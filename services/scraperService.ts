@@ -30,18 +30,31 @@ const detectPlatformFromUrl = (url: string): string => {
 
 // --- REAL API LOGIC (RapidAPI) ---
 const fetchFromRapidAPI = async (url: string, platform: string): Promise<ScrapedMetrics> => {
-    // VITE REQUIREMENT: Access env vars directly via property (not dynamic string index)
-    // @ts-ignore
-    const RAPIDAPI_KEY = import.meta.env.VITE_RAPIDAPI_KEY;
-    
-    // @ts-ignore
-    const HOST_IG = import.meta.env.VITE_RAPIDAPI_HOST_IG || 'instagram120.p.rapidapi.com';
-    // @ts-ignore
-    const HOST_TIKTOK = import.meta.env.VITE_RAPIDAPI_HOST_TIKTOK || 'tiktok-api23.p.rapidapi.com';
-    // @ts-ignore
-    const HOST_LINKEDIN = import.meta.env.VITE_RAPIDAPI_HOST_LINKEDIN || 'linkedin-data-api.p.rapidapi.com';
-    // @ts-ignore
-    const HOST_THREADS = import.meta.env.VITE_RAPIDAPI_HOST_THREADS || 'threads-scraper.p.rapidapi.com';
+    // Initialize with defaults to prevent crash
+    let RAPIDAPI_KEY = '';
+    let HOST_IG = 'instagram120.p.rapidapi.com';
+    let HOST_TIKTOK = 'tiktok-api23.p.rapidapi.com';
+    let HOST_LINKEDIN = 'linkedin-data-api.p.rapidapi.com';
+    let HOST_THREADS = 'threads-scraper.p.rapidapi.com';
+
+    // Safe Environment Access
+    try {
+        // @ts-ignore
+        if (typeof import.meta !== 'undefined' && import.meta.env) {
+            // @ts-ignore
+            RAPIDAPI_KEY = import.meta.env.VITE_RAPIDAPI_KEY || '';
+            // @ts-ignore
+            HOST_IG = import.meta.env.VITE_RAPIDAPI_HOST_IG || HOST_IG;
+            // @ts-ignore
+            HOST_TIKTOK = import.meta.env.VITE_RAPIDAPI_HOST_TIKTOK || HOST_TIKTOK;
+            // @ts-ignore
+            HOST_LINKEDIN = import.meta.env.VITE_RAPIDAPI_HOST_LINKEDIN || HOST_LINKEDIN;
+            // @ts-ignore
+            HOST_THREADS = import.meta.env.VITE_RAPIDAPI_HOST_THREADS || HOST_THREADS;
+        }
+    } catch (e) {
+        console.warn("[Scraper] Env vars not accessible, using defaults/empty.");
+    }
 
     let apiUrl = '';
     let host = '';
@@ -208,17 +221,20 @@ export const analyzeContentLink = async (url: string): Promise<ScrapedMetrics> =
 
     const platform = detectPlatformFromUrl(url);
     
-    // Access safely and DIRECTLY for Vite
-    // @ts-ignore
-    const apiKey = import.meta.env.VITE_RAPIDAPI_KEY;
+    // Access safely
+    let apiKey = '';
+    try {
+        // @ts-ignore
+        if (typeof import.meta !== 'undefined' && import.meta.env) {
+            // @ts-ignore
+            apiKey = import.meta.env.VITE_RAPIDAPI_KEY;
+        }
+    } catch (e) {
+        console.warn("[Scraper] Could not read env apiKey");
+    }
 
     console.log(`[Scraper] Analyzing: ${url} (${platform})`);
     
-    // Debug log to browser console (will be hidden in prod but visible in dev)
-    if (!apiKey) {
-        console.warn("DEBUG: VITE_RAPIDAPI_KEY is undefined/empty");
-    }
-
     if (apiKey && apiKey.length > 5) {
         return await fetchFromRapidAPI(url, platform);
     } else {
