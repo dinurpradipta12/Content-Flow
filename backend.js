@@ -65,6 +65,7 @@ app.post('/api/scrape-instagram', async (req, res) => {
 
     const data = await response.json();
     console.log(`[Instagram Scraper] Response status: ${response.status}`);
+    console.log(`[Instagram Scraper] Response data structure:`, JSON.stringify(data).substring(0, 500));
 
     // Parse response - handle edges array structure
     let metrics = {
@@ -84,6 +85,7 @@ app.post('/api/scrape-instagram', async (req, res) => {
     // Extract first post metrics
     if (data.edges && Array.isArray(data.edges) && data.edges.length > 0) {
       const firstPost = data.edges[0].node;
+      console.log(`[Instagram Scraper] First post node:`, JSON.stringify(firstPost).substring(0, 500));
 
       metrics = {
         username: username,
@@ -106,7 +108,8 @@ app.post('/api/scrape-instagram', async (req, res) => {
         comments: metrics.comments,
         views: metrics.views
       });
-    }
+    } else {
+      console.log(`[Instagram Scraper] No edges found in response, returning defaults`);
 
     res.json({
       success: true,
