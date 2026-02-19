@@ -66,6 +66,7 @@ export const ContentDataInsight: React.FC = () => {
                     contentLink: item.content_link,
                     workspaces: item.workspaces
                 }));
+                console.log('[ContentDataInsight] Fetched items with links:', formattedItems.map(i => ({ id: i.id, title: i.title, contentLink: i.contentLink })));
                 setData(formattedItems);
             }
         } catch (err) {
@@ -81,6 +82,7 @@ export const ContentDataInsight: React.FC = () => {
 
     const handleAnalyze = async (e: React.MouseEvent, id: string, url: string) => {
         e.stopPropagation(); // Prevent row toggle
+        console.log('[ContentDataInsight] Analyze button clicked - ID:', id, 'URL:', url);
         if (!url) {
             alert("Link postingan tidak tersedia. Harap input link di detail konten.");
             return;
