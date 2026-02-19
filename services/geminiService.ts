@@ -11,7 +11,9 @@ const getApiKey = () => {
 };
 
 const apiKey = getApiKey();
-const ai = new GoogleGenAI({ apiKey });
+// Initialize with fallback to prevent "API key must be set" error crashing the app on load
+// This ensures the app loads UI even if API key is missing (AI features will fail gracefully later)
+const ai = new GoogleGenAI({ apiKey: apiKey || 'fallback_key_for_ui_load' });
 
 export const generateScript = async (topic: string, platform: string, contentType: string): Promise<string> => {
   try {
