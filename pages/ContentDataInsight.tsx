@@ -110,7 +110,9 @@ export const ContentDataInsight: React.FC = () => {
 
         } catch (err: any) {
             console.error("Analysis failed:", err);
-            alert(`Gagal menganalisa konten: ${err.message}`);
+            const errorMessage = err.message || "Terjadi kesalahan yang tidak diketahui";
+            // Show user-friendly error message with helpful tips
+            alert(`Gagal menganalisa konten:\n\n${errorMessage}\n\nTip: Jika Anda menggunakan RapidAPI, pastikan:\n- API key sudah diatur di .env\n- Anda memiliki subscription untuk API\n- Link konten valid`);
         } finally {
             setAnalyzingId(null);
         }

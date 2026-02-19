@@ -110,7 +110,19 @@ const fetchFromRapidAPI = async (url: string, platform: string): Promise<Scraped
         if (!response.ok) {
             const errText = await response.text();
             console.error(`[Scraper] API Error (${response.status}):`, errText);
-            throw new Error(`API Error ${response.status}: ${response.statusText}`);
+            
+            // Better error messages for common HTTP errors
+            if (response.status === 403) {
+                throw new Error(`Akses ditolak. Pastikan API key RapidAPI Anda valid dan memiliki subscription untuk ${platform}.`);
+            } else if (response.status === 401) {
+                throw new Error(`API key tidak valid. Periksa konfigurasi VITE_RAPIDAPI_KEY di .env`);
+            } else if (response.status === 429) {
+                throw new Error(`Terlalu banyak request. Coba lagi dalam beberapa saat.`);
+            } else if (response.status === 404) {
+                throw new Error(`Konten tidak ditemukan di ${platform}. Periksa kembali link-nya.`);
+            } else {
+                throw new Error(`API Error ${response.status}: ${response.statusText}`);
+            }
         }
         
         const data = await response.json();
