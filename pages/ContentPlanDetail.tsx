@@ -385,6 +385,11 @@ export const ContentPlanDetail: React.FC = () => {
     setLoading(true);
     setErrorState(null);
     try {
+        // 0. Sync Latest User Avatar
+        const userId = localStorage.getItem('user_id');
+        const { data: userData } = await supabase.from('app_users').select('avatar_url').eq('id', userId).single();
+        const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
+
         const { data: ws, error: wsError } = await supabase
             .from('workspaces')
             .select('*')
@@ -405,6 +410,16 @@ export const ContentPlanDetail: React.FC = () => {
             }
         }
 
+        // Sync Members logic
+        let currentMembers = ws.members || [];
+        if (freshAvatar) {
+            if (currentMembers.length === 0) {
+                currentMembers.push(freshAvatar);
+            } else if (ws.role === 'Owner') {
+                currentMembers[0] = freshAvatar;
+            }
+        }
+
         setWorkspaceData({ 
             name: ws.name, 
             platforms: ws.platforms || [], 
@@ -412,7 +427,7 @@ export const ContentPlanDetail: React.FC = () => {
             logo_url: ws.logo_url || '',
             period: ws.period || '',
             account_name: ws.account_name || '',
-            members: ws.members || []
+            members: currentMembers
         });
 
         const { data: items, error: itemsError } = await supabase
@@ -422,7 +437,15 @@ export const ContentPlanDetail: React.FC = () => {
             .order('created_at', { ascending: false });
 
         if (itemsError) throw itemsError;
-        setTasks(items as ContentItem[]);
+
+        // MAP Supabase data (snake_case) to Frontend Type (camelCase)
+        const mappedItems = items.map((item: any) => ({
+            ...item,
+            contentLink: item.content_link, // MAPPING FIX
+            // Other fields usually match or are handled by JS weak typing, but content_link -> contentLink is crucial
+        }));
+
+        setTasks(mappedItems as ContentItem[]);
 
     } catch (error: any) {
         console.error("Error fetching detail:", error);
@@ -439,13 +462,16 @@ export const ContentPlanDetail: React.FC = () => {
   useEffect(() => {
      const handleClickOutside = () => setActiveRowMenu(null);
      document.addEventListener('click', handleClickOutside);
-     return () => document.removeEventListener('click', handleClickOutside);
+     const handleUserUpdate = () => { fetchData(); };
+     window.addEventListener('user_updated', handleUserUpdate);
+     return () => {
+         document.removeEventListener('click', handleClickOutside);
+         window.removeEventListener('user_updated', handleUserUpdate);
+     };
   }, []);
 
   // Filter Logic for Table View
   const filteredTableTasks = tasks.filter(task => {
-      // Only apply these filters if in table view (conceptually), 
-      // though the variable is calculated regardless.
       const matchPlatform = filterPlatform === 'all' || task.platform === filterPlatform;
       const matchStatus = filterStatus === 'all' || task.status === filterStatus;
       return matchPlatform && matchStatus;
@@ -484,7 +510,7 @@ export const ContentPlanDetail: React.FC = () => {
         pic: (item as any).pic || '',
         approval: (item as any).approval || '',
         platform: item.platform,
-        contentLink: item.contentLink || ''
+        contentLink: item.contentLink || '' // Ensure this reads from mapped item
       });
       setIsModalOpen(true);
   };
@@ -517,11 +543,14 @@ export const ContentPlanDetail: React.FC = () => {
   };
 
   const handleQuickUpdateLink = async (itemId: string, newLink: string) => {
+      // Optimistic Update
       setTasks(prev => prev.map(t => t.id === itemId ? { ...t, contentLink: newLink } : t));
+      
       try {
+          // Sync to Database (using content_link)
           await supabase.from('content_items').update({ content_link: newLink }).eq('id', itemId);
       } catch (err) {
-          console.error(err);
+          console.error("Failed to sync link:", err);
       }
   };
 
@@ -539,7 +568,7 @@ export const ContentPlanDetail: React.FC = () => {
         script: formData.script,
         pic: formData.pic,
         approval: formData.approval,
-        content_link: formData.contentLink
+        content_link: formData.contentLink // Ensure SNAKE_CASE for DB
       };
       try {
         if (modalMode === 'create') {
@@ -624,11 +653,8 @@ export const ContentPlanDetail: React.FC = () => {
         <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-240px)] min-h-[500px] space-y-4">
         {/* Header Section Updated */}
         <div className="flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-slate-100 pb-6 flex-shrink-0 w-full max-w-full pl-2 md:pl-4">
-            
             {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
             <div className="flex flex-col items-start gap-4">
-                
-                {/* 1. Row: Back Button + LOGO (Raw PNG) */}
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => navigate('/plan')}
@@ -648,15 +674,12 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 2. INFO (Platform & Period) - Colorful Shapes */}
                 <div className="flex flex-wrap gap-2">
-                    {/* Platform Badges */}
                     {workspaceData.platforms.map(p => (
                         <span key={p} className="px-3 py-1 bg-pink-100 border-2 border-pink-200 text-pink-700 font-black font-heading rounded-lg text-xs transform -rotate-2 shadow-sm inline-block">
                             {p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p}
                         </span>
                     ))}
-                    {/* Period Badge */}
                     {workspaceData.period && (
                         <span className="px-3 py-1 bg-yellow-100 border-2 border-yellow-200 text-yellow-700 font-black font-heading rounded-lg text-xs transform rotate-2 shadow-sm inline-block">
                             {new Date(workspaceData.period).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
@@ -664,12 +687,10 @@ export const ContentPlanDetail: React.FC = () => {
                     )}
                 </div>
 
-                {/* 3. WORKSPACE NAME */}
                 <h2 className="text-5xl md:text-7xl font-extrabold text-slate-800 font-heading tracking-tight drop-shadow-sm leading-tight max-w-3xl">
                     {workspaceData.name}
                 </h2>
 
-                {/* 4. MEMBER STACK */}
                 <div className="flex items-center gap-3">
                     <div className="flex -space-x-3">
                         {workspaceData.members && workspaceData.members.length > 0 ? (
@@ -697,8 +718,6 @@ export const ContentPlanDetail: React.FC = () => {
 
             {/* RIGHT SIDE: Actions & Account Info */}
             <div className="flex flex-col items-end gap-3 w-full lg:w-auto mt-4 lg:mt-0">
-                
-                {/* 1. Actions (Right to Left: Button, View Mode) */}
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
                         <button 
@@ -724,7 +743,6 @@ export const ContentPlanDetail: React.FC = () => {
                     </Button>
                 </div>
 
-                {/* 2. Account Info (Reduced Size) */}
                 <div className="text-right">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Content Plan For</p>
                     <div className="bg-white border-2 border-slate-800 rounded-lg px-4 py-2 shadow-hard inline-block">
@@ -928,14 +946,19 @@ export const ContentPlanDetail: React.FC = () => {
                                             )}
                                         </td>
 
-                                        {/* 8. Link Input (Interactive) */}
+                                        {/* 8. Link Input (Interactive - Controlled) */}
                                         <td className="p-3 border-y border-slate-200">
                                             <div className="relative flex items-center group/input">
                                                 <LinkIcon size={14} className={`absolute left-2 z-10 ${task.contentLink ? 'text-blue-500' : 'text-slate-300'}`} />
                                                 <input 
                                                     type="text"
-                                                    defaultValue={task.contentLink || ''}
+                                                    value={task.contentLink || ''} // CONTROLLED INPUT
                                                     placeholder="Paste Link..."
+                                                    onChange={(e) => {
+                                                        const newVal = e.target.value;
+                                                        // Update Local State for typing
+                                                        setTasks(prev => prev.map(t => t.id === task.id ? { ...t, contentLink: newVal } : t));
+                                                    }}
                                                     onBlur={(e) => handleQuickUpdateLink(task.id, e.target.value)}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter') {
@@ -1005,9 +1028,8 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </div>
         )}
-        </div>
 
-        {/* --- DETAIL MODAL (NEW) --- */}
+        {/* --- DETAIL MODAL --- */}
         {selectedTask && (
             <Modal
                 isOpen={isDetailModalOpen}
@@ -1022,7 +1044,6 @@ export const ContentPlanDetail: React.FC = () => {
                             {selectedTask.title}
                         </h2>
                         
-                        {/* Sticker Style Platform Badge (Flex Positioned) */}
                         <div className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold border-2 border-slate-900 shadow-hard -rotate-2 transform transition-transform hover:rotate-0 ${getPlatformBadgeStyle(selectedTask.platform)}`}>
                             <div className="flex items-center gap-2">
                                 {getPlatformIcon(selectedTask.platform)}
@@ -1072,7 +1093,6 @@ export const ContentPlanDetail: React.FC = () => {
                     <div className="flex flex-wrap gap-3 items-center py-2 border-y-2 border-slate-100 border-dashed">
                         <span className="text-xs font-bold text-slate-400 tracking-wide mr-2">Quick Stats:</span>
                         
-                        {/* Status Badge */}
                         <div className={`px-4 py-1.5 rounded-full border-2 text-sm font-bold flex items-center gap-2 ${
                             selectedTask.status === ContentStatus.TODO ? 'bg-slate-100 border-slate-300 text-slate-600' :
                             selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-purple-100 border-purple-300 text-purple-700' :
@@ -1099,7 +1119,7 @@ export const ContentPlanDetail: React.FC = () => {
                         )}
                     </div>
 
-                    {/* New: Post Link Section (Blue Pop Style) */}
+                    {/* Post Link Section */}
                     <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl flex items-center justify-between gap-4 transition-colors hover:border-blue-400 group">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center border border-blue-200 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -1128,7 +1148,7 @@ export const ContentPlanDetail: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Script / Notes Area (Reduced Height as requested) */}
+                    {/* Script / Notes Area */}
                     <div className="bg-[#FFFDF5] p-5 rounded-2xl border-2 border-slate-800 relative shadow-hard">
                         <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 w-40 h-8 bg-yellow-300 -rotate-1 rounded-sm border-2 border-slate-800 flex items-center justify-center shadow-sm z-10">
                              <span className="font-bold text-xs font-heading text-slate-800">Brief / Script</span>
@@ -1162,7 +1182,7 @@ export const ContentPlanDetail: React.FC = () => {
             </Modal>
         )}
 
-        {/* Modal Create/Edit Content - COLORFUL POP STYLE */}
+        {/* Modal Create/Edit Content */}
         <Modal 
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
@@ -1170,7 +1190,7 @@ export const ContentPlanDetail: React.FC = () => {
         >
             <form onSubmit={handleSaveContent} className="space-y-6 pb-4">
                 
-                {/* 1. INFORMASI UTAMA (Violet Pop) */}
+                {/* 1. INFORMASI UTAMA */}
                 <div className="bg-purple-50 p-5 rounded-2xl border-2 border-purple-800 shadow-[4px_4px_0px_0px_#8B5CF6] relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-purple-200 rounded-bl-full opacity-50"></div>
                     <h4 className="font-heading font-black text-purple-900 flex items-center gap-2 mb-4 text-lg">
@@ -1212,8 +1232,7 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 2. DETAIL & JENIS (Pink Pop) */}
-                {/* Fixed overflow issue for dropdown visibility */}
+                {/* 2. DETAIL & JENIS */}
                 <div className="bg-pink-50 p-5 rounded-2xl border-2 border-pink-700 shadow-[4px_4px_0px_0px_#BE185D] relative">
                      <div className="absolute bottom-0 left-0 w-12 h-12 bg-pink-200 rounded-tr-full rounded-bl-2xl opacity-50"></div>
                     <h4 className="font-heading font-black text-pink-900 flex items-center gap-2 mb-4 text-lg relative z-10">
@@ -1244,7 +1263,7 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 3. STATUS & PIC (Yellow Pop) */}
+                {/* 3. STATUS & PIC */}
                 <div className="bg-yellow-50 p-5 rounded-2xl border-2 border-yellow-600 shadow-[4px_4px_0px_0px_#CA8A04] relative">
                     <h4 className="font-heading font-black text-yellow-900 flex items-center gap-2 mb-4 text-lg">
                         <CheckCircle className="text-yellow-600" /> Status & Tim
@@ -1269,7 +1288,6 @@ export const ContentPlanDetail: React.FC = () => {
                             className="border-yellow-200 focus:border-yellow-500"
                         />
                     </div>
-                    {/* Updated: PIC & Approval using CreatableSelect for mentioning members */}
                     <div className="grid grid-cols-2 gap-4 mt-4">
                          <CreatableSelect 
                             label="PIC (Penanggung Jawab)" 
@@ -1292,7 +1310,7 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 4. SCRIPT & FILES (Green Pop) */}
+                {/* 4. SCRIPT & FILES */}
                 <div className="bg-emerald-50 p-5 rounded-2xl border-2 border-emerald-700 shadow-[4px_4px_0px_0px_#059669]">
                     <label className="font-heading font-black text-emerald-900 text-sm mb-2 flex items-center gap-2">
                         <File className="text-emerald-600" /> Script / Resources

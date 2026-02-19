@@ -1,22 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Modal } from '../components/ui/Modal';
-import { Layers } from 'lucide-react';
+import { Layers, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { isSupabaseConfigured } from '../services/supabaseClient';
+import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  // We keep the state logic just in case we need to show a warning, 
-  // but the configuration UI is moved to the inner app settings.
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Allow login even if not configured, so user can go to Settings to configure it.
-    // Or we could block it. Given the instructions "moved to settings", we let them in.
-    navigate('/');
+    setLoading(true);
+    setError(null);
+
+    // Bypass check for demo if unconfigured, but usually we need Supabase
+    if (!isSupabaseConfigured()) {
+        setError("Database belum terhubung. Cek konfigurasi.");
+        setLoading(false);
+        return;
+    }
+
+    try {
+        // Query to custom table app_users
+        // Note: Password is plain text as per user requirement (ar4925) for this demo.
+        const { data, error: dbError } = await supabase
+            .from('app_users')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+
+        if (dbError) {
+             if (dbError.code === 'PGRST116') {
+                 // No rows found
+                 throw new Error("Username atau Password salah.");
+             } else {
+                 console.error(dbError);
+                 throw new Error("Gagal terhubung ke database. Pastikan tabel 'app_users' sudah dibuat via SQL Script di Settings.");
+             }
+        }
+
+        if (data) {
+            // Login Success
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('user_id', data.id); // Save ID for data relations
+            localStorage.setItem('user_name', data.full_name || data.username);
+            localStorage.setItem('user_role', data.role || 'Member');
+            localStorage.setItem('user_avatar', data.avatar_url || 'https://picsum.photos/40/40');
+            navigate('/');
+        }
+
+    } catch (err: any) {
+        setError(err.message || "Terjadi kesalahan.");
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -36,21 +79,46 @@ export const Login: React.FC = () => {
           </div>
           
           <form onSubmit={handleLogin} className="space-y-4">
-            <Input label="Email" type="email" placeholder="kamu@arunika.id" />
-            <Input label="Password" type="password" placeholder="••••••••" />
+            <Input 
+                label="Username" 
+                placeholder="Contoh: arunika" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+            />
+            <Input 
+                label="Password" 
+                type="password" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+            />
             
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg flex items-start gap-2">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
+
             <div className="pt-2">
-                <Button className="w-full" type="submit">Masuk Sekarang</Button>
+                <Button className="w-full" type="submit" disabled={loading}>
+                    {loading ? (
+                        <>
+                            <Loader2 size={18} className="animate-spin mr-2" />
+                            Memproses...
+                        </>
+                    ) : (
+                        "Masuk Sekarang"
+                    )}
+                </Button>
             </div>
           </form>
 
-          <p className="text-center mt-6 text-sm text-slate-500">
-            Belum punya akun? <a href="#" className="text-accent font-bold hover:underline">Daftar dulu</a>
-          </p>
-          
           {!isSupabaseConfigured() && (
               <div className="mt-4 p-3 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg border border-yellow-200 text-center">
-                  Database belum terhubung. Silakan Login lalu buka menu <b>Settings &gt; Integrasi</b>.
+                  ⚠️ Database belum terhubung. Konfigurasi di dalam aplikasi (Settings) atau cek file .env.
               </div>
           )}
         </Card>

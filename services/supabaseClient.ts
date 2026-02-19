@@ -1,24 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Safe access to environment variables
-const getEnv = (key: string) => {
-  // Check process.env (Node/Webpack/Some Vite setups)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key];
-  }
-  // Check import.meta.env (Standard Vite)
-  try {
-    // @ts-ignore
-    if (import.meta && import.meta.env && import.meta.env[key]) {
-      // @ts-ignore
-      return import.meta.env[key];
-    }
-  } catch (e) {
-    // ignore errors if import.meta is not available
-  }
-  return '';
-};
-
 // Prioritize LocalStorage for runtime configuration (User Input)
 const storedUrl = localStorage.getItem('sb_url');
 const storedKey = localStorage.getItem('sb_key');
@@ -27,8 +8,24 @@ const storedKey = localStorage.getItem('sb_key');
 const DEFAULT_URL = 'https://reqomleljyfujkivesxp.supabase.co';
 const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW9tbGVsanlmdWpraXZlc3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0NDAzNTEsImV4cCI6MjA4NzAxNjM1MX0.kssegIPnTXBfaaHV199T5uox8Qz5Z0rziTBhJ7L_ko4';
 
-const supabaseUrl = storedUrl || getEnv('VITE_SUPABASE_URL') || getEnv('REACT_APP_SUPABASE_URL') || DEFAULT_URL;
-const supabaseAnonKey = storedKey || getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('REACT_APP_SUPABASE_ANON_KEY') || DEFAULT_KEY;
+// Explicitly access Vite env vars safely
+let envUrl = '';
+let envKey = '';
+
+try {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+        // @ts-ignore
+        envUrl = import.meta.env.VITE_SUPABASE_URL;
+        // @ts-ignore
+        envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    }
+} catch (e) {
+    console.warn("Vite environment variables are not accessible.");
+}
+
+const supabaseUrl = storedUrl || envUrl || DEFAULT_URL;
+const supabaseAnonKey = storedKey || envKey || DEFAULT_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Supabase URL or Key missing. Please configure them in the Login settings.");

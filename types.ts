@@ -35,6 +35,18 @@ export interface ContentItem {
   script?: string;
   contentLink?: string; // New field for direct post link
   approval?: string;
+  metrics?: {
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    saves?: number;
+    lastUpdated: string;
+  };
+  workspaces?: {
+      account_name: string;
+      name: string;
+  }
 }
 
 export interface Workspace {

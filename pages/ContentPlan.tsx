@@ -80,6 +80,11 @@ export const ContentPlan: React.FC = () => {
     const fetchWorkspaces = async () => {
         setLoading(true);
         try {
+            // 0. Get Current User Info for Syncing
+            const userId = localStorage.getItem('user_id');
+            const { data: userData } = await supabase.from('app_users').select('avatar_url').eq('id', userId).single();
+            const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
+
             // 1. Fetch Workspaces
             const { data: wsData, error: wsError } = await supabase
                 .from('workspaces')
@@ -95,11 +100,25 @@ export const ContentPlan: React.FC = () => {
 
             if (contentError) throw contentError;
 
-            // 3. Merge Data
+            // 3. Merge Data & Sync Avatar
             const mergedData: WorkspaceData[] = wsData.map((ws: any) => {
                 const workspaceContent = contentData.filter((c: any) => c.workspace_id === ws.id);
                 const total = workspaceContent.length;
                 const published = workspaceContent.filter((c: any) => c.status === 'Published').length;
+
+                // Sync Logic: If I am the creator/owner (role Owner), ensure my fresh avatar is the first member
+                // If I am just a member, ensure my fresh avatar replaces my old one in the list (simple approximation)
+                let currentMembers = ws.members || ['https://picsum.photos/40/40'];
+                
+                if (freshAvatar) {
+                    if (ws.role === 'Owner') {
+                         // Force update owner avatar at index 0
+                         if (currentMembers.length > 0) currentMembers[0] = freshAvatar;
+                         else currentMembers = [freshAvatar];
+                    } 
+                    // Note: Ideally we match by User ID, but since members is string[], 
+                    // for this version we trust the Owner flag for the first slot.
+                }
 
                 return {
                     id: ws.id,
@@ -111,7 +130,7 @@ export const ContentPlan: React.FC = () => {
                     period: ws.period,
                     accountName: ws.account_name,
                     logoUrl: ws.logo_url,
-                    members: ws.members || ['https://picsum.photos/40/40'],
+                    members: currentMembers,
                     totalContent: total,
                     publishedCount: published
                 };
@@ -131,7 +150,17 @@ export const ContentPlan: React.FC = () => {
         
         const handleClickOutside = () => setActiveMenu(null);
         document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
+
+        // LISTEN FOR USER UPDATES (Profile Photo Sync)
+        const handleUserUpdate = () => {
+            fetchWorkspaces();
+        };
+        window.addEventListener('user_updated', handleUserUpdate);
+
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+            window.removeEventListener('user_updated', handleUserUpdate);
+        };
     }, []);
 
     const toggleMenu = (e: React.MouseEvent, id: string) => {
@@ -212,6 +241,7 @@ export const ContentPlan: React.FC = () => {
         
         const colors: ('violet' | 'pink' | 'yellow' | 'green')[] = ['violet', 'pink', 'yellow', 'green'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
         try {
             if (modalMode === 'create') {
@@ -225,7 +255,7 @@ export const ContentPlan: React.FC = () => {
                         period: formData.period,
                         account_name: formData.accountName,
                         logo_url: formData.logoUrl, // Base64 string is saved here
-                        members: ['https://picsum.photos/40/40']
+                        members: [currentUserAvatar] // Use current user avatar for sync accuracy
                     }
                 ]).select();
 
@@ -315,19 +345,11 @@ export const ContentPlan: React.FC = () => {
                     <p className="text-slate-500 font-medium mt-2">Pilih workspace untuk mulai mengelola konten.</p>
                 </div>
                 
-                <div className="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
-                    <div className="relative group w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-accent transition-colors" size={18} />
-                        <input 
-                            placeholder="Cari workspace..." 
-                            className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-xl pl-10 pr-4 py-2.5 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-slate-400 font-medium"
-                        />
-                    </div>
-                    
+                <div className="flex items-center gap-3">
                     <Button 
-                        variant="secondary"
-                        icon={<Ticket size={18}/>} 
-                        className="whitespace-nowrap"
+                        // Style adjusted to match primary structure but with Tertiary (Yellow) color
+                        className="bg-tertiary text-slate-900 hover:bg-[#FCD34D] whitespace-nowrap"
+                        icon={<Users size={18}/>} 
                         onClick={() => setIsJoinModalOpen(true)}
                     >
                         Gabung Workspace
