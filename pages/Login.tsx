@@ -50,7 +50,7 @@ export const Login: React.FC = () => {
           
           {!isSupabaseConfigured() && (
               <div className="mt-4 p-3 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg border border-yellow-200 text-center">
-                  Database belum terhubung. Silakan Login lalu buka menu <b>Settings > Integrasi</b>.
+                  Database belum terhubung. Silakan Login lalu buka menu <b>Settings &gt; Integrasi</b>.
               </div>
           )}
         </Card>
