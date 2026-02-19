@@ -25,7 +25,13 @@ import {
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { ContentItem, Platform } from '../types';
-import { analyzeContentLink } from '../services/scraperService';
+import { 
+    scrapeInstagramMetricsBackend, 
+    saveMetricsToDatabase,
+    getMetricsForContent,
+    subscribeToMetricsUpdates,
+    ContentMetrics
+} from '../services/backendService';
 
 export const ContentDataInsight: React.FC = () => {
     const [data, setData] = useState<ContentItem[]>([]);
@@ -40,6 +46,7 @@ export const ContentDataInsight: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
     
     const [accounts, setAccounts] = useState<string[]>([]);
+    const [metricsMap, setMetricsMap] = useState<Map<string, ContentMetrics>>(new Map());
 
     const fetchData = async () => {
         setLoading(true);
@@ -90,18 +97,50 @@ export const ContentDataInsight: React.FC = () => {
         setAnalyzingId(id);
         
         try {
-            // Use the new Scraper Service
-            const metrics = await analyzeContentLink(url);
+            // Extract username from URL
+            const usernameMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.-]+)/);
+            const username = usernameMatch ? usernameMatch[1] : 'unknown';
             
+            console.log('[ContentDataInsight] Calling backend for:', { url, username });
+            
+            // Call backend to scrape metrics
+            const metrics = await scrapeInstagramMetricsBackend(url, username);
+            
+            if (!metrics) {
+                throw new Error('Failed to scrape metrics from backend');
+            }
+
+            console.log('[ContentDataInsight] Received metrics from backend:', metrics);
+            
+            // Update metrics map for real-time display
+            const newMetricsMap = new Map(metricsMap);
+            newMetricsMap.set(url, metrics);
+            setMetricsMap(newMetricsMap);
+
+            // Subscribe to real-time updates for this content
+            const subscription = subscribeToMetricsUpdates(url, (updatedMetrics) => {
+                console.log('[ContentDataInsight] Real-time update received:', updatedMetrics);
+                const updatedMap = new Map(metricsMap);
+                updatedMap.set(url, updatedMetrics);
+                setMetricsMap(updatedMap);
+            });
+
+            // Also save to content_items for backward compatibility
             const timestamp = new Date().toISOString();
-            const metricsData = { ...metrics, lastUpdated: timestamp };
+            const metricsData = { 
+                ...metrics, 
+                lastUpdated: timestamp,
+                dataSource: 'supabase_edge_function'
+            };
 
             const { error } = await supabase
                 .from('content_items')
                 .update({ metrics: metricsData })
                 .eq('id', id);
 
-            if (error) throw error;
+            if (error) {
+                console.warn('[ContentDataInsight] Could not update content_items:', error);
+            }
 
             setData(prev => prev.map(item => 
                 item.id === id ? { ...item, metrics: metricsData as any } : item
@@ -286,7 +325,7 @@ export const ContentDataInsight: React.FC = () => {
                                             <td className="p-4 align-middle">
                                                 {item.metrics ? (
                                                     <div className="grid grid-cols-4 gap-2 text-center w-full max-w-[280px]">
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-xs font-black text-slate-800">{item.metrics.views.toLocaleString()}</span></div>
+                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-xs font-black text-slate-800">{item.metrics.views > 0 ? item.metrics.views.toLocaleString() : item.platform === 'Instagram' ? 'N/A' : item.metrics.views.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Likes</span><span className="text-xs font-black text-slate-800">{item.metrics.likes.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Comm</span><span className="text-xs font-black text-slate-800">{item.metrics.comments.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Share</span><span className="text-xs font-black text-slate-800">{item.metrics.shares.toLocaleString()}</span></div>
@@ -328,7 +367,11 @@ export const ContentDataInsight: React.FC = () => {
                                                                             <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Good</span>
                                                                         </div>
                                                                         <p className="text-2xl font-black text-slate-800">
-                                                                            {((item.metrics.likes + item.metrics.comments) / (item.metrics.views || 1) * 100).toFixed(2)}%
+                                                                            {item.platform === 'Instagram' && item.metrics.views === 0 ? (
+                                                                                <span className="text-slate-400">N/A</span>
+                                                                            ) : (
+                                                                                ((item.metrics.likes + item.metrics.comments) / (item.metrics.views || 1) * 100).toFixed(2) + '%'
+                                                                            )}
                                                                         </p>
                                                                         <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2"><div className="bg-green-500 h-1.5 rounded-full" style={{width: '65%'}}></div></div>
                                                                     </div>

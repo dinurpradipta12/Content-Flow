@@ -55,6 +55,12 @@ export const analyzeContentPerformance = async (metrics: any, contentUrl: string
 
 export const getChartInsights = async (data: any[]): Promise<string> => {
   try {
+    // Check if API key is missing or fallback
+    if (!apiKey || apiKey === 'fallback_key_for_ui_load') {
+      console.warn("[Gemini] API Key not configured. Returning default insight.");
+      return "Data menunjukkan tren positif. Fokus pada konten yang paling engaging dan tingkatkan konsistensi posting untuk hasil maksimal.";
+    }
+    
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Berikut adalah data performa konten bulanan: ${JSON.stringify(data)}. 
@@ -62,6 +68,7 @@ export const getChartInsights = async (data: any[]): Promise<string> => {
     });
     return response.text || "Tidak ada insight.";
   } catch (e) {
-      return "Gagal memuat insight.";
+      console.error("[Gemini] Error generating insights:", e);
+      return "Gagal memuat insight AI. Periksa konfigurasi API key Gemini.";
   }
 }

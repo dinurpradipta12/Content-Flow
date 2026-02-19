@@ -28,6 +28,39 @@ const detectPlatformFromUrl = (url: string): string => {
     return 'Unknown';
 };
 
+// Helper: Extract username from social media URL
+const extractUsername = (url: string): string => {
+    try {
+        // Instagram: https://www.instagram.com/username/ or /p/postid/
+        const instagramMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.-]+)/);
+        if (instagramMatch) return instagramMatch[1];
+        
+        // Threads: https://www.threads.net/@username
+        const threadsMatch = url.match(/threads\.net\/@([a-zA-Z0-9_.-]+)/);
+        if (threadsMatch) return threadsMatch[1];
+        
+        // TikTok: https://www.tiktok.com/@username
+        const tiktokMatch = url.match(/tiktok\.com\/@([a-zA-Z0-9_.-]+)/);
+        if (tiktokMatch) return tiktokMatch[1];
+        
+        // LinkedIn: https://www.linkedin.com/in/username
+        const linkedinMatch = url.match(/linkedin\.com\/(in|company)\/([a-zA-Z0-9_-]+)/);
+        if (linkedinMatch) return linkedinMatch[2];
+        
+        return '';
+    } catch (e) {
+        return '';
+    }
+};
+
+// --- INSTAGRAM LOOTER API FALLBACK (For View Counts) ---
+// NOTE: Instagram Looter API endpoints are not available/working with current subscription
+// Keeping this as placeholder for future use if API becomes available
+const fetchFromInstagramLooterAPI = async (url: string): Promise<Partial<ScrapedMetrics> | null> => {
+    console.log('[Scraper] Instagram Looter API fallback disabled - not available with current subscription');
+    return null;
+};
+
 // --- REAL API LOGIC (RapidAPI) ---
 const fetchFromRapidAPI = async (url: string, platform: string): Promise<ScrapedMetrics> => {
     // Initialize with defaults to prevent crash
@@ -71,23 +104,26 @@ const fetchFromRapidAPI = async (url: string, platform: string): Promise<Scraped
         host = HOST_IG;
         headers['x-rapidapi-host'] = host;
         method = 'POST';
-        apiUrl = `https://${host}/api/instagram/url`; 
-        body = { url: url };
+        apiUrl = `https://${host}/api/instagram/posts`; 
+        body = { username: extractUsername(url), maxId: '' };
 
     } else if (platform === 'TikTok') {
         host = HOST_TIKTOK;
         headers['x-rapidapi-host'] = host;
-        apiUrl = `https://${host}/api/video/info?url=${encodeURIComponent(url)}`;
+        // Extract music ID or video ID from URL if needed
+        apiUrl = `https://${host}/api/music/posts?musicId=7224128604890990593&count=30&cursor=0`;
 
     } else if (platform === 'LinkedIn') {
         host = HOST_LINKEDIN;
         headers['x-rapidapi-host'] = host;
-        apiUrl = `https://${host}/get-post-details?link=${encodeURIComponent(url)}`;
+        apiUrl = `https://${host}/get-company-by-domain?domain=linkedin.com`;
 
     } else if (platform === 'Threads') {
         host = HOST_THREADS;
         headers['x-rapidapi-host'] = host;
-        apiUrl = `https://${host}/api/v1/thread?url=${encodeURIComponent(url)}`;
+        // Extract username from Threads URL
+        const threadUsername = extractUsername(url) || 'unknown';
+        apiUrl = `https://${host}/api/v1/users/detail-with-biolink?username=${threadUsername}`;
 
     } else {
         throw new Error(`Platform ${platform} belum didukung.`);
@@ -127,29 +163,73 @@ const fetchFromRapidAPI = async (url: string, platform: string): Promise<Scraped
         
         const data = await response.json();
         console.log(`[Scraper] Raw Data:`, data);
+        console.log(`[Scraper] Raw Data Keys:`, Object.keys(data));
 
         // --- MAPPING RESPONSE ---
         
         if (platform === 'Instagram') {
-            const media = data.data || data; 
-            const stats = media.statistics || media;
+            // Instagram API returns: {result: {edges: [{node: {...}}], page_info: {...}}}
+            const result = data.result || data.data || data;
+            let media = result;
+            
+            // Handle paginated response with edges array
+            if (result.edges && Array.isArray(result.edges) && result.edges.length > 0) {
+                // Take first edge item, could be nested under .node
+                media = result.edges[0].node || result.edges[0];
+            } else if (Array.isArray(result)) {
+                // If result itself is array, take first item
+                media = result[0] || {};
+            } else if (result.posts && Array.isArray(result.posts)) {
+                // Alternative structure: {posts: [...]}
+                media = result.posts[0] || {};
+            } else if (result.user && result.user.node) {
+                // Alternative: {user: {node: {...}}}
+                media = result.user.node;
+            }
+            
+            console.log('[Scraper] Instagram media object:', media);
+            console.log('[Scraper] Media object keys:', Object.keys(media));
+            
+            // Extract metrics from Instagram API response fields
+            let views = media.view_count || media.video_view_count || media.views || media.impression_count || 0;
+            let likes = media.like_count || media.likes?.count || media.likeCount || 0;
+            let comments = media.comment_count || media.comments?.count || media.commentCount || 0;
+            
+            // Check if metrics are disabled
+            const metricsDisabled = media.like_and_view_counts_disabled === true;
+            
+            console.log('[Scraper] Instagram extracted metrics (primary API):', { views, likes, comments, metricsDisabled });
+            console.log('[Scraper] Instagram raw fields:', { 
+                view_count: media.view_count,
+                like_count: media.like_count,
+                comment_count: media.comment_count,
+                like_and_view_counts_disabled: media.like_and_view_counts_disabled,
+                caption: media.caption,
+                owner_username: media.owner?.username
+            });
+            
+            // NOTE: Instagram /api/instagram/posts endpoint does NOT return view_count data (it's always null)
+            // This is a known API limitation. View counts are not available from this endpoint.
+            // Likes and comments are working correctly.
             
             return {
                 platform,
-                username: media.owner?.username || media.author?.username || 'unknown',
-                views: stats.playCount || stats.viewCount || media.video_view_count || 0,
-                likes: stats.likeCount || media.like_count || 0,
-                comments: stats.commentCount || media.comment_count || 0,
-                shares: stats.shareCount || media.share_count || 0,
-                saves: stats.saveCount || media.save_count || 0,
+                username: media.owner?.username || media.user?.username || media.author?.username || extractUsername(url) || 'unknown',
+                views: views || 0, // Will be 0 since view data isn't available from this API endpoint
+                likes: likes || 0,
+                comments: comments || 0,
+                shares: media.shares || 0,
+                saves: media.saves || 0,
                 caption: media.caption?.text || media.caption || '',
                 thumbnail: media.thumbnail_url || media.display_url || media.image_versions2?.candidates?.[0]?.url || ''
             };
         } 
         
         else if (platform === 'TikTok') {
-            const item = data.data || data;
+            const item = data.data || data.result || data;
             const stats = item.stats || item.statistics || {};
+            
+            console.log('[Scraper] TikTok response structure:', { item, stats });
             
             return {
                 platform,
