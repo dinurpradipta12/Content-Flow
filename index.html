@@ -4,8 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Arunika Content Flow</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Suppress Tailwind CDN Warning & Cloudflare Optimization Fix -->
+    <script>
+      // Suppress the "should not be used in production" warning from Tailwind CDN
+      // content: "cdn.tailwindcss.com should not be used in production..."
+      const originalWarn = console.warn;
+      console.warn = (...args) => {
+        if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+        originalWarn.apply(console, args);
+      };
+    </script>
+
+    <!-- Tailwind CSS (Pinned Version + No Cloudflare Async) -->
+    <script src="https://cdn.tailwindcss.com/3.4.1" data-cfasync="false"></script>
+    
     <!-- Google Fonts: Outfit (Headings) & Plus Jakarta Sans (Body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
