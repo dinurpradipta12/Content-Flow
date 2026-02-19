@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arunika Content Flow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Outfit (Headings) & Plus Jakarta Sans (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* Global Design System Overrides */
+      body {
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        background-color: #FFFDF5; /* Warm Cream */
+        color: #1E293B; /* Slate 800 */
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', system-ui, sans-serif;
+      }
+      
+      /* Dot Grid Background Pattern */
+      .bg-dot-grid {
+        background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #F1F5F9;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 5px;
+        border: 2px solid #F1F5F9;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94A3B8;
+      }
+
+      /* Hide Scrollbar Utility */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              background: '#FFFDF5',
+              foreground: '#1E293B',
+              muted: '#F1F5F9',
+              mutedForeground: '#64748B',
+              accent: '#8B5CF6', // Vivid Violet
+              accentForeground: '#FFFFFF',
+              secondary: '#F472B6', // Hot Pink
+              tertiary: '#FBBF24', // Amber/Yellow
+              quaternary: '#34D399', // Emerald/Mint
+              border: '#E2E8F0',
+              card: '#FFFFFF',
+            },
+            boxShadow: {
+              'hard': '4px 4px 0px 0px #1E293B',
+              'hard-hover': '6px 6px 0px 0px #1E293B',
+              'hard-active': '2px 2px 0px 0px #1E293B',
+            },
+            animation: {
+              'bounce-in': 'bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            },
+            keyframes: {
+              bounceIn: {
+                '0%': { opacity: 0, transform: 'scale(0.8)' },
+                '100%': { opacity: 1, transform: 'scale(1)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.574.0",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.97.0",
+    "react-dom": "https://esm.sh/react-dom@^19.2.4"
+  }
+}
+</script>
+</head>
+  <body class="bg-background text-foreground bg-dot-grid min-h-screen overflow-x-hidden">
+    <div id="root"></div>
+  </body>
+</html>

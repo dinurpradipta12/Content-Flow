@@ -1,0 +1,7 @@
+{
+  "name": "Arunika Content Flow",
+  "description": "Aplikasi manajemen konten cerdas dengan desain Playful Geometric, terintegrasi dengan AI untuk analisis dan pembuatan konten.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
