@@ -1408,6 +1408,7 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </div>
         </Modal>
+        </div>
     </>
   );
 };
