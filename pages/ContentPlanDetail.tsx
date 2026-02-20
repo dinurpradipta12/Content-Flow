@@ -1028,6 +1028,7 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </div>
         )}
+        </div>
 
         {/* --- DETAIL MODAL --- */}
         {selectedTask && (

@@ -363,11 +363,15 @@ export const ContentDataInsight: React.FC = () => {
 
                                             <td className="p-4 align-middle">
                                                 {item.metrics ? (
-                                                    <div className="grid grid-cols-4 gap-2 text-center w-full max-w-[280px]">
+                                                    <div className={`grid gap-2 text-center w-full ${item.platform === Platform.INSTAGRAM ? 'grid-cols-6 max-w-[400px]' : 'grid-cols-5 max-w-[350px]'}`}>
+                                                        {item.platform === Platform.INSTAGRAM && (
+                                                            <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Reach</span><span className="text-xs font-black text-slate-800">{(item.metrics as any).reach?.toLocaleString() || 0}</span></div>
+                                                        )}
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-xs font-black text-slate-800">{item.metrics.views.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Likes</span><span className="text-xs font-black text-slate-800">{item.metrics.likes.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Comm</span><span className="text-xs font-black text-slate-800">{item.metrics.comments.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Share</span><span className="text-xs font-black text-slate-800">{item.metrics.shares.toLocaleString()}</span></div>
+                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Save</span><span className="text-xs font-black text-slate-800">{(item.metrics.saves || 0).toLocaleString()}</span></div>
                                                     </div>
                                                 ) : (
                                                     <div className="text-center"><span className="text-xs text-slate-400 italic">Belum dianalisa</span></div>
@@ -378,33 +382,14 @@ export const ContentDataInsight: React.FC = () => {
                                                     {/* TOMBOL INPUT MANUAL */}
                                                     <Button
                                                         size="sm"
-                                                        variant="secondary"
-                                                        className="h-8 w-8 !p-0 rounded-lg border-2 border-slate-200 bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200"
+                                                        className="h-8 px-3 text-xs font-bold rounded-lg border-2 border-pink-200 bg-pink-50 text-pink-600 hover:bg-pink-100 hover:border-pink-300 shadow-sm"
                                                         onClick={(e) => openManualInput(e, item)}
                                                         title="Input Metrics Manual"
                                                     >
-                                                        <Edit3 size={14} />
+                                                        <Edit3 size={14} className="mr-1.5" /> Input Metrics
                                                     </Button>
 
-                                                    {/* TOMBOL ANALYZE (SCRAPE) */}
-                                                    <Button 
-                                                        size="sm" 
-                                                        className={`h-8 text-xs ${
-                                                            !item.contentLink 
-                                                                ? 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed shadow-none' 
-                                                                : item.metrics && !(item.metrics as any).isManual
-                                                                    ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' 
-                                                                    : 'bg-slate-800 text-white'
-                                                        }`}
-                                                        onClick={(e) => handleAnalyze(e, item.id, item.contentLink || '')}
-                                                        disabled={analyzingId === item.id || !item.contentLink}
-                                                        icon={analyzingId === item.id ? <Loader2 size={12} className="animate-spin"/> : <Zap size={12}/>}
-                                                        title={!item.contentLink ? "Input link di menu Plan dulu" : "Scrape & Analisa"}
-                                                    >
-                                                        {analyzingId === item.id ? 'Scraping...' : 'Auto'}
-                                                    </Button>
-                                                    
-                                                    <button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                                                    <button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </div>
@@ -468,22 +453,25 @@ export const ContentDataInsight: React.FC = () => {
                                                             )}
                                                         </div>
 
-                                                        {/* Right: Content Preview & Caption */}
+                                                        {/* Right: Content Details & Insights (REPLACED CAPTION) */}
                                                         <div className="flex-1 bg-white p-5 rounded-xl border-2 border-slate-200 shadow-sm relative">
-                                                            <div className="absolute top-0 right-0 bg-yellow-400 text-slate-900 text-[10px] font-black px-2 py-1 rounded-bl-lg border-l border-b border-slate-800">CONTENT PREVIEW</div>
-                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-3"><FileText size={18} className="text-slate-400"/> Caption & Hashtags</h4>
-                                                            <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-600 leading-relaxed max-h-40 overflow-y-auto custom-scrollbar">
-                                                                {(item.metrics as any)?.caption ? (
-                                                                    <p className="whitespace-pre-wrap">{(item.metrics as any).caption}</p>
-                                                                ) : (
-                                                                    <p className="italic text-slate-400">Caption tidak tersedia.</p>
-                                                                )}
-                                                            </div>
-                                                            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Bookmark size={14} className="text-slate-400"/> 
-                                                                    <span className="text-xs font-bold text-slate-500">{(item.metrics as any)?.saves || 0} Saves</span>
+                                                            <div className="absolute top-0 right-0 bg-yellow-400 text-slate-900 text-[10px] font-black px-2 py-1 rounded-bl-lg border-l border-b border-slate-800">CONTENT DETAILS</div>
+                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-4"><FileText size={18} className="text-slate-400"/> Insight & Details</h4>
+                                                            
+                                                            <div className="space-y-4">
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pillar Konten</span>
+                                                                        <span className="font-bold text-slate-700 text-sm">{item.pillar || '-'}</span>
+                                                                    </div>
+                                                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">PIC / Creator</span>
+                                                                        <span className="font-bold text-slate-700 text-sm">{item.pic || item.assignee || '-'}</span>
+                                                                    </div>
                                                                 </div>
+                                                            </div>
+
+                                                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                                                                 <div className="flex items-center gap-1">
                                                                      <span className="text-[10px] text-slate-300 font-mono">Last updated: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : '-'}</span>
                                                                 </div>
