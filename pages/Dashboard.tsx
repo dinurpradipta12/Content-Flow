@@ -72,8 +72,8 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Chart */}
         <Card className="lg:col-span-2" title="Statistik Pertumbuhan">
-            <div style={{ height: '320px', width: '100%' }}>
-                <ResponsiveContainer width="100%" height={320}>
+            <div className="h-80 w-full">
+                <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                         <XAxis dataKey="name" tick={{fill: '#64748B'}} axisLine={false} tickLine={false} />

@@ -1126,9 +1126,9 @@ export const ContentPlanDetail: React.FC = () => {
                                 <LinkIcon size={20} />
                             </div>
                             <div>
-                                <p className="font-bold text-slate-800 text-sm">Link Postingan</p>
+                                <p className="font-bold text-slate-800 text-sm">Link Postingan (Analisa)</p>
                                 <p className="text-xs text-slate-500">
-                                    {selectedTask.contentLink ? 'Klik tombol untuk melihat postingan.' : 'Belum ada link yang ditautkan.'}
+                                    {selectedTask.contentLink ? 'Klik tombol untuk melihat postingan atau analisa di menu Insight.' : 'Input link ini agar bisa dianalisa.'}
                                 </p>
                             </div>
                         </div>
@@ -1319,7 +1319,7 @@ export const ContentPlanDetail: React.FC = () => {
                     {/* NEW INPUT: Link Postingan */}
                     <div className="mb-3">
                          <Input 
-                            label="Link Postingan (Opsional)" 
+                            label="Link Postingan (untuk Analisa)" 
                             placeholder="https://instagram.com/p/..."
                             value={formData.contentLink}
                             onChange={(e) => setFormData({...formData, contentLink: e.target.value})}
@@ -1408,7 +1408,6 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </div>
         </Modal>
-        </div>
     </>
   );
 };

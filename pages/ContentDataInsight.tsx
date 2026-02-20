@@ -1,37 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Input';
+import { Select, Input } from '../components/ui/Input'; // Import Input component
+import { Modal } from '../components/ui/Modal'; // Import Modal
 import { 
     Filter, 
     Trash2, 
-    ExternalLink, 
     Instagram, 
     Calendar, 
     TrendingUp, 
-    Eye, 
-    MessageCircle, 
-    Share2, 
     RefreshCw,
     Loader2,
     Zap,
     Globe,
     X,
-    AlertCircle,
-    CheckCircle,
     ChevronDown,
     ChevronUp,
     FileText,
-    Bookmark
+    Bookmark,
+    Link as LinkIcon,
+    Edit3, // Icon for Manual Input
+    Save, // Icon for Save
+    Share2,
+    MessageSquare,
+    Heart,
+    Eye,
+    BarChart2
 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { ContentItem, Platform } from '../types';
-import { 
-    scrapeInstagramMetricsBackend, 
-    saveMetricsToDatabase,
-    getMetricsForContent,
-    subscribeToMetricsUpdates,
-    ContentMetrics
-} from '../services/backendService';
+import { analyzeContentLink } from '../services/scraperService';
 
 export const ContentDataInsight: React.FC = () => {
     const [data, setData] = useState<ContentItem[]>([]);
@@ -46,7 +43,18 @@ export const ContentDataInsight: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
     
     const [accounts, setAccounts] = useState<string[]>([]);
-    const [metricsMap, setMetricsMap] = useState<Map<string, ContentMetrics>>(new Map());
+
+    // --- MANUAL INPUT STATE ---
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+    const [selectedItemForInput, setSelectedItemForInput] = useState<ContentItem | null>(null);
+    const [manualMetrics, setManualMetrics] = useState({
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        saves: 0,
+        reach: 0
+    });
 
     const fetchData = async () => {
         setLoading(true);
@@ -73,7 +81,6 @@ export const ContentDataInsight: React.FC = () => {
                     contentLink: item.content_link,
                     workspaces: item.workspaces
                 }));
-                console.log('[ContentDataInsight] Fetched items with links:', formattedItems.map(i => ({ id: i.id, title: i.title, contentLink: i.contentLink })));
                 setData(formattedItems);
             }
         } catch (err) {
@@ -87,73 +94,34 @@ export const ContentDataInsight: React.FC = () => {
         fetchData();
     }, []);
 
+    // --- HANDLERS ---
+
     const handleAnalyze = async (e: React.MouseEvent, id: string, url: string) => {
-        e.stopPropagation(); // Prevent row toggle
-        console.log('[ContentDataInsight] Analyze button clicked - ID:', id, 'URL:', url);
+        e.stopPropagation();
         if (!url) {
-            alert("Link postingan tidak tersedia. Harap input link di detail konten.");
+            alert("Link postingan tidak tersedia. Harap input link di halaman Detail Konten terlebih dahulu.");
             return;
         }
         setAnalyzingId(id);
-        
         try {
-            // Extract username from URL
-            const usernameMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.-]+)/);
-            const username = usernameMatch ? usernameMatch[1] : 'unknown';
-            
-            console.log('[ContentDataInsight] Calling backend for:', { url, username });
-            
-            // Call backend to scrape metrics
-            const metrics = await scrapeInstagramMetricsBackend(url, username);
-            
-            if (!metrics) {
-                throw new Error('Failed to scrape metrics from backend');
-            }
-
-            console.log('[ContentDataInsight] Received metrics from backend:', metrics);
-            
-            // Update metrics map for real-time display
-            const newMetricsMap = new Map(metricsMap);
-            newMetricsMap.set(url, metrics);
-            setMetricsMap(newMetricsMap);
-
-            // Subscribe to real-time updates for this content
-            const subscription = subscribeToMetricsUpdates(url, (updatedMetrics) => {
-                console.log('[ContentDataInsight] Real-time update received:', updatedMetrics);
-                const updatedMap = new Map(metricsMap);
-                updatedMap.set(url, updatedMetrics);
-                setMetricsMap(updatedMap);
-            });
-
-            // Also save to content_items for backward compatibility
+            const metrics = await analyzeContentLink(url);
             const timestamp = new Date().toISOString();
-            const metricsData = { 
-                ...metrics, 
-                lastUpdated: timestamp,
-                dataSource: 'supabase_edge_function'
-            };
+            const metricsData = { ...metrics, lastUpdated: timestamp };
 
             const { error } = await supabase
                 .from('content_items')
                 .update({ metrics: metricsData })
                 .eq('id', id);
 
-            if (error) {
-                console.warn('[ContentDataInsight] Could not update content_items:', error);
-            }
+            if (error) throw error;
 
             setData(prev => prev.map(item => 
                 item.id === id ? { ...item, metrics: metricsData as any } : item
             ));
-            
-            // Auto expand to show results
             setExpandedRowId(id);
-
         } catch (err: any) {
             console.error("Analysis failed:", err);
-            const errorMessage = err.message || "Terjadi kesalahan yang tidak diketahui";
-            // Show user-friendly error message with helpful tips
-            alert(`Gagal menganalisa konten:\n\n${errorMessage}\n\nTip: Jika Anda menggunakan RapidAPI, pastikan:\n- API key sudah diatur di .env\n- Anda memiliki subscription untuk API\n- Link konten valid`);
+            alert(`Gagal menganalisa konten: ${err.message}`);
         } finally {
             setAnalyzingId(null);
         }
@@ -162,7 +130,6 @@ export const ContentDataInsight: React.FC = () => {
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         if (!confirm("Hapus konten ini dari database?")) return;
-
         try {
             const { error } = await supabase.from('content_items').delete().eq('id', id);
             if (error) throw error;
@@ -172,15 +139,67 @@ export const ContentDataInsight: React.FC = () => {
         }
     };
 
+    // --- MANUAL INPUT HANDLERS ---
+
+    const openManualInput = (e: React.MouseEvent, item: ContentItem) => {
+        e.stopPropagation();
+        setSelectedItemForInput(item);
+        setManualMetrics({
+            views: item.metrics?.views || 0,
+            likes: item.metrics?.likes || 0,
+            comments: item.metrics?.comments || 0,
+            shares: item.metrics?.shares || 0,
+            saves: item.metrics?.saves || 0,
+            reach: (item.metrics as any)?.reach || 0 // Handle custom reach field
+        });
+        setIsManualModalOpen(true);
+    };
+
+    const saveManualMetrics = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedItemForInput) return;
+
+        try {
+            const timestamp = new Date().toISOString();
+            // Preserve existing metrics data (like caption/username) but overwrite numbers
+            const existingMetrics = selectedItemForInput.metrics || {};
+            
+            const updatedMetrics = {
+                ...existingMetrics,
+                ...manualMetrics,
+                lastUpdated: timestamp,
+                isManual: true // Flag to indicate manual entry
+            };
+
+            const { error } = await supabase
+                .from('content_items')
+                .update({ metrics: updatedMetrics })
+                .eq('id', selectedItemForInput.id);
+
+            if (error) throw error;
+
+            setData(prev => prev.map(item => 
+                item.id === selectedItemForInput.id ? { ...item, metrics: updatedMetrics as any } : item
+            ));
+            
+            setIsManualModalOpen(false);
+            setExpandedRowId(selectedItemForInput.id); // Auto expand to show result
+
+        } catch (err) {
+            console.error(err);
+            alert("Gagal menyimpan data manual.");
+        }
+    };
+
+    const toggleRow = (id: string) => {
+        setExpandedRowId(expandedRowId === id ? null : id);
+    };
+
     const resetFilters = () => {
         setFilterPlatform('all');
         setFilterAccount('all');
         setStartDate('');
         setEndDate('');
-    };
-
-    const toggleRow = (id: string) => {
-        setExpandedRowId(expandedRowId === id ? null : id);
     };
 
     const filteredData = data.filter(item => {
@@ -194,6 +213,19 @@ export const ContentDataInsight: React.FC = () => {
         return matchPlatform && matchAccount && matchPeriod;
     });
 
+    // Helper for Total Interactions Formula
+    const calculateInteractions = (m: any) => {
+        if (!m) return 0;
+        return (m.likes || 0) + (m.comments || 0) + (m.shares || 0) + (m.saves || 0);
+    };
+
+    // Helper for ER Formula
+    const calculateER = (m: any) => {
+        if (!m || !m.views) return 0;
+        const interactions = calculateInteractions(m);
+        return (interactions / m.views) * 100;
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
@@ -202,7 +234,7 @@ export const ContentDataInsight: React.FC = () => {
                         Content Data Insight
                     </h2>
                     <p className="text-slate-500 font-medium mt-2">
-                        Analisa performa konten published dari seluruh database.
+                        Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.
                     </p>
                 </div>
             </div>
@@ -263,8 +295,8 @@ export const ContentDataInsight: React.FC = () => {
                                 <th className="p-4 w-10"></th>
                                 <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Tanggal</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px] bg-white">Konten</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Platform & Akun</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center bg-white min-w-[280px]">Metrics Summary</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Link Postingan</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center bg-white min-w-[280px]">Quick Metrics</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right bg-white">Action</th>
                             </tr>
                         </thead>
@@ -304,47 +336,74 @@ export const ContentDataInsight: React.FC = () => {
                                                 <p className="font-bold text-slate-800 text-sm line-clamp-1 mb-1" title={item.title}>{item.title}</p>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
-                                                    {item.contentLink && (
-                                                        <a href={item.contentLink} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] px-2 py-0.5 rounded border flex items-center gap-1 font-bold bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100">
-                                                            Link <ExternalLink size={10} />
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="p-4 align-middle">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2">
-                                                        {item.platform === Platform.INSTAGRAM ? <div className="text-pink-600 bg-pink-50 p-1 rounded"><Instagram size={14}/></div> : 
-                                                         item.platform === Platform.TIKTOK ? <div className="text-black bg-slate-100 p-1 rounded"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg></div> :
-                                                         <div className="text-slate-600 bg-slate-100 p-1 rounded"><Globe size={14}/></div>}
-                                                        <span className="text-sm font-bold text-slate-700">{item.platform}</span>
+                                                    <div className="flex items-center gap-1 text-slate-500">
+                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={12}/> : <Globe size={12}/>}
+                                                        <span className="text-[10px] font-bold">@{item.workspaces?.account_name || '-'}</span>
                                                     </div>
-                                                    <span className="text-xs font-bold text-slate-500 pl-7">@{item.workspaces?.account_name || 'unknown'}</span>
                                                 </div>
                                             </td>
+                                            
+                                            <td className="p-4 align-middle">
+                                                {item.contentLink ? (
+                                                     <a 
+                                                        href={item.contentLink} 
+                                                        target="_blank" 
+                                                        rel="noreferrer" 
+                                                        onClick={e => e.stopPropagation()} 
+                                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100"
+                                                    >
+                                                        <LinkIcon size={12} /> Link Tersedia
+                                                    </a>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                                                        <LinkIcon size={12} /> Kosong
+                                                    </span>
+                                                )}
+                                            </td>
+
                                             <td className="p-4 align-middle">
                                                 {item.metrics ? (
                                                     <div className="grid grid-cols-4 gap-2 text-center w-full max-w-[280px]">
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-xs font-black text-slate-800">{item.metrics.views > 0 ? item.metrics.views.toLocaleString() : item.platform === 'Instagram' ? 'N/A' : item.metrics.views.toLocaleString()}</span></div>
+                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-xs font-black text-slate-800">{item.metrics.views.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Likes</span><span className="text-xs font-black text-slate-800">{item.metrics.likes.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Comm</span><span className="text-xs font-black text-slate-800">{item.metrics.comments.toLocaleString()}</span></div>
                                                         <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Share</span><span className="text-xs font-black text-slate-800">{item.metrics.shares.toLocaleString()}</span></div>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-center"><span className="text-xs text-slate-400 italic">No Data</span></div>
+                                                    <div className="text-center"><span className="text-xs text-slate-400 italic">Belum dianalisa</span></div>
                                                 )}
                                             </td>
                                             <td className="p-4 align-middle text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    {/* TOMBOL INPUT MANUAL */}
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        className="h-8 w-8 !p-0 rounded-lg border-2 border-slate-200 bg-white hover:bg-pink-50 hover:text-pink-600 hover:border-pink-200"
+                                                        onClick={(e) => openManualInput(e, item)}
+                                                        title="Input Metrics Manual"
+                                                    >
+                                                        <Edit3 size={14} />
+                                                    </Button>
+
+                                                    {/* TOMBOL ANALYZE (SCRAPE) */}
                                                     <Button 
                                                         size="sm" 
-                                                        className={`h-8 text-xs ${item.metrics ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' : 'bg-slate-800 text-white'}`}
+                                                        className={`h-8 text-xs ${
+                                                            !item.contentLink 
+                                                                ? 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed shadow-none' 
+                                                                : item.metrics && !(item.metrics as any).isManual
+                                                                    ? 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' 
+                                                                    : 'bg-slate-800 text-white'
+                                                        }`}
                                                         onClick={(e) => handleAnalyze(e, item.id, item.contentLink || '')}
                                                         disabled={analyzingId === item.id || !item.contentLink}
                                                         icon={analyzingId === item.id ? <Loader2 size={12} className="animate-spin"/> : <Zap size={12}/>}
+                                                        title={!item.contentLink ? "Input link di menu Plan dulu" : "Scrape & Analisa"}
                                                     >
-                                                        {analyzingId === item.id ? '...' : item.metrics ? 'Update' : 'Analyze'}
+                                                        {analyzingId === item.id ? 'Scraping...' : 'Auto'}
                                                     </Button>
+                                                    
                                                     <button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg">
                                                         <Trash2 size={18} />
                                                     </button>
@@ -356,37 +415,56 @@ export const ContentDataInsight: React.FC = () => {
                                             <tr className="bg-purple-50/30 animate-in slide-in-from-top-2 duration-200">
                                                 <td colSpan={6} className="p-6 border-b-2 border-slate-100">
                                                     <div className="flex flex-col lg:flex-row gap-6">
-                                                        {/* Left: Detailed Metrics */}
+                                                        {/* Left: Detailed Metrics with NEW FORMULA */}
                                                         <div className="flex-1 space-y-4">
-                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={18} className="text-accent"/> Detailed Metrics</h4>
+                                                            <div className="flex justify-between items-center">
+                                                                <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={18} className="text-accent"/> Detailed Metrics</h4>
+                                                                {(item.metrics as any)?.isManual && (
+                                                                    <span className="text-[10px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-200">
+                                                                        Data Manual
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             {item.metrics ? (
                                                                 <div className="grid grid-cols-2 gap-4">
-                                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                                                        <div className="flex justify-between items-start mb-2">
-                                                                            <span className="text-xs font-bold text-slate-400 uppercase">Engagement Rate</span>
-                                                                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Good</span>
+                                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                                        <div className="absolute top-0 right-0 p-1">
+                                                                            <TrendingUp size={64} className="text-slate-50 opacity-50 -rotate-12"/>
                                                                         </div>
-                                                                        <p className="text-2xl font-black text-slate-800">
-                                                                            {item.platform === 'Instagram' && item.metrics.views === 0 ? (
-                                                                                <span className="text-slate-400">N/A</span>
-                                                                            ) : (
-                                                                                ((item.metrics.likes + item.metrics.comments) / (item.metrics.views || 1) * 100).toFixed(2) + '%'
-                                                                            )}
-                                                                        </p>
-                                                                        <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2"><div className="bg-green-500 h-1.5 rounded-full" style={{width: '65%'}}></div></div>
-                                                                    </div>
-                                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                                                        <div className="flex justify-between items-start mb-2">
-                                                                            <span className="text-xs font-bold text-slate-400 uppercase">Total Interactions</span>
+                                                                        <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                            <span className="text-xs font-bold text-slate-400 uppercase">Engagement Rate (ER)</span>
                                                                         </div>
-                                                                        <p className="text-2xl font-black text-slate-800">
-                                                                            {(item.metrics.likes + item.metrics.comments + item.metrics.shares + (item.metrics.saves || 0)).toLocaleString()}
+                                                                        <p className="text-3xl font-black text-slate-800 relative z-10">
+                                                                            {calculateER(item.metrics).toFixed(2)}%
                                                                         </p>
-                                                                        <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2"><div className="bg-accent h-1.5 rounded-full" style={{width: '40%'}}></div></div>
+                                                                        <p className="text-[10px] text-slate-400 mt-1 relative z-10 font-medium">
+                                                                            (Interaksi / Views) x 100%
+                                                                        </p>
                                                                     </div>
+                                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                                        <div className="absolute top-0 right-0 p-1">
+                                                                            <Zap size={64} className="text-slate-50 opacity-50 -rotate-12"/>
+                                                                        </div>
+                                                                        <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                            <span className="text-xs font-bold text-slate-400 uppercase">Total Interaksi</span>
+                                                                        </div>
+                                                                        <p className="text-3xl font-black text-slate-800 relative z-10">
+                                                                            {calculateInteractions(item.metrics).toLocaleString()}
+                                                                        </p>
+                                                                        <p className="text-[10px] text-slate-400 mt-1 relative z-10 font-medium">
+                                                                            Like + Comment + Share + Save
+                                                                        </p>
+                                                                    </div>
+                                                                    {/* Additional Stats Display */}
+                                                                    {(item.metrics as any).reach > 0 && (
+                                                                        <div className="col-span-2 bg-blue-50 p-3 rounded-lg border border-blue-100 flex justify-between items-center">
+                                                                            <span className="text-xs font-bold text-blue-500 uppercase">Total Reach</span>
+                                                                            <span className="font-black text-blue-900">{(item.metrics as any).reach.toLocaleString()}</span>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ) : (
-                                                                <div className="bg-slate-100 p-6 rounded-xl text-center text-slate-400 italic text-sm">Belum ada data detail. Klik tombol Analyze.</div>
+                                                                <div className="bg-slate-100 p-6 rounded-xl text-center text-slate-400 italic text-sm">Belum ada data detail. Klik tombol Analyze atau Input Manual.</div>
                                                             )}
                                                         </div>
 
@@ -398,7 +476,7 @@ export const ContentDataInsight: React.FC = () => {
                                                                 {(item.metrics as any)?.caption ? (
                                                                     <p className="whitespace-pre-wrap">{(item.metrics as any).caption}</p>
                                                                 ) : (
-                                                                    <p className="italic text-slate-400">Caption tidak tersedia atau belum discraping.</p>
+                                                                    <p className="italic text-slate-400">Caption tidak tersedia.</p>
                                                                 )}
                                                             </div>
                                                             <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
@@ -406,7 +484,9 @@ export const ContentDataInsight: React.FC = () => {
                                                                     <Bookmark size={14} className="text-slate-400"/> 
                                                                     <span className="text-xs font-bold text-slate-500">{(item.metrics as any)?.saves || 0} Saves</span>
                                                                 </div>
-                                                                <span className="text-[10px] text-slate-300 font-mono">ID: {item.id.substring(0,8)}</span>
+                                                                <div className="flex items-center gap-1">
+                                                                     <span className="text-[10px] text-slate-300 font-mono">Last updated: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : '-'}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -420,6 +500,104 @@ export const ContentDataInsight: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {/* MODAL INPUT MANUAL */}
+            {isManualModalOpen && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-white border-2 border-slate-800 overflow-hidden">
+                        
+                        {/* Header Pop Art */}
+                        <div className="px-6 py-4 border-b-2 border-slate-800 bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -z-0"></div>
+                            <h3 className="font-bold font-heading text-lg tracking-tight flex items-center gap-2 z-10">
+                                <Edit3 size={20} /> Input Metrics Manual
+                            </h3>
+                            <button 
+                                onClick={() => setIsManualModalOpen(false)}
+                                className="bg-black/20 hover:bg-black/30 text-white p-1.5 rounded-lg transition-all z-10"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={saveManualMetrics} className="p-6 space-y-5 bg-[#FFFDF5]">
+                            <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-lg text-xs text-yellow-800 font-bold mb-2 flex gap-2 items-center">
+                                <Zap size={14} /> Update data secara manual untuk hasil yang presisi.
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Conditional Field: Reach (Only IG) */}
+                                {selectedItemForInput?.platform === Platform.INSTAGRAM && (
+                                    <div className="col-span-2">
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><BarChart2 size={12}/> Reach / Jangkauan</label>
+                                            <input 
+                                                type="number" 
+                                                className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                value={manualMetrics.reach}
+                                                onChange={(e) => setManualMetrics({...manualMetrics, reach: parseInt(e.target.value) || 0})}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Eye size={12}/> Total Views</label>
+                                    <input 
+                                        type="number" 
+                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        value={manualMetrics.views}
+                                        onChange={(e) => setManualMetrics({...manualMetrics, views: parseInt(e.target.value) || 0})}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Heart size={12}/> Likes</label>
+                                    <input 
+                                        type="number" 
+                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        value={manualMetrics.likes}
+                                        onChange={(e) => setManualMetrics({...manualMetrics, likes: parseInt(e.target.value) || 0})}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><MessageSquare size={12}/> Comments</label>
+                                    <input 
+                                        type="number" 
+                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        value={manualMetrics.comments}
+                                        onChange={(e) => setManualMetrics({...manualMetrics, comments: parseInt(e.target.value) || 0})}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Share2 size={12}/> Shares</label>
+                                    <input 
+                                        type="number" 
+                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        value={manualMetrics.shares}
+                                        onChange={(e) => setManualMetrics({...manualMetrics, shares: parseInt(e.target.value) || 0})}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1 w-full">
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Bookmark size={12}/> Saves</label>
+                                    <input 
+                                        type="number" 
+                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        value={manualMetrics.saves}
+                                        onChange={(e) => setManualMetrics({...manualMetrics, saves: parseInt(e.target.value) || 0})}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t-2 border-slate-100 flex justify-end gap-3">
+                                <Button type="button" variant="secondary" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
+                                <Button type="submit" className="bg-pink-500 hover:bg-pink-600 border-pink-700" icon={<Save size={18}/>}>
+                                    Simpan Metrics
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
