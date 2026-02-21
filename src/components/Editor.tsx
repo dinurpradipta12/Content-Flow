@@ -124,73 +124,70 @@ export const Editor: React.FC = () => {
         setHistoryIndex(prev => prev + 1);
     };
 
-    const handleUndo = () => {
+    const handleUndo = async () => {
         if (historyIndex <= 0 || !fabricCanvas.current) return;
         const json = history[historyIndex - 1];
-        fabricCanvas.current.loadFromJSON(JSON.parse(json), () => {
-            fabricCanvas.current?.renderAll();
-            updateLayers();
-            setHistoryIndex(prev => prev - 1);
-        });
+        if (!json) return;
+        await fabricCanvas.current.loadFromJSON(JSON.parse(json));
+        fabricCanvas.current.renderAll();
+        updateLayers();
+        setHistoryIndex(prev => prev - 1);
     };
 
-    const handleRedo = () => {
+    const handleRedo = async () => {
         if (historyIndex >= history.length - 1 || !fabricCanvas.current) return;
         const json = history[historyIndex + 1];
-        fabricCanvas.current.loadFromJSON(JSON.parse(json), () => {
-            fabricCanvas.current?.renderAll();
-            updateLayers();
-            setHistoryIndex(prev => prev + 1);
-        });
+        if (!json) return;
+        await fabricCanvas.current.loadFromJSON(JSON.parse(json));
+        fabricCanvas.current.renderAll();
+        updateLayers();
+        setHistoryIndex(prev => prev + 1);
     };
 
-    const handleCopy = () => {
+    const handleCopy = async () => {
         if (!selectedObject || !fabricCanvas.current) return;
-        selectedObject.clone((cloned: fabric.Object) => {
-            setClipboard(cloned);
-        });
+        const cloned = await selectedObject.clone();
+        setClipboard(cloned);
     };
 
-    const handlePaste = () => {
+    const handlePaste = async () => {
         if (!clipboard || !fabricCanvas.current) return;
-        clipboard.clone((cloned: fabric.Object) => {
-            fabricCanvas.current?.discardActiveObject();
-            cloned.set({
-                left: cloned.left! + 10,
-                top: cloned.top! + 10,
-                evented: true,
-            });
-            if (cloned.type === 'activeSelection') {
-                cloned.canvas = fabricCanvas.current!;
-                (cloned as fabric.ActiveSelection).forEachObject((obj: any) => {
-                    fabricCanvas.current?.add(obj);
-                });
-                cloned.setCoords();
-            } else {
-                fabricCanvas.current?.add(cloned);
-            }
-            clipboard.top! += 10;
-            clipboard.left! += 10;
-            fabricCanvas.current?.setActiveObject(cloned);
-            fabricCanvas.current?.requestRenderAll();
-            addToHistory();
+        const cloned = await clipboard.clone();
+        fabricCanvas.current.discardActiveObject();
+        cloned.set({
+            left: cloned.left! + 10,
+            top: cloned.top! + 10,
+            evented: true,
         });
+        if (cloned.type === 'activeSelection') {
+            cloned.canvas = fabricCanvas.current;
+            (cloned as fabric.ActiveSelection).forEachObject((obj: any) => {
+                fabricCanvas.current?.add(obj);
+            });
+            cloned.setCoords();
+        } else {
+            fabricCanvas.current.add(cloned);
+        }
+        clipboard.top! += 10;
+        clipboard.left! += 10;
+        fabricCanvas.current.setActiveObject(cloned);
+        fabricCanvas.current.requestRenderAll();
+        addToHistory();
     };
 
-    const handleDuplicate = () => {
+    const handleDuplicate = async () => {
         if (!selectedObject || !fabricCanvas.current) return;
-        selectedObject.clone((cloned: fabric.Object) => {
-            fabricCanvas.current?.discardActiveObject();
-            cloned.set({
-                left: cloned.left! + 20,
-                top: cloned.top! + 20,
-                evented: true,
-            });
-            fabricCanvas.current?.add(cloned);
-            fabricCanvas.current?.setActiveObject(cloned);
-            fabricCanvas.current?.requestRenderAll();
-            addToHistory();
+        const cloned = await selectedObject.clone();
+        fabricCanvas.current.discardActiveObject();
+        cloned.set({
+            left: cloned.left! + 20,
+            top: cloned.top! + 20,
+            evented: true,
         });
+        fabricCanvas.current.add(cloned);
+        fabricCanvas.current.setActiveObject(cloned);
+        fabricCanvas.current.requestRenderAll();
+        addToHistory();
     };
 
     const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
@@ -480,9 +477,12 @@ export const Editor: React.FC = () => {
                 handlePaste();
             }
             if (e.key === 'Escape') {
-                setActiveTool(null);
-                canvas.discardActiveObject();
-                canvas.requestRenderAll();
+                if (activeTool) {
+                    setActiveTool(null);
+                } else {
+                    canvas.discardActiveObject();
+                    canvas.requestRenderAll();
+                }
             }
         };
 
@@ -801,25 +801,21 @@ export const Editor: React.FC = () => {
             {/* Floating Context Menu */}
             {selectedObject && (
                 <div 
-                    className="absolute z-40 flex gap-1 bg-slate-900 text-white p-1.5 rounded-xl shadow-xl -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100"
+                    className="absolute z-40 flex gap-1 bg-white border-4 border-slate-900 text-slate-900 p-1.5 rounded-xl shadow-[4px_4px_0px_0px_#0f172a] -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100"
                     style={{ 
-                        top: `calc(50% - ${canvasSize.height * zoom / 2}px + ${floatingMenuPos.top * zoom}px - 50px)`, 
+                        top: `calc(50% - ${canvasSize.height * zoom / 2}px + ${floatingMenuPos.top * zoom}px - 60px)`, 
                         left: `calc(50% - ${canvasSize.width * zoom / 2}px + ${floatingMenuPos.left * zoom}px)`
-                        // Note: This positioning is tricky because the canvas is centered. 
-                        // We need to calculate relative to the container center.
-                        // The canvas wrapper is centered.
-                        // Let's try to position it inside the canvas wrapper instead?
                     }}
                 >
-                    <button onClick={handleDuplicate} className="p-1.5 hover:bg-white/20 rounded-lg" title="Duplicate (Ctrl+D)"><Copy size={16} /></button>
-                    <button onClick={handleCopy} className="p-1.5 hover:bg-white/20 rounded-lg" title="Copy (Ctrl+C)"><Clipboard size={16} /></button>
-                    <button onClick={handleDelete} className="p-1.5 hover:bg-red-500 rounded-lg text-red-400 hover:text-white" title="Delete"><Trash2 size={16} /></button>
+                    <button onClick={handleDuplicate} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Duplicate (Ctrl+D)"><Copy size={16} /></button>
+                    <button onClick={handleCopy} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Copy (Ctrl+C)"><Clipboard size={16} /></button>
+                    <button onClick={handleDelete} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg" title="Delete"><Trash2 size={16} /></button>
                 </div>
             )}
 
             {/* Left Vertical Toolbar */}
-            {selectedObject && (
-                <div className="absolute top-1/2 -translate-y-1/2 left-6 flex flex-col gap-4 z-30">
+            <div className="absolute top-24 left-6 flex flex-col gap-4 z-30">
+                {selectedObject && (
                     <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
                         {/* Typography Group */}
                         {selectedObject instanceof fabric.IText && (
@@ -1204,8 +1200,28 @@ export const Editor: React.FC = () => {
                             <Trash2 size={20} />
                         </button>
                     </div>
+                )}
+
+                {/* Undo / Redo */}
+                <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
+                    <button 
+                        onClick={handleUndo} 
+                        disabled={historyIndex <= 0}
+                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <Undo2 size={20} />
+                    </button>
+                    <button 
+                        onClick={handleRedo} 
+                        disabled={historyIndex >= history.length - 1}
+                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                        title="Redo (Ctrl+Shift+Z)"
+                    >
+                        <Redo2 size={20} />
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 };
