@@ -37,12 +37,24 @@ export const Editor: React.FC = () => {
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     
-    const { pages, currentPageIndex, canvasSize, setCurrentLayers, zoom, setZoom, referenceData, customFonts, loadFonts } = useCarouselStore();
+    const { pages, currentPageIndex, canvasSize, setCurrentLayers, zoom, setZoom, referenceData, customFonts, loadFonts, updatePageElements } = useCarouselStore();
     const currentPage = pages[currentPageIndex];
     
     const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
     const [isPanning, setIsPanning] = useState(false);
+    const isPanningRef = useRef(false);
     const [activeTool, setActiveTool] = useState<string | null>(null);
+
+    // Sync isPanning state to ref for event handlers
+    useEffect(() => {
+        isPanningRef.current = isPanning;
+    }, [isPanning]);
+
+    const saveCanvas = () => {
+        if (!fabricCanvas.current) return;
+        const json = fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst']);
+        updatePageElements(currentPageIndex, json.objects);
+    };
     const [objectProps, setObjectProps] = useState({
         opacity: 1,
         angle: 0,
@@ -98,19 +110,12 @@ export const Editor: React.FC = () => {
 
         fabricCanvas.current = canvas;
 
-        // Initialize with content
-        if (currentPage.elements.length === 0) {
-            const hook = new fabric.IText('Judul Utama', {
-                id: 'hook',
-                left: 100,
-                top: 100,
-                fontSize: 60,
-                fontWeight: 'bold',
-                fontFamily: 'Inter',
-                fill: '#0f172a',
-                name: 'hook'
+        // Initialize with content from store
+        if (currentPage.elements && currentPage.elements.length > 0) {
+            canvas.loadFromJSON({ objects: currentPage.elements }, () => {
+                canvas.renderAll();
+                updateLayers();
             });
-            canvas.add(hook);
         }
 
         canvas.on('selection:created', (e) => setSelectedObject(e.selected[0]));
@@ -130,8 +135,12 @@ export const Editor: React.FC = () => {
                     fontSize: (obj as any).fontSize || 40,
                     shadowBlur: (obj.shadow as any)?.blur || 0,
                     shadowColor: (obj.shadow as any)?.color || '#000000',
+                    shadowOpacity: 1, // Default, as fabric shadow doesn't expose opacity directly easily
+                    shadowAngle: 45,
+                    shadowDistance: 5,
                     strokeWidth: obj.strokeWidth || 0,
                     strokeColor: obj.stroke as string || '#000000',
+                    strokeType: (obj as any).paintFirst === 'stroke' ? 'outer' : 'middle',
                     fill: obj.fill as string || '#000000',
                     charSpacing: (obj as any).charSpacing || 0,
                     lineHeight: (obj as any).lineHeight || 1.16,
@@ -140,10 +149,11 @@ export const Editor: React.FC = () => {
                 });
             }
             updateLayers();
+            saveCanvas();
         });
         
-        canvas.on('object:added', updateLayers);
-        canvas.on('object:removed', updateLayers);
+        canvas.on('object:added', () => { updateLayers(); saveCanvas(); });
+        canvas.on('object:removed', () => { updateLayers(); saveCanvas(); });
 
         // Mouse Wheel Zoom (Alt + Scroll)
         canvas.on('mouse:wheel', (opt) => {
@@ -164,17 +174,18 @@ export const Editor: React.FC = () => {
         let lastPosY = 0;
 
         canvas.on('mouse:down', (opt) => {
-            if (isPanning) {
+            if (isPanningRef.current) {
                 isDragging = true;
                 canvas.selection = false;
                 const e = opt.e as any;
                 lastPosX = e.clientX;
                 lastPosY = e.clientY;
+                canvas.defaultCursor = 'grabbing';
             }
         });
 
         canvas.on('mouse:move', (opt) => {
-            if (isDragging) {
+            if (isDragging && isPanningRef.current) {
                 const e = opt.e as any;
                 const vpt = canvas.viewportTransform;
                 if (vpt) {
@@ -190,6 +201,11 @@ export const Editor: React.FC = () => {
         canvas.on('mouse:up', () => {
             isDragging = false;
             canvas.selection = true;
+            if (isPanningRef.current) {
+                canvas.defaultCursor = 'grab';
+            } else {
+                canvas.defaultCursor = 'default';
+            }
         });
 
         const handleCanvasAction = (e: any) => {
@@ -302,7 +318,7 @@ export const Editor: React.FC = () => {
             window.removeEventListener('keyup', handleKeyUp);
             canvas.dispose();
         };
-    }, [currentPageIndex, canvasSize.id, referenceData, isPanning]);
+    }, [currentPageIndex, canvasSize.id, referenceData]);
 
     // Immediate Background Update
     useEffect(() => {

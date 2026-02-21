@@ -50,6 +50,7 @@ interface CarouselState {
     deletePage: (index: number) => void;
     updatePageContent: (index: number, content: Partial<CarouselPage['content']>) => void;
     updatePageBackground: (index: number, background: string) => void;
+    updatePageElements: (index: number, elements: any[]) => void;
     savePreset: (name: string) => Promise<void>;
     loadPresets: () => Promise<any[]>;
     uploadFont: (name: string, data: string) => Promise<void>;
@@ -135,6 +136,12 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
     updatePageBackground: (index, background) => set((state) => {
         const newPages = [...state.pages];
         newPages[index] = { ...newPages[index], background };
+        return { pages: newPages };
+    }),
+
+    updatePageElements: (index, elements) => set((state) => {
+        const newPages = [...state.pages];
+        newPages[index] = { ...newPages[index], elements };
         return { pages: newPages };
     }),
 
