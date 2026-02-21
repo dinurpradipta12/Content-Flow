@@ -29,7 +29,18 @@ import {
     List,
     Type as KerningIcon,
     Bold,
-    Italic
+    Italic,
+    Copy,
+    Clipboard,
+    Undo2,
+    Redo2,
+    ArrowUpToLine,
+    ArrowDownToLine,
+    ArrowLeftToLine,
+    ArrowRightToLine,
+    AlignHorizontalJustifyCenter,
+    AlignVerticalJustifyCenter,
+    X
 } from 'lucide-react';
 
 export const Editor: React.FC = () => {
@@ -97,6 +108,123 @@ export const Editor: React.FC = () => {
         loadFonts();
     }, []);
 
+    const [history, setHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
+    const [clipboard, setClipboard] = useState<fabric.Object | null>(null);
+    const [floatingMenuPos, setFloatingMenuPos] = useState({ top: 0, left: 0 });
+
+    const addToHistory = () => {
+        if (!fabricCanvas.current) return;
+        const json = JSON.stringify(fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst']));
+        setHistory(prev => {
+            const newHistory = prev.slice(0, historyIndex + 1);
+            newHistory.push(json);
+            return newHistory;
+        });
+        setHistoryIndex(prev => prev + 1);
+    };
+
+    const handleUndo = () => {
+        if (historyIndex <= 0 || !fabricCanvas.current) return;
+        const json = history[historyIndex - 1];
+        fabricCanvas.current.loadFromJSON(JSON.parse(json), () => {
+            fabricCanvas.current?.renderAll();
+            updateLayers();
+            setHistoryIndex(prev => prev - 1);
+        });
+    };
+
+    const handleRedo = () => {
+        if (historyIndex >= history.length - 1 || !fabricCanvas.current) return;
+        const json = history[historyIndex + 1];
+        fabricCanvas.current.loadFromJSON(JSON.parse(json), () => {
+            fabricCanvas.current?.renderAll();
+            updateLayers();
+            setHistoryIndex(prev => prev + 1);
+        });
+    };
+
+    const handleCopy = () => {
+        if (!selectedObject || !fabricCanvas.current) return;
+        selectedObject.clone((cloned: fabric.Object) => {
+            setClipboard(cloned);
+        });
+    };
+
+    const handlePaste = () => {
+        if (!clipboard || !fabricCanvas.current) return;
+        clipboard.clone((cloned: fabric.Object) => {
+            fabricCanvas.current?.discardActiveObject();
+            cloned.set({
+                left: cloned.left! + 10,
+                top: cloned.top! + 10,
+                evented: true,
+            });
+            if (cloned.type === 'activeSelection') {
+                cloned.canvas = fabricCanvas.current!;
+                (cloned as fabric.ActiveSelection).forEachObject((obj: any) => {
+                    fabricCanvas.current?.add(obj);
+                });
+                cloned.setCoords();
+            } else {
+                fabricCanvas.current?.add(cloned);
+            }
+            clipboard.top! += 10;
+            clipboard.left! += 10;
+            fabricCanvas.current?.setActiveObject(cloned);
+            fabricCanvas.current?.requestRenderAll();
+            addToHistory();
+        });
+    };
+
+    const handleDuplicate = () => {
+        if (!selectedObject || !fabricCanvas.current) return;
+        selectedObject.clone((cloned: fabric.Object) => {
+            fabricCanvas.current?.discardActiveObject();
+            cloned.set({
+                left: cloned.left! + 20,
+                top: cloned.top! + 20,
+                evented: true,
+            });
+            fabricCanvas.current?.add(cloned);
+            fabricCanvas.current?.setActiveObject(cloned);
+            fabricCanvas.current?.requestRenderAll();
+            addToHistory();
+        });
+    };
+
+    const handleAlign = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+        if (!selectedObject || !fabricCanvas.current) return;
+        const canvasWidth = fabricCanvas.current.width || 0;
+        const canvasHeight = fabricCanvas.current.height || 0;
+        const objWidth = selectedObject.getScaledWidth();
+        const objHeight = selectedObject.getScaledHeight();
+
+        switch (alignment) {
+            case 'left':
+                selectedObject.set({ left: 0 });
+                break;
+            case 'center':
+                selectedObject.set({ left: (canvasWidth - objWidth) / 2 });
+                break;
+            case 'right':
+                selectedObject.set({ left: canvasWidth - objWidth });
+                break;
+            case 'top':
+                selectedObject.set({ top: 0 });
+                break;
+            case 'middle':
+                selectedObject.set({ top: (canvasHeight - objHeight) / 2 });
+                break;
+            case 'bottom':
+                selectedObject.set({ top: canvasHeight - objHeight });
+                break;
+        }
+        selectedObject.setCoords();
+        fabricCanvas.current.renderAll();
+        addToHistory();
+    };
+
     useEffect(() => {
         if (!canvasRef.current) return;
 
@@ -115,11 +243,20 @@ export const Editor: React.FC = () => {
             canvas.loadFromJSON({ objects: currentPage.elements }, () => {
                 canvas.renderAll();
                 updateLayers();
+                addToHistory(); // Initial state
             });
+        } else {
+             addToHistory(); // Initial empty state
         }
 
-        canvas.on('selection:created', (e) => setSelectedObject(e.selected[0]));
-        canvas.on('selection:updated', (e) => setSelectedObject(e.selected[0]));
+        canvas.on('selection:created', (e) => {
+            setSelectedObject(e.selected[0]);
+            updateFloatingMenuPos(e.selected[0]);
+        });
+        canvas.on('selection:updated', (e) => {
+            setSelectedObject(e.selected[0]);
+            updateFloatingMenuPos(e.selected[0]);
+        });
         canvas.on('selection:cleared', () => setSelectedObject(null));
         
         canvas.on('object:modified', () => {
@@ -135,7 +272,7 @@ export const Editor: React.FC = () => {
                     fontSize: (obj as any).fontSize || 40,
                     shadowBlur: (obj.shadow as any)?.blur || 0,
                     shadowColor: (obj.shadow as any)?.color || '#000000',
-                    shadowOpacity: 1, // Default, as fabric shadow doesn't expose opacity directly easily
+                    shadowOpacity: 1, 
                     shadowAngle: 45,
                     shadowDistance: 5,
                     strokeWidth: obj.strokeWidth || 0,
@@ -147,13 +284,19 @@ export const Editor: React.FC = () => {
                     textCase: (obj as any).textCase || 'normal',
                     cornerRadius: (obj as any).rx || 0
                 });
+                updateFloatingMenuPos(obj);
             }
             updateLayers();
             saveCanvas();
+            addToHistory();
         });
         
-        canvas.on('object:added', () => { updateLayers(); saveCanvas(); });
-        canvas.on('object:removed', () => { updateLayers(); saveCanvas(); });
+        canvas.on('object:moving', (e) => updateFloatingMenuPos(e.target));
+        canvas.on('object:scaling', (e) => updateFloatingMenuPos(e.target));
+        canvas.on('object:rotating', (e) => updateFloatingMenuPos(e.target));
+
+        canvas.on('object:added', () => { updateLayers(); saveCanvas(); addToHistory(); });
+        canvas.on('object:removed', () => { updateLayers(); saveCanvas(); addToHistory(); });
 
         // Mouse Wheel Zoom (Alt + Scroll)
         canvas.on('mouse:wheel', (opt) => {
@@ -181,6 +324,11 @@ export const Editor: React.FC = () => {
                 lastPosX = e.clientX;
                 lastPosY = e.clientY;
                 canvas.defaultCursor = 'grabbing';
+                // Disable object selection while panning
+                canvas.forEachObject(obj => {
+                    obj.selectable = false;
+                    obj.evented = false;
+                });
             }
         });
 
@@ -205,6 +353,11 @@ export const Editor: React.FC = () => {
                 canvas.defaultCursor = 'grab';
             } else {
                 canvas.defaultCursor = 'default';
+                // Re-enable object selection
+                canvas.forEachObject(obj => {
+                    obj.selectable = true;
+                    obj.evented = true;
+                });
             }
         });
 
@@ -221,6 +374,7 @@ export const Editor: React.FC = () => {
                 canvas.set('backgroundColor', currentPage.background);
                 sortedObjects.forEach(obj => canvas.add(obj as fabric.Object));
                 canvas.renderAll();
+                addToHistory();
                 return;
             }
 
@@ -242,6 +396,7 @@ export const Editor: React.FC = () => {
             }
             canvas.renderAll();
             updateLayers();
+            addToHistory();
         };
 
         const handleCanvasAdd = (e: any) => {
@@ -285,17 +440,49 @@ export const Editor: React.FC = () => {
                 });
             }
             canvas.renderAll();
+            addToHistory();
         };
 
         window.addEventListener('canvas:action', handleCanvasAction);
         window.addEventListener('canvas:add', handleCanvasAdd);
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code === 'Space' && !isPanning) {
+            if (e.code === 'Space' && !isPanningRef.current) {
                 setIsPanning(true);
                 canvas.defaultCursor = 'grab';
                 canvas.hoverCursor = 'grab';
+                canvas.forEachObject(obj => {
+                    obj.selectable = false;
+                    obj.evented = false;
+                });
+                canvas.selection = false;
                 canvas.renderAll();
+            }
+            
+            // Shortcuts
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                if (e.shiftKey) {
+                    handleRedo();
+                } else {
+                    handleUndo();
+                }
+                e.preventDefault();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                handleDuplicate();
+                e.preventDefault();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                handleCopy();
+                // Don't prevent default copy to allow system clipboard if needed, but here we use internal
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                handlePaste();
+            }
+            if (e.key === 'Escape') {
+                setActiveTool(null);
+                canvas.discardActiveObject();
+                canvas.requestRenderAll();
             }
         };
 
@@ -304,6 +491,11 @@ export const Editor: React.FC = () => {
                 setIsPanning(false);
                 canvas.defaultCursor = 'default';
                 canvas.hoverCursor = 'move';
+                canvas.forEachObject(obj => {
+                    obj.selectable = true;
+                    obj.evented = true;
+                });
+                canvas.selection = true;
                 canvas.renderAll();
             }
         };
@@ -319,6 +511,25 @@ export const Editor: React.FC = () => {
             canvas.dispose();
         };
     }, [currentPageIndex, canvasSize.id, referenceData]);
+
+    const updateFloatingMenuPos = (obj: fabric.Object | undefined) => {
+        if (!obj || !fabricCanvas.current) return;
+        const bound = obj.getBoundingRect();
+        // Adjust for zoom and viewport if needed, but getBoundingRect usually returns canvas pixel coords
+        // Since the toolbar is inside the canvas wrapper which is scaled by `zoom`, we might need to adjust.
+        // Wait, the wrapper has `transform: scale(zoom)`. 
+        // If we put the toolbar inside the wrapper, it will scale with the canvas.
+        // If we put it outside, we need to calculate screen coords.
+        // Let's put it inside the wrapper for simplicity, so it moves with the object.
+        // But if it scales, the buttons will shrink/grow.
+        // Better to put it outside or use `transform: scale(1/zoom)` on the toolbar.
+        
+        // Actually, let's just use the values directly and see.
+        setFloatingMenuPos({
+            top: bound.top,
+            left: bound.left + bound.width / 2
+        });
+    };
 
     // Immediate Background Update
     useEffect(() => {
@@ -388,12 +599,23 @@ export const Editor: React.FC = () => {
         reader.onload = (f) => {
             const data = f.target?.result;
             if (typeof data === 'string') {
-                fabric.Image.fromURL(data).then((img) => {
-                    (img as any).id = `img-${Date.now()}`;
-                    img.scaleToWidth(300);
-                    fabricCanvas.current?.add(img);
-                    fabricCanvas.current?.setActiveObject(img);
-                });
+                // Check if it's a valid image data URL
+                if (data.startsWith('data:image')) {
+                    fabric.Image.fromURL(data).then((img) => {
+                        (img as any).id = `img-${Date.now()}`;
+                        img.scaleToWidth(300);
+                        fabricCanvas.current?.add(img);
+                        fabricCanvas.current?.setActiveObject(img);
+                        fabricCanvas.current?.renderAll();
+                        addToHistory();
+                    }).catch(err => {
+                        console.error("Error loading image:", err);
+                        alert("Failed to load image. Please try a different file.");
+                    });
+                } else {
+                    console.error("Invalid image data");
+                    alert("Invalid image file.");
+                }
             }
         };
         reader.readAsDataURL(file);
@@ -551,14 +773,49 @@ export const Editor: React.FC = () => {
                 </div>
             </div>
 
-            {/* Top Right Toolbar: Zoom & Fullscreen */}
-            <div className="absolute top-6 right-6 bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-2 shadow-[4px_4px_0px_0px_#0f172a] z-20">
-                <button onClick={() => setZoom(Math.max(0.1, zoom - 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomOut size={16} /></button>
-                <span className="text-[10px] font-black w-10 text-center">{Math.round(zoom * 100)}%</span>
-                <button onClick={() => setZoom(Math.min(5, zoom + 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomIn size={16} /></button>
-                <div className="w-1 h-6 bg-slate-200 mx-1" />
-                <button onClick={() => setZoom(1)} className="p-1.5 hover:bg-slate-100 rounded-md" title="Reset Zoom"><Maximize size={16} /></button>
+            {/* Top Right Toolbar: Zoom & Fullscreen & Alignment */}
+            <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
+                {/* Alignment Tools */}
+                {selectedObject && (
+                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-1 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-right-4">
+                        <button onClick={() => handleAlign('left')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Left"><AlignLeft size={16} /></button>
+                        <button onClick={() => handleAlign('center')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Center"><AlignHorizontalJustifyCenter size={16} /></button>
+                        <button onClick={() => handleAlign('right')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Right"><AlignRight size={16} /></button>
+                        <div className="w-px h-4 bg-slate-200 mx-1" />
+                        <button onClick={() => handleAlign('top')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Top"><ArrowUpToLine size={16} /></button>
+                        <button onClick={() => handleAlign('middle')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Middle"><AlignVerticalJustifyCenter size={16} /></button>
+                        <button onClick={() => handleAlign('bottom')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Bottom"><ArrowDownToLine size={16} /></button>
+                    </div>
+                )}
+
+                {/* Zoom Tools */}
+                <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
+                    <button onClick={() => setZoom(Math.max(0.1, zoom - 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomOut size={16} /></button>
+                    <span className="text-[10px] font-black w-10 text-center">{Math.round(zoom * 100)}%</span>
+                    <button onClick={() => setZoom(Math.min(5, zoom + 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomIn size={16} /></button>
+                    <div className="w-1 h-6 bg-slate-200 mx-1" />
+                    <button onClick={() => setZoom(1)} className="p-1.5 hover:bg-slate-100 rounded-md" title="Reset Zoom"><Maximize size={16} /></button>
+                </div>
             </div>
+
+            {/* Floating Context Menu */}
+            {selectedObject && (
+                <div 
+                    className="absolute z-40 flex gap-1 bg-slate-900 text-white p-1.5 rounded-xl shadow-xl -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100"
+                    style={{ 
+                        top: `calc(50% - ${canvasSize.height * zoom / 2}px + ${floatingMenuPos.top * zoom}px - 50px)`, 
+                        left: `calc(50% - ${canvasSize.width * zoom / 2}px + ${floatingMenuPos.left * zoom}px)`
+                        // Note: This positioning is tricky because the canvas is centered. 
+                        // We need to calculate relative to the container center.
+                        // The canvas wrapper is centered.
+                        // Let's try to position it inside the canvas wrapper instead?
+                    }}
+                >
+                    <button onClick={handleDuplicate} className="p-1.5 hover:bg-white/20 rounded-lg" title="Duplicate (Ctrl+D)"><Copy size={16} /></button>
+                    <button onClick={handleCopy} className="p-1.5 hover:bg-white/20 rounded-lg" title="Copy (Ctrl+C)"><Clipboard size={16} /></button>
+                    <button onClick={handleDelete} className="p-1.5 hover:bg-red-500 rounded-lg text-red-400 hover:text-white" title="Delete"><Trash2 size={16} /></button>
+                </div>
+            )}
 
             {/* Left Vertical Toolbar */}
             {selectedObject && (
@@ -716,6 +973,36 @@ export const Editor: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button onClick={() => handleFlip('x')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipX ? 'bg-slate-100' : ''}`}><FlipHorizontal className="mx-auto" size={20} /></button>
                                         <button onClick={() => handleFlip('y')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipY ? 'bg-slate-100' : ''}`}><FlipVertical className="mx-auto" size={20} /></button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Opacity Tool */}
+                        <div className="relative group">
+                            <button 
+                                onClick={() => setActiveTool(activeTool === 'opacity' ? null : 'opacity')}
+                                className={`p-3 rounded-xl transition-all ${activeTool === 'opacity' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                title="Opacity"
+                            >
+                                <div className="flex items-center justify-center w-5 h-5">
+                                    <div className="w-4 h-4 rounded-full bg-current opacity-50 border border-current" />
+                                </div>
+                            </button>
+                            {activeTool === 'opacity' && (
+                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Opacity</h4>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <span>Value</span>
+                                            <span>{Math.round(objectProps.opacity * 100)}%</span>
+                                        </div>
+                                        <input 
+                                            type="range" min="0" max="1" step="0.01"
+                                            value={objectProps.opacity} 
+                                            onChange={(e) => handleOpacity(parseFloat(e.target.value))}
+                                            className="w-full accent-slate-900"
+                                        />
                                     </div>
                                 </div>
                             )}
