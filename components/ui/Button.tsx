@@ -1,9 +1,11 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -11,6 +13,7 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary', 
   size = 'md', 
   icon,
+  isLoading,
   className = '',
   ...props 
 }) => {
@@ -31,13 +34,20 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button 
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={isLoading || props.disabled}
       {...props}
     >
-      {children}
-      {icon && (
-        <span className={`${variant === 'primary' ? 'bg-white text-accent' : 'bg-slate-800 text-white'} rounded-full p-1 flex items-center justify-center`}>
-          {icon}
-        </span>
+      {isLoading ? (
+        <Loader2 className="animate-spin" size={size === 'sm' ? 14 : size === 'md' ? 16 : 20} />
+      ) : (
+        <>
+          {children}
+          {icon && (
+            <span className={`${variant === 'primary' ? 'bg-white text-accent' : 'bg-slate-800 text-white'} rounded-full p-1 flex items-center justify-center`}>
+              {icon}
+            </span>
+          )}
+        </>
       )}
     </button>
   );

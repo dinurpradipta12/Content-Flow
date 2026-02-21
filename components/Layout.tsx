@@ -263,7 +263,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const mainNavItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { path: '/plan', label: 'Content Plan', icon: <CalendarDays size={20} /> },
-    { path: '/analysis', label: 'Analisa Konten', icon: <BarChart2 size={20} /> },
+    { path: '/approval', label: 'Approval', icon: <CheckCircle size={20} /> },
     { path: '/insight', label: 'Content Data Insight', icon: <Presentation size={20} /> },
     { path: '/carousel', label: 'Carousel Maker', icon: <ImageIcon size={20} /> },
     { path: '/script', label: 'Script Creator', icon: <PenTool size={20} /> },

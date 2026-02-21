@@ -69,11 +69,15 @@ export const ContentPlan: React.FC = () => {
     const [formData, setFormData] = useState({
         name: '',
         logoUrl: '',
-        accountName: '',
+        accountName: '', // Keep for backward compatibility or primary display
         platforms: [] as string[],
         description: '',
-        period: ''
+        period: '',
+        profileLinks: {} as Record<string, string>,
+        accountNames: {} as Record<string, string> // New: Store usernames per platform
     });
+    
+    const [currentUserName, setCurrentUserName] = useState('Anda');
 
     // --- SUPABASE INTEGRATION ---
 
@@ -82,8 +86,10 @@ export const ContentPlan: React.FC = () => {
         try {
             // 0. Get Current User Info for Syncing
             const userId = localStorage.getItem('user_id');
-            const { data: userData } = await supabase.from('app_users').select('avatar_url').eq('id', userId).single();
+            const { data: userData } = await supabase.from('app_users').select('avatar_url, name').eq('id', userId).single();
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
+            const freshName = userData?.name || localStorage.getItem('user_name') || 'Anda';
+            setCurrentUserName(freshName);
 
             // 1. Fetch Workspaces
             const { data: wsData, error: wsError } = await supabase
@@ -176,7 +182,9 @@ export const ContentPlan: React.FC = () => {
             accountName: '',
             platforms: [],
             description: '',
-            period: ''
+            period: '',
+            profileLinks: {},
+            accountNames: {}
         });
         setIsModalOpen(true);
     };
@@ -191,7 +199,9 @@ export const ContentPlan: React.FC = () => {
             accountName: workspace.accountName || '',
             platforms: workspace.platforms,
             description: workspace.description || '',
-            period: workspace.period || ''
+            period: workspace.period || '',
+            profileLinks: {}, // TODO: Load existing links if available in DB
+            accountNames: { [workspace.platforms[0]]: workspace.accountName || '' } // Basic init
         });
         setIsModalOpen(true);
         setActiveMenu(null);
@@ -328,12 +338,43 @@ export const ContentPlan: React.FC = () => {
     const togglePlatform = (code: string) => {
         setFormData(prev => {
             const exists = prev.platforms.includes(code);
+            let newPlatforms;
             if (exists) {
-                return { ...prev, platforms: prev.platforms.filter(p => p !== code) };
+                newPlatforms = prev.platforms.filter(p => p !== code);
             } else {
-                return { ...prev, platforms: [...prev.platforms, code] };
+                newPlatforms = [...prev.platforms, code];
             }
+            
+            // Auto-generate profile link placeholder if not exists
+            const newLinks = { ...prev.profileLinks };
+            if (!exists && !newLinks[code]) {
+                newLinks[code] = ''; 
+            }
+            
+            return { ...prev, platforms: newPlatforms, profileLinks: newLinks };
         });
+    };
+
+    const handleProfileLinkChange = (platformCode: string, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            profileLinks: {
+                ...prev.profileLinks,
+                [platformCode]: value
+            }
+        }));
+    };
+
+    const handleAccountNameChange = (platformCode: string, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            accountNames: {
+                ...prev.accountNames,
+                [platformCode]: value
+            },
+            // Update the main accountName to be the first one entered (for display consistency)
+            accountName: prev.platforms[0] === platformCode ? value : prev.accountName
+        }));
     };
 
     return (
@@ -550,20 +591,13 @@ export const ContentPlan: React.FC = () => {
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                                 required
                             />
-                            <Input 
-                                label="Nama Akun Social Media" 
-                                placeholder="@username" 
-                                icon={<AtSign size={16}/>}
-                                value={formData.accountName}
-                                onChange={(e) => setFormData({...formData, accountName: e.target.value})}
-                            />
                         </div>
                     </div>
 
                     {/* Platform Selection */}
                     <div>
                         <label className="font-bold text-xs text-slate-600 mb-2 block ml-1">Platform (Pilih Minimal 1)</label>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-3 mb-4">
                             {[
                                 { id: 'IG', label: 'Instagram', icon: <Instagram size={18}/>, color: 'hover:bg-pink-50 hover:border-pink-200 hover:text-pink-600' },
                                 { id: 'TK', label: 'TikTok', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-black' },
@@ -590,6 +624,41 @@ export const ContentPlan: React.FC = () => {
                                 );
                             })}
                         </div>
+
+                        {/* Dynamic Profile Links & Account Names */}
+                        {formData.platforms.length > 0 && (
+                            <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-200 animate-in slide-in-from-top-2">
+                                <label className="font-bold text-xs text-slate-500 block mb-1">Detail Akun per Platform</label>
+                                {formData.platforms.map(code => (
+                                    <div key={code} className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-200 last:border-0 last:pb-0">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 flex justify-center text-slate-400">
+                                                {code === 'IG' ? <Instagram size={16}/> : 
+                                                 code === 'YT' ? <Youtube size={16}/> : 
+                                                 code === 'LI' ? <Linkedin size={16}/> : 
+                                                 code === 'FB' ? <Facebook size={16}/> : 
+                                                 code === 'TH' ? <AtSign size={16}/> : <span className="font-bold text-xs">{code}</span>}
+                                            </div>
+                                            <Input 
+                                                placeholder={`Username ${code === 'IG' ? 'Instagram' : code} (e.g. @arunika)`}
+                                                value={formData.accountNames[code] || ''}
+                                                onChange={(e) => handleAccountNameChange(code, e.target.value)}
+                                                className="h-9 text-xs"
+                                                icon={<AtSign size={14}/>}
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <Input 
+                                                placeholder={`Link Profile ${code === 'IG' ? 'Instagram' : code}...`}
+                                                value={formData.profileLinks[code] || ''}
+                                                onChange={(e) => handleProfileLinkChange(code, e.target.value)}
+                                                className="h-9 text-xs"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Description & Period */}
@@ -604,7 +673,7 @@ export const ContentPlan: React.FC = () => {
                              <label className="font-bold text-xs text-slate-600 ml-1">Owner</label>
                              <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-500 cursor-not-allowed">
                                 <User size={18} />
-                                <span className="font-bold text-sm">Aditya W. (Anda)</span>
+                                <span className="font-bold text-sm">{currentUserName} (Anda)</span>
                              </div>
                         </div>
                     </div>

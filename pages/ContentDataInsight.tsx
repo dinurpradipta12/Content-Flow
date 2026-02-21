@@ -26,6 +26,17 @@ import {
     Eye,
     BarChart2
 } from 'lucide-react';
+import { 
+    LineChart, 
+    Line, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+    AreaChart,
+    Area
+} from 'recharts';
 import { supabase } from '../services/supabaseClient';
 import { ContentItem, Platform } from '../types';
 import { analyzeContentLink } from '../services/scraperService';
@@ -47,6 +58,7 @@ export const ContentDataInsight: React.FC = () => {
     // --- MANUAL INPUT STATE ---
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [selectedItemForInput, setSelectedItemForInput] = useState<ContentItem | null>(null);
+    const [selectedMetric, setSelectedMetric] = useState<'reach' | 'er' | 'interactions' | 'views' | null>(null);
     const [manualMetrics, setManualMetrics] = useState({
         views: 0,
         likes: 0,
@@ -71,7 +83,7 @@ export const ContentDataInsight: React.FC = () => {
                 .from('content_items')
                 .select(`*, workspaces (name, account_name)`)
                 .eq('status', 'Published')
-                .order('date', { ascending: false });
+                .order('date', { ascending: true });
 
             if (error) throw error;
 
@@ -226,8 +238,159 @@ export const ContentDataInsight: React.FC = () => {
         return (interactions / m.views) * 100;
     };
 
+    // Calculate Summary Stats based on Filtered Data
+    const summaryStats = React.useMemo(() => {
+        let totalReach = 0;
+        let totalViews = 0;
+        let totalInteractions = 0;
+
+        filteredData.forEach(item => {
+            const m = item.metrics || {};
+            totalReach += (m as any).reach || 0;
+            totalViews += m.views || 0;
+            totalInteractions += calculateInteractions(m);
+        });
+
+        let er = 0;
+        // ER Calculation Logic
+        // If Instagram, use Reach as denominator if available
+        if (filterPlatform === Platform.INSTAGRAM && totalReach > 0) {
+            er = (totalInteractions / totalReach) * 100;
+        } 
+        // For others (or if Reach is 0), use Views
+        else if (totalViews > 0) {
+            er = (totalInteractions / totalViews) * 100;
+        }
+
+        return { 
+            reach: totalReach, 
+            views: totalViews, 
+            interactions: totalInteractions, 
+            er 
+        };
+    }, [filteredData, filterPlatform]);
+
+    // Helper to format period string
+    const getPeriodLabel = () => {
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const startMonth = start.toLocaleDateString('id-ID', { month: 'long' });
+            const endMonth = end.toLocaleDateString('id-ID', { month: 'long' });
+            const year = end.getFullYear();
+            
+            if (startMonth === endMonth) {
+                return `Periode ${startMonth} ${year}`;
+            }
+            return `Periode ${startMonth} - ${endMonth} ${year}`;
+        }
+        // Default to current month if no filter
+        const now = new Date();
+        return `Periode ${now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`;
+    };
+
+    // Helper to get dynamic footer text
+    const getCardFooterText = () => {
+        if (filterPlatform === 'all') return "Semua Platform";
+        const accountText = filterAccount !== 'all' ? filterAccount : "Semua Akun";
+        return `${filterPlatform} Insight for ${accountText}`;
+    };
+
+    // Prepare Chart Data based on selectedMetric
+    const chartData = React.useMemo(() => {
+        if (!selectedMetric) return [];
+
+        // Group by Date
+        const groupedByDate: Record<string, number> = {};
+        
+        // Sort data by date ascending first
+        const sortedData = [...filteredData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        sortedData.forEach(item => {
+            const dateKey = new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            
+            if (!groupedByDate[dateKey]) groupedByDate[dateKey] = 0;
+
+            const m = item.metrics || {};
+            let value = 0;
+
+            switch (selectedMetric) {
+                case 'reach':
+                    value = (m as any).reach || 0;
+                    break;
+                case 'views':
+                    value = m.views || 0;
+                    break;
+                case 'interactions':
+                    value = calculateInteractions(m);
+                    break;
+                case 'er':
+                    // For daily ER, we average it? Or sum interactions / sum views?
+                    // Let's do daily ER = (Daily Interactions / Daily Views/Reach) * 100
+                    // But here we are summing values for the day first?
+                    // Let's just sum the raw numbers first, then calculate ER later if needed.
+                    // Actually, for ER chart, it's better to calculate per item and average? 
+                    // Or calculate aggregate for the day. Let's do aggregate for the day.
+                    // So we need intermediate storage.
+                    break;
+            }
+
+            if (selectedMetric !== 'er') {
+                groupedByDate[dateKey] += value;
+            }
+        });
+
+        // Special handling for ER Chart Data
+        if (selectedMetric === 'er') {
+             const dailyTotals: Record<string, { interactions: number, denominator: number }> = {};
+             
+             sortedData.forEach(item => {
+                const dateKey = new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                if (!dailyTotals[dateKey]) dailyTotals[dateKey] = { interactions: 0, denominator: 0 };
+                
+                const m = item.metrics || {};
+                const interactions = calculateInteractions(m);
+                const reach = (m as any).reach || 0;
+                const views = m.views || 0;
+
+                dailyTotals[dateKey].interactions += interactions;
+                
+                if (item.platform === Platform.INSTAGRAM && reach > 0) {
+                    dailyTotals[dateKey].denominator += reach;
+                } else {
+                    dailyTotals[dateKey].denominator += views;
+                }
+             });
+
+             return Object.keys(dailyTotals).map(date => ({
+                 name: date,
+                 value: dailyTotals[date].denominator > 0 
+                    ? parseFloat(((dailyTotals[date].interactions / dailyTotals[date].denominator) * 100).toFixed(2))
+                    : 0
+             }));
+        }
+
+        return Object.keys(groupedByDate).map(date => ({
+            name: date,
+            value: groupedByDate[date]
+        }));
+    }, [filteredData, selectedMetric]);
+
+    // Analysis Helper
+    const getAnalysis = () => {
+        if (chartData.length < 2) return "Data belum cukup untuk analisa tren.";
+        const last = chartData[chartData.length - 1].value;
+        const prev = chartData[chartData.length - 2].value;
+        const diff = last - prev;
+        
+        if (diff > 0) return `🔥 Tren Positif! Performa ${selectedMetric?.toUpperCase()} meningkat pada tanggal ${chartData[chartData.length - 1].name}.`;
+        if (diff < 0) return `📉 Perhatian: Terjadi penurunan ${selectedMetric?.toUpperCase()} dibandingkan tanggal sebelumnya.`;
+        return "⚡ Performa stabil.";
+    };
+
     return (
         <div className="space-y-6">
+            {/* ... Header ... */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
                 <div>
                     <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-3">
@@ -237,7 +400,190 @@ export const ContentDataInsight: React.FC = () => {
                         Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.
                     </p>
                 </div>
+                
+                {/* Period Indicator Badge */}
+                <div className="bg-white border-2 border-slate-800 px-4 py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default">
+                    <span className="font-heading font-black text-slate-800 text-sm uppercase tracking-wide flex items-center gap-2">
+                        <Calendar size={16} className="text-accent" />
+                        {getPeriodLabel()}
+                    </span>
+                </div>
             </div>
+
+            {/* Summary Cards - Colorful & Solid */}
+            <div className={`grid gap-4 ${filterPlatform === Platform.TIKTOK ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+                
+                {/* Reach Card */}
+                {filterPlatform !== Platform.TIKTOK && (
+                    <div 
+                        onClick={() => setSelectedMetric('reach')}
+                        className="bg-blue-500 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                    >
+                        <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                            <BarChart2 size={80} className="text-white" />
+                        </div>
+                        <div className="relative z-10 text-white">
+                            <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Reach</p>
+                            <h3 className="text-3xl font-black">{summaryStats.reach.toLocaleString()}</h3>
+                        </div>
+                        <div className="relative z-10 mt-auto pt-2">
+                            <span className="inline-block bg-black/20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                                {getCardFooterText()}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Engagement Rate */}
+                <div 
+                    onClick={() => setSelectedMetric('er')}
+                    className="bg-pink-500 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                >
+                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <TrendingUp size={80} className="text-white" />
+                    </div>
+                    <div className="relative z-10 text-white">
+                        <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-90">Engagement Rate</p>
+                        <h3 className="text-3xl font-black">{summaryStats.er.toFixed(2)}%</h3>
+                    </div>
+                    <div className="relative z-10 mt-auto pt-2">
+                        <span className="inline-block bg-black/20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                            {getCardFooterText()}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Interactions */}
+                <div 
+                    onClick={() => setSelectedMetric('interactions')}
+                    className="bg-purple-600 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                >
+                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <Zap size={80} className="text-white" />
+                    </div>
+                    <div className="relative z-10 text-white">
+                        <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Interaksi</p>
+                        <h3 className="text-3xl font-black">{summaryStats.interactions.toLocaleString()}</h3>
+                    </div>
+                    <div className="relative z-10 mt-auto pt-2">
+                        <span className="inline-block bg-black/20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                            {getCardFooterText()}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Views */}
+                <div 
+                    onClick={() => setSelectedMetric('views')}
+                    className="bg-yellow-400 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                >
+                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <Eye size={80} className="text-black" />
+                    </div>
+                    <div className="relative z-10 text-slate-900">
+                        <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-80">Content Views</p>
+                        <h3 className="text-3xl font-black">{summaryStats.views.toLocaleString()}</h3>
+                    </div>
+                    <div className="relative z-10 mt-auto pt-2">
+                        <span className="inline-block bg-black/10 text-slate-900 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                            {getCardFooterText()}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* CHART MODAL */}
+            {selectedMetric && (
+                <Modal
+                    isOpen={!!selectedMetric}
+                    onClose={() => setSelectedMetric(null)}
+                    title={`Grafik Analisa: ${selectedMetric.toUpperCase()}`}
+                    maxWidth="max-w-4xl"
+                >
+                    <div className="space-y-6">
+                        {/* Header Info */}
+                        <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-xl flex justify-between items-center">
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase">Periode Data</p>
+                                <p className="font-black text-slate-800 text-lg">{getPeriodLabel()}</p>
+                            </div>
+                            <div className={`px-4 py-2 rounded-lg font-bold text-white uppercase text-sm ${
+                                selectedMetric === 'reach' ? 'bg-blue-500' :
+                                selectedMetric === 'er' ? 'bg-pink-500' :
+                                selectedMetric === 'interactions' ? 'bg-purple-600' : 'bg-yellow-400 text-black'
+                            }`}>
+                                {selectedMetric}
+                            </div>
+                        </div>
+
+                        {/* Chart Area */}
+                        <div className="h-[300px] w-full bg-white border-2 border-slate-800 rounded-xl p-4 shadow-hard relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={chartData}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={
+                                                selectedMetric === 'reach' ? '#3B82F6' :
+                                                selectedMetric === 'er' ? '#EC4899' :
+                                                selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
+                                            } stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor={
+                                                selectedMetric === 'reach' ? '#3B82F6' :
+                                                selectedMetric === 'er' ? '#EC4899' :
+                                                selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
+                                            } stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickMargin={10} />
+                                    <YAxis stroke="#64748b" fontSize={12} />
+                                    <Tooltip 
+                                        contentStyle={{ 
+                                            backgroundColor: '#fff', 
+                                            border: '2px solid #1e293b', 
+                                            borderRadius: '8px',
+                                            boxShadow: '4px 4px 0px 0px #1e293b'
+                                        }}
+                                        itemStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="value" 
+                                        stroke={
+                                            selectedMetric === 'reach' ? '#3B82F6' :
+                                            selectedMetric === 'er' ? '#EC4899' :
+                                            selectedMetric === 'interactions' ? '#9333EA' : '#CA8A04'
+                                        } 
+                                        strokeWidth={3}
+                                        fillOpacity={1} 
+                                        fill="url(#colorValue)" 
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        {/* Analysis Box */}
+                        <div className="bg-[#FFFDF5] border-2 border-slate-800 rounded-xl p-6 shadow-hard relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-2 h-full bg-slate-800"></div>
+                            <h4 className="font-heading font-black text-xl text-slate-800 mb-2 flex items-center gap-2">
+                                <TrendingUp size={24} className="text-slate-800" />
+                                Hipotesa & Analisa Singkat
+                            </h4>
+                            <p className="text-slate-700 font-medium leading-relaxed">
+                                {getAnalysis()}
+                            </p>
+                            <div className="mt-4 flex gap-2">
+                                {chartData.slice(-3).map((d, i) => (
+                                    <div key={i} className="bg-white border border-slate-200 p-2 rounded-lg text-xs">
+                                        <span className="block font-bold text-slate-400">{d.name}</span>
+                                        <span className="font-black text-slate-800">{d.value.toLocaleString()}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
             <div className="bg-white rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col min-h-[600px]">
                 {/* Toolbar */}
@@ -329,7 +675,7 @@ export const ContentDataInsight: React.FC = () => {
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
                                                     <Calendar size={16} className="text-slate-400"/>
-                                                    {item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                                                    {item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                                 </div>
                                             </td>
                                             <td className="p-4 align-middle max-w-xs">
@@ -337,7 +683,12 @@ export const ContentDataInsight: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
                                                     <div className="flex items-center gap-1 text-slate-500">
-                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={12}/> : <Globe size={12}/>}
+                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={12}/> : 
+                                                         item.platform === Platform.TIKTOK ? (
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                                                            </svg>
+                                                         ) : <Globe size={12}/>}
                                                         <span className="text-[10px] font-bold">@{item.workspaces?.account_name || '-'}</span>
                                                     </div>
                                                 </div>

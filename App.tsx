@@ -4,7 +4,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { ContentPlan } from './pages/ContentPlan';
 import { ContentPlanDetail } from './pages/ContentPlanDetail';
-import { Analysis } from './pages/Analysis';
+import { Approval } from './pages/Approval';
 import { ContentDataInsight } from './pages/ContentDataInsight';
 import { CarouselMaker } from './pages/CarouselMaker';
 import { ScriptCreator } from './pages/ScriptCreator';
@@ -43,7 +43,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="plan" element={<ContentPlan />} />
             <Route path="plan/:id" element={<ContentPlanDetail />} />
-            <Route path="analysis" element={<Analysis />} />
+            <Route path="approval" element={<Approval />} />
             <Route path="insight" element={<ContentDataInsight />} />
             <Route path="carousel" element={<CarouselMaker />} />
             <Route path="script" element={<ScriptCreator />} />

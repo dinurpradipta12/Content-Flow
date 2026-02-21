@@ -1,6 +1,6 @@
 {
-  "name": "Arunika Content Flow",
-  "description": "Aplikasi manajemen konten cerdas dengan desain Playful Geometric, terintegrasi dengan AI untuk analisis dan pembuatan konten.",
+  "name": "AI Carousel Maker",
+  "description": "Pembuat konten carousel bertenaga AI dengan editor kanvas interaktif, manajemen multi-halaman, dan referensi desain cerdas.",
   "requestFramePermissions": [
     "microphone"
   ]

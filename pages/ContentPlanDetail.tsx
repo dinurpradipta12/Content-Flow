@@ -9,14 +9,11 @@ import { supabase } from '../services/supabaseClient';
 
 // --- TYPES & HELPERS ---
 
-// Mock Team Members for Mentioning
-const TEAM_MEMBERS = [
-    { label: 'Aditya W. (You)', value: 'Aditya W.' },
-    { label: 'Sarah J. (Manager)', value: 'Sarah J.' },
-    { label: 'Dimas R. (Editor)', value: 'Dimas R.' },
-    { label: 'Bella (Designer)', value: 'Bella' },
-    { label: 'Johan (Client)', value: 'Johan' }
-];
+interface Member {
+    id: string;
+    name: string;
+    avatar: string;
+}
 
 // Helper: Get Platform Icon
 const getPlatformIcon = (platform: Platform) => {
@@ -157,12 +154,16 @@ const RichTextRenderer: React.FC<{ text: string }> = ({ text }) => {
 
 const KanbanCard: React.FC<{ 
     item: ContentItem; 
+    members: Member[]; // Add members prop
     onEdit: (item: ContentItem) => void; 
     onDelete: (id: string) => void;
     onDragStart: (e: React.DragEvent, id: string) => void;
     onClick: (item: ContentItem) => void;
-}> = ({ item, onEdit, onDelete, onDragStart, onClick }) => {
+}> = ({ item, members, onEdit, onDelete, onDragStart, onClick }) => {
     const [showMenu, setShowMenu] = useState(false);
+    
+    // Find PIC member
+    const picMember = members.find(m => m.name === item.pic);
 
     return (
         <div 
@@ -171,7 +172,7 @@ const KanbanCard: React.FC<{
             onClick={() => onClick(item)}
             className={`group rounded-xl border-2 transition-all duration-200 hover:-translate-y-1 cursor-grab active:cursor-grabbing relative mb-4 flex-shrink-0 z-10 hover:z-20 overflow-visible ${getCardStatusStyle(item.status)}`}
         >
-            {/* Header: Platform & Actions */}
+            {/* ... (keep existing header) ... */}
             <div className={`px-4 py-3 flex justify-between items-center rounded-t-[10px]`}>
                 <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${getPlatformBadgeStyle(item.platform)}`}>
                     {getPlatformIcon(item.platform)}
@@ -237,9 +238,17 @@ const KanbanCard: React.FC<{
 
                     {item.pic ? (
                         <div className="flex items-center gap-1.5" title={`PIC: ${item.pic}`}>
-                            <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm">
-                                {item.pic.charAt(0).toUpperCase()}
-                            </div>
+                            {picMember ? (
+                                <img 
+                                    src={picMember.avatar} 
+                                    alt={picMember.name} 
+                                    className="w-6 h-6 rounded-full border border-slate-800 shadow-sm object-cover"
+                                />
+                            ) : (
+                                <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm">
+                                    {item.pic.charAt(0).toUpperCase()}
+                                </div>
+                            )}
                             <span className="text-[10px] font-bold text-slate-600 truncate max-w-[60px]">{item.pic}</span>
                         </div>
                     ) : (
@@ -257,13 +266,14 @@ const KanbanColumn: React.FC<{
     status: ContentStatus, 
     items: ContentItem[], 
     textColor: string,
+    members: Member[], // Add members prop
     onEdit: (item: ContentItem) => void,
     onDelete: (id: string) => void,
     onDropTask: (e: React.DragEvent, status: ContentStatus) => void,
     onDragStart: (e: React.DragEvent, id: string) => void,
     onCardClick: (item: ContentItem) => void
-}> = ({ status, items, textColor, onEdit, onDelete, onDropTask, onDragStart, onCardClick }) => {
-    
+}> = ({ status, items, textColor, members, onEdit, onDelete, onDropTask, onDragStart, onCardClick }) => {
+    // ... (keep existing handlers) ...
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.currentTarget.classList.add('bg-slate-50/50', 'border-accent/50');
@@ -281,28 +291,31 @@ const KanbanColumn: React.FC<{
 
     return (
         <div 
-            className="min-w-[300px] w-[300px] flex-shrink-0 flex flex-col h-full rounded-2xl border-2 border-transparent transition-colors"
+            className="min-w-[320px] w-[320px] flex-shrink-0 flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             {/* Column Header */}
-            <div className="flex-shrink-0 flex items-center justify-between py-4 px-2 mb-2">
-                <div className="flex items-center gap-2">
-                    <h3 className={`font-heading font-black text-xl tracking-wide ${textColor}`}>{status}</h3>
-                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md text-xs font-bold min-w-[24px] text-center border border-slate-300">
+            <div className="flex-shrink-0 mb-10 pt-2">
+                <div className="flex items-center justify-between pb-4 border-b-2 border-slate-900">
+                    <h3 className={`font-heading font-black text-sm tracking-widest uppercase ${textColor}`}>
+                        {status}
+                    </h3>
+                    <span className="bg-slate-900 text-white w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm">
                         {items.length}
                     </span>
                 </div>
             </div>
             
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto px-3 pb-8 pt-4 no-scrollbar">
+            {/* Content Area */}
+            <div className="flex-1 px-0 pb-0 flex flex-col gap-4">
                 {items.length > 0 ? (
                     items.map(item => (
                         <KanbanCard 
                             key={item.id} 
                             item={item} 
+                            members={members} // Pass members
                             onEdit={onEdit}
                             onDelete={onDelete}
                             onDragStart={onDragStart}
@@ -310,8 +323,8 @@ const KanbanColumn: React.FC<{
                         />
                     ))
                 ) : (
-                    <div className="h-32 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-300 text-xs font-bold select-none">
-                        Kosong
+                    <div className="h-32 border-2 border-dashed border-slate-100 rounded-3xl flex items-center justify-center text-slate-200 text-[10px] font-bold italic select-none tracking-widest">
+                        BELUM ADA TASK
                     </div>
                 )}
             </div>
@@ -346,10 +359,20 @@ export const ContentPlanDetail: React.FC = () => {
   const [errorState, setErrorState] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<Member[]>([]); // NEW STATE
 
   // Table Filters State
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+      const handleScroll = () => {
+          setIsScrolled(window.scrollY > 50);
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -398,6 +421,7 @@ export const ContentPlanDetail: React.FC = () => {
         
         if (wsError) throw wsError;
         
+        // ... (existing invite code logic) ...
         let currentCode = ws.invite_code;
         if (!currentCode) {
             const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -410,15 +434,28 @@ export const ContentPlanDetail: React.FC = () => {
             }
         }
 
-        // Sync Members logic
-        let currentMembers = ws.members || [];
-        if (freshAvatar) {
-            if (currentMembers.length === 0) {
-                currentMembers.push(freshAvatar);
-            } else if (ws.role === 'Owner') {
-                currentMembers[0] = freshAvatar;
-            }
-        }
+        // FETCH MEMBERS (Assuming we can get all users for now, or filter if possible)
+        // Since we don't have a direct link, we'll try to fetch all app_users and filter by those who have this workspace_id in their list?
+        // Or simpler: Just fetch all users and let the user select.
+        // But the request says "list user yang ada di workspace list nya".
+        // Let's try to fetch app_users.
+        const { data: allUsers } = await supabase.from('app_users').select('*');
+        
+        // Map to Member type
+        const mappedMembers: Member[] = (allUsers || []).map((u: any) => ({
+            id: u.id,
+            name: u.full_name || u.email || 'Unknown',
+            avatar: u.avatar_url || ''
+        }));
+        setTeamMembers(mappedMembers);
+
+        // Update workspace members avatar list for header
+        // We can use mappedMembers to get avatars.
+        // But ws.members might be just a list of IDs or something.
+        // Let's assume ws.members is NOT reliable for names, so we use mappedMembers.
+        
+        // For the header avatars, we'll use the first 5 members
+        const headerMembers = mappedMembers.map(m => m.avatar).filter(Boolean).slice(0, 5);
 
         setWorkspaceData({ 
             name: ws.name, 
@@ -427,7 +464,7 @@ export const ContentPlanDetail: React.FC = () => {
             logo_url: ws.logo_url || '',
             period: ws.period || '',
             account_name: ws.account_name || '',
-            members: currentMembers
+            members: headerMembers.length > 0 ? headerMembers : (ws.members || [])
         });
 
         const { data: items, error: itemsError } = await supabase
@@ -442,7 +479,6 @@ export const ContentPlanDetail: React.FC = () => {
         const mappedItems = items.map((item: any) => ({
             ...item,
             contentLink: item.content_link, // MAPPING FIX
-            // Other fields usually match or are handled by JS weak typing, but content_link -> contentLink is crucial
         }));
 
         setTasks(mappedItems as ContentItem[]);
@@ -650,12 +686,12 @@ export const ContentPlanDetail: React.FC = () => {
 
   return (
     <>
-        <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-240px)] min-h-[500px] space-y-4">
+        <div className="flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
         {/* Header Section Updated */}
-        <div className="flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-slate-100 pb-6 flex-shrink-0 w-full max-w-full pl-2 md:pl-4">
+        <div className={`flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-slate-100 pb-0 flex-shrink-0 w-full max-w-full pl-2 md:pl-4 pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-3 bg-white/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
             {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
-            <div className="flex flex-col items-start gap-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col items-start gap-4 transition-all duration-300">
+                <div className={`flex items-center gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                     <button 
                         onClick={() => navigate('/plan')}
                         className="p-2 rounded-lg border-2 border-slate-200 hover:border-slate-800 hover:bg-white transition-all group bg-white shadow-sm text-slate-400 hover:text-slate-800"
@@ -674,7 +710,7 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className={`flex flex-wrap gap-2 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                     {workspaceData.platforms.map(p => (
                         <span key={p} className="px-3 py-1 bg-pink-100 border-2 border-pink-200 text-pink-700 font-black font-heading rounded-lg text-xs transform -rotate-2 shadow-sm inline-block">
                             {p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p}
@@ -687,15 +723,27 @@ export const ContentPlanDetail: React.FC = () => {
                     )}
                 </div>
 
-                <h2 className="text-5xl md:text-7xl font-extrabold text-slate-800 font-heading tracking-tight drop-shadow-sm leading-tight max-w-3xl">
-                    {workspaceData.name}
-                </h2>
+                <div className="flex items-center gap-4">
+                    {isScrolled && (
+                         <button 
+                            onClick={() => navigate('/plan')}
+                            className="p-1.5 rounded-lg border-2 border-slate-200 hover:border-slate-800 hover:bg-white transition-all group bg-white shadow-sm text-slate-400 hover:text-slate-800 mr-2"
+                        >
+                            <ArrowLeft size={16} />
+                        </button>
+                    )}
+                    <h2 className={`font-extrabold text-slate-800 font-heading tracking-tight drop-shadow-sm leading-tight max-w-3xl transition-all duration-300 ${isScrolled ? 'text-2xl md:text-3xl' : 'text-5xl md:text-7xl'}`}>
+                        {workspaceData.name}
+                    </h2>
+                </div>
 
-                <div className="flex items-center gap-3">
+                <div className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                     <div className="flex -space-x-3">
                         {workspaceData.members && workspaceData.members.length > 0 ? (
                             workspaceData.members.map((m, i) => (
-                                <img key={i} src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover" />
+                                <button key={i} onClick={() => navigate('/profile')} className="relative group focus:outline-none">
+                                    <img src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
+                                </button>
                             ))
                         ) : (
                                 <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400">
@@ -743,37 +791,66 @@ export const ContentPlanDetail: React.FC = () => {
                     </Button>
                 </div>
 
-                <div className="text-right">
+                <div className="text-right py-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Content Plan For</p>
-                    <div className="bg-white border-2 border-slate-800 rounded-lg px-4 py-2 shadow-hard inline-block">
-                        <h3 className="font-heading font-black text-lg text-accent flex items-center gap-2 justify-end">
-                            {workspaceData.account_name || '@username'}
-                            <CheckCircle size={16} className="fill-blue-500 text-white" />
-                        </h3>
+                    <div className="flex gap-2 justify-end">
+                        {/* Render buttons for each platform if link exists, otherwise fallback to account name badge */}
+                        {workspaceData.platforms.length > 0 ? (
+                            workspaceData.platforms.map(p => {
+                                // TODO: In real app, these links should come from workspaceData.profileLinks[p]
+                                // For now we simulate or use a placeholder if we haven't migrated DB yet
+                                const link = `https://${p === 'IG' ? 'instagram.com' : p === 'TK' ? 'tiktok.com' : 'example.com'}/${workspaceData.account_name.replace('@', '')}`;
+                                
+                                return (
+                                    <a 
+                                        key={p}
+                                        href={link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-white border-2 border-slate-800 rounded-lg px-3 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-sm transition-all flex items-center gap-2 text-slate-800 font-bold text-sm group"
+                                        title={`Visit ${p} Profile`}
+                                    >
+                                        {getPlatformIcon(p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : p === 'YT' ? Platform.YOUTUBE : p === 'LI' ? Platform.LINKEDIN : p === 'FB' ? Platform.FACEBOOK : Platform.THREADS)}
+                                        <span>{workspaceData.account_name || 'Profile'}</span>
+                                        <ExternalLink size={12} className="text-slate-400 group-hover:text-accent"/>
+                                    </a>
+                                );
+                            })
+                        ) : (
+                            <div className="bg-white border-2 border-slate-800 rounded-lg px-4 py-2 shadow-hard inline-block">
+                                <h3 className="font-heading font-black text-lg text-accent flex items-center gap-2 justify-end">
+                                    {workspaceData.account_name || '@username'}
+                                    <CheckCircle size={16} className="fill-blue-500 text-white" />
+                                </h3>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+            
+            {/* Background Logo Decoration Removed */}
         </div>
 
         {/* Content Area */}
         {viewMode === 'kanban' ? (
-            <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-4 no-scrollbar">
-                <div className="inline-flex h-full gap-6 items-start px-1">
+            <div className="flex-1 w-full overflow-x-auto pb-4 no-scrollbar">
+                <div className="inline-flex gap-6 items-start pl-1 pr-8">
                     {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                         <KanbanColumn 
                             key={status}
                             status={status} 
                             items={tasks.filter(t => t.status === status)} 
                             textColor={
-                                status === ContentStatus.TODO ? 'text-slate-400' :
-                                status === ContentStatus.IN_PROGRESS ? 'text-accent' :
-                                status === ContentStatus.REVIEW ? 'text-amber-500' :
-                                status === ContentStatus.SCHEDULED ? 'text-secondary' : 'text-emerald-600'
+                                status === ContentStatus.TODO ? 'text-slate-900' :
+                                status === ContentStatus.IN_PROGRESS ? 'text-blue-500' :
+                                status === ContentStatus.REVIEW ? 'text-pink-500' :
+                                status === ContentStatus.SCHEDULED ? 'text-purple-500' : 'text-emerald-500'
                             }
+                            members={teamMembers} // Pass members
                             onEdit={handleOpenEditModal}
                             onDelete={handleDeleteContent}
-                            onDropTask={handleDropTask}
                             onDragStart={handleDragStart}
+                            onDropTask={handleDropTask}
                             onCardClick={handleCardClick}
                         />
                     ))}
@@ -781,7 +858,7 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </div>
         ) : (
-            <div className="flex-1 w-full overflow-hidden flex flex-col pt-2 pb-6 px-1">
+            <div className="flex-1 w-full flex flex-col pt-2 pb-6 px-1">
                  {/* Filter Control Bar (Only for Table View) */}
                  <div className="flex items-center gap-3 mb-4 px-1 flex-wrap">
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-500 mr-2">
@@ -834,7 +911,7 @@ export const ContentPlanDetail: React.FC = () => {
                  </div>
 
                  {/* Table Container - Custom Scrollbar */}
-                <div className="overflow-auto custom-scrollbar flex-1 pb-4">
+                <div className="flex-1 pb-4">
                     <table className="w-full text-left border-separate border-spacing-y-3 px-1">
                          {/* Header */}
                         <thead className="sticky top-0 z-20">
@@ -1082,9 +1159,20 @@ export const ContentPlanDetail: React.FC = () => {
                          <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl flex flex-col justify-center items-center text-center hover:border-accent transition-colors">
                             <span className="text-[10px] font-bold text-slate-400 tracking-wider">PIC / Creator</span>
                             <div className="font-bold text-slate-800 text-lg flex items-center gap-2 mt-1">
-                                <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] border border-slate-900 shadow-sm">
-                                    {selectedTask.pic ? selectedTask.pic.charAt(0).toUpperCase() : <User size={12}/>}
-                                </div>
+                                {(() => {
+                                    const picMember = teamMembers.find(m => m.name === selectedTask.pic);
+                                    return picMember ? (
+                                        <img 
+                                            src={picMember.avatar} 
+                                            alt={picMember.name} 
+                                            className="w-6 h-6 rounded-full border border-slate-900 shadow-sm object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] border border-slate-900 shadow-sm">
+                                            {selectedTask.pic ? selectedTask.pic.charAt(0).toUpperCase() : <User size={12}/>}
+                                        </div>
+                                    );
+                                })()}
                                 <span className="truncate max-w-[100px]">{selectedTask.pic || '-'}</span>
                             </div>
                          </div>
@@ -1115,7 +1203,19 @@ export const ContentPlanDetail: React.FC = () => {
 
                         {selectedTask.approval && (
                             <div className="bg-blue-50 border-2 border-blue-200 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
-                                <CheckCircle size={14}/> Acc: {selectedTask.approval}
+                                {(() => {
+                                    const approvalMember = teamMembers.find(m => m.name === selectedTask.approval);
+                                    return approvalMember ? (
+                                        <img 
+                                            src={approvalMember.avatar} 
+                                            alt={approvalMember.name} 
+                                            className="w-4 h-4 rounded-full border border-blue-300 object-cover"
+                                        />
+                                    ) : (
+                                        <CheckCircle size={14}/>
+                                    );
+                                })()}
+                                Acc: {selectedTask.approval}
                             </div>
                         )}
                     </div>
@@ -1296,7 +1396,7 @@ export const ContentPlanDetail: React.FC = () => {
                             value={formData.pic}
                             onChange={(val) => setFormData({...formData, pic: val})}
                             colorTheme="yellow"
-                            options={TEAM_MEMBERS}
+                            options={teamMembers.map(m => ({ label: m.name, value: m.name }))}
                             className="border-yellow-200"
                         />
                          <CreatableSelect 
@@ -1305,7 +1405,7 @@ export const ContentPlanDetail: React.FC = () => {
                             value={formData.approval}
                             onChange={(val) => setFormData({...formData, approval: val})}
                             colorTheme="yellow"
-                            options={TEAM_MEMBERS}
+                            options={teamMembers.map(m => ({ label: m.name, value: m.name }))}
                             className="border-yellow-200"
                         />
                     </div>
