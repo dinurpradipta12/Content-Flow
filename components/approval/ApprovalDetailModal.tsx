@@ -17,7 +17,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Download,
-    Send
+    Send,
+    Paperclip
 } from 'lucide-react';
 
 interface ApprovalDetailModalProps {
@@ -33,6 +34,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     const [comment, setComment] = useState('');
     const [actionLoading, setActionLoading] = useState<'Approve' | 'Reject' | 'Return' | null>(null);
     const [chatInput, setChatInput] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     
     // Action Note Popover State
     const [activeAction, setActiveAction] = useState<'Approve' | 'Reject' | 'Return' | null>(null);
@@ -48,6 +50,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             setActiveAction(null);
             setComment('');
             setChatInput('');
+            setSelectedFile(null);
             setPreviewImages([]);
             setPreviewPdf(null);
         }
@@ -87,7 +90,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     };
 
     const handleSendChat = async () => {
-        if (!chatInput.trim() || !request) return;
+        if ((!chatInput.trim() && !selectedFile) || !request) return;
         // In a real app, this would save a comment-only log to the database
         // For now, we'll just simulate adding it to the local state
         const newLog: ApprovalLog = {
@@ -98,10 +101,12 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             user_name: currentUser.full_name || currentUser.username,
             action: 'Comment',
             comment: chatInput,
+            attachment: selectedFile ? selectedFile.name : undefined,
             created_at: new Date().toISOString()
         };
         setLogs(prev => [...prev, newLog]);
         setChatInput('');
+        setSelectedFile(null);
     };
 
     if (!request) return null;
@@ -400,30 +405,43 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             </div>
 
                             {/* Chat Input */}
-                            <div className="shrink-0 flex gap-2">
-                                <div className="relative flex-1">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Tulis komentar..." 
-                                        className="w-full border-4 border-slate-900 rounded-xl pl-4 pr-12 py-3 font-bold text-sm focus:outline-none focus:bg-yellow-50 transition-colors shadow-[4px_4px_0px_0px_#0f172a]"
-                                        value={chatInput}
-                                        onChange={e => setChatInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && handleSendChat()}
-                                    />
-                                    <label className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-accent transition-colors">
-                                        <ImageIcon size={20} />
-                                        <input type="file" className="hidden" onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) setChatInput(prev => prev + ` [Lampiran: ${file.name}]`);
-                                        }} />
-                                    </label>
+                            <div className="shrink-0 flex flex-col gap-2">
+                                {selectedFile && (
+                                    <div className="flex items-center justify-between bg-slate-100 p-2 rounded-lg border border-slate-300">
+                                        <div className="flex items-center gap-2 text-sm text-slate-700 truncate">
+                                            <Paperclip size={14} />
+                                            <span className="truncate">{selectedFile.name}</span>
+                                        </div>
+                                        <button onClick={() => setSelectedFile(null)} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Tulis komentar..." 
+                                            className="w-full border-4 border-slate-900 rounded-xl pl-4 pr-12 py-3 font-bold text-sm focus:outline-none focus:bg-yellow-50 transition-colors shadow-[4px_4px_0px_0px_#0f172a]"
+                                            value={chatInput}
+                                            onChange={e => setChatInput(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && handleSendChat()}
+                                        />
+                                        <label className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-accent transition-colors p-1 hover:bg-slate-100 rounded-lg">
+                                            <Paperclip size={20} />
+                                            <input type="file" className="hidden" onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) setSelectedFile(file);
+                                            }} />
+                                        </label>
+                                    </div>
+                                    <button 
+                                        onClick={handleSendChat}
+                                        className="bg-accent text-white p-4 rounded-xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all"
+                                    >
+                                        <Send size={20} />
+                                    </button>
                                 </div>
-                                <button 
-                                    onClick={handleSendChat}
-                                    className="bg-accent text-white p-4 rounded-xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all"
-                                >
-                                    <Send size={20} />
-                                </button>
                             </div>
                         </div>
 
@@ -487,7 +505,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         </Button>
                         <Button 
                             onClick={() => { setActiveAction(null); setComment(''); }} 
-                            className="flex-1 bg-red-500 text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] py-3 text-sm uppercase tracking-widest"
+                            className="flex-1 bg-red-600 text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] py-3 text-sm uppercase tracking-widest hover:bg-red-700"
                         >
                             Batal
                         </Button>
@@ -497,7 +515,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
             {/* Image Preview Modal */}
             {previewImages.length > 0 && createPortal(
-                <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md">
+                <div className="fixed inset-0 z-[20000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md">
                     {/* Top Actions */}
                     <div className="absolute top-4 right-4 flex gap-4 z-10">
                         <button 
@@ -558,7 +576,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
             {/* PDF Preview Modal */}
             {previewPdf && createPortal(
-                <div className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 md:p-12 backdrop-blur-md">
+                <div className="fixed inset-0 z-[20000] bg-black/90 flex items-center justify-center p-4 md:p-12 backdrop-blur-md">
                     {/* Top Actions */}
                     <div className="absolute top-4 right-4 flex gap-4 z-10">
                         <button 

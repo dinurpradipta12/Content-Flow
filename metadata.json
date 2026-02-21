@@ -1,6 +1,6 @@
 {
-  "name": "AI Carousel Maker",
-  "description": "Pembuat konten carousel bertenaga AI dengan editor kanvas interaktif, manajemen multi-halaman, dan referensi desain cerdas.",
+  "name": "Arunika Carousel Dev",
+  "description": "Platform pembuatan konten carousel AI dengan fitur editor profesional, manajemen layer, dan sinkronisasi database.",
   "requestFramePermissions": [
     "microphone"
   ]

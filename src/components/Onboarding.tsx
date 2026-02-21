@@ -33,7 +33,7 @@ export const Onboarding: React.FC = () => {
                         <Sparkles size={40} className="text-white" />
                     </div>
                     <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tight mb-4 leading-none">
-                        AI Carousel Maker
+                        Arunika Carousel Dev
                     </h1>
                     <p className="text-xl font-bold text-slate-500">
                         Upload referensi desain, biarkan AI kami bekerja untuk Anda.

@@ -414,7 +414,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }`}
       >
         {/* Logo Area */}
-        <div className="h-24 flex items-center px-6 border-b-2 border-slate-100 shrink-0">
+        <div className="h-auto min-h-24 flex items-center px-6 border-b-2 border-slate-100 shrink-0 py-4">
           <div className="flex items-center gap-3 w-full">
             {branding.appLogo ? (
                  <img src={branding.appLogo} className="w-10 h-10 object-contain shrink-0" alt="Logo" />
@@ -423,34 +423,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Layers size={20} className="text-slate-800" />
                 </div>
             )}
-            <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight leading-tight">
-              <span className="block">{branding.appName}</span>
-              <span className="block text-slate-800">Content Flow.</span>
+            <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight leading-tight break-words whitespace-normal">
+              {branding.appName}
             </h1>
-          </div>
-        </div>
-
-        {/* Workspace Switcher */}
-        <div className="px-6 pt-6 pb-2 shrink-0">
-          <div className="relative group">
-            <button className="w-full flex items-center justify-between bg-muted border-2 border-transparent hover:border-slate-300 p-3 rounded-xl transition-all">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center text-white font-bold border-2 border-slate-800 flex-shrink-0">
-                  {currentWorkspace.name.charAt(0)}
-                </div>
-                <div className="text-left truncate">
-                  <p className="text-sm font-bold text-slate-800 leading-tight truncate">{currentWorkspace.name}</p>
-                  <p className="text-xs text-slate-500">{currentWorkspace.role}</p>
-                </div>
-              </div>
-              <ChevronDown size={16} className="text-slate-400" />
-            </button>
-            <div className="hidden group-hover:block absolute top-full left-0 w-full bg-white border-2 border-slate-200 rounded-xl shadow-hard mt-2 p-2 z-50">
-              <button className="w-full text-left p-2 hover:bg-transparent hover:text-slate-900 rounded-lg text-sm font-medium transition-colors">Arunika Business</button>
-              <button className="w-full text-left p-2 hover:bg-transparent hover:translate-x-1 rounded-lg text-sm font-medium text-accent flex items-center gap-2 transition-transform">
-                <UserPlus size={14} /> Buat Workspace
-              </button>
-            </div>
           </div>
         </div>
 
@@ -554,7 +529,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <main className="flex-1 p-4 md:px-6 md:py-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar">
             <div className="max-w-[1600px] mx-auto animate-bounce-in h-full flex flex-col">
                 {children}
             </div>

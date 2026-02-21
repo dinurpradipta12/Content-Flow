@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCarouselStore, CANVAS_SIZES } from '../store/useCarouselStore';
-import { Type, Image as ImageIcon, Palette, Layout, ChevronDown, Layers, Eye, EyeOff, Lock, Unlock, GripVertical, AlignLeft, AlignCenter, AlignRight, Bold, Italic } from 'lucide-react';
+import { Type, Image as ImageIcon, Palette, Layout, ChevronDown, Layers, Eye, EyeOff, Lock, Unlock, GripVertical, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Save, FolderOpen, Loader2, Plus, Square, Circle, Upload } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -59,9 +59,69 @@ const SortableLayerItem: React.FC<{ layer: any }> = ({ layer }) => {
 };
 
 export const Sidebar: React.FC = () => {
-    const { pages, currentPageIndex, updatePageContent, updatePageBackground, canvasSize, setCanvasSize, currentLayers, setCurrentLayers } = useCarouselStore();
+    const { 
+        pages, 
+        currentPageIndex, 
+        updatePageContent, 
+        updatePageBackground, 
+        canvasSize, 
+        setCanvasSize, 
+        currentLayers, 
+        setCurrentLayers,
+        savePreset,
+        loadPresets,
+        setPages,
+        uploadFont
+    } = useCarouselStore();
+    
     const [activeTab, setActiveTab] = useState<'content' | 'layers'>('content');
+    const [isSaving, setIsSaving] = useState(false);
+    const [presets, setPresets] = useState<any[]>([]);
+    const [isLoadingPresets, setIsLoadingPresets] = useState(false);
+    
     const currentPage = pages[currentPageIndex];
+
+    useEffect(() => {
+        if (activeTab === 'content') {
+            fetchPresets();
+        }
+    }, [activeTab]);
+
+    const fetchPresets = async () => {
+        try {
+            setIsLoadingPresets(true);
+            const data = await loadPresets();
+            setPresets(data);
+        } catch (err) {
+            console.error('Failed to load presets:', err);
+        } finally {
+            setIsLoadingPresets(false);
+        }
+    };
+
+    const handleSavePreset = async () => {
+        const name = prompt('Enter preset name:');
+        if (!name) return;
+        
+        try {
+            setIsSaving(true);
+            await savePreset(name);
+            alert('Preset saved successfully!');
+            fetchPresets();
+        } catch (err) {
+            alert('Failed to save preset. Make sure you are logged in.');
+            console.error(err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleLoadPreset = (preset: any) => {
+        if (confirm(`Load preset "${preset.name}"? This will replace your current design.`)) {
+            setPages(preset.data.pages);
+            setCanvasSize(preset.data.canvasSize);
+        }
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -86,8 +146,6 @@ export const Sidebar: React.FC = () => {
         updatePageContent(currentPageIndex, { [key]: value });
     };
 
-    const fonts = ['Inter', 'Space Grotesk', 'Playfair Display', 'JetBrains Mono', 'Anton', 'Montserrat'];
-
     return (
         <div className="w-80 bg-white border-r-4 border-slate-900 flex flex-col h-full overflow-hidden">
             {/* Tabs */}
@@ -109,6 +167,39 @@ export const Sidebar: React.FC = () => {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
                 {activeTab === 'content' ? (
                     <div className="space-y-8">
+                        {/* Presets */}
+                        <section>
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
+                                    <FolderOpen size={14} /> Presets
+                                </label>
+                                <button 
+                                    onClick={handleSavePreset}
+                                    disabled={isSaving}
+                                    className="p-1.5 bg-accent text-white rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50"
+                                >
+                                    {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {isLoadingPresets ? (
+                                    <div className="flex justify-center py-4"><Loader2 className="animate-spin text-slate-300" size={20} /></div>
+                                ) : presets.length > 0 ? (
+                                    presets.map(preset => (
+                                        <button 
+                                            key={preset.id}
+                                            onClick={() => handleLoadPreset(preset)}
+                                            className="w-full text-left p-3 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors font-bold text-xs truncate uppercase"
+                                        >
+                                            {preset.name}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-[10px] font-bold text-slate-400 italic text-center py-2">No presets saved yet</p>
+                                )}
+                            </div>
+                        </section>
+
                         {/* Canvas Size */}
                         <section>
                             <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
@@ -145,56 +236,93 @@ export const Sidebar: React.FC = () => {
                                         style={{ backgroundColor: color }}
                                     />
                                 ))}
-                                <label className="w-10 h-10 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center cursor-pointer hover:bg-slate-50">
-                                    <ImageIcon size={18} className="text-slate-400" />
-                                    <input type="file" className="hidden" />
+                                <label className="w-10 h-10 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center cursor-pointer hover:bg-slate-50 relative">
+                                    <Plus size={18} className="text-slate-400" />
+                                    <input 
+                                        type="color" 
+                                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                                        onChange={(e) => updatePageBackground(currentPageIndex, e.target.value)}
+                                    />
                                 </label>
                             </div>
                         </section>
 
-                        {/* Content Form */}
-                        <section className="space-y-6">
+                        {/* Add Elements */}
+                        <section className="space-y-4">
                             <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
-                                <Type size={14} /> Structured Content
+                                <Plus size={14} /> Add Elements
                             </label>
                             
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-black uppercase mb-1 text-slate-600">Hook</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button 
+                                    onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'text' } }))}
+                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                >
+                                    <Type size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-black uppercase">Add Text</span>
+                                </button>
+                                <button 
+                                    onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'rect' } }))}
+                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                >
+                                    <Square size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-black uppercase">Add Shape</span>
+                                </button>
+                                <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
+                                    <ImageIcon size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-black uppercase">Add Image</span>
                                     <input 
-                                        type="text"
-                                        value={currentPage.content.hook}
-                                        onChange={(e) => handleContentChange('hook', e.target.value)}
-                                        className="w-full border-4 border-slate-900 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:bg-yellow-50"
+                                        type="file" 
+                                        className="hidden" 
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (f) => {
+                                                    window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'image', data: f.target?.result } }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }} 
+                                        accept="image/*" 
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black uppercase mb-1 text-slate-600">Sub-Headline</label>
+                                </label>
+                                <button 
+                                    onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'circle' } }))}
+                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                >
+                                    <Circle size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-black uppercase">Add Circle</span>
+                                </button>
+                                <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
+                                    <Upload size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-black uppercase text-center">Upload Font</span>
                                     <input 
-                                        type="text"
-                                        value={currentPage.content.subHeadline}
-                                        onChange={(e) => handleContentChange('subHeadline', e.target.value)}
-                                        className="w-full border-4 border-slate-900 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:bg-yellow-50"
+                                        type="file" 
+                                        className="hidden" 
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = async (f) => {
+                                                    const data = f.target?.result;
+                                                    if (typeof data === 'string') {
+                                                        const fontName = file.name.split('.')[0];
+                                                        try {
+                                                            await uploadFont(fontName, data);
+                                                            alert(`Font ${fontName} uploaded and synced!`);
+                                                        } catch (err) {
+                                                            console.error('Font upload error:', err);
+                                                            alert('Failed to upload font.');
+                                                        }
+                                                    }
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }} 
+                                        accept=".ttf,.otf,.woff,.woff2" 
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black uppercase mb-1 text-slate-600">Body Text</label>
-                                    <textarea 
-                                        rows={4}
-                                        value={currentPage.content.body}
-                                        onChange={(e) => handleContentChange('body', e.target.value)}
-                                        className="w-full border-4 border-slate-900 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:bg-yellow-50 resize-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-black uppercase mb-1 text-slate-600">Call to Action</label>
-                                    <input 
-                                        type="text"
-                                        value={currentPage.content.cta}
-                                        onChange={(e) => handleContentChange('cta', e.target.value)}
-                                        className="w-full border-4 border-slate-900 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:bg-yellow-50"
-                                    />
-                                </div>
+                                </label>
                             </div>
                         </section>
                     </div>
@@ -231,3 +359,4 @@ export const Sidebar: React.FC = () => {
         </div>
     );
 };
+

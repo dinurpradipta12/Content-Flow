@@ -225,7 +225,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                         ))}
                         
                         {/* Custom Form Builder Button (Superuser Only) */}
-                        {(currentUser?.role === 'Developer' || currentUser?.role === 'Owner') && (
+                        {currentUser?.role === 'superuser' && (
                             <button
                                 onClick={() => { onClose(); setIsCustomBuilderOpen(true); }}
                                 className="flex flex-col items-start p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl hover:border-accent hover:bg-yellow-50 hover:shadow-[4px_4px_0px_0px_#0f172a] transition-all text-left group"
