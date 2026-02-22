@@ -207,6 +207,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
 
+    // Role Change Notification State
+    const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
+
     // Network State
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
     const [latency, setLatency] = useState(0);
@@ -322,6 +325,32 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/carousel', label: 'Carousel Maker', icon: <ImageIcon size={20} /> },
         { path: '/script', label: 'Team KPI Board', icon: <BarChart2 size={20} /> },
     ];
+
+    // Listen for Role Changes via Realtime
+    useEffect(() => {
+        const currentUserId = localStorage.getItem('user_id');
+        if (!currentUserId) return;
+
+        const roleChannel = supabase
+            .channel('app_users_role_checker')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${currentUserId}` },
+                (payload: any) => {
+                    const newRole = payload.new.role;
+                    const oldRole = localStorage.getItem('user_role');
+                    // If the role was changed from what we have cached, show the warning modal
+                    if (newRole && oldRole && newRole !== oldRole) {
+                        setShowRoleChangeModal(true);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(roleChannel);
+        };
+    }, []);
 
     // Handlers
     const handleLogout = () => {
@@ -743,6 +772,28 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             )}
                         </div>
                     )}
+                </div>
+            </Modal>
+
+            {/* --- ROLE CHANGE NOTIFICATION MODAL --- */}
+            <Modal isOpen={showRoleChangeModal} onClose={() => { }} title="Pemberitahuan Sistem">
+                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                    <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2">
+                        <Shield className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800">Perubahan Akses/Role</h3>
+                    <p className="text-slate-500 text-sm max-w-sm">
+                        Administrator telah mengubah Role atau level akses Anda. Untuk mencegah masalah sinkronisasi dan keamanan, Anda diharuskan untuk login ulang.
+                    </p>
+                    <button
+                        onClick={() => {
+                            localStorage.clear();
+                            navigate('/login');
+                        }}
+                        className="mt-6 w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl shadow-hard border-2 border-slate-900 hover:bg-slate-700 transition-colors"
+                    >
+                        Login Ulang Sekarang
+                    </button>
                 </div>
             </Modal>
         </div>
