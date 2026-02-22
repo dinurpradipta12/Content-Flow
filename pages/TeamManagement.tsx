@@ -4,7 +4,7 @@ import { Workspace } from '../types';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
-import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers } from 'lucide-react';
+import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target } from 'lucide-react';
 
 interface AppUser {
     id: string;
@@ -53,6 +53,12 @@ export const TeamManagement: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [saving, setSaving] = useState(false);
+
+    // KPI Add Form
+    const [showAddKPI, setShowAddKPI] = useState(false);
+    const [kpiForm, setKpiForm] = useState({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', notes: '' });
+    const [addingKPI, setAddingKPI] = useState(false);
+    const [minCompletionRate, setMinCompletionRate] = useState(80);
 
     const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
@@ -314,6 +320,43 @@ export const TeamManagement: React.FC = () => {
         }
     };
 
+    const handleRemoveFromSpecificWorkspace = async (wsId: string, wsName: string) => {
+        if (!selectedUser) return;
+        if (!confirm(`Hapus ${selectedUser.full_name} dari workspace "${wsName}"?`)) return;
+        const ws = allWorkspaces.find(w => w.id === wsId);
+        if (!ws) return;
+        const updatedMembers = (ws.members || []).filter(m => m !== selectedUser.avatar_url);
+        const { error } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', wsId);
+        if (error) { console.error(error); alert('Gagal menghapus dari workspace.'); }
+        else { fetchData(); }
+    };
+
+    const handleAddKPI = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        const tm = teamMembers.find(t => t.full_name === selectedUser.full_name);
+        if (!tm) { alert('Team member record tidak ditemukan. Pastikan user terdaftar di Team Members.'); return; }
+        setAddingKPI(true);
+        try {
+            const { error } = await supabase.from('team_kpis').insert([{
+                member_id: tm.id,
+                metric_name: kpiForm.metric_name,
+                category: kpiForm.category,
+                target_value: kpiForm.target_value,
+                actual_value: kpiForm.actual_value,
+                unit: kpiForm.unit,
+                period: kpiForm.period,
+                period_date: new Date().toISOString().split('T')[0],
+                notes: kpiForm.notes
+            }]);
+            if (error) throw error;
+            setKpiForm({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', notes: '' });
+            setShowAddKPI(false);
+            fetchData();
+        } catch (err) { console.error(err); alert('Gagal menambahkan KPI.'); }
+        finally { setAddingKPI(false); }
+    };
+
     return (
         <div className="space-y-6 pb-12 animate-in fade-in duration-300 relative w-full h-full min-h-[85vh]">
             {/* Page Header */}
@@ -457,37 +500,44 @@ export const TeamManagement: React.FC = () => {
                                                 className="cursor-pointer hover:-translate-y-1 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] p-4 flex flex-col gap-3 bg-white transition-all group"
                                                 onClick={() => handleOpenDetail(user)}
                                             >
+                                                {/* Top: Avatar left + Info right */}
                                                 <div className="flex items-center gap-4">
                                                     <img
                                                         src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                        className="w-14 h-14 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover group-hover:-rotate-3 transition-transform shrink-0"
+                                                        className="w-16 h-16 rounded-2xl border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] object-cover group-hover:-rotate-3 transition-transform shrink-0"
                                                         alt="Avatar"
                                                     />
                                                     <div className="flex-1 min-w-0">
-                                                        <h4 className="font-heading font-black text-slate-900 truncate">{user.full_name}</h4>
-                                                        <p className="text-xs font-bold text-slate-500 truncate">@{user.username}</p>
-                                                    </div>
-                                                    <ChevronRight className="text-slate-300 shrink-0 group-hover:text-accent group-hover:translate-x-1 transition-all" size={24} />
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border-2 border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
-                                                        user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
-                                                            'bg-white text-slate-900'
-                                                        }`}>
-                                                        {user.role}
-                                                    </span>
-                                                    {tm?.department && (
-                                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-widest text-slate-600 bg-slate-100 border border-slate-200 truncate max-w-[120px]">
-                                                            {tm.department}
+                                                        <h4 className="font-heading font-black text-slate-900 text-lg leading-tight truncate">{user.full_name}</h4>
+                                                        <p className="text-xs font-bold text-slate-400 truncate mb-1">@{user.username}</p>
+                                                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border-2 border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
+                                                            user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
+                                                                'bg-white text-slate-900'
+                                                            }`}>
+                                                            {user.role}
                                                         </span>
-                                                    )}
+                                                        {tm?.department && (
+                                                            <span className="ml-1 inline-block px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 truncate max-w-[100px]">
+                                                                {tm.department}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <ChevronRight className="text-slate-300 shrink-0 group-hover:text-accent group-hover:translate-x-1 transition-all" size={20} />
                                                 </div>
 
-                                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1 border border-slate-200 mt-2">
-                                                    <div className={`h-2 rounded-full ${rate >= 80 ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${rate}%` }}></div>
+                                                {/* Bottom: KPI Progress */}
+                                                <div className="pt-2 border-t border-slate-100">
+                                                    <p className="text-[11px] font-black text-slate-500 text-center mb-2 uppercase tracking-widest">KPI Progress</p>
+                                                    <div className="w-full bg-slate-100 rounded-full h-2.5 border border-slate-200 overflow-hidden">
+                                                        <div
+                                                            className={`h-2.5 rounded-full transition-all ${rate >= minCompletionRate ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                                                                }`}
+                                                            style={{ width: `${rate}%` }}
+                                                        />
+                                                    </div>
+                                                    <p className={`text-xs font-black text-right mt-1 ${rate >= minCompletionRate ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-red-600'
+                                                        }`}>{rate}% Selesai</p>
                                                 </div>
-                                                <p className="text-[10px] text-right font-bold text-slate-500">{rate}% KPI Completed</p>
                                             </Card>
                                         );
                                     })}
@@ -552,21 +602,32 @@ export const TeamManagement: React.FC = () => {
                             </div>
 
                             {/* WORKSPACES INFO & INVITE */}
-                            <div className="space-y-4 pt-4 border-t-2 border-slate-200">
+                            <div className="space-y-3 pt-4 border-t-2 border-slate-200">
                                 <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
                                     <Globe size={16} /> Workspaces
                                 </h4>
-                                <div className="flex flex-wrap gap-2 mb-4">
+                                {/* Workspace tags with individual remove button */}
+                                <div className="flex flex-wrap gap-2">
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).map(ws => (
-                                        <span key={ws.id} className="inline-block px-3 py-1 bg-white border-2 border-slate-900 rounded-lg text-xs font-bold text-slate-700 shadow-[2px_2px_0px_#0f172a]">
+                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border-2 border-slate-900 rounded-lg text-xs font-bold text-slate-700 shadow-[2px_2px_0px_#0f172a]">
                                             {ws.name}
+                                            <button
+                                                onClick={() => handleRemoveFromSpecificWorkspace(ws.id, ws.name)}
+                                                className="text-slate-400 hover:text-red-600 transition-colors ml-0.5"
+                                                title={`Hapus dari ${ws.name}`}
+                                            >
+                                                <X size={12} />
+                                            </button>
                                         </span>
                                     ))}
+                                    {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).length === 0 && (
+                                        <p className="text-xs text-slate-400 italic">Tidak ada workspace</p>
+                                    )}
                                 </div>
 
                                 {/* Add to Workspace feature */}
-                                <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-300 p-4">
-                                    <p className="text-xs font-bold text-emerald-800 mb-3">Undang user ke workspace lain:</p>
+                                <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-300 p-3">
+                                    <p className="text-xs font-bold text-emerald-800 mb-2">Undang ke workspace lain:</p>
                                     <div className="flex gap-2 items-center">
                                         <select
                                             id="ws-select"
@@ -579,28 +640,23 @@ export const TeamManagement: React.FC = () => {
                                         </select>
                                         <Button onClick={() => {
                                             const selectEl = document.getElementById('ws-select') as HTMLSelectElement;
-                                            if (selectEl && selectEl.value) {
-                                                handleAddToOtherWorkspace(selectEl.value);
-                                            }
+                                            if (selectEl && selectEl.value) handleAddToOtherWorkspace(selectEl.value);
                                         }}>Undang</Button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Hapus Anggota */}
+                            {/* Hapus dari workspace aktif */}
                             <div className="pt-4 border-t-2 border-slate-200">
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
-                                    <UserMinus size={16} /> Keluarkan dari Workspace
-                                </h4>
-                                <div className="bg-red-50 rounded-2xl border-2 border-red-300 p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                <div className="bg-red-50 rounded-2xl border-2 border-red-300 p-3 flex flex-col sm:flex-row gap-3 items-center justify-between">
                                     <p className="text-xs font-bold text-red-800">
-                                        Anggota tidak akan memiliki akses lagi terhadap konten dan data di {selectedWorkspace?.name}.
+                                        Keluarkan dari workspace <span className="italic">{selectedWorkspace?.name}</span>.
                                     </p>
                                     <button
                                         onClick={handleRemoveFromWorkspace}
-                                        className="whitespace-nowrap bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs px-4 py-3 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none"
+                                        className="whitespace-nowrap bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs px-4 py-2.5 rounded-xl border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:shadow-none"
                                     >
-                                        Keluarkan Anggota
+                                        <UserMinus size={14} className="inline mr-1" /> Keluarkan
                                     </button>
                                 </div>
                             </div>
@@ -608,33 +664,84 @@ export const TeamManagement: React.FC = () => {
 
                         {/* RIGHT COL - KPI */}
                         <div className="space-y-4 bg-slate-50 p-6 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] h-full flex flex-col">
-                            <h4 className="font-heading font-black text-xl text-slate-900 mb-2 pb-3 border-b-2 border-slate-200 flex items-center justify-between">
-                                Daftar KPI Progress
-                                <span className="text-sm px-3 py-1 bg-accent text-white rounded-full ml-auto shadow-[2px_2px_0px_#0f172a]">
-                                    {getKPICompletion(selectedUser)}% Selesai
-                                </span>
-                            </h4>
-                            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 min-h-[400px]">
+                            {/* KPI Header */}
+                            <div className="pb-3 border-b-2 border-slate-200">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-heading font-black text-xl text-slate-900">Daftar KPI</h4>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm px-3 py-1 bg-accent text-white rounded-full shadow-[2px_2px_0px_#0f172a]">
+                                            {getKPICompletion(selectedUser)}% Selesai
+                                        </span>
+                                        <button
+                                            onClick={() => setShowAddKPI(!showAddKPI)}
+                                            className="p-1.5 bg-emerald-500 text-white rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-emerald-600 transition-colors"
+                                            title="Tambah KPI"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                                {/* Min Completion Rate setter */}
+                                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                                    <Target size={14} className="text-amber-600 shrink-0" />
+                                    <span className="text-xs font-bold text-amber-800">Completion min:</span>
+                                    <input
+                                        type="number"
+                                        min={0} max={100}
+                                        value={minCompletionRate}
+                                        onChange={e => setMinCompletionRate(Number(e.target.value))}
+                                        className="w-16 bg-white border border-amber-300 rounded px-2 py-0.5 text-xs font-black text-amber-900 text-center focus:outline-none"
+                                    />
+                                    <span className="text-xs font-bold text-amber-700">%</span>
+                                </div>
+                                {/* Add KPI Form */}
+                                {showAddKPI && (
+                                    <form onSubmit={handleAddKPI} className="mt-3 bg-white border-2 border-slate-900 rounded-xl p-4 space-y-3 shadow-[3px_3px_0px_#0f172a] animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Tambah KPI Baru</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input required placeholder="Nama Metrik" value={kpiForm.metric_name} onChange={e => setKpiForm(p => ({ ...p, metric_name: e.target.value }))} className="col-span-2 border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                            <input placeholder="Kategori" value={kpiForm.category} onChange={e => setKpiForm(p => ({ ...p, category: e.target.value }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                            <input placeholder="Period" value={kpiForm.period} onChange={e => setKpiForm(p => ({ ...p, period: e.target.value }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                            <input type="number" placeholder="Target" value={kpiForm.target_value} onChange={e => setKpiForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                            <input type="number" placeholder="Actual" value={kpiForm.actual_value} onChange={e => setKpiForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                            <input placeholder="Unit (%, pcs...)" value={kpiForm.unit} onChange={e => setKpiForm(p => ({ ...p, unit: e.target.value }))} className="col-span-2 border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button type="submit" disabled={addingKPI} className="text-xs py-1.5">{addingKPI ? <Loader2 className="animate-spin" size={14} /> : 'Simpan KPI'}</Button>
+                                            <Button type="button" variant="secondary" onClick={() => setShowAddKPI(false)} className="text-xs py-1.5">Batal</Button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+
+                            {/* KPI List */}
+                            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 min-h-[300px]">
                                 {getUserKPIs(selectedUser).length === 0 ? (
-                                    <div className="text-slate-400 font-bold text-center py-10">Belum ada KPI terdaftar</div>
+                                    <div className="text-slate-400 font-bold text-center py-10">
+                                        <Target className="mx-auto mb-2 opacity-40" size={32} />
+                                        Belum ada KPI terdaftar
+                                    </div>
                                 ) : (
                                     getUserKPIs(selectedUser).map(kpi => {
                                         const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
                                         const pVal = Math.min(progress, 100);
+                                        const isSuccess = pVal >= minCompletionRate;
                                         return (
                                             <div key={kpi.id} className="bg-white p-4 rounded-xl border-2 border-slate-200 hover:border-slate-900 transition-colors">
                                                 <div className="flex justify-between items-start mb-2">
                                                     <h5 className="font-bold text-slate-900 text-sm truncate pr-2">{kpi.metric_name}</h5>
-                                                    <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shadow-sm shrink-0">
-                                                        {kpi.period}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${isSuccess ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-red-50 text-red-600 border-red-200'
+                                                            }`}>{isSuccess ? '✓ Berhasil' : '✗ Perlu Ditingkatkan'}</span>
+                                                        <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shadow-sm">{kpi.period}</span>
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-end mb-1">
                                                     <span className="text-xs font-bold text-slate-500">{kpi.category}</span>
                                                     <span className="text-xs font-black text-slate-900">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
                                                 </div>
                                                 <div className="w-full bg-slate-100 rounded-full h-2 border border-slate-200 overflow-hidden">
-                                                    <div className={`h-2 rounded-full ${pVal >= 80 ? 'bg-emerald-500' : pVal >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${pVal}%` }}></div>
+                                                    <div className={`h-2 rounded-full ${pVal >= minCompletionRate ? 'bg-emerald-500' : pVal >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${pVal}%` }} />
                                                 </div>
                                             </div>
                                         );

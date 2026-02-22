@@ -725,7 +725,17 @@ export const Editor: React.FC = () => {
             window.removeEventListener('keyup', handleKeyUp);
             canvas.dispose();
         };
-    }, [currentPageIndex, canvasSize.id, referenceData]);
+    }, [currentPageIndex, referenceData]);
+
+    // Resize canvas when canvasSize changes — WITHOUT destroying/recreating canvas or elements
+    useEffect(() => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        canvas.setWidth(canvasSize.width);
+        canvas.setHeight(canvasSize.height);
+        canvas.renderAll();
+        saveCanvas();
+    }, [canvasSize.id]);
 
     const updateFloatingMenuPos = (obj: fabric.Object | undefined) => {
         if (!obj || !fabricCanvas.current) return;

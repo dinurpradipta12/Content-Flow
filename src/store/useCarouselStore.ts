@@ -53,7 +53,7 @@ interface CarouselState {
     updatePageContent: (index: number, content: Partial<CarouselPage['content']>) => void;
     updatePageBackground: (index: number, background: string) => void;
     updatePageElements: (index: number, elements: any[], previewUrl?: string) => void;
-    savePreset: (name: string) => Promise<void>;
+    savePreset: (name: string, presetData?: { pages: CarouselPage[], canvasSize: CanvasSize }) => Promise<void>;
     loadPresets: () => Promise<any[]>;
     uploadFont: (name: string, data: string) => Promise<void>;
     loadFonts: () => Promise<void>;
@@ -172,7 +172,7 @@ export const useCarouselStore = create<CarouselState>()(
                 return { pages: newPages };
             }),
 
-            savePreset: async (name) => {
+            savePreset: async (name, presetData) => {
                 const { pages, canvasSize } = get();
                 const { supabase } = await import('../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
@@ -180,7 +180,7 @@ export const useCarouselStore = create<CarouselState>()(
                 const { error } = await supabase.from('carousel_presets').insert({
                     name,
                     user_id: userId,
-                    data: { pages, canvasSize }
+                    data: presetData ?? { pages, canvasSize }
                 });
 
                 if (error) throw error;
