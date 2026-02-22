@@ -71,7 +71,7 @@ export interface User {
   avatarUrl: string;
 }
 
-export type NotificationType = 'JOIN_WORKSPACE' | 'CONTENT_APPROVAL' | 'CONTENT_REVISION' | 'CONTENT_APPROVED' | 'MENTION';
+export type NotificationType = 'JOIN_WORKSPACE' | 'CONTENT_APPROVAL' | 'CONTENT_REVISION' | 'CONTENT_APPROVED' | 'MENTION' | 'REACTION';
 
 export interface AppNotification {
   id: string;
