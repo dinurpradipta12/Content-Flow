@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type CanvasSize = {
     width: number;
@@ -35,7 +36,7 @@ interface CarouselState {
     zoom: number;
     referenceData: any | null;
     customFonts: string[];
-    
+
     // Actions
     setPages: (pages: CarouselPage[]) => void;
     setCurrentPageIndex: (index: number) => void;
@@ -45,7 +46,7 @@ interface CarouselState {
     setZoom: (zoom: number) => void;
     setReferenceData: (data: any) => void;
     setCustomFonts: (fonts: string[]) => void;
-    
+
     addPage: () => void;
     duplicatePage: (index: number) => void;
     deletePage: (index: number) => void;
@@ -56,185 +57,211 @@ interface CarouselState {
     loadPresets: () => Promise<any[]>;
     uploadFont: (name: string, data: string) => Promise<void>;
     loadFonts: () => Promise<void>;
+    resetCanvas: () => void;
 }
 
-export const useCarouselStore = create<CarouselState>((set, get) => ({
-    pages: [
-        {
-            id: '1',
-            background: '#ffffff',
-            elements: [],
-            content: {
-                hook: 'Your Catchy Hook Here',
-                subHeadline: 'A compelling sub-headline',
-                body: 'The main value proposition or story goes here.',
-                cta: 'Swipe to learn more'
-            }
-        }
-    ],
-    currentPageIndex: 0,
-    canvasSize: CANVAS_SIZES[0],
-    isOnboarding: false,
-    currentLayers: [],
-    zoom: 0.5,
-    referenceData: null,
-    customFonts: [],
-
-    setPages: (pages) => set({ pages }),
-    setCurrentPageIndex: (currentPageIndex) => set({ currentPageIndex }),
-    setCanvasSize: (canvasSize) => set({ canvasSize }),
-    setIsOnboarding: (isOnboarding) => set({ isOnboarding }),
-    setCurrentLayers: (currentLayers) => set({ currentLayers }),
-    setZoom: (zoom) => set({ zoom }),
-    setReferenceData: (referenceData) => set({ referenceData }),
-    setCustomFonts: (customFonts) => set({ customFonts }),
-
-    addPage: () => set((state) => ({
-        pages: [
-            ...state.pages,
-            {
-                id: Math.random().toString(36).substr(2, 9),
-                background: '#ffffff',
-                elements: [],
-                content: {
-                    hook: 'New Hook',
-                    subHeadline: 'New Sub-headline',
-                    body: 'New body text',
-                    cta: 'New CTA'
+export const useCarouselStore = create<CarouselState>()(
+    persist(
+        (set, get) => ({
+            pages: [
+                {
+                    id: '1',
+                    background: '#ffffff',
+                    elements: [],
+                    content: {
+                        hook: 'Your Catchy Hook Here',
+                        subHeadline: 'A compelling sub-headline',
+                        body: 'The main value proposition or story goes here.',
+                        cta: 'Swipe to learn more'
+                    }
                 }
-            }
-        ],
-        currentPageIndex: state.pages.length
-    })),
+            ],
+            currentPageIndex: 0,
+            canvasSize: CANVAS_SIZES[0],
+            isOnboarding: false,
+            currentLayers: [],
+            zoom: 0.5,
+            referenceData: null,
+            customFonts: [],
 
-    duplicatePage: (index) => set((state) => {
-        const pageToDuplicate = state.pages[index];
-        const newPage = {
-            ...pageToDuplicate,
-            id: Math.random().toString(36).substr(2, 9),
-        };
-        const newPages = [...state.pages];
-        newPages.splice(index + 1, 0, newPage);
-        return { pages: newPages, currentPageIndex: index + 1 };
-    }),
+            setPages: (pages) => set({ pages }),
+            setCurrentPageIndex: (currentPageIndex) => set({ currentPageIndex }),
+            setCanvasSize: (canvasSize) => set({ canvasSize }),
+            setIsOnboarding: (isOnboarding) => set({ isOnboarding }),
+            setCurrentLayers: (currentLayers) => set({ currentLayers }),
+            setZoom: (zoom) => set({ zoom }),
+            setReferenceData: (referenceData) => set({ referenceData }),
+            setCustomFonts: (customFonts) => set({ customFonts }),
 
-    deletePage: (index) => set((state) => {
-        if (state.pages.length <= 1) return state;
-        const newPages = state.pages.filter((_, i) => i !== index);
-        const newIndex = Math.min(state.currentPageIndex, newPages.length - 1);
-        return { pages: newPages, currentPageIndex: newIndex };
-    }),
+            resetCanvas: () => set({
+                pages: [{
+                    id: Math.random().toString(36).substr(2, 9),
+                    background: '#ffffff',
+                    elements: [],
+                    content: {
+                        hook: 'Your Catchy Hook Here',
+                        subHeadline: 'A compelling sub-headline',
+                        body: 'The main value proposition or story goes here.',
+                        cta: 'Swipe to learn more'
+                    }
+                }],
+                currentPageIndex: 0,
+                currentLayers: [],
+            }),
 
-    updatePageContent: (index, content) => set((state) => {
-        const newPages = [...state.pages];
-        newPages[index] = {
-            ...newPages[index],
-            content: { ...newPages[index].content, ...content }
-        };
-        return { pages: newPages };
-    }),
+            addPage: () => set((state) => {
+                const currentBg = state.pages.length > 0 && state.currentPageIndex >= 0 ? state.pages[state.currentPageIndex].background : '#ffffff';
+                return {
+                    pages: [
+                        ...state.pages,
+                        {
+                            id: Math.random().toString(36).substr(2, 9),
+                            background: currentBg,
+                            elements: [],
+                            content: {
+                                hook: 'New Hook',
+                                subHeadline: 'New Sub-headline',
+                                body: 'New body text',
+                                cta: 'New CTA'
+                            }
+                        }
+                    ],
+                    currentPageIndex: state.pages.length
+                };
+            }),
 
-    updatePageBackground: (index, background) => set((state) => {
-        const newPages = [...state.pages];
-        newPages[index] = { ...newPages[index], background };
-        return { pages: newPages };
-    }),
+            duplicatePage: (index) => set((state) => {
+                const pageToDuplicate = state.pages[index];
+                const newPage = {
+                    ...pageToDuplicate,
+                    id: Math.random().toString(36).substr(2, 9),
+                };
+                const newPages = [...state.pages];
+                newPages.splice(index + 1, 0, newPage);
+                return { pages: newPages, currentPageIndex: index + 1 };
+            }),
 
-    updatePageElements: (index, elements, previewUrl) => set((state) => {
-        const newPages = [...state.pages];
-        newPages[index] = { ...newPages[index], elements };
-        if (previewUrl) {
-            newPages[index].previewUrl = previewUrl;
-        }
-        return { pages: newPages };
-    }),
+            deletePage: (index) => set((state) => {
+                if (state.pages.length <= 1) return state;
+                const newPages = state.pages.filter((_, i) => i !== index);
+                const newIndex = Math.min(state.currentPageIndex, newPages.length - 1);
+                return { pages: newPages, currentPageIndex: newIndex };
+            }),
 
-    savePreset: async (name) => {
-        const { pages, canvasSize } = get();
-        const { supabase } = await import('../services/supabaseClient');
-        const userId = localStorage.getItem('user_id');
-        
-        const { error } = await supabase.from('carousel_presets').insert({
-            name,
-            user_id: userId,
-            data: { pages, canvasSize }
-        });
+            updatePageContent: (index, content) => set((state) => {
+                const newPages = [...state.pages];
+                newPages[index] = {
+                    ...newPages[index],
+                    content: { ...newPages[index].content, ...content }
+                };
+                return { pages: newPages };
+            }),
 
-        if (error) throw error;
-    },
+            updatePageBackground: (index, background) => set((state) => {
+                const newPages = [...state.pages];
+                newPages[index] = { ...newPages[index], background };
+                return { pages: newPages };
+            }),
 
-    loadPresets: async () => {
-        const { supabase } = await import('../services/supabaseClient');
-        const userId = localStorage.getItem('user_id');
-        const { data, error } = await supabase
-            .from('carousel_presets')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        return data;
-    },
-
-    uploadFont: async (name, data) => {
-        const { supabase } = await import('../services/supabaseClient');
-        const userId = localStorage.getItem('user_id');
-        
-        try {
-            const { error } = await supabase.from('custom_fonts').insert({
-                name,
-                user_id: userId,
-                font_data: data
-            });
-
-            if (error) {
-                // Ignore if table doesn't exist (PGRST205)
-                if (error.code === 'PGRST205' || error.message.includes('custom_fonts')) {
-                    console.warn('Custom fonts table missing, skipping upload.');
-                    return;
+            updatePageElements: (index, elements, previewUrl) => set((state) => {
+                const newPages = [...state.pages];
+                newPages[index] = { ...newPages[index], elements };
+                if (previewUrl) {
+                    newPages[index].previewUrl = previewUrl;
                 }
-                throw error;
-            }
-            await get().loadFonts();
-        } catch (err) {
-            console.error('Font upload failed:', err);
-        }
-    },
+                return { pages: newPages };
+            }),
 
-    loadFonts: async () => {
-        const { supabase } = await import('../services/supabaseClient');
-        const userId = localStorage.getItem('user_id');
-        
-        try {
-            const { data, error } = await supabase
-                .from('custom_fonts')
-                .select('name, font_data')
-                .eq('user_id', userId);
+            savePreset: async (name) => {
+                const { pages, canvasSize } = get();
+                const { supabase } = await import('../services/supabaseClient');
+                const userId = localStorage.getItem('user_id');
 
-            if (error) {
-                 // Ignore if table doesn't exist (PGRST205)
-                 if (error.code === 'PGRST205' || error.message.includes('custom_fonts')) {
-                    console.warn('Custom fonts table missing, skipping load.');
-                    return;
-                }
-                throw error;
-            }
-            
-            const fonts = data.map(f => f.name);
-            set({ customFonts: fonts });
+                const { error } = await supabase.from('carousel_presets').insert({
+                    name,
+                    user_id: userId,
+                    data: { pages, canvasSize }
+                });
 
-            // Load into document
-            for (const font of data) {
+                if (error) throw error;
+            },
+
+            loadPresets: async () => {
+                const { supabase } = await import('../services/supabaseClient');
+                const userId = localStorage.getItem('user_id');
+                const { data, error } = await supabase
+                    .from('carousel_presets')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                return data;
+            },
+
+            uploadFont: async (name, data) => {
+                const { supabase } = await import('../services/supabaseClient');
+                const userId = localStorage.getItem('user_id');
+
                 try {
-                    const fontFace = new FontFace(font.name, `url(${font.font_data})`);
-                    const loadedFace = await fontFace.load();
-                    (document.fonts as any).add(loadedFace);
-                } catch (e) {
-                    console.error(`Failed to load font ${font.name}`, e);
+                    const { error } = await supabase.from('custom_fonts').insert({
+                        name,
+                        user_id: userId,
+                        font_data: data
+                    });
+
+                    if (error) {
+                        // Ignore if table doesn't exist (PGRST205)
+                        if (error.code === 'PGRST205' || error.message.includes('custom_fonts')) {
+                            console.warn('Custom fonts table missing, skipping upload.');
+                            return;
+                        }
+                        throw error;
+                    }
+                    await get().loadFonts();
+                } catch (err) {
+                    console.error('Font upload failed:', err);
+                }
+            },
+
+            loadFonts: async () => {
+                const { supabase } = await import('../services/supabaseClient');
+                const userId = localStorage.getItem('user_id');
+
+                try {
+                    const { data, error } = await supabase
+                        .from('custom_fonts')
+                        .select('name, font_data')
+                        .eq('user_id', userId);
+
+                    if (error) {
+                        // Ignore if table doesn't exist (PGRST205)
+                        if (error.code === 'PGRST205' || error.message.includes('custom_fonts')) {
+                            console.warn('Custom fonts table missing, skipping load.');
+                            return;
+                        }
+                        throw error;
+                    }
+
+                    const fonts = data.map(f => f.name);
+                    set({ customFonts: fonts });
+
+                    // Load into document
+                    for (const font of data) {
+                        try {
+                            const fontFace = new FontFace(font.name, `url(${font.font_data})`);
+                            const loadedFace = await fontFace.load();
+                            (document.fonts as any).add(loadedFace);
+                        } catch (e) {
+                            console.error(`Failed to load font ${font.name}`, e);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Font load failed:', err);
                 }
             }
-        } catch (err) {
-            console.error('Font load failed:', err);
+        }),
+        {
+            name: 'carousel-storage'
         }
-    }
-}));
+    ));

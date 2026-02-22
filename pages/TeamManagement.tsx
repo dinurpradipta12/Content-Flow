@@ -24,9 +24,25 @@ interface WorkspaceData extends Workspace {
     members?: string[];
 }
 
+interface KPI {
+    id: string;
+    member_id: string;
+    metric_name: string;
+    category: string;
+    target_value: number;
+    actual_value: number;
+    unit: string;
+    period: string;
+    period_date: string;
+    notes: string;
+}
+
 export const TeamManagement: React.FC = () => {
     const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
+    const [allWorkspaces, setAllWorkspaces] = useState<WorkspaceData[]>([]);
     const [users, setUsers] = useState<AppUser[]>([]);
+    const [teamMembers, setTeamMembers] = useState<any[]>([]);
+    const [kpis, setKpis] = useState<KPI[]>([]);
     const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceData | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
@@ -70,6 +86,16 @@ export const TeamManagement: React.FC = () => {
                 }
             }
 
+            const { data: allWsData } = await supabase.from('workspaces').select('*').eq('admin_id', tenantId);
+            if (allWsData) setAllWorkspaces(allWsData);
+
+            // Fetch team members and KPIs
+            const { data: tmData } = await supabase.from('team_members').select('*').eq('admin_id', tenantId);
+            if (tmData) setTeamMembers(tmData);
+
+            const { data: kData } = await supabase.from('team_kpis').select('*');
+            if (kData) setKpis(kData);
+
             // Fetch all users to map avatars
             const { data: userData, error: userError } = await supabase
                 .from('app_users')
@@ -109,6 +135,19 @@ export const TeamManagement: React.FC = () => {
             supabase.removeChannel(workspacesChannel);
         };
     }, []);
+
+    const getUserKPIs = (user: AppUser) => {
+        const tm = teamMembers.find(t => t.full_name === user.full_name);
+        if (!tm) return [];
+        return kpis.filter(k => k.member_id === tm.id);
+    };
+
+    const getKPICompletion = (user: AppUser) => {
+        const ukpis = getUserKPIs(user);
+        if (ukpis.length === 0) return 0;
+        const total = ukpis.reduce((sum, k) => sum + Math.min((k.target_value > 0 ? k.actual_value / k.target_value : 0) * 100, 100), 0);
+        return Math.round(total / ukpis.length);
+    };
 
     const currentWorkspaceUsers = users.filter(u =>
         selectedWorkspace?.members?.some(m => {
@@ -255,16 +294,46 @@ export const TeamManagement: React.FC = () => {
         }
     };
 
+    const handleAddToOtherWorkspace = async (workspaceId: string) => {
+        if (!selectedUser) return;
+        const wsToUpdate = allWorkspaces.find(w => w.id === workspaceId);
+        if (!wsToUpdate) return;
+        if (wsToUpdate.members?.includes(selectedUser.avatar_url)) {
+            alert("User sudah ada di workspace ini.");
+            return;
+        }
+
+        const updatedMembers = [...(wsToUpdate.members || []), selectedUser.avatar_url];
+        const { error } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', workspaceId);
+        if (error) {
+            console.error(error);
+            alert("Gagal menambahkan ke workspace.");
+        } else {
+            alert("Berhasil mengundang ke workspace!");
+            fetchData();
+        }
+    };
+
     return (
         <div className="space-y-6 pb-12 animate-in fade-in duration-300 relative w-full h-full min-h-[85vh]">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b-2 border-slate-100 pb-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-2">
                 <div>
                     <h2 className="text-3xl md:text-5xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        <Briefcase size={36} className="text-accent" />
                         Team Management
                     </h2>
                     <p className="text-slate-500 font-bold mt-2">Kelola akses anggota dalam workspace spesifik Anda.</p>
+                </div>
+                <div className="flex z-10">
+                    <Button
+                        className="whitespace-nowrap shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all"
+                        onClick={() => {
+                            if (!selectedWorkspace) return alert('Pilih Workspace di kiri dulu!');
+                            setIsInviteOpen(!isInviteOpen);
+                        }}
+                    >
+                        + Mendaftarkan Anggota
+                    </Button>
                 </div>
             </div>
 
@@ -272,7 +341,7 @@ export const TeamManagement: React.FC = () => {
                 {/* LEFT: WORKSPACES LIST */}
                 <div className="w-full lg:w-1/3 flex flex-col gap-4">
                     <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
-                        <div className="p-4 bg-primary border-b-4 border-slate-900 flex items-center gap-3">
+                        <div className="p-4 bg-primary flex items-center gap-3">
                             <Layers className="text-white" size={24} />
                             <h3 className="font-heading font-black text-white text-lg">My Workspaces</h3>
                         </div>
@@ -324,7 +393,7 @@ export const TeamManagement: React.FC = () => {
                                 </h3>
                             </div>
 
-                            {/* SEARCH BAR & BUTTON */}
+                            {/* SEARCH BAR (Button moved out) */}
                             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto z-10">
                                 <div className="relative w-full sm:w-64">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -336,15 +405,6 @@ export const TeamManagement: React.FC = () => {
                                         className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[2px_2px_0px_#0f172a]"
                                     />
                                 </div>
-                                <Button
-                                    className="whitespace-nowrap"
-                                    onClick={() => {
-                                        if (!selectedWorkspace) return alert('Pilih Workspace di kiri dulu!');
-                                        setIsInviteOpen(!isInviteOpen);
-                                    }}
-                                >
-                                    + Mendaftarkan Anggota
-                                </Button>
                             </div>
                         </div>
 
@@ -388,30 +448,49 @@ export const TeamManagement: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {filteredUsers.map(user => (
-                                        <Card
-                                            key={user.id}
-                                            className="cursor-pointer hover:-translate-y-1 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] p-4 flex items-center gap-4 bg-white transition-all group"
-                                            onClick={() => handleOpenDetail(user)}
-                                        >
-                                            <img
-                                                src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                className="w-14 h-14 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover group-hover:-rotate-3 transition-transform"
-                                                alt="Avatar"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-heading font-black text-slate-900 truncate">{user.full_name}</h4>
-                                                <p className="text-xs font-bold text-slate-500 truncate">@{user.username}</p>
-                                                <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border-2 border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
-                                                    user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
-                                                        'bg-white text-slate-900'
-                                                    }`}>
-                                                    {user.role}
-                                                </span>
-                                            </div>
-                                            <ChevronRight className="text-slate-300 group-hover:text-accent group-hover:translate-x-1 transition-all" size={24} />
-                                        </Card>
-                                    ))}
+                                    {filteredUsers.map(user => {
+                                        const rate = getKPICompletion(user);
+                                        const tm = teamMembers.find(t => t.full_name === user.full_name);
+                                        return (
+                                            <Card
+                                                key={user.id}
+                                                className="cursor-pointer hover:-translate-y-1 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] p-4 flex flex-col gap-3 bg-white transition-all group"
+                                                onClick={() => handleOpenDetail(user)}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <img
+                                                        src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
+                                                        className="w-14 h-14 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover group-hover:-rotate-3 transition-transform shrink-0"
+                                                        alt="Avatar"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="font-heading font-black text-slate-900 truncate">{user.full_name}</h4>
+                                                        <p className="text-xs font-bold text-slate-500 truncate">@{user.username}</p>
+                                                    </div>
+                                                    <ChevronRight className="text-slate-300 shrink-0 group-hover:text-accent group-hover:translate-x-1 transition-all" size={24} />
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border-2 border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
+                                                        user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
+                                                            'bg-white text-slate-900'
+                                                        }`}>
+                                                        {user.role}
+                                                    </span>
+                                                    {tm?.department && (
+                                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-widest text-slate-600 bg-slate-100 border border-slate-200 truncate max-w-[120px]">
+                                                            {tm.department}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="w-full bg-slate-100 rounded-full h-2 mb-1 border border-slate-200 mt-2">
+                                                    <div className={`h-2 rounded-full ${rate >= 80 ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${rate}%` }}></div>
+                                                </div>
+                                                <p className="text-[10px] text-right font-bold text-slate-500">{rate}% KPI Completed</p>
+                                            </Card>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -420,71 +499,147 @@ export const TeamManagement: React.FC = () => {
             </div>
 
             {/* DETAIL MODAL */}
-            <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Manajemen Anggota Tim">
+            <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Manajemen Anggota Tim" maxWidth="max-w-5xl">
                 {selectedUser && (
-                    <div className="space-y-6">
-                        {/* Header User */}
-                        <div className="flex items-start gap-4 p-4 border-2 border-slate-900 rounded-2xl bg-white relative overflow-hidden shadow-[4px_4px_0px_#0f172a]">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
-                            <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                className="w-16 h-16 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-white" alt="Avatar" />
-                            <div className="relative z-10">
-                                <h3 className="text-xl font-heading font-black text-slate-900">{selectedUser.full_name}</h3>
-                                <p className="text-sm font-bold text-slate-500 mb-1">@{selectedUser.username}</p>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-slate-900 text-white border-slate-900">
-                                    {selectedUser.role}
-                                </span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                        {/* LEFT COL */}
+                        <div className="space-y-6">
+                            {/* Header User */}
+                            <div className="flex items-start gap-4 p-4 border-2 border-slate-900 rounded-2xl bg-white relative overflow-hidden shadow-[4px_4px_0px_#0f172a]">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
+                                <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
+                                    className="w-16 h-16 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-white" alt="Avatar" />
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-heading font-black text-slate-900">{selectedUser.full_name}</h3>
+                                    <p className="text-sm font-bold text-slate-500 mb-1">@{selectedUser.username}</p>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-slate-900 text-white border-slate-900">
+                                        {selectedUser.role}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Reset Password */}
-                        <div>
-                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
-                                <Key size={16} /> Password User
-                            </h4>
-                            <div className="bg-slate-50 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
-                                <div className="mb-4">
-                                    <p className="text-sm font-bold text-slate-700 mb-2">Password Saat Ini:</p>
-                                    <div className="flex justify-between items-center bg-white border-2 border-slate-900 p-3 rounded-xl shadow-inner">
-                                        <span className="font-mono font-bold text-slate-900">
-                                            {showPassword ? selectedUser.password : '••••••••'}
+                            {/* Reset Password */}
+                            <div>
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                    <Key size={16} /> Password User
+                                </h4>
+                                <div className="bg-slate-50 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
+                                    <div className="mb-4">
+                                        <p className="text-sm font-bold text-slate-700 mb-2">Password Saat Ini:</p>
+                                        <div className="flex justify-between items-center bg-white border-2 border-slate-900 p-3 rounded-xl shadow-inner">
+                                            <span className="font-mono font-bold text-slate-900">
+                                                {showPassword ? selectedUser.password : '••••••••'}
+                                            </span>
+                                            <button onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-slate-900">
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <form onSubmit={handleUpdatePassword} className="border-t-2 border-slate-200 pt-4 flex gap-3">
+                                        <input
+                                            type="text"
+                                            value={newPassword}
+                                            onChange={e => setNewPassword(e.target.value)}
+                                            placeholder="Ketik password baru..."
+                                            required
+                                            className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent shadow-[2px_2px_0px_#0f172a]"
+                                        />
+                                        <Button type="submit" disabled={saving || !newPassword}>
+                                            {saving ? <Loader2 className="animate-spin" size={16} /> : 'Ubah Password'}
+                                        </Button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {/* WORKSPACES INFO & INVITE */}
+                            <div className="space-y-4 pt-4 border-t-2 border-slate-200">
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                    <Globe size={16} /> Workspaces
+                                </h4>
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).map(ws => (
+                                        <span key={ws.id} className="inline-block px-3 py-1 bg-white border-2 border-slate-900 rounded-lg text-xs font-bold text-slate-700 shadow-[2px_2px_0px_#0f172a]">
+                                            {ws.name}
                                         </span>
-                                        <button onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-slate-900">
-                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Add to Workspace feature */}
+                                <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-300 p-4">
+                                    <p className="text-xs font-bold text-emerald-800 mb-3">Undang user ke workspace lain:</p>
+                                    <div className="flex gap-2 items-center">
+                                        <select
+                                            id="ws-select"
+                                            className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                                        >
+                                            <option value="">-- Pilih Workspace --</option>
+                                            {allWorkspaces.filter(ws => !ws.members?.includes(selectedUser.avatar_url)).map(ws => (
+                                                <option key={ws.id} value={ws.id}>{ws.name}</option>
+                                            ))}
+                                        </select>
+                                        <Button onClick={() => {
+                                            const selectEl = document.getElementById('ws-select') as HTMLSelectElement;
+                                            if (selectEl && selectEl.value) {
+                                                handleAddToOtherWorkspace(selectEl.value);
+                                            }
+                                        }}>Undang</Button>
                                     </div>
                                 </div>
-                                <form onSubmit={handleUpdatePassword} className="border-t-2 border-slate-200 pt-4 flex gap-3">
-                                    <input
-                                        type="text"
-                                        value={newPassword}
-                                        onChange={e => setNewPassword(e.target.value)}
-                                        placeholder="Ketik password baru..."
-                                        required
-                                        className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent shadow-[2px_2px_0px_#0f172a]"
-                                    />
-                                    <Button type="submit" disabled={saving || !newPassword}>
-                                        {saving ? <Loader2 className="animate-spin" size={16} /> : 'Ubah Password'}
-                                    </Button>
-                                </form>
+                            </div>
+
+                            {/* Hapus Anggota */}
+                            <div className="pt-4 border-t-2 border-slate-200">
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                    <UserMinus size={16} /> Keluarkan dari Workspace
+                                </h4>
+                                <div className="bg-red-50 rounded-2xl border-2 border-red-300 p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                    <p className="text-xs font-bold text-red-800">
+                                        Anggota tidak akan memiliki akses lagi terhadap konten dan data di {selectedWorkspace?.name}.
+                                    </p>
+                                    <button
+                                        onClick={handleRemoveFromWorkspace}
+                                        className="whitespace-nowrap bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs px-4 py-3 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none"
+                                    >
+                                        Keluarkan Anggota
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Hapus Anggota */}
-                        <div>
-                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
-                                <UserMinus size={16} /> Keluarkan dari Workspace
+                        {/* RIGHT COL - KPI */}
+                        <div className="space-y-4 bg-slate-50 p-6 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] h-full flex flex-col">
+                            <h4 className="font-heading font-black text-xl text-slate-900 mb-2 pb-3 border-b-2 border-slate-200 flex items-center justify-between">
+                                Daftar KPI Progress
+                                <span className="text-sm px-3 py-1 bg-accent text-white rounded-full ml-auto shadow-[2px_2px_0px_#0f172a]">
+                                    {getKPICompletion(selectedUser)}% Selesai
+                                </span>
                             </h4>
-                            <div className="bg-red-50 rounded-2xl border-2 border-red-300 p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
-                                <p className="text-xs font-bold text-red-800">
-                                    Anggota tidak akan memiliki akses lagi terhadap konten dan data di {selectedWorkspace?.name}.
-                                </p>
-                                <button
-                                    onClick={handleRemoveFromWorkspace}
-                                    className="whitespace-nowrap bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs px-4 py-3 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none"
-                                >
-                                    Keluarkan Anggota
-                                </button>
+                            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 min-h-[400px]">
+                                {getUserKPIs(selectedUser).length === 0 ? (
+                                    <div className="text-slate-400 font-bold text-center py-10">Belum ada KPI terdaftar</div>
+                                ) : (
+                                    getUserKPIs(selectedUser).map(kpi => {
+                                        const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
+                                        const pVal = Math.min(progress, 100);
+                                        return (
+                                            <div key={kpi.id} className="bg-white p-4 rounded-xl border-2 border-slate-200 hover:border-slate-900 transition-colors">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h5 className="font-bold text-slate-900 text-sm truncate pr-2">{kpi.metric_name}</h5>
+                                                    <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shadow-sm shrink-0">
+                                                        {kpi.period}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-end mb-1">
+                                                    <span className="text-xs font-bold text-slate-500">{kpi.category}</span>
+                                                    <span className="text-xs font-black text-slate-900">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
+                                                </div>
+                                                <div className="w-full bg-slate-100 rounded-full h-2 border border-slate-200 overflow-hidden">
+                                                    <div className={`h-2 rounded-full ${pVal >= 80 ? 'bg-emerald-500' : pVal >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${pVal}%` }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
                     </div>
