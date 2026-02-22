@@ -7,6 +7,7 @@ import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
 import { useNotifications } from '../components/NotificationProvider';
+import { WorkspaceChat } from '../components/chat/WorkspaceChat';
 
 // --- TYPES & HELPERS ---
 
@@ -1645,6 +1646,18 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
+            {id && (
+                <WorkspaceChat
+                    workspaceId={id}
+                    currentUser={{
+                        id: localStorage.getItem('user_id') || 'guest',
+                        name: localStorage.getItem('user_name') || 'Guest User',
+                        avatar: localStorage.getItem('user_avatar') || '',
+                        role: localStorage.getItem('user_role') || 'Member'
+                    }}
+                />
+            )}
         </>
     );
 };

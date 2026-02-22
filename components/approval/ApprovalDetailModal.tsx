@@ -20,7 +20,9 @@ import {
     Download,
     Send,
     Paperclip,
-    Bell
+    Bell,
+    Smile,
+    Reply
 } from 'lucide-react';
 import { useNotifications } from '../../components/NotificationProvider';
 
@@ -62,6 +64,27 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             setSelectedFile(null);
             setPreviewImages([]);
             setPreviewPdf(null);
+
+            // Subscribe to real-time logs
+            const channel = supabase
+                .channel(`approval_logs:${request.id}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'approval_logs',
+                        filter: `request_id=eq.${request.id}`
+                    },
+                    () => {
+                        fetchLogs();
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
     }, [isOpen, request]);
 
@@ -529,11 +552,22 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                                     <User size={18} className="text-slate-500" />
                                                 )}
                                             </div>
-                                            <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]`}>
+                                            <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%] relative group`}>
                                                 <div className="flex items-baseline gap-2 mb-1">
                                                     <span className="font-black text-xs text-slate-900 uppercase tracking-tight">{isMe ? 'Anda' : log.user_name}</span>
                                                     <span className="text-[10px] font-bold text-slate-400">{new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
+
+                                                {/* Hover Actions */}
+                                                <div className={`absolute -top-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white border-2 border-slate-900 rounded-lg shadow-hard p-1 flex gap-1 z-10 ${isMe ? 'right-0' : 'left-0'}`}>
+                                                    <button className="p-1 hover:bg-yellow-100 rounded text-slate-600 transition-colors" title="Beri Reaksi">
+                                                        <Smile size={14} />
+                                                    </button>
+                                                    <button className="p-1 hover:bg-blue-100 rounded text-slate-600 transition-colors" title="Balas">
+                                                        <Reply size={14} />
+                                                    </button>
+                                                </div>
+
                                                 <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-[4px_4px_0px_0px_#0f172a] ${isMe ? 'bg-yellow-100 rounded-tr-none' : 'bg-white rounded-tl-none'
                                                     }`}>
                                                     {log.comment}

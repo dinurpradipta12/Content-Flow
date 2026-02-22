@@ -734,8 +734,30 @@ export const Editor: React.FC = () => {
         canvas.setWidth(canvasSize.width);
         canvas.setHeight(canvasSize.height);
         canvas.renderAll();
-        saveCanvas();
+        // Removed saveCanvas() here as it can overwrite preset data during load
     }, [canvasSize.id]);
+
+    // Handle Preset Load Event
+    useEffect(() => {
+        const handlePresetLoad = async (e: any) => {
+            const canvas = fabricCanvas.current;
+            if (!canvas) return;
+            const { pages: newPages } = e.detail;
+            const firstPage = newPages[0];
+            if (firstPage) {
+                isRestoringHistory.current = true;
+                canvas.backgroundColor = firstPage.background;
+                await canvas.loadFromJSON({ objects: firstPage.elements });
+                canvas.renderAll();
+                updateLayers();
+                isRestoringHistory.current = false;
+                addToHistory();
+            }
+        };
+
+        window.addEventListener('canvas:load-preset', handlePresetLoad);
+        return () => window.removeEventListener('canvas:load-preset', handlePresetLoad);
+    }, []);
 
     const updateFloatingMenuPos = (obj: fabric.Object | undefined) => {
         if (!obj || !fabricCanvas.current) return;

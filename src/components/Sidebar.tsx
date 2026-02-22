@@ -121,6 +121,7 @@ export const Sidebar: React.FC = () => {
         if (confirm(`Load preset "${preset.name}"? This will replace your current design.`)) {
             setPages(preset.data.pages);
             setCanvasSize(preset.data.canvasSize);
+            window.dispatchEvent(new CustomEvent('canvas:load-preset', { detail: preset.data }));
         }
     };
 
