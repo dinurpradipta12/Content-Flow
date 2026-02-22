@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { useCarouselStore } from '../store/useCarouselStore';
-import { 
-    Square, 
-    Circle, 
-    Triangle, 
-    Image as ImageIcon, 
-    FlipHorizontal, 
-    FlipVertical, 
-    RotateCw, 
-    ArrowUp, 
-    ArrowDown, 
+import {
+    Square,
+    Circle,
+    Triangle,
+    Image as ImageIcon,
+    FlipHorizontal,
+    FlipVertical,
+    RotateCw,
+    ArrowUp,
+    ArrowDown,
     Trash2,
     Lock,
     Unlock,
@@ -42,18 +42,22 @@ import {
     AlignVerticalJustifyCenter,
     X,
     Group,
-    Ungroup
+    Ungroup,
+    ChevronsUp,
+    ChevronsDown
 } from 'lucide-react';
 
 export const Editor: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    
+
     const { pages, currentPageIndex, canvasSize, setCurrentLayers, zoom, setZoom, referenceData, customFonts, loadFonts, updatePageElements } = useCarouselStore();
     const currentPage = pages[currentPageIndex];
-    
+
     const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
+    const isActiveSelection = selectedObject instanceof fabric.ActiveSelection;
+    const isGroup = selectedObject instanceof fabric.Group && !isActiveSelection;
     const [isPanning, setIsPanning] = useState(false);
     const isPanningRef = useRef(false);
     const [activeTool, setActiveTool] = useState<string | null>(null);
@@ -183,7 +187,7 @@ export const Editor: React.FC = () => {
             top: cloned.top! + 10,
             evented: true,
         });
-        if (cloned.type === 'activeSelection') {
+        if (cloned instanceof fabric.ActiveSelection) {
             cloned.canvas = fabricCanvas.current;
             (cloned as fabric.ActiveSelection).forEachObject((obj: any) => {
                 fabricCanvas.current?.add(obj);
@@ -247,20 +251,46 @@ export const Editor: React.FC = () => {
     };
 
     const handleGroup = () => {
-        if (!fabricCanvas.current || !selectedObject || selectedObject.type !== 'activeSelection') return;
+        const canvas = fabricCanvas.current;
+        if (!canvas || !selectedObject || !isActiveSelection) return;
         const activeSelection = selectedObject as fabric.ActiveSelection;
-        activeSelection.toGroup();
-        fabricCanvas.current.requestRenderAll();
+        const objects = activeSelection.getObjects().slice();
+        canvas.discardActiveObject();
+        // Remove individual objects from canvas
+        objects.forEach(obj => canvas.remove(obj));
+        // Create a new group
+        const group = new fabric.Group(objects);
+        (group as any).id = `group-${Date.now()}`;
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
         updateLayers();
+        saveCanvas();
         addToHistory();
     };
 
     const handleUngroup = () => {
-        if (!fabricCanvas.current || !selectedObject || selectedObject.type !== 'group') return;
+        const canvas = fabricCanvas.current;
+        if (!canvas || !selectedObject || !isGroup) return;
         const group = selectedObject as fabric.Group;
-        group.toActiveSelection();
-        fabricCanvas.current.requestRenderAll();
+        // removeAll() detaches children and restores their absolute positions automatically
+        const objects = [...group.removeAll()];
+        // Remove the now-empty group from canvas
+        canvas.remove(group);
+        // Add children back to canvas
+        objects.forEach(obj => {
+            obj.setCoords();
+            canvas.add(obj);
+        });
+        // Select all ungrouped objects
+        if (objects.length > 0) {
+            const sel = new fabric.ActiveSelection(objects, { canvas });
+            canvas.setActiveObject(sel);
+            setSelectedObject(sel);
+        }
+        canvas.requestRenderAll();
         updateLayers();
+        saveCanvas();
         addToHistory();
     };
 
@@ -308,16 +338,18 @@ export const Editor: React.FC = () => {
         };
         initCanvas();
 
-        canvas.on('selection:created', (e) => {
-            setSelectedObject(e.selected[0]);
-            updateFloatingMenuPos(e.selected[0]);
+        canvas.on('selection:created', () => {
+            const activeObj = canvas.getActiveObject();
+            setSelectedObject(activeObj || null);
+            updateFloatingMenuPos(activeObj || undefined);
         });
-        canvas.on('selection:updated', (e) => {
-            setSelectedObject(e.selected[0]);
-            updateFloatingMenuPos(e.selected[0]);
+        canvas.on('selection:updated', () => {
+            const activeObj = canvas.getActiveObject();
+            setSelectedObject(activeObj || null);
+            updateFloatingMenuPos(activeObj || undefined);
         });
         canvas.on('selection:cleared', () => setSelectedObject(null));
-        
+
         canvas.on('object:modified', () => {
             if (canvas.getActiveObject()) {
                 const obj = canvas.getActiveObject()!;
@@ -331,7 +363,7 @@ export const Editor: React.FC = () => {
                     fontSize: (obj as any).fontSize || 40,
                     shadowBlur: (obj.shadow as any)?.blur || 0,
                     shadowColor: (obj.shadow as any)?.color || '#000000',
-                    shadowOpacity: 1, 
+                    shadowOpacity: 1,
                     shadowAngle: 45,
                     shadowDistance: 5,
                     strokeWidth: obj.strokeWidth || 0,
@@ -349,7 +381,7 @@ export const Editor: React.FC = () => {
             saveCanvas();
             addToHistory();
         });
-        
+
         canvas.on('object:moving', (e) => updateFloatingMenuPos(e.target));
         canvas.on('object:scaling', (e) => updateFloatingMenuPos(e.target));
         canvas.on('object:rotating', (e) => updateFloatingMenuPos(e.target));
@@ -422,7 +454,7 @@ export const Editor: React.FC = () => {
 
         const handleCanvasAction = (e: any) => {
             const { type, id, layers } = e.detail;
-            
+
             if (type === 'reorder' && layers) {
                 const objects = canvas.getObjects();
                 const reversedLayers = [...layers].reverse();
@@ -474,40 +506,58 @@ export const Editor: React.FC = () => {
 
         const handleCanvasAdd = (e: any) => {
             const { type, data } = e.detail;
+            const centerX = canvasSize.width / 2;
+            const centerY = canvasSize.height / 2;
             if (type === 'text') {
                 const text = new fabric.IText('New Text', {
-                    left: 100,
-                    top: 100,
+                    left: centerX,
+                    top: centerY,
+                    originX: 'center',
+                    originY: 'center',
                     fontFamily: 'Inter',
                     fontSize: 40,
                     fill: '#000000'
                 });
+                (text as any).id = `text-${Date.now()}`;
                 canvas.add(text);
                 canvas.setActiveObject(text);
             } else if (type === 'rect') {
                 const rect = new fabric.Rect({
-                    left: 100,
-                    top: 100,
+                    left: centerX,
+                    top: centerY,
+                    originX: 'center',
+                    originY: 'center',
                     width: 100,
                     height: 100,
                     fill: '#f27d26',
                     rx: 0,
                     ry: 0
                 });
+                (rect as any).id = `rect-${Date.now()}`;
                 canvas.add(rect);
                 canvas.setActiveObject(rect);
             } else if (type === 'circle') {
                 const circle = new fabric.Circle({
-                    left: 100,
-                    top: 100,
+                    left: centerX,
+                    top: centerY,
+                    originX: 'center',
+                    originY: 'center',
                     radius: 50,
                     fill: '#f27d26'
                 });
+                (circle as any).id = `circle-${Date.now()}`;
                 canvas.add(circle);
                 canvas.setActiveObject(circle);
             } else if (type === 'image' && data) {
                 fabric.Image.fromURL(data).then((img) => {
+                    (img as any).id = `img-${Date.now()}`;
                     img.scaleToWidth(300);
+                    img.set({
+                        left: centerX,
+                        top: centerY,
+                        originX: 'center',
+                        originY: 'center'
+                    });
                     canvas.add(img);
                     canvas.setActiveObject(img);
                 });
@@ -518,11 +568,11 @@ export const Editor: React.FC = () => {
 
         const handleExport = async (e: any) => {
             const { pages: selectedPages, format, quality } = e.detail;
-            
+
             if (selectedPages.length === 1) {
                 const pageIndex = selectedPages[0];
                 const page = pages[pageIndex];
-                
+
                 let dataUrl = '';
                 if (pageIndex === currentPageIndex) {
                     fabricCanvas.current?.discardActiveObject();
@@ -550,7 +600,7 @@ export const Editor: React.FC = () => {
                     });
                     tempCanvas.dispose();
                 }
-                
+
                 if (dataUrl) {
                     const { saveAs } = await import('file-saver');
                     saveAs(dataUrl, `arunika-page-${pageIndex + 1}.${format}`);
@@ -559,7 +609,7 @@ export const Editor: React.FC = () => {
                 const JSZip = (await import('jszip')).default;
                 const { saveAs } = await import('file-saver');
                 const zip = new JSZip();
-                
+
                 for (const pageIndex of selectedPages) {
                     const page = pages[pageIndex];
                     let dataUrl = '';
@@ -589,14 +639,14 @@ export const Editor: React.FC = () => {
                         });
                         tempCanvas.dispose();
                     }
-                    
+
                     if (dataUrl) {
                         const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
-                        zip.file(`arunika-page-${pageIndex + 1}.${format}`, base64Data, {base64: true});
+                        zip.file(`arunika-page-${pageIndex + 1}.${format}`, base64Data, { base64: true });
                     }
                 }
-                
-                const content = await zip.generateAsync({type: "blob"});
+
+                const content = await zip.generateAsync({ type: "blob" });
                 saveAs(content, "arunika-export.zip");
             }
         };
@@ -617,7 +667,7 @@ export const Editor: React.FC = () => {
                 canvas.selection = false;
                 canvas.renderAll();
             }
-            
+
             // Shortcuts
             if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
                 if (e.shiftKey) {
@@ -686,7 +736,7 @@ export const Editor: React.FC = () => {
         // Let's put it inside the wrapper for simplicity, so it moves with the object.
         // But if it scales, the buttons will shrink/grow.
         // Better to put it outside or use `transform: scale(1/zoom)` on the toolbar.
-        
+
         // Actually, let's just use the values directly and see.
         setFloatingMenuPos({
             top: bound.top,
@@ -722,7 +772,7 @@ export const Editor: React.FC = () => {
         let newText = text;
         if (textCase === 'uppercase') newText = text.toUpperCase();
         else if (textCase === 'lowercase') newText = text.toLowerCase();
-        
+
         selectedObject.set({ text: newText });
         (selectedObject as any).textCase = textCase;
         fabricCanvas.current.renderAll();
@@ -732,12 +782,16 @@ export const Editor: React.FC = () => {
     const addShape = (type: 'rect' | 'circle' | 'triangle') => {
         if (!fabricCanvas.current) return;
         let shape;
-        const common = { 
+        const centerX = canvasSize.width / 2;
+        const centerY = canvasSize.height / 2;
+        const common = {
             id: `shape-${Date.now()}`,
-            left: 200, 
-            top: 200, 
-            fill: '#f27d26', 
-            width: 150, 
+            left: centerX,
+            top: centerY,
+            originX: 'center' as const,
+            originY: 'center' as const,
+            fill: '#f27d26',
+            width: 150,
             height: 150,
             cornerStyle: 'circle' as const,
             transparentCorners: false,
@@ -745,11 +799,11 @@ export const Editor: React.FC = () => {
             cornerStrokeColor: '#0f172a',
             cornerSize: 12
         };
-        
+
         if (type === 'rect') shape = new fabric.Rect({ ...common, rx: 0, ry: 0 });
         else if (type === 'circle') shape = new fabric.Circle({ ...common, radius: 75 });
         else shape = new fabric.Triangle(common);
-        
+
         fabricCanvas.current.add(shape);
         fabricCanvas.current.setActiveObject(shape);
     };
@@ -757,7 +811,7 @@ export const Editor: React.FC = () => {
     const addImage = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !fabricCanvas.current) return;
-        
+
         const reader = new FileReader();
         reader.onload = (f) => {
             const data = f.target?.result;
@@ -808,12 +862,15 @@ export const Editor: React.FC = () => {
 
     const handleZIndex = (action: 'front' | 'back' | 'forward' | 'backward') => {
         if (!selectedObject || !fabricCanvas.current) return;
-        if (action === 'front') selectedObject.bringToFront();
-        else if (action === 'back') selectedObject.sendToBack();
-        else if (action === 'forward') selectedObject.bringForward();
-        else if (action === 'backward') selectedObject.sendBackwards();
-        fabricCanvas.current.renderAll();
+        const canvas = fabricCanvas.current;
+        if (action === 'front') canvas.bringObjectToFront(selectedObject);
+        else if (action === 'back') canvas.sendObjectToBack(selectedObject);
+        else if (action === 'forward') canvas.bringObjectForward(selectedObject);
+        else if (action === 'backward') canvas.sendObjectBackwards(selectedObject);
+        canvas.renderAll();
         updateLayers();
+        saveCanvas();
+        addToHistory();
     };
 
     const handleTextAlign = (align: 'left' | 'center' | 'right') => {
@@ -873,7 +930,7 @@ export const Editor: React.FC = () => {
 
     const handleShadow = (updates: Partial<typeof objectProps>) => {
         if (!selectedObject || !fabricCanvas.current) return;
-        
+
         const newProps = { ...objectProps, ...updates };
         setObjectProps(newProps);
 
@@ -899,7 +956,7 @@ export const Editor: React.FC = () => {
 
     const handleStroke = (updates: Partial<typeof objectProps>) => {
         if (!selectedObject || !fabricCanvas.current) return;
-        
+
         const newProps = { ...objectProps, ...updates };
         setObjectProps(newProps);
 
@@ -924,9 +981,9 @@ export const Editor: React.FC = () => {
         <div ref={containerRef} className="flex-1 bg-slate-200 flex flex-col overflow-hidden relative">
             {/* Canvas Wrapper for Zoom */}
             <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-200">
-                <div 
+                <div
                     className="transition-transform duration-200 ease-out shadow-[20px_20px_0px_0px_#0f172a] border-4 border-slate-900 bg-white"
-                    style={{ 
+                    style={{
                         transform: `scale(${zoom})`,
                         width: canvasSize.width,
                         height: canvasSize.height,
@@ -942,24 +999,35 @@ export const Editor: React.FC = () => {
                 {/* Arrange & Group Tools */}
                 {selectedObject && (
                     <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-1 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-right-4">
-                        {selectedObject.type === 'activeSelection' && (
-                            <button onClick={handleGroup} className="p-1.5 hover:bg-slate-100 rounded-md" title="Group"><Group size={16} /></button>
+                        {/* Group / Ungroup */}
+                        {isActiveSelection && (
+                            <button onClick={handleGroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold text-[11px] uppercase tracking-wide transition-colors" title="Group selected layers">
+                                <Group size={14} />
+                                <span>Group</span>
+                            </button>
                         )}
-                        {selectedObject.type === 'group' && (
-                            <button onClick={handleUngroup} className="p-1.5 hover:bg-slate-100 rounded-md" title="Ungroup"><Ungroup size={16} /></button>
+                        {isGroup && (
+                            <button onClick={handleUngroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold text-[11px] uppercase tracking-wide transition-colors" title="Ungroup layers">
+                                <Ungroup size={14} />
+                                <span>Ungroup</span>
+                            </button>
                         )}
-                        {(selectedObject.type === 'activeSelection' || selectedObject.type === 'group') && (
-                            <div className="w-px h-4 bg-slate-200 mx-1" />
+                        {(isActiveSelection || isGroup) && (
+                            <div className="w-px h-5 bg-slate-200 mx-1" />
                         )}
-                        
+
+                        {/* Arrange Layer */}
+                        <button onClick={() => handleZIndex('front')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring to Front"><ChevronsUp size={16} /></button>
                         <button onClick={() => handleZIndex('forward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring Forward"><ArrowUp size={16} /></button>
                         <button onClick={() => handleZIndex('backward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send Backward"><ArrowDown size={16} /></button>
-                        <div className="w-px h-4 bg-slate-200 mx-1" />
-                        
+                        <button onClick={() => handleZIndex('back')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send to Back"><ChevronsDown size={16} /></button>
+                        <div className="w-px h-5 bg-slate-200 mx-1" />
+
+                        {/* Alignment */}
                         <button onClick={() => handleAlign('left')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Left"><AlignLeft size={16} /></button>
                         <button onClick={() => handleAlign('center')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Center"><AlignHorizontalJustifyCenter size={16} /></button>
                         <button onClick={() => handleAlign('right')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Right"><AlignRight size={16} /></button>
-                        <div className="w-px h-4 bg-slate-200 mx-1" />
+                        <div className="w-px h-5 bg-slate-200 mx-1" />
                         <button onClick={() => handleAlign('top')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Top"><ArrowUpToLine size={16} /></button>
                         <button onClick={() => handleAlign('middle')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Middle"><AlignVerticalJustifyCenter size={16} /></button>
                         <button onClick={() => handleAlign('bottom')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Bottom"><ArrowDownToLine size={16} /></button>
@@ -978,13 +1046,22 @@ export const Editor: React.FC = () => {
 
             {/* Floating Context Menu */}
             {selectedObject && (
-                <div 
+                <div
                     className="absolute z-40 flex gap-1 bg-white border-4 border-slate-900 text-slate-900 p-1.5 rounded-xl shadow-[4px_4px_0px_0px_#0f172a] -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100"
-                    style={{ 
-                        top: `calc(50% - ${canvasSize.height * zoom / 2}px + ${floatingMenuPos.top * zoom}px - 60px)`, 
+                    style={{
+                        top: `calc(50% - ${canvasSize.height * zoom / 2}px + ${floatingMenuPos.top * zoom}px - 60px)`,
                         left: `calc(50% - ${canvasSize.width * zoom / 2}px + ${floatingMenuPos.left * zoom}px)`
                     }}
                 >
+                    {isActiveSelection && (
+                        <button onClick={handleGroup} className="p-1.5 hover:bg-indigo-50 text-indigo-600 rounded-lg" title="Group"><Group size={16} /></button>
+                    )}
+                    {isGroup && (
+                        <button onClick={handleUngroup} className="p-1.5 hover:bg-amber-50 text-amber-600 rounded-lg" title="Ungroup"><Ungroup size={16} /></button>
+                    )}
+                    {(isActiveSelection || isGroup) && (
+                        <div className="w-px h-4 bg-slate-200" />
+                    )}
                     <button onClick={handleDuplicate} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Duplicate (Ctrl+D)"><Copy size={16} /></button>
                     <button onClick={handleCopy} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Copy (Ctrl+C)"><Clipboard size={16} /></button>
                     <button onClick={handleDelete} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg" title="Delete"><Trash2 size={16} /></button>
@@ -999,7 +1076,7 @@ export const Editor: React.FC = () => {
                         {selectedObject instanceof fabric.IText && (
                             <>
                                 <div className="relative group">
-                                    <button 
+                                    <button
                                         onClick={() => setActiveTool(activeTool === 'typography' ? null : 'typography')}
                                         className={`p-3 rounded-xl transition-all ${activeTool === 'typography' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                         title="Typography"
@@ -1012,7 +1089,7 @@ export const Editor: React.FC = () => {
                                             <div className="space-y-4">
                                                 <div className="space-y-1">
                                                     <span className="text-[10px] font-bold uppercase text-slate-500">Font Family</span>
-                                                    <select 
+                                                    <select
                                                         value={objectProps.fontFamily}
                                                         onChange={(e) => handleFontFamily(e.target.value)}
                                                         className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold focus:outline-none focus:border-slate-900"
@@ -1023,9 +1100,9 @@ export const Editor: React.FC = () => {
                                                 <div className="flex gap-2">
                                                     <div className="flex-1 space-y-1">
                                                         <span className="text-[10px] font-bold uppercase text-slate-500">Size</span>
-                                                        <input 
-                                                            type="number" 
-                                                            value={objectProps.fontSize} 
+                                                        <input
+                                                            type="number"
+                                                            value={objectProps.fontSize}
                                                             onChange={(e) => handleFontSize(parseInt(e.target.value))}
                                                             className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold focus:outline-none focus:border-slate-900"
                                                         />
@@ -1033,9 +1110,9 @@ export const Editor: React.FC = () => {
                                                     <div className="flex-1 space-y-1">
                                                         <span className="text-[10px] font-bold uppercase text-slate-500">Color</span>
                                                         <div className="flex items-center gap-2 h-[34px] bg-slate-50 border-2 border-slate-200 rounded-lg px-2">
-                                                            <input 
-                                                                type="color" 
-                                                                value={objectProps.fill} 
+                                                            <input
+                                                                type="color"
+                                                                value={objectProps.fill}
                                                                 onChange={(e) => handleColor(e.target.value)}
                                                                 className="w-6 h-6 rounded border border-slate-300 p-0 overflow-hidden cursor-pointer"
                                                             />
@@ -1071,7 +1148,7 @@ export const Editor: React.FC = () => {
                                 </div>
 
                                 <div className="relative group">
-                                    <button 
+                                    <button
                                         onClick={() => setActiveTool(activeTool === 'spacing' ? null : 'spacing')}
                                         className={`p-3 rounded-xl transition-all ${activeTool === 'spacing' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                         title="Spacing"
@@ -1087,9 +1164,9 @@ export const Editor: React.FC = () => {
                                                         <span>Letter Spacing</span>
                                                         <span>{objectProps.charSpacing}</span>
                                                     </div>
-                                                    <input 
-                                                        type="range" min="-100" max="500" 
-                                                        value={objectProps.charSpacing} 
+                                                    <input
+                                                        type="range" min="-100" max="500"
+                                                        value={objectProps.charSpacing}
                                                         onChange={(e) => handleSpacing('char', parseInt(e.target.value))}
                                                         className="w-full accent-slate-900"
                                                     />
@@ -1099,9 +1176,9 @@ export const Editor: React.FC = () => {
                                                         <span>Line Height</span>
                                                         <span>{objectProps.lineHeight}</span>
                                                     </div>
-                                                    <input 
+                                                    <input
                                                         type="range" min="0.5" max="3" step="0.1"
-                                                        value={objectProps.lineHeight} 
+                                                        value={objectProps.lineHeight}
                                                         onChange={(e) => handleSpacing('line', parseFloat(e.target.value))}
                                                         className="w-full accent-slate-900"
                                                     />
@@ -1111,13 +1188,13 @@ export const Editor: React.FC = () => {
                                     )}
                                 </div>
 
-                                <button 
+                                <button
                                     onClick={() => {
                                         if (selectedObject instanceof fabric.IText) {
                                             const text = selectedObject.text || '';
                                             const lines = text.split('\n');
                                             const allBulleted = lines.every(l => l.startsWith('• '));
-                                            const newText = allBulleted 
+                                            const newText = allBulleted
                                                 ? lines.map(l => l.replace(/^• /, '')).join('\n')
                                                 : lines.map(l => l.startsWith('• ') ? l : `• ${l}`).join('\n');
                                             selectedObject.set('text', newText);
@@ -1134,7 +1211,7 @@ export const Editor: React.FC = () => {
 
                         {/* Color Tool */}
                         <div className="relative group">
-                            <button 
+                            <button
                                 onClick={() => setActiveTool(activeTool === 'color' ? null : 'color')}
                                 className={`p-3 rounded-xl transition-all ${activeTool === 'color' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                 title="Color"
@@ -1147,15 +1224,15 @@ export const Editor: React.FC = () => {
                                     <div className="space-y-4">
                                         <div className="flex gap-2 flex-wrap">
                                             {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6', 'transparent'].map(c => (
-                                                <button 
+                                                <button
                                                     key={c}
                                                     onClick={() => handleColor(c)}
                                                     className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.fill === c ? 'ring-2 ring-slate-900' : ''}`}
                                                     style={{ backgroundColor: c === 'transparent' ? '#fff' : c, backgroundImage: c === 'transparent' ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)' : 'none', backgroundSize: '8px 8px', backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px' }}
                                                 />
                                             ))}
-                                            <input 
-                                                type="color" 
+                                            <input
+                                                type="color"
                                                 value={objectProps.fill === 'transparent' ? '#000000' : objectProps.fill}
                                                 onChange={(e) => handleColor(e.target.value)}
                                                 className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
@@ -1168,7 +1245,7 @@ export const Editor: React.FC = () => {
 
                         {/* Flip Tool */}
                         <div className="relative group">
-                            <button 
+                            <button
                                 onClick={() => setActiveTool(activeTool === 'flip' ? null : 'flip')}
                                 className={`p-3 rounded-xl transition-all ${activeTool === 'flip' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                 title="Flip"
@@ -1188,7 +1265,7 @@ export const Editor: React.FC = () => {
 
                         {/* Opacity Tool */}
                         <div className="relative group">
-                            <button 
+                            <button
                                 onClick={() => setActiveTool(activeTool === 'opacity' ? null : 'opacity')}
                                 className={`p-3 rounded-xl transition-all ${activeTool === 'opacity' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                 title="Opacity"
@@ -1205,9 +1282,9 @@ export const Editor: React.FC = () => {
                                             <span>Value</span>
                                             <span>{Math.round(objectProps.opacity * 100)}%</span>
                                         </div>
-                                        <input 
+                                        <input
                                             type="range" min="0" max="1" step="0.01"
-                                            value={objectProps.opacity} 
+                                            value={objectProps.opacity}
                                             onChange={(e) => handleOpacity(parseFloat(e.target.value))}
                                             className="w-full accent-slate-900"
                                         />
@@ -1218,14 +1295,14 @@ export const Editor: React.FC = () => {
 
                         {/* Stroke Tool */}
                         <div className="relative group">
-                            <button 
+                            <button
                                 onClick={() => setActiveTool(activeTool === 'stroke' ? null : 'stroke')}
                                 className={`p-3 rounded-xl transition-all ${activeTool === 'stroke' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                 title="Stroke"
                             >
                                 <div className={`w-5 h-5 border-2 rounded-sm ${activeTool === 'stroke' ? 'border-white' : 'border-slate-900'}`} />
                             </button>
-                            
+
                             {activeTool === 'stroke' && (
                                 <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
                                     <h4 className="font-black text-xs uppercase tracking-widest mb-3">Stroke Settings</h4>
@@ -1235,24 +1312,24 @@ export const Editor: React.FC = () => {
                                                 <span>Width</span>
                                                 <span>{objectProps.strokeWidth}px</span>
                                             </div>
-                                            <input 
-                                                type="range" min="0" max="20" 
-                                                value={objectProps.strokeWidth} 
+                                            <input
+                                                type="range" min="0" max="20"
+                                                value={objectProps.strokeWidth}
                                                 onChange={(e) => handleStroke({ strokeWidth: parseInt(e.target.value) })}
                                                 className="w-full accent-slate-900"
                                             />
                                         </div>
-                                        
+
                                         <div className="space-y-2">
                                             <span className="text-[10px] font-bold uppercase text-slate-500">Position</span>
                                             <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
-                                                <button 
+                                                <button
                                                     onClick={() => handleStroke({ strokeType: 'middle' })}
                                                     className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.strokeType === 'middle' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}
                                                 >
                                                     Middle
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => handleStroke({ strokeType: 'outer' })}
                                                     className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.strokeType === 'outer' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}
                                                 >
@@ -1265,15 +1342,15 @@ export const Editor: React.FC = () => {
                                             <span className="text-[10px] font-bold uppercase text-slate-500">Color</span>
                                             <div className="flex gap-2 flex-wrap">
                                                 {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
-                                                    <button 
+                                                    <button
                                                         key={c}
                                                         onClick={() => handleStroke({ strokeColor: c })}
                                                         className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.strokeColor === c ? 'ring-2 ring-slate-900' : ''}`}
                                                         style={{ backgroundColor: c }}
                                                     />
                                                 ))}
-                                                <input 
-                                                    type="color" 
+                                                <input
+                                                    type="color"
                                                     value={objectProps.strokeColor}
                                                     onChange={(e) => handleStroke({ strokeColor: e.target.value })}
                                                     className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
@@ -1287,7 +1364,7 @@ export const Editor: React.FC = () => {
 
                         {/* Shadow Tool */}
                         <div className="relative group">
-                            <button 
+                            <button
                                 onClick={() => setActiveTool(activeTool === 'shadow' ? null : 'shadow')}
                                 className={`p-3 rounded-xl transition-all ${activeTool === 'shadow' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                 title="Shadow"
@@ -1304,9 +1381,9 @@ export const Editor: React.FC = () => {
                                                 <span>Distance (Value)</span>
                                                 <span>{objectProps.shadowDistance}px</span>
                                             </div>
-                                            <input 
-                                                type="range" min="0" max="50" 
-                                                value={objectProps.shadowDistance} 
+                                            <input
+                                                type="range" min="0" max="50"
+                                                value={objectProps.shadowDistance}
                                                 onChange={(e) => handleShadow({ shadowDistance: parseInt(e.target.value) })}
                                                 className="w-full accent-slate-900"
                                             />
@@ -1317,9 +1394,9 @@ export const Editor: React.FC = () => {
                                                 <span>Blur</span>
                                                 <span>{objectProps.shadowBlur}px</span>
                                             </div>
-                                            <input 
-                                                type="range" min="0" max="50" 
-                                                value={objectProps.shadowBlur} 
+                                            <input
+                                                type="range" min="0" max="50"
+                                                value={objectProps.shadowBlur}
                                                 onChange={(e) => handleShadow({ shadowBlur: parseInt(e.target.value) })}
                                                 className="w-full accent-slate-900"
                                             />
@@ -1330,9 +1407,9 @@ export const Editor: React.FC = () => {
                                                 <span>Rotation</span>
                                                 <span>{objectProps.shadowAngle}°</span>
                                             </div>
-                                            <input 
-                                                type="range" min="0" max="360" 
-                                                value={objectProps.shadowAngle} 
+                                            <input
+                                                type="range" min="0" max="360"
+                                                value={objectProps.shadowAngle}
                                                 onChange={(e) => handleShadow({ shadowAngle: parseInt(e.target.value) })}
                                                 className="w-full accent-slate-900"
                                             />
@@ -1343,9 +1420,9 @@ export const Editor: React.FC = () => {
                                                 <span>Opacity</span>
                                                 <span>{Math.round(objectProps.shadowOpacity * 100)}%</span>
                                             </div>
-                                            <input 
+                                            <input
                                                 type="range" min="0" max="1" step="0.01"
-                                                value={objectProps.shadowOpacity} 
+                                                value={objectProps.shadowOpacity}
                                                 onChange={(e) => handleShadow({ shadowOpacity: parseFloat(e.target.value) })}
                                                 className="w-full accent-slate-900"
                                             />
@@ -1355,15 +1432,15 @@ export const Editor: React.FC = () => {
                                             <span className="text-[10px] font-bold uppercase text-slate-500">Color</span>
                                             <div className="flex gap-2 flex-wrap">
                                                 {['#000000', '#0f172a', '#94a3b8', '#f27d26'].map(c => (
-                                                    <button 
+                                                    <button
                                                         key={c}
                                                         onClick={() => handleShadow({ shadowColor: c })}
                                                         className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.shadowColor === c ? 'ring-2 ring-slate-900' : ''}`}
                                                         style={{ backgroundColor: c }}
                                                     />
                                                 ))}
-                                                <input 
-                                                    type="color" 
+                                                <input
+                                                    type="color"
                                                     value={objectProps.shadowColor}
                                                     onChange={(e) => handleShadow({ shadowColor: e.target.value })}
                                                     className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
@@ -1378,7 +1455,7 @@ export const Editor: React.FC = () => {
                         {/* Radius Tool (Rect Only) */}
                         {selectedObject instanceof fabric.Rect && (
                             <div className="relative group">
-                                <button 
+                                <button
                                     onClick={() => setActiveTool(activeTool === 'radius' ? null : 'radius')}
                                     className={`p-3 rounded-xl transition-all ${activeTool === 'radius' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
                                     title="Corner Radius"
@@ -1393,9 +1470,9 @@ export const Editor: React.FC = () => {
                                                 <span>Value</span>
                                                 <span>{objectProps.cornerRadius}px</span>
                                             </div>
-                                            <input 
-                                                type="range" min="0" max="100" 
-                                                value={objectProps.cornerRadius} 
+                                            <input
+                                                type="range" min="0" max="100"
+                                                value={objectProps.cornerRadius}
                                                 onChange={(e) => handleCornerRadius(parseInt(e.target.value))}
                                                 className="w-full accent-slate-900"
                                             />
@@ -1416,18 +1493,18 @@ export const Editor: React.FC = () => {
 
                 {/* Undo / Redo */}
                 <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
-                    <button 
-                        onClick={handleUndo} 
+                    <button
+                        onClick={handleUndo}
                         disabled={historyIndex <= 0}
-                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Undo (Ctrl+Z)"
                     >
                         <Undo2 size={20} />
                     </button>
-                    <button 
-                        onClick={handleRedo} 
+                    <button
+                        onClick={handleRedo}
                         disabled={historyIndex >= history.length - 1}
-                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Redo (Ctrl+Shift+Z)"
                     >
                         <Redo2 size={20} />
