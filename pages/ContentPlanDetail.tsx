@@ -661,6 +661,10 @@ export const ContentPlanDetail: React.FC = () => {
                 if (payload.approval) {
                     await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `menunjuk Anda sebagai approver untuk konten: ${payload.title}`);
                 }
+                // Notify PIC if assigned
+                if (payload.pic) {
+                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `menugaskan Anda sebagai PIC untuk konten: ${payload.title}`);
+                }
             } else if (modalMode === 'edit' && editingId) {
                 const { error } = await supabase.from('content_items').update(payload).eq('id', editingId);
                 if (error) throw error;
@@ -674,11 +678,31 @@ export const ContentPlanDetail: React.FC = () => {
                     } else if (payload.status === ContentStatus.IN_PROGRESS && oldTask.status === ContentStatus.REVIEW) {
                         await notifyMemberByName(payload.pic, 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${payload.title}".`);
                     }
-                } else if (oldTask && oldTask.approval !== payload.approval && payload.approval) {
+                }
+
+                // Notify if PIC changed
+                if (oldTask && oldTask.pic !== payload.pic && payload.pic) {
+                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `menugaskan Anda sebagai PIC baru untuk konten: ${payload.title}`);
+                }
+
+                if (oldTask && oldTask.approval !== payload.approval && payload.approval) {
                     // Notify if Approver changed
                     await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `menunjuk Anda sebagai approver untuk konten: ${payload.title}`);
                 }
             }
+
+            // Detect @mentions in script (for both Create/Edit)
+            if (payload.script && payload.script.includes('@')) {
+                const mentions = payload.script.match(/@\[([^\]]+)\]|@(\w+)/g);
+                if (mentions) {
+                    const uniqueNames: string[] = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))] as string[];
+                    for (const name of uniqueNames) {
+                        // Notify if mentioned
+                        await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten: ${payload.title}`);
+                    }
+                }
+            }
+
             setIsModalOpen(false);
             fetchData();
         } catch (error) {

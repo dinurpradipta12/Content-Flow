@@ -5,8 +5,9 @@ import { Input, Select } from '../ui/Input';
 import { ApprovalTemplate, FormField } from '../../types/approval';
 import { createRequest } from '../../services/approvalService';
 import { supabase } from '../../services/supabaseClient';
-import { CheckCircle, AlertCircle, FileText, UploadCloud, PlusCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, FileText, UploadCloud, PlusCircle, Bell } from 'lucide-react';
 import { CustomFormBuilderModal } from './CustomFormBuilderModal';
+import { useNotifications } from '../../components/NotificationProvider';
 
 interface CreateRequestModalProps {
     isOpen: boolean;
@@ -21,10 +22,35 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(false);
     const [isCustomBuilderOpen, setIsCustomBuilderOpen] = useState(false);
-    
+
     // Dropdown Data
     const [users, setUsers] = useState<any[]>([]);
     const [workspaces, setWorkspaces] = useState<any[]>([]);
+
+    const { sendNotification } = useNotifications();
+
+    const fetchAppUsers = async () => {
+        // We can reuse the users state but for mentions we need names
+    };
+
+    const notifyByMention = async (text: string, sourceTitle: string) => {
+        if (!text || typeof text !== 'string' || !text.includes('@')) return;
+        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+        if (mentions) {
+            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
+            for (const name of uniqueNames) {
+                const user = users.find(u => (u.full_name || u.username) === name);
+                if (user) {
+                    await sendNotification({
+                        recipientId: user.id,
+                        type: 'MENTION',
+                        title: 'Anda disebut dalam Pengajuan',
+                        content: `menyebut Anda dalam pengajuan baru: ${sourceTitle}`,
+                    });
+                }
+            }
+        }
+    };
 
     useEffect(() => {
         if (!isOpen) {
@@ -41,7 +67,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                 supabase.from('app_users').select('id, full_name, username'),
                 supabase.from('workspaces').select('id, name, account_name')
             ]);
-            
+
             if (usersRes.data) setUsers(usersRes.data);
             if (wsRes.data) setWorkspaces(wsRes.data);
         } catch (err) {
@@ -83,6 +109,29 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
         setLoading(true);
         try {
             await createRequest(selectedTemplate, formData, currentUser);
+
+            // Scan for mentions and assignments
+            const judul = formData.judul_konten || selectedTemplate.name;
+            for (const field of selectedTemplate.form_schema) {
+                const value = formData[field.id];
+                if (!value) continue;
+
+                if (field.type === 'user_select') {
+                    // This is an assignment, notify the user
+                    const user = users.find(u => (u.full_name || u.username) === value);
+                    if (user && user.id !== currentUser.id) {
+                        await sendNotification({
+                            recipientId: user.id,
+                            type: 'MENTION',
+                            title: 'Penugasan Approval',
+                            content: `menugaskan Anda dalam pengajuan baru: ${judul}`,
+                        });
+                    }
+                } else if (typeof value === 'string') {
+                    await notifyByMention(value, judul);
+                }
+            }
+
             onSuccess();
             onClose();
         } catch (err) {
@@ -180,8 +229,8 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                                 <span className="text-sm font-bold">{formData[field.id] ? 'File Terpilih' : 'Klik untuk Upload'}</span>
                                 {formData[field.id] && <span className="text-xs text-accent mt-1 truncate max-w-full px-4">{formData[field.id]}</span>}
                             </div>
-                            <input 
-                                type="file" 
+                            <input
+                                type="file"
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 multiple={field.type === 'file_multiple'}
                                 accept={field.type === 'file_multiple' ? "image/jpeg, image/png" : ".pdf"}
@@ -223,7 +272,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                                 <p className="text-sm text-slate-500 line-clamp-2">{template.description}</p>
                             </button>
                         ))}
-                        
+
                         {/* Custom Form Builder Button (Superuser Only) */}
                         {currentUser?.role === 'superuser' && (
                             <button
@@ -255,9 +304,9 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                                 <h4 className="font-bold text-blue-800">{selectedTemplate.name}</h4>
                                 <p className="text-sm text-blue-600/80">{selectedTemplate.description}</p>
                             </div>
-                            <button 
-                                type="button" 
-                                onClick={() => setSelectedTemplate(null)} 
+                            <button
+                                type="button"
+                                onClick={() => setSelectedTemplate(null)}
                                 className="ml-auto text-xs font-bold text-blue-500 hover:text-blue-700 underline"
                             >
                                 Ganti Template
@@ -277,9 +326,9 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                 )}
             </Modal>
 
-            <CustomFormBuilderModal 
-                isOpen={isCustomBuilderOpen} 
-                onClose={() => setIsCustomBuilderOpen(false)} 
+            <CustomFormBuilderModal
+                isOpen={isCustomBuilderOpen}
+                onClose={() => setIsCustomBuilderOpen(false)}
             />
         </>
     );

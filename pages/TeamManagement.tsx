@@ -4,7 +4,8 @@ import { Workspace } from '../types';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
-import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save } from 'lucide-react';
+import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save, Bell } from 'lucide-react';
+import { useNotifications } from '../components/NotificationProvider';
 
 interface AppUser {
     id: string;
@@ -65,6 +66,27 @@ export const TeamManagement: React.FC = () => {
     const [savingEditKPI, setSavingEditKPI] = useState(false);
 
     const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
+
+    const { sendNotification } = useNotifications();
+
+    const notifyByMention = async (text: string, sourceTitle: string) => {
+        if (!text || typeof text !== 'string' || !text.includes('@')) return;
+        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+        if (mentions) {
+            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
+            for (const name of uniqueNames) {
+                const user = users.find(u => u.full_name === name || u.username === name);
+                if (user) {
+                    await sendNotification({
+                        recipientId: user.id,
+                        type: 'MENTION',
+                        title: 'Anda disebut dalam KPI',
+                        content: `menyebut Anda dalam catatan KPI: ${sourceTitle}`,
+                    });
+                }
+            }
+        }
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -374,6 +396,7 @@ export const TeamManagement: React.FC = () => {
                 notes: kpiForm.notes
             }]);
             if (error) throw error;
+            await notifyByMention(kpiForm.notes, kpiForm.metric_name);
             setKpiForm({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
             setShowAddKPI(false);
             fetchData();
@@ -409,6 +432,7 @@ export const TeamManagement: React.FC = () => {
                 notes: editKPIForm.notes,
             }).eq('id', kpiId);
             if (error) throw error;
+            await notifyByMention(editKPIForm.notes, editKPIForm.metric_name);
             setEditingKPIId(null);
             fetchData();
         } catch (err: any) { alert('Gagal menyimpan: ' + err?.message); }

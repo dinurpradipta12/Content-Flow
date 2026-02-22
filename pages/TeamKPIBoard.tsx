@@ -4,8 +4,10 @@ import { Modal } from '../components/ui/Modal';
 import {
     Users, Target, TrendingUp, Plus, Trash2, Edit3, Save,
     ChevronDown, AlertCircle, CheckCircle, Clock, X, Loader2,
-    BarChart3, User
+    BarChart3, User, Bell
 } from 'lucide-react';
+import { useNotifications } from '../components/NotificationProvider';
+import { NotificationType } from '../types';
 
 interface TeamMember {
     id: string;
@@ -81,9 +83,37 @@ export const TeamKPIBoard: React.FC = () => {
     const [memberActuals, setMemberActuals] = useState<Record<string, { actual_value: number; notes: string }>>({});
     const [savingActuals, setSavingActuals] = useState(false);
 
+    const { sendNotification } = useNotifications();
+    const [allAppUsers, setAllAppUsers] = useState<{ id: string, name: string }[]>([]);
+
     useEffect(() => {
         fetchData();
+        fetchAppUsers();
     }, []);
+
+    const fetchAppUsers = async () => {
+        const { data } = await supabase.from('app_users').select('id, full_name');
+        if (data) setAllAppUsers(data.map(u => ({ id: u.id, name: u.full_name })));
+    };
+
+    const notifyByMention = async (text: string, sourceTitle: string) => {
+        if (!text || !text.includes('@')) return;
+        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+        if (mentions) {
+            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
+            for (const name of uniqueNames) {
+                const user = allAppUsers.find(u => u.name === name);
+                if (user) {
+                    await sendNotification({
+                        recipientId: user.id,
+                        type: 'MENTION',
+                        title: 'Anda disebut di KPI Board',
+                        content: `menyebut Anda dalam catatan KPI: ${sourceTitle}`,
+                    });
+                }
+            }
+        }
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -164,6 +194,7 @@ export const TeamKPIBoard: React.FC = () => {
             ...newKPI,
         }]);
         if (!error) {
+            await notifyByMention(newKPI.notes, newKPI.metric_name);
             setNewKPI({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
             setIsAddKPIOpen(false);
             fetchData();
@@ -175,6 +206,12 @@ export const TeamKPIBoard: React.FC = () => {
             actual_value: editValues.actual_value,
             notes: editValues.notes,
         }).eq('id', kpiId);
+
+        const kpi = kpis.find(k => k.id === kpiId);
+        if (kpi) {
+            await notifyByMention(editValues.notes, kpi.metric_name);
+        }
+
         setEditingKPI(null);
         fetchData();
     };
@@ -194,6 +231,15 @@ export const TeamKPIBoard: React.FC = () => {
                     supabase.from('team_kpis').update({ actual_value: vals.actual_value, notes: vals.notes }).eq('id', kpiId)
                 )
             );
+
+            // Notify for each KPI note updated
+            for (const [kpiId, vals] of Object.entries(memberActuals) as [string, { actual_value: number; notes: string }][]) {
+                const kpi = kpis.find(k => k.id === kpiId);
+                if (kpi && vals.notes) {
+                    await notifyByMention(vals.notes, kpi.metric_name);
+                }
+            }
+
             fetchData();
             setShowMemberInput(false);
             // Auto-close detail modal with slight delay for slide-back effect

@@ -4,13 +4,14 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { ApprovalRequest, ApprovalLog } from '../../types/approval';
 import { getLogs, processApproval } from '../../services/approvalService';
-import { 
-    CheckCircle, 
-    XCircle, 
-    CornerUpLeft, 
-    User, 
-    Clock, 
-    FileText, 
+import { supabase } from '../../services/supabaseClient';
+import {
+    CheckCircle,
+    XCircle,
+    CornerUpLeft,
+    User,
+    Clock,
+    FileText,
     ExternalLink,
     Image as ImageIcon,
     X,
@@ -18,8 +19,10 @@ import {
     ChevronRight,
     Download,
     Send,
-    Paperclip
+    Paperclip,
+    Bell
 } from 'lucide-react';
+import { useNotifications } from '../../components/NotificationProvider';
 
 interface ApprovalDetailModalProps {
     isOpen: boolean;
@@ -35,7 +38,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     const [actionLoading, setActionLoading] = useState<'Approve' | 'Reject' | 'Return' | null>(null);
     const [chatInput, setChatInput] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    
+
     // Action Note Popover State
     const [activeAction, setActiveAction] = useState<'Approve' | 'Reject' | 'Return' | null>(null);
 
@@ -44,9 +47,13 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     const [currentPreviewIndex, setCurrentPreviewIndex] = useState<number>(0);
     const [previewPdf, setPreviewPdf] = useState<string | null>(null);
 
+    const { sendNotification } = useNotifications();
+    const [allAppUsers, setAllAppUsers] = useState<{ id: string, name: string }[]>([]);
+
     useEffect(() => {
         if (isOpen && request) {
             fetchLogs();
+            fetchAppUsers();
             setActiveAction(null);
             setComment('');
             setChatInput('');
@@ -55,6 +62,30 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             setPreviewPdf(null);
         }
     }, [isOpen, request]);
+
+    const fetchAppUsers = async () => {
+        const { data } = await supabase.from('app_users').select('id, full_name');
+        if (data) setAllAppUsers(data.map(u => ({ id: u.id, name: u.full_name })));
+    };
+
+    const notifyByMention = async (text: string, sourceTitle: string) => {
+        if (!text || !text.includes('@')) return;
+        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+        if (mentions) {
+            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
+            for (const name of uniqueNames) {
+                const user = allAppUsers.find(u => u.name === name);
+                if (user) {
+                    await sendNotification({
+                        recipientId: user.id,
+                        type: 'MENTION',
+                        title: 'Anda disebut dalam Approval',
+                        content: `menyebut Anda dalam diskusi approval: ${sourceTitle}`,
+                    });
+                }
+            }
+        }
+    };
 
     const fetchLogs = async () => {
         if (!request) return;
@@ -72,10 +103,26 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             alert("Harap berikan komentar/alasan untuk penolakan atau pengembalian.");
             return;
         }
-        
+
         setActionLoading(activeAction);
         try {
             await processApproval(request, activeAction, comment, currentUser);
+
+            // 1. Notify Requester
+            if (request.requester_id !== currentUser.id) {
+                await sendNotification({
+                    recipientId: request.requester_id,
+                    type: activeAction === 'Approve' ? 'CONTENT_APPROVED' : 'CONTENT_REVISION',
+                    title: `Status Approval: ${activeAction}`,
+                    content: `telah melakukan aksi "${activeAction}" pada pengajuan: ${request.form_data.judul_konten || 'Untitled'}`,
+                });
+            }
+
+            // 2. Notify Mentions in comment
+            if (comment) {
+                await notifyByMention(comment, request.form_data.judul_konten || 'Untitled');
+            }
+
             onUpdate();
             // We don't close the modal automatically so user can see the updated status
             setActiveAction(null);
@@ -105,6 +152,10 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             created_at: new Date().toISOString()
         };
         setLogs(prev => [...prev, newLog]);
+
+        // Notify Mentions in chat
+        await notifyByMention(chatInput, request.form_data.judul_konten || 'Untitled');
+
         setChatInput('');
         setSelectedFile(null);
     };
@@ -112,7 +163,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     if (!request) return null;
 
     const steps = request.template?.workflow_steps || [];
-    
+
     // Determine Header Color based on Status
     const getStatusBgColor = () => {
         switch (request.status) {
@@ -167,8 +218,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         {filesString.includes('.jpg') || filesString.includes('.png') ? (
                             // Mock Images
                             Array.from({ length: Math.min(5, 15) }).map((_, i) => (
-                                <div 
-                                    key={i} 
+                                <div
+                                    key={i}
                                     onClick={() => openImagePreview(i, Math.min(5, 15))}
                                     className="shrink-0 w-32 h-32 bg-slate-200 border-4 border-slate-900 rounded-xl overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform shadow-[4px_4px_0px_0px_#0f172a]"
                                 >
@@ -202,7 +253,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         <div className="inline-block px-4 py-1.5 rounded-full border-4 border-slate-900 font-black text-sm uppercase mb-6 bg-white shadow-[4px_4px_0px_0px_#0f172a]">
                             Status: {request.status}
                         </div>
-                        
+
                         {/* PIC Info */}
                         <div className="flex items-center gap-3 mb-6 bg-white/50 w-fit pr-6 rounded-full border-2 border-slate-900">
                             {request.requester_avatar ? (
@@ -240,7 +291,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             )}
                             <div className="bg-white/60 px-3 py-1.5 rounded-lg border-2 border-slate-900">
                                 <span className="opacity-60 uppercase text-[10px] block leading-none mb-1">Tgl Posting</span>
-                                {request.form_data.tanggal_posting ? new Date(request.form_data.tanggal_posting).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'}) : '-'}
+                                {request.form_data.tanggal_posting ? new Date(request.form_data.tanggal_posting).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                             </div>
                         </div>
                     </div>
@@ -254,10 +305,10 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
                 {/* Body Area */}
                 <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-[#FFFDF5]">
-                    
+
                     {/* Left Column: Files & Timeline */}
                     <div className="lg:col-span-2 space-y-8">
-                        
+
                         {/* Content Files */}
                         <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a]">
                             <h3 className="font-black text-2xl mb-6 uppercase tracking-tight flex items-center gap-3">
@@ -290,24 +341,23 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Workflow Steps */}
                                 {steps.map((step, index) => {
                                     const log = logs.find(l => l.step_name === step.name);
                                     const isCurrent = index === request.current_step_index && request.status === 'Pending';
                                     const isCompleted = index < request.current_step_index || request.status === 'Approved';
-                                    
+
                                     return (
                                         <div key={step.id} className="flex items-start gap-4 relative">
                                             {/* Connecting Line */}
                                             <div className="absolute left-4 top-[-24px] bottom-8 w-0.5 bg-slate-200 -z-10"></div>
-                                            
-                                            <div className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center shrink-0 mt-1 ${
-                                                isCompleted ? 'bg-green-100' : isCurrent ? 'bg-yellow-100 animate-pulse' : 'bg-slate-100'
-                                            }`}>
-                                                {isCompleted ? <CheckCircle size={16} className="text-green-600" /> : 
-                                                 isCurrent ? <div className="w-2 h-2 bg-yellow-600 rounded-full"></div> : 
-                                                 <Clock size={16} className="text-slate-400" />}
+
+                                            <div className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center shrink-0 mt-1 ${isCompleted ? 'bg-green-100' : isCurrent ? 'bg-yellow-100 animate-pulse' : 'bg-slate-100'
+                                                }`}>
+                                                {isCompleted ? <CheckCircle size={16} className="text-green-600" /> :
+                                                    isCurrent ? <div className="w-2 h-2 bg-yellow-600 rounded-full"></div> :
+                                                        <Clock size={16} className="text-slate-400" />}
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start">
@@ -318,10 +368,9 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                                     <div className="text-right">
                                                         {log ? (
                                                             <>
-                                                                <span className={`text-sm font-bold ${
-                                                                    log.action === 'Approve' ? 'text-green-600' :
+                                                                <span className={`text-sm font-bold ${log.action === 'Approve' ? 'text-green-600' :
                                                                     log.action === 'Reject' ? 'text-red-600' : 'text-orange-600'
-                                                                }`}>{log.action}</span>
+                                                                    }`}>{log.action}</span>
                                                                 <p className="text-xs text-slate-500">{new Date(log.created_at).toLocaleString('id-ID')}</p>
                                                             </>
                                                         ) : (
@@ -363,7 +412,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         {/* Comments / Activity Section */}
                         <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col h-[500px]">
                             <h3 className="font-black text-xl mb-4 uppercase tracking-tight border-b-4 border-slate-900 pb-2 shrink-0">Komentar & Aktivitas</h3>
-                            
+
                             {/* Chat Messages */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4 mb-4">
                                 {logs.filter(l => l.comment).map(log => {
@@ -380,11 +429,10 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                             <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]`}>
                                                 <div className="flex items-baseline gap-2 mb-1">
                                                     <span className="font-black text-xs text-slate-900 uppercase tracking-tight">{isMe ? 'Anda' : log.user_name}</span>
-                                                    <span className="text-[10px] font-bold text-slate-400">{new Date(log.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400">{new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
-                                                <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-[4px_4px_0px_0px_#0f172a] ${
-                                                    isMe ? 'bg-yellow-100 rounded-tr-none' : 'bg-white rounded-tl-none'
-                                                }`}>
+                                                <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-[4px_4px_0px_0px_#0f172a] ${isMe ? 'bg-yellow-100 rounded-tr-none' : 'bg-white rounded-tl-none'
+                                                    }`}>
                                                     {log.comment}
                                                     {log.attachment && (
                                                         <div className="mt-2 pt-2 border-t border-slate-900/10 flex items-center gap-2 text-accent cursor-pointer hover:underline">
@@ -419,9 +467,9 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                 )}
                                 <div className="flex gap-2">
                                     <div className="relative flex-1">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Tulis komentar..." 
+                                        <input
+                                            type="text"
+                                            placeholder="Tulis komentar..."
                                             className="w-full border-4 border-slate-900 rounded-xl pl-4 pr-12 py-3 font-bold text-sm focus:outline-none focus:bg-yellow-50 transition-colors shadow-[4px_4px_0px_0px_#0f172a]"
                                             value={chatInput}
                                             onChange={e => setChatInput(e.target.value)}
@@ -435,7 +483,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                             }} />
                                         </label>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={handleSendChat}
                                         className="bg-accent text-white p-4 rounded-xl border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all"
                                     >
@@ -448,23 +496,23 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         {request.status === 'Pending' && (
                             <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] sticky top-6">
                                 <h3 className="font-black text-xl mb-4 uppercase tracking-tight border-b-4 border-slate-900 pb-2">Aksi</h3>
-                                
+
                                 <div className="flex flex-col gap-3 relative">
-                                    
-                                    <Button 
-                                        onClick={() => setActiveAction('Approve')} 
+
+                                    <Button
+                                        onClick={() => setActiveAction('Approve')}
                                         className="bg-green-400 text-slate-900 border-4 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:shadow-[4px_4px_0px_0px_#0f172a] py-2 text-sm uppercase tracking-widest w-full justify-center"
                                     >
                                         Approve
                                     </Button>
-                                    <Button 
-                                        onClick={() => setActiveAction('Reject')} 
+                                    <Button
+                                        onClick={() => setActiveAction('Reject')}
                                         className="bg-red-400 text-slate-900 border-4 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:shadow-[4px_4px_0px_0px_#0f172a] py-2 text-sm uppercase tracking-widest w-full justify-center"
                                     >
                                         Reject
                                     </Button>
-                                    <Button 
-                                        onClick={() => setActiveAction('Return')} 
+                                    <Button
+                                        onClick={() => setActiveAction('Return')}
                                         className="bg-orange-400 text-slate-900 border-4 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:shadow-[4px_4px_0px_0px_#0f172a] py-2 text-sm uppercase tracking-widest w-full justify-center"
                                     >
                                         Return
@@ -477,34 +525,33 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             </Modal>
 
             {/* Action Note Modal */}
-            <Modal 
-                isOpen={!!activeAction} 
-                onClose={() => { setActiveAction(null); setComment(''); }} 
+            <Modal
+                isOpen={!!activeAction}
+                onClose={() => { setActiveAction(null); setComment(''); }}
                 title={`Catatan ${activeAction}`}
                 maxWidth="max-w-md"
             >
                 <div className="space-y-4">
                     <p className="font-black uppercase text-sm text-slate-600">Berikan alasan atau catatan untuk aksi ini:</p>
-                    <textarea 
-                        className="w-full border-4 border-slate-900 p-3 rounded-xl font-bold focus:outline-none focus:bg-yellow-50 transition-colors resize-none text-sm shadow-[4px_4px_0px_0px_#0f172a]" 
+                    <textarea
+                        className="w-full border-4 border-slate-900 p-3 rounded-xl font-bold focus:outline-none focus:bg-yellow-50 transition-colors resize-none text-sm shadow-[4px_4px_0px_0px_#0f172a]"
                         rows={4}
                         placeholder="Tambahkan catatan..."
-                        value={comment} 
-                        onChange={e => setComment(e.target.value)} 
+                        value={comment}
+                        onChange={e => setComment(e.target.value)}
                     />
                     <div className="flex gap-3 pt-2">
-                        <Button 
-                            onClick={handleActionSubmit} 
+                        <Button
+                            onClick={handleActionSubmit}
                             isLoading={actionLoading === activeAction}
-                            className={`flex-1 border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] py-3 text-sm uppercase tracking-widest ${
-                                activeAction === 'Approve' ? 'bg-green-500' :
+                            className={`flex-1 border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] py-3 text-sm uppercase tracking-widest ${activeAction === 'Approve' ? 'bg-green-500' :
                                 activeAction === 'Reject' ? 'bg-red-500' : 'bg-orange-500'
-                            } text-white`}
+                                } text-white`}
                         >
                             Konfirmasi
                         </Button>
-                        <Button 
-                            onClick={() => { setActiveAction(null); setComment(''); }} 
+                        <Button
+                            onClick={() => { setActiveAction(null); setComment(''); }}
                             className="flex-1 bg-red-600 text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] py-3 text-sm uppercase tracking-widest hover:bg-red-700"
                         >
                             Batal
@@ -518,7 +565,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                 <div className="fixed inset-0 z-[20000] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md">
                     {/* Top Actions */}
                     <div className="absolute top-4 right-4 flex gap-4 z-10">
-                        <button 
+                        <button
                             className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
                             onClick={() => {
                                 const link = document.createElement('a');
@@ -529,7 +576,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         >
                             <Download size={24} />
                         </button>
-                        <button 
+                        <button
                             className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
                             onClick={() => setPreviewImages([])}
                         >
@@ -540,13 +587,13 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                     {/* Navigation */}
                     {previewImages.length > 1 && (
                         <>
-                            <button 
+                            <button
                                 className="absolute left-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-10"
                                 onClick={() => setCurrentPreviewIndex(prev => prev === 0 ? previewImages.length - 1 : prev - 1)}
                             >
                                 <ChevronLeft size={32} />
                             </button>
-                            <button 
+                            <button
                                 className="absolute right-4 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-10"
                                 onClick={() => setCurrentPreviewIndex(prev => prev === previewImages.length - 1 ? 0 : prev + 1)}
                             >
@@ -557,12 +604,12 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
                     {/* Image Container */}
                     <div className="relative w-full h-full max-w-6xl max-h-[90vh] flex items-center justify-center">
-                        <img 
-                            src={previewImages[currentPreviewIndex]} 
-                            alt={`Preview ${currentPreviewIndex + 1}`} 
-                            className="max-w-full max-h-full object-contain border-8 border-white rounded-xl shadow-2xl animate-in fade-in zoom-in duration-300" 
+                        <img
+                            src={previewImages[currentPreviewIndex]}
+                            alt={`Preview ${currentPreviewIndex + 1}`}
+                            className="max-w-full max-h-full object-contain border-8 border-white rounded-xl shadow-2xl animate-in fade-in zoom-in duration-300"
                         />
-                        
+
                         {/* Counter */}
                         {previewImages.length > 1 && (
                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-4 py-2 rounded-full font-bold tracking-widest text-sm backdrop-blur-md">
@@ -579,7 +626,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                 <div className="fixed inset-0 z-[20000] bg-black/90 flex items-center justify-center p-4 md:p-12 backdrop-blur-md">
                     {/* Top Actions */}
                     <div className="absolute top-4 right-4 flex gap-4 z-10">
-                        <button 
+                        <button
                             className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
                             onClick={() => {
                                 alert("Download PDF: " + previewPdf);
@@ -587,7 +634,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         >
                             <Download size={24} />
                         </button>
-                        <button 
+                        <button
                             className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
                             onClick={() => setPreviewPdf(null)}
                         >
@@ -605,8 +652,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             {/* In a real app, this would be the actual URL to the PDF. 
                                 For demo purposes, we'll use a placeholder PDF URL if available, 
                                 or just a styled iframe that looks like a PDF viewer. */}
-                            <iframe 
-                                src={`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0`} 
+                            <iframe
+                                src={`https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf#toolbar=0`}
                                 className="absolute inset-0 w-full h-full border-none"
                                 title="PDF Preview"
                             />
