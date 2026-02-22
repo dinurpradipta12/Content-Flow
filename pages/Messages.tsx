@@ -386,17 +386,37 @@ export const Messages: React.FC = () => {
     };
 
     const handleCreateGroup = async () => {
-        if (!newGroupName.trim() || !selectedWorkspace || !currentUser.id) return;
+        if (!newGroupName.trim() || !selectedWorkspace || !currentUser.id) {
+            console.warn('Missing required data for group creation:', { newGroupName, selectedWorkspace, userId: currentUser.id });
+            return;
+        }
 
         try {
-            const { data: group, error } = await supabase.from('workspace_chat_groups').insert({
+            console.log('Creating group with payload:', {
+                name: newGroupName,
+                workspace_id: selectedWorkspace.id,
+                icon: newGroupIcon ? (newGroupIcon.length > 100 ? 'base64_image' : newGroupIcon) : 'users',
+                created_by: currentUser.id
+            });
+
+            const { data: group, error: groupError } = await supabase.from('workspace_chat_groups').insert({
                 name: newGroupName,
                 workspace_id: selectedWorkspace.id,
                 icon: newGroupIcon || 'users',
                 created_by: currentUser.id
             }).select().single();
 
-            if (error) throw error;
+            if (groupError) {
+                console.error('Error creating group (Supabase):', groupError);
+                if (groupError.message?.includes('column "icon" does not exist')) {
+                    alert('Error: Database belum terupdate. Silahkan jalankan file migration 20260223_fix_chat_schema_columns.sql di Supabase SQL Editor.');
+                } else {
+                    alert(`Gagal membuat grup: ${groupError.message}`);
+                }
+                return;
+            }
+
+            if (!group) throw new Error('No group data returned after insert');
 
             // Add members to workspace_chat_members
             const membersToInsert = [currentUser.id, ...selectedMembers].map(uid => ({
@@ -404,19 +424,19 @@ export const Messages: React.FC = () => {
                 user_id: uid
             }));
 
-            // Only insert if table exists and we have members
             if (membersToInsert.length > 0) {
-                await supabase.from('workspace_chat_members').insert(membersToInsert);
+                const { error: memberError } = await supabase.from('workspace_chat_members').insert(membersToInsert);
+                if (memberError) console.error('Error adding members:', memberError);
             }
 
-            fetchGroups(selectedWorkspace.id);
+            await fetchGroups(selectedWorkspace.id);
             setShowGroupModal(false);
             setNewGroupName('');
             setNewGroupIcon(null);
             setSelectedMembers([]);
-        } catch (err) {
-            console.error('Error creating group:', err);
-            alert('Gagal membuat grup. Pastikan semua data valid.');
+        } catch (err: any) {
+            console.error('Unexpected error creating group:', err);
+            alert(`Terjadi kesalahan: ${err.message || 'Unknown error'}`);
         }
     };
 

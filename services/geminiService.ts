@@ -3,8 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 // Safe env access helper to prevent "process is not defined" error in browser
 const getApiKey = () => {
   try {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      return import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || '';
+    }
     if (typeof process !== 'undefined' && process.env) {
-      return process.env.API_KEY;
+      return process.env.VITE_GEMINI_API_KEY || process.env.API_KEY || '';
     }
   } catch (e) { }
   return '';
@@ -12,7 +17,6 @@ const getApiKey = () => {
 
 const apiKey = getApiKey();
 // Initialize with fallback to prevent "API key must be set" error crashing the app on load
-// This ensures the app loads UI even if API key is missing (AI features will fail gracefully later)
 const ai = new GoogleGenAI({ apiKey: apiKey || 'fallback_key_for_ui_load' });
 
 export const generateScript = async (topic: string, platform: string, contentType: string): Promise<string> => {
