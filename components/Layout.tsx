@@ -657,9 +657,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <NavLink to="/admin/team" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-secondary text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-secondary hover:translate-x-1'}`}>
                                 <Briefcase size={20} /> Team Mgmt
                             </NavLink>
-                            <NavLink to="/admin/workspace" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-secondary text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-secondary hover:translate-x-1'}`}>
-                                <Settings size={20} /> Workspace Settings
-                            </NavLink>
                         </>
                     )}
 
@@ -670,6 +667,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
                             <NavLink to="/admin/users" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
                                 <Users size={20} /> User Management
+                            </NavLink>
+                            <NavLink to="/admin/workspace" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
+                                <Settings size={20} /> Workspace Settings
                             </NavLink>
                         </>
                     )}
