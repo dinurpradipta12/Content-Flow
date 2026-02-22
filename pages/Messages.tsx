@@ -47,6 +47,7 @@ interface ChatGroup {
 interface ChatMessage {
     id: string;
     group_id: string;
+    workspace_id: string;
     sender_id: string;
     sender_name: string;
     sender_avatar: string;
@@ -105,6 +106,7 @@ export const Messages: React.FC = () => {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const groupIconRef = useRef<HTMLInputElement>(null);
+    const globalChannelRef = useRef<any>(null);
 
     // Sync refs
     useEffect(() => { activeGroupRef.current = activeGroup; }, [activeGroup]);
@@ -205,17 +207,50 @@ export const Messages: React.FC = () => {
     };
 
     const setupGlobalRealtime = (wsList: Workspace[]) => {
+        if (wsList.length === 0) return;
+
+        console.log('Setting up real-time for workspaces:', wsList.map(w => w.id));
+
+        // Remove existing channels to avoid duplicates
+        if (globalChannelRef.current) {
+            supabase.removeChannel(globalChannelRef.current);
+        }
         supabase.removeAllChannels();
-        wsList.forEach(ws => {
-            supabase.channel(`chat_ws:${ws.id}`)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workspace_chat_messages' },
-                    (payload) => handleNewMessage(payload.new as ChatMessage, ws.id))
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workspace_chat_reads' },
-                    (payload) => handleNewRead(payload.new))
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'workspace_chat_reactions' },
-                    (payload) => handleReactionChange(payload))
-                .subscribe();
-        });
+
+        // Create ONE global channel for all workspace chat updates
+        const channel = supabase.channel('global-workspace-chat');
+
+        channel
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'workspace_chat_messages'
+            }, (payload) => {
+                console.log('Real-time message received:', payload.new);
+                handleNewMessage(payload.new as ChatMessage);
+            })
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'workspace_chat_reads'
+            }, (payload) => {
+                handleNewRead(payload.new);
+            })
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'workspace_chat_reactions'
+            }, (payload) => {
+                handleReactionChange(payload);
+            })
+            .subscribe((status) => {
+                console.log('Real-time subscription status:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('Successfully subscribed to real-time updates');
+                }
+            });
+
+        globalChannelRef.current = channel;
     };
 
     const handleNewRead = (newRead: any) => {
@@ -257,21 +292,27 @@ export const Messages: React.FC = () => {
         }
     };
 
-    const handleNewMessage = (msg: ChatMessage, wsId: string) => {
+    const handleNewMessage = (msg: ChatMessage) => {
         const isActiveGroup = activeGroupRef.current?.id === msg.group_id;
+
+        // Find which workspace this message belongs to
+        const wsId = msg.workspace_id ||
+            workspacesRef.current.find(w => w.id === msg.workspace_id)?.id ||
+            workspacesRef.current[0]?.id;
+
         if (isActiveGroup) {
             setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, { ...msg, read_by: [], reactions: [] }]);
             markMessagesAsRead([msg.id], msg.group_id);
-        } else {
+        } else if (wsId) {
             setUnreadCounts(prev => ({ ...prev, [wsId]: (prev[wsId] || 0) + 1 }));
         }
 
-        if (msg.sender_id !== currentUserRef.current.id) {
+        if (msg.sender_id !== currentUserRef.current.id && wsId) {
             if (msg.content.includes(`@${currentUserRef.current.name}`) || msg.content.includes(`@everyone`)) {
                 sendNotification({
                     recipientId: currentUserRef.current.id,
                     type: 'MENTION',
-                    title: `Disebut di ${workspacesRef.current.find(w => w.id === wsId)?.name}`,
+                    title: `Disebut di ${workspacesRef.current.find(w => w.id === wsId)?.name || 'Workspace'}`,
                     content: `${msg.sender_name}: ${msg.content}`,
                     metadata: { workspace_id: wsId, group_id: msg.group_id }
                 });
@@ -290,6 +331,7 @@ export const Messages: React.FC = () => {
         const optimisticMsg: ChatMessage = {
             id: tempId,
             group_id: activeGroup.id,
+            workspace_id: selectedWorkspace.id,
             sender_id: currentUser.id,
             sender_name: currentUser.name,
             sender_avatar: currentUser.avatar,
@@ -311,6 +353,7 @@ export const Messages: React.FC = () => {
 
         const { data } = await supabase.from('workspace_chat_messages').insert({
             group_id: optimisticMsg.group_id,
+            workspace_id: optimisticMsg.workspace_id,
             sender_id: optimisticMsg.sender_id,
             sender_name: optimisticMsg.sender_name,
             sender_avatar: optimisticMsg.sender_avatar,

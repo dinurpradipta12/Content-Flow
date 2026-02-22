@@ -38,4 +38,12 @@ BEGIN
     ) THEN
         ALTER TABLE public.workspace_chat_messages ADD COLUMN metadata JSONB DEFAULT '{}'::jsonB;
     END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name='workspace_chat_messages' AND column_name='workspace_id'
+    ) THEN
+        ALTER TABLE public.workspace_chat_messages ADD COLUMN workspace_id UUID REFERENCES public.workspaces(id) ON DELETE CASCADE;
+    END IF;
 END $$;
