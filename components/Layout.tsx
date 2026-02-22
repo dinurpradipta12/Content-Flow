@@ -35,6 +35,8 @@ import { Modal } from './ui/Modal';
 import { Workspace } from '../types';
 import { updateSupabaseConfig, checkConnectionLatency, supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { useNotifications } from './NotificationProvider';
+import { CheckCircle2 } from 'lucide-react';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -198,8 +200,35 @@ begin
   ) then
     alter publication supabase_realtime add table public.app_users;
   end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'notifications'
+  ) then
+    alter publication supabase_realtime add table public.notifications;
+  end if;
 end
 $$;
+
+-- 8. Notifications Table
+create table if not exists public.notifications (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  recipient_id uuid not null,
+  actor_id uuid null,
+  workspace_id uuid null,
+  type text not null,
+  title text not null,
+  content text not null,
+  is_read boolean default false,
+  metadata jsonb null,
+  constraint notifications_pkey primary key (id),
+  constraint notifications_recipient_id_fkey foreign key (recipient_id) references public.app_users(id) on delete cascade
+);
+
+alter table public.notifications enable row level security;
+drop policy if exists "Enable all access" on public.notifications;
+create policy "Enable all access" on public.notifications for all using (true) with check (true);
 `;
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -211,6 +240,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Settings State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
+
+    // Notification State
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const notificationRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setIsNotificationOpen(false);
+            }
+        };
+
+        if (isNotificationOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isNotificationOpen]);
 
     // Role & Subscription Notification State
     const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
@@ -653,11 +700,91 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <span className="hidden sm:inline">{getNetworkLabel()}</span>
                         </div>
 
-                        <div className="flex items-center gap-1">
-                            <button className="p-2 text-slate-500 hover:text-accent hover:bg-slate-50 rounded-full transition-all relative">
+                        <div className="flex items-center gap-1 relative" ref={notificationRef}>
+                            <button
+                                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-50'}`}
+                            >
                                 <Bell size={18} />
-                                <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black animate-in fade-in zoom-in duration-300">
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
                             </button>
+
+                            {/* NOTIFICATION POPUP OVERLAY */}
+                            {isNotificationOpen && (
+                                <div className="absolute top-full right-0 mt-3 w-[480px] bg-white border-2 border-slate-800 shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {/* Header */}
+                                    <div className="px-6 py-4 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                        <div className="flex items-center gap-2">
+                                            <Bell size={16} className="text-accent" />
+                                            <span className="font-black font-heading text-sm text-slate-800 tracking-tight text-lg">Notifikasi</span>
+                                        </div>
+                                        {unreadCount > 0 && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    markAllAsRead();
+                                                }}
+                                                className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg"
+                                            >
+                                                Tandai Semua Dibaca
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
+                                        {notifications.length === 0 ? (
+                                            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
+                                                <Bell size={40} className="opacity-10 mb-3" />
+                                                <p className="font-bold text-sm">Tidak ada notifikasi</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-50">
+                                                {notifications.map((notif) => (
+                                                    <div
+                                                        key={notif.id}
+                                                        className={`p-4 flex gap-3 transition-colors hover:bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`}
+                                                        onClick={() => markAsRead(notif.id)}
+                                                    >
+                                                        {!notif.is_read && (
+                                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>
+                                                        )}
+                                                        <div className="shrink-0">
+                                                            {notif.actor?.avatar_url ? (
+                                                                <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-slate-200 object-cover" />
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                                                                    <User size={18} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex justify-between items-start mb-0.5">
+                                                                <h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5>
+                                                                <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">
+                                                                    {new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs font-bold text-slate-600 leading-snug">
+                                                                <span className="text-slate-900">{notif.actor?.full_name}</span> {notif.content}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="p-3 bg-slate-50/50 border-t-2 border-slate-100 text-center">
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Aktivitas Terbaru Anda</p>
+                                    </div>
+                                </div>
+                            )}
                             <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-full transition-all">
                                 <Settings size={18} />
                             </button>

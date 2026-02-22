@@ -4,6 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
+import { useNotifications } from '../components/NotificationProvider';
 import { Search, Plus, Instagram, Video, ArrowRight, MoreHorizontal, Linkedin, Youtube, Facebook, AtSign, Edit, Trash2, User, Image as ImageIcon, Loader2, Upload, Users, Ticket, Layers } from 'lucide-react';
 import { Workspace } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -53,6 +54,7 @@ const getAccountStyle = (platforms: string[]) => {
 
 export const ContentPlan: React.FC = () => {
     const navigate = useNavigate();
+    const { sendNotification } = useNotifications();
     const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -341,6 +343,15 @@ export const ContentPlan: React.FC = () => {
                     .eq('id', data.id);
 
                 if (updateError) throw updateError;
+
+                // 3. Notify Workspace Owner
+                await sendNotification({
+                    recipientId: data.admin_id,
+                    type: 'JOIN_WORKSPACE',
+                    title: 'Member Baru Bergabung',
+                    content: `telah bergabung ke workspace ${data.name}`,
+                    workspaceId: data.id
+                });
             }
 
             alert(`Berhasil bergabung ke workspace: ${data.name}`);

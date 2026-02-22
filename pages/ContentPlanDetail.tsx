@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
 import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown } from 'lucide-react';
-import { ContentStatus, ContentPriority, Platform, ContentItem } from '../types';
+import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
+import { useNotifications } from '../components/NotificationProvider';
 
 // --- TYPES & HELPERS ---
 
@@ -337,6 +338,7 @@ const KanbanColumn: React.FC<{
 export const ContentPlanDetail: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { sendNotification } = useNotifications();
     const [tasks, setTasks] = useState<ContentItem[]>([]);
     const [workspaceData, setWorkspaceData] = useState<{
         name: string,
@@ -401,6 +403,20 @@ export const ContentPlanDetail: React.FC = () => {
         platform: Platform.INSTAGRAM,
         contentLink: ''
     });
+
+    const notifyMemberByName = async (name: string, type: NotificationType, title: string, content: string) => {
+        if (!name) return;
+        const member = teamMembers.find(m => m.name === name);
+        if (member) {
+            await sendNotification({
+                recipientId: member.id,
+                type,
+                title,
+                content,
+                workspaceId: id
+            });
+        }
+    };
 
     // --- DATA FETCHING ---
     const fetchData = async () => {
@@ -585,9 +601,21 @@ export const ContentPlanDetail: React.FC = () => {
     };
 
     const handleQuickUpdateStatus = async (itemId: string, newStatus: ContentStatus) => {
+        const item = tasks.find(t => t.id === itemId);
         setTasks(prev => prev.map(t => t.id === itemId ? { ...t, status: newStatus } : t));
         try {
             await supabase.from('content_items').update({ status: newStatus }).eq('id', itemId);
+
+            // Notification logic
+            if (item && item.status !== newStatus) {
+                if (newStatus === ContentStatus.REVIEW) {
+                    await notifyMemberByName(item.approval || '', 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${item.title}" untuk di-review.`);
+                } else if (newStatus === ContentStatus.SCHEDULED) {
+                    await notifyMemberByName(item.pic || '', 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${item.title}" untuk dijadwalkan.`);
+                } else if (newStatus === ContentStatus.IN_PROGRESS && item.status === ContentStatus.REVIEW) {
+                    await notifyMemberByName(item.pic || '', 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${item.title}".`);
+                }
+            }
         } catch (err) {
             console.error(err);
         }
@@ -608,6 +636,9 @@ export const ContentPlanDetail: React.FC = () => {
     const handleSaveContent = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!id) return;
+
+        const oldTask = modalMode === 'edit' ? tasks.find(t => t.id === editingId) : null;
+
         const payload = {
             title: formData.title,
             date: formData.date,
@@ -625,9 +656,28 @@ export const ContentPlanDetail: React.FC = () => {
             if (modalMode === 'create') {
                 const { error } = await supabase.from('content_items').insert([{ workspace_id: id, ...payload }]);
                 if (error) throw error;
+
+                // Notify Approver if assigned
+                if (payload.approval) {
+                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `menunjuk Anda sebagai approver untuk konten: ${payload.title}`);
+                }
             } else if (modalMode === 'edit' && editingId) {
                 const { error } = await supabase.from('content_items').update(payload).eq('id', editingId);
                 if (error) throw error;
+
+                // NOTIFICATION LOGIC for status changes
+                if (oldTask && oldTask.status !== payload.status) {
+                    if (payload.status === ContentStatus.REVIEW) {
+                        await notifyMemberByName(payload.approval, 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${payload.title}" untuk di-review.`);
+                    } else if (payload.status === ContentStatus.SCHEDULED) {
+                        await notifyMemberByName(payload.pic, 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${payload.title}" untuk dijadwalkan.`);
+                    } else if (payload.status === ContentStatus.IN_PROGRESS && oldTask.status === ContentStatus.REVIEW) {
+                        await notifyMemberByName(payload.pic, 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${payload.title}".`);
+                    }
+                } else if (oldTask && oldTask.approval !== payload.approval && payload.approval) {
+                    // Notify if Approver changed
+                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `menunjuk Anda sebagai approver untuk konten: ${payload.title}`);
+                }
             }
             setIsModalOpen(false);
             fetchData();
@@ -645,11 +695,23 @@ export const ContentPlanDetail: React.FC = () => {
     const handleDropTask = async (e: React.DragEvent, newStatus: ContentStatus) => {
         const taskId = e.dataTransfer.getData("taskId");
         if (!taskId) return;
+        const item = tasks.find(t => t.id === taskId);
         const originalTasks = [...tasks];
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
         try {
             const { error } = await supabase.from('content_items').update({ status: newStatus }).eq('id', taskId);
             if (error) throw error;
+
+            // Notification logic
+            if (item && item.status !== newStatus) {
+                if (newStatus === ContentStatus.REVIEW) {
+                    await notifyMemberByName(item.approval || '', 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${item.title}" untuk di-review.`);
+                } else if (newStatus === ContentStatus.SCHEDULED) {
+                    await notifyMemberByName(item.pic || '', 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${item.title}" untuk dijadwalkan.`);
+                } else if (newStatus === ContentStatus.IN_PROGRESS && item.status === ContentStatus.REVIEW) {
+                    await notifyMemberByName(item.pic || '', 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${item.title}".`);
+                }
+            }
         } catch (err) {
             console.error("DnD Error:", err);
             setTasks(originalTasks);

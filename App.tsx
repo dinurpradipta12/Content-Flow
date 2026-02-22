@@ -12,6 +12,7 @@ import { Login } from './pages/Login';
 import { UserManagement } from './pages/UserManagement';
 import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
+import { NotificationProvider } from './components/NotificationProvider';
 
 // Auth Guard Component
 const RequireAuth = () => {
@@ -53,30 +54,32 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
+    <NotificationProvider>
+      <HashRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected Routes */}
-        <Route element={<RequireAuth />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="plan" element={<ContentPlan />} />
-          <Route path="plan/:id" element={<ContentPlanDetail />} />
-          <Route path="approval" element={<Approval />} />
-          <Route path="insight" element={<ContentDataInsight />} />
-          <Route path="carousel" element={<CarouselMaker />} />
-          <Route path="script" element={<TeamKPIBoard />} />
-          <Route path="profile" element={<Profile />} />
+          {/* Protected Routes */}
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="plan" element={<ContentPlan />} />
+            <Route path="plan/:id" element={<ContentPlanDetail />} />
+            <Route path="approval" element={<Approval />} />
+            <Route path="insight" element={<ContentDataInsight />} />
+            <Route path="carousel" element={<CarouselMaker />} />
+            <Route path="script" element={<TeamKPIBoard />} />
+            <Route path="profile" element={<Profile />} />
 
-          {/* Admin Routes (Developer + Admin) */}
-          <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
-          <Route path="admin/workspace" element={<RequireAdmin><PlaceholderPage title="Workspace Settings" /></RequireAdmin>} />
+            {/* Admin Routes (Developer + Admin) */}
+            <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
+            <Route path="admin/workspace" element={<RequireAdmin><PlaceholderPage title="Workspace Settings" /></RequireAdmin>} />
 
-          {/* Developer Routes (Developer only) */}
-          <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
-        </Route>
-      </Routes>
-    </HashRouter>
+            {/* Developer Routes (Developer only) */}
+            <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
+          </Route>
+        </Routes>
+      </HashRouter>
+    </NotificationProvider>
   );
 };
 

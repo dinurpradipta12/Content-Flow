@@ -44,8 +44,8 @@ export interface ContentItem {
     lastUpdated: string;
   };
   workspaces?: {
-      account_name: string;
-      name: string;
+    account_name: string;
+    name: string;
   }
 }
 
@@ -69,4 +69,23 @@ export interface User {
   name: string;
   email: string;
   avatarUrl: string;
+}
+
+export type NotificationType = 'JOIN_WORKSPACE' | 'CONTENT_APPROVAL' | 'CONTENT_REVISION' | 'CONTENT_APPROVED' | 'MENTION';
+
+export interface AppNotification {
+  id: string;
+  created_at: string;
+  recipient_id: string;
+  actor_id: string | null;
+  workspace_id: string | null;
+  type: NotificationType;
+  title: string;
+  content: string;
+  is_read: boolean;
+  metadata?: any;
+  actor?: {
+    full_name: string;
+    avatar_url: string;
+  };
 }
