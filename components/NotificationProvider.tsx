@@ -1,13 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { AppNotification, NotificationType } from '../types';
-import { Bell, Check, Info, AlertCircle, X, ExternalLink, User } from 'lucide-react';
+import { Bell, Info, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface NotificationContextType {
     notifications: AppNotification[];
     unreadCount: number;
     markAsRead: (id: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
+    handleNotificationClick: (notif: AppNotification) => void;
     sendNotification: (params: {
         recipientId: string;
         type: NotificationType;
@@ -30,6 +32,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [toasts, setToasts] = useState<AppNotification[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string | null>(localStorage.getItem('user_id'));
+    const navigate = useNavigate();
+
+    // Notification Sound
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    }, []);
+
+    const playNotificationSound = () => {
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(err => console.log('Audio play failed:', err));
+        }
+    };
 
     // Check for user ID changes (e.g., login/logout)
     useEffect(() => {
@@ -79,13 +96,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
-                    // Note: Ensure RLS is enabled and Realtime is enabled for this table
                     filter: `recipient_id=eq.${currentUserId}`
                 },
                 async (payload) => {
                     console.log('New notification received via real-time:', payload);
 
                     try {
+                        // Play sound
+                        playNotificationSound();
+
                         // Fetch actor details for the new notification
                         const { data: actorData } = await supabase
                             .from('app_users')
@@ -100,16 +119,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
                         // Add to toasts
                         setToasts(prev => {
-                            // Don't duplicate toasts if multi-triggering
                             if (prev.find(t => t.id === newNotif.id)) return prev;
                             const newToasts = [...prev, newNotif];
                             return newToasts.slice(-3); // Max 3 items
                         });
 
-                        // Remove toast after 6 seconds (giving more time for user to see)
+                        // Remove toast after 10 seconds per request
                         setTimeout(() => {
                             setToasts(prev => prev.filter(t => t.id !== newNotif.id));
-                        }, 6000);
+                        }, 10000);
                     } catch (err) {
                         console.error('Error handling real-time notification:', err);
                     }
@@ -150,6 +168,27 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     };
 
+    const handleNotificationClick = (notif: AppNotification) => {
+        // Mark as read
+        markAsRead(notif.id);
+
+        // Navigate based on metadata
+        if (notif.metadata?.request_id) {
+            navigate(`/approval`);
+            localStorage.setItem('open_request_id', notif.metadata.request_id);
+        } else if (notif.metadata?.content_id && notif.workspace_id) {
+            navigate(`/plan/${notif.workspace_id}`);
+            localStorage.setItem('open_content_id', notif.metadata.content_id);
+        } else if (notif.workspace_id) {
+            navigate(`/plan/${notif.workspace_id}`);
+        } else if (notif.type === 'MENTION' && notif.content.toLowerCase().includes('kpi')) {
+            navigate('/admin/team');
+        }
+
+        // Remove from toasts if present
+        setToasts(prev => prev.filter(t => t.id !== notif.id));
+    };
+
     const sendNotification = async ({ recipientId, type, title, content, workspaceId, metadata }: any) => {
         const actorId = localStorage.getItem('user_id');
         if (recipientId === actorId) return; // Don't notify yourself
@@ -168,7 +207,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, sendNotification }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick, sendNotification }}>
             {children}
 
             {/* TOAST POPUP UI */}
@@ -176,9 +215,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
-                        className="pointer-events-auto bg-white border-2 border-slate-800 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group"
+                        onClick={() => handleNotificationClick(toast)}
+                        className="pointer-events-auto bg-white border-2 border-slate-800 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer hover:bg-slate-50 transition-colors"
                     >
-                        {/* Progress Bar for 5s timer */}
+                        {/* Progress Bar for 10s timer */}
                         <div className="absolute bottom-0 left-0 h-1.5 bg-accent/20 animate-toast-progress w-full origin-left"></div>
 
                         <div className="shrink-0 relative">
@@ -200,7 +240,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             </p>
                         </div>
                         <button
-                            onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setToasts(prev => prev.filter(t => t.id !== toast.id));
+                            }}
                             className="bg-slate-100 p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
                         >
                             <X size={16} />
@@ -222,7 +265,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     animation: notification-slide-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
                 }
                 .animate-toast-progress {
-                    animation: toast-progress 5s linear forwards;
+                    animation: toast-progress 10s linear forwards;
                 }
             `}</style>
         </NotificationContext.Provider>

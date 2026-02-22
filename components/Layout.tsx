@@ -242,7 +242,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
 
     // Notification State
-    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick } = useNotifications();
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -748,7 +748,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     <div
                                                         key={notif.id}
                                                         className={`p-4 flex gap-3 transition-colors hover:bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`}
-                                                        onClick={() => markAsRead(notif.id)}
+                                                        onClick={() => {
+                                                            handleNotificationClick(notif);
+                                                            setIsNotificationOpen(false);
+                                                        }}
                                                     >
                                                         {!notif.is_read && (
                                                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>

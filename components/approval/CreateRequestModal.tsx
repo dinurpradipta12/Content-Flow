@@ -33,7 +33,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
         // We can reuse the users state but for mentions we need names
     };
 
-    const notifyByMention = async (text: string, sourceTitle: string) => {
+    const notifyByMention = async (text: string, sourceTitle: string, reqId?: string) => {
         if (!text || typeof text !== 'string') return;
 
         const mentionedIds = new Set<string>();
@@ -67,6 +67,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                 type: 'MENTION',
                 title: 'Anda disebut dalam Pengajuan',
                 content: `menyebut Anda dalam pengajuan baru: ${sourceTitle}`,
+                metadata: reqId ? { request_id: reqId } : undefined
             });
         }
     };
@@ -127,7 +128,8 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
 
         setLoading(true);
         try {
-            await createRequest(selectedTemplate, formData, currentUser);
+            const newReq = await createRequest(selectedTemplate, formData, currentUser);
+            const reqId = newReq.id;
 
             // Scan for mentions and assignments
             const judul = formData.judul_konten || selectedTemplate.name;
@@ -144,10 +146,11 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             type: 'MENTION',
                             title: 'Penugasan Approval',
                             content: `menugaskan Anda dalam pengajuan baru: ${judul}`,
+                            metadata: { request_id: reqId }
                         });
                     }
                 } else if (typeof value === 'string') {
-                    await notifyByMention(value, judul);
+                    await notifyByMention(value, judul, reqId);
                 }
             }
 

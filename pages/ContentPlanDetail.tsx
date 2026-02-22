@@ -404,7 +404,7 @@ export const ContentPlanDetail: React.FC = () => {
         contentLink: ''
     });
 
-    const notifyMemberByName = async (name: string, type: NotificationType, title: string, content: string) => {
+    const notifyMemberByName = async (name: string, type: NotificationType, title: string, content: string, metadata?: any) => {
         if (!name) return;
         const member = teamMembers.find(m => m.name === name);
         if (member) {
@@ -413,7 +413,8 @@ export const ContentPlanDetail: React.FC = () => {
                 type,
                 title,
                 content,
-                workspaceId: id
+                workspaceId: id,
+                metadata
             });
         }
     };
@@ -537,6 +538,18 @@ export const ContentPlanDetail: React.FC = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const openId = localStorage.getItem('open_content_id');
+        if (openId && tasks.length > 0) {
+            const task = tasks.find(t => t.id === openId);
+            if (task) {
+                setSelectedTask(task);
+                setIsDetailModalOpen(true);
+                localStorage.removeItem('open_content_id');
+            }
+        }
+    }, [tasks]);
+
     // Filter Logic for Table View
     const filteredTableTasks = tasks.filter(task => {
         const matchPlatform = filterPlatform === 'all' || task.platform === filterPlatform;
@@ -656,17 +669,25 @@ export const ContentPlanDetail: React.FC = () => {
             content_link: formData.contentLink // Ensure SNAKE_CASE for DB
         };
         try {
+            const currentUserName = localStorage.getItem('user_name') || 'Seseorang';
+            const wsName = workspaceData.name;
+            let currentContentId = editingId;
+
             if (modalMode === 'create') {
-                const { error } = await supabase.from('content_items').insert([{ workspace_id: id, ...payload }]);
+                const { data, error } = await supabase.from('content_items')
+                    .insert([{ workspace_id: id, ...payload }])
+                    .select('id')
+                    .single();
                 if (error) throw error;
+                currentContentId = data.id;
 
                 // Notify Approver if assigned
                 if (payload.approval) {
-                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`);
+                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`, { content_id: currentContentId });
                 }
                 // Notify PIC if assigned
                 if (payload.pic) {
-                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} telah menugaskan Anda sebagai PIC untuk konten: ${payload.title} di workspace ${wsName}`);
+                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} telah menugaskan Anda sebagai PIC untuk konten: ${payload.title} di workspace ${wsName}`, { content_id: currentContentId });
                 }
             } else if (modalMode === 'edit' && editingId) {
                 const { error } = await supabase.from('content_items').update(payload).eq('id', editingId);
@@ -674,23 +695,24 @@ export const ContentPlanDetail: React.FC = () => {
 
                 // NOTIFICATION LOGIC for status changes
                 if (oldTask && oldTask.status !== payload.status) {
+                    const meta = { content_id: editingId };
                     if (payload.status === ContentStatus.REVIEW) {
-                        await notifyMemberByName(payload.approval, 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${payload.title}" untuk di-review.`);
+                        await notifyMemberByName(payload.approval, 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${payload.title}" untuk di-review.`, meta);
                     } else if (payload.status === ContentStatus.SCHEDULED) {
-                        await notifyMemberByName(payload.pic, 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${payload.title}" untuk dijadwalkan.`);
+                        await notifyMemberByName(payload.pic, 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${payload.title}" untuk dijadwalkan.`, meta);
                     } else if (payload.status === ContentStatus.IN_PROGRESS && oldTask.status === ContentStatus.REVIEW) {
-                        await notifyMemberByName(payload.pic, 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${payload.title}".`);
+                        await notifyMemberByName(payload.pic, 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${payload.title}".`, meta);
                     }
                 }
 
                 // Notify if PIC changed
                 if (oldTask && oldTask.pic !== payload.pic && payload.pic) {
-                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} menugaskan Anda sebagai PIC baru untuk konten: ${payload.title} di workspace ${wsName}`);
+                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} menugaskan Anda sebagai PIC baru untuk konten: ${payload.title} di workspace ${wsName}`, { content_id: editingId });
                 }
 
                 if (oldTask && oldTask.approval !== payload.approval && payload.approval) {
                     // Notify if Approver changed
-                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`);
+                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`, { content_id: editingId });
                 }
             }
 
@@ -716,7 +738,7 @@ export const ContentPlanDetail: React.FC = () => {
 
                 // Send notifications
                 for (const name of Array.from(mentionedNames)) {
-                    await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten: ${payload.title}`);
+                    await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten: ${payload.title}`, { content_id: currentContentId });
                 }
             }
 

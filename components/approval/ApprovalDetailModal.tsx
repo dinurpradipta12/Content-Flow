@@ -122,12 +122,13 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
         });
 
         // Send notifications
-        for (const userId of mentionedIds) {
+        for (const userId of Array.from(mentionedIds)) {
             await sendNotification({
                 recipientId: userId,
                 type: 'MENTION',
                 title: 'Anda disebut dalam Approval',
                 content: `menyebut Anda dalam diskusi approval: ${sourceTitle}`,
+                metadata: { request_id: request.id }
             });
         }
     };
@@ -156,10 +157,11 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             // 1. Notify Requester
             if (request.requester_id !== currentUser.id) {
                 await sendNotification({
-                    recipientId: request.requester_id,
+                    recipientId: request.requester_id, // Notify the requester
                     type: activeAction === 'Approve' ? 'CONTENT_APPROVED' : 'CONTENT_REVISION',
                     title: `Status Approval: ${activeAction}`,
                     content: `telah melakukan aksi "${activeAction}" pada pengajuan: ${request.form_data.judul_konten || 'Untitled'}`,
+                    metadata: { request_id: request.id }
                 });
             }
 
@@ -221,6 +223,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                 type: 'CONTENT_APPROVAL',
                 title: 'Pengajuan Approval Baru',
                 content: `${request.requester_name} telah mengajukan permintaan ${request.template?.name || 'Konten'} ke kamu, segera cek sebelum ${deadline}`,
+                metadata: { request_id: request.id }
             });
 
             alert(`Notifikasi telah dikirim ke ${targetUser.name}`);

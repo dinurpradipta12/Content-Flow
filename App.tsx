@@ -54,8 +54,8 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 
 const App: React.FC = () => {
   return (
-    <NotificationProvider>
-      <HashRouter>
+    <HashRouter>
+      <NotificationProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
 
@@ -78,8 +78,8 @@ const App: React.FC = () => {
             <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
           </Route>
         </Routes>
-      </HashRouter>
-    </NotificationProvider>
+      </NotificationProvider>
+    </HashRouter>
   );
 };
 

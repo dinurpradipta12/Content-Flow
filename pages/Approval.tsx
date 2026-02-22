@@ -47,6 +47,18 @@ export const Approval: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        const openId = localStorage.getItem('open_request_id');
+        if (openId && requests.length > 0) {
+            const req = requests.find(r => r.id === openId);
+            if (req) {
+                setSelectedRequest(req);
+                setIsDetailModalOpen(true);
+                localStorage.removeItem('open_request_id');
+            }
+        }
+    }, [requests]);
+
     const handleSelectRequest = (req: ApprovalRequest) => {
         setSelectedRequest(req);
         setIsDetailModalOpen(true);
@@ -76,8 +88,8 @@ export const Approval: React.FC = () => {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <Button 
-                        onClick={() => setIsCreateModalOpen(true)} 
+                    <Button
+                        onClick={() => setIsCreateModalOpen(true)}
                         className="bg-accent text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:shadow-[6px_6px_0px_0px_#0f172a] hover:-translate-y-1 transition-all"
                         icon={<Plus size={18} />}
                     >
@@ -88,26 +100,26 @@ export const Approval: React.FC = () => {
 
             {/* Main Content */}
             <div className="flex-1 min-h-0">
-                <ApprovalInbox 
-                    requests={requests} 
-                    onSelectRequest={handleSelectRequest} 
-                    loading={loading} 
+                <ApprovalInbox
+                    requests={requests}
+                    onSelectRequest={handleSelectRequest}
+                    loading={loading}
                 />
             </div>
 
             {/* Modals */}
-            <ApprovalDetailModal 
-                isOpen={isDetailModalOpen} 
-                onClose={() => setIsDetailModalOpen(false)} 
-                request={selectedRequest} 
+            <ApprovalDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                request={selectedRequest}
                 currentUser={currentUser}
                 onUpdate={handleUpdateSuccess}
             />
 
-            <CreateRequestModal 
-                isOpen={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                templates={templates} 
+            <CreateRequestModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                templates={templates}
                 currentUser={currentUser}
                 onSuccess={handleCreateSuccess}
             />
@@ -120,25 +132,25 @@ export const Approval: React.FC = () => {
                         <div>
                             <h4 className="font-bold text-lg">Instruksi Setup</h4>
                             <p className="text-sm">
-                                Fitur ini membutuhkan tabel baru di Supabase. Salin kode SQL di bawah ini dan jalankan di 
+                                Fitur ini membutuhkan tabel baru di Supabase. Salin kode SQL di bawah ini dan jalankan di
                                 <a href="https://supabase.com/dashboard/project/_/sql" target="_blank" rel="noreferrer" className="font-bold underline ml-1">
                                     Supabase SQL Editor
                                 </a>.
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className="relative group">
                         <div className="absolute top-3 right-3 flex gap-2">
-                            <button 
-                                onClick={() => { navigator.clipboard.writeText(APPROVAL_SQL_SCRIPT); alert("SQL Copied!"); }} 
+                            <button
+                                onClick={() => { navigator.clipboard.writeText(APPROVAL_SQL_SCRIPT); alert("SQL Copied!"); }}
                                 className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold backdrop-blur-md flex items-center gap-2 transition-all opacity-0 group-hover:opacity-100"
                             >
                                 <Copy size={14} /> Salin SQL
                             </button>
                         </div>
-                        <textarea 
-                            readOnly 
+                        <textarea
+                            readOnly
                             className="w-full h-96 bg-slate-900 text-green-400 font-mono text-xs p-4 rounded-xl border-2 border-slate-700 outline-none resize-none custom-scrollbar"
                             value={APPROVAL_SQL_SCRIPT}
                         />
