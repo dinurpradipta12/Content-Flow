@@ -66,8 +66,35 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     }, [isOpen, request]);
 
     const fetchAppUsers = async () => {
-        const { data } = await supabase.from('app_users').select('id, full_name');
-        if (data) setAllAppUsers(data.map(u => ({ id: u.id, name: u.full_name })));
+        if (!request) return;
+
+        // 1. Fetch all potentially relevant users
+        const { data: userData } = await supabase.from('app_users').select('id, full_name, avatar_url');
+        if (!userData) return;
+
+        // 2. Get workspace name from request form data
+        const wsName = request.form_data.workspace;
+
+        if (wsName) {
+            // 3. Fetch workspace to get its member list (avatar URLs)
+            const { data: wsData } = await supabase
+                .from('workspaces')
+                .select('members')
+                .eq('name', wsName)
+                .single();
+
+            if (wsData && wsData.members) {
+                const members = wsData.members;
+                const filtered = userData
+                    .filter(u => members.includes(u.avatar_url))
+                    .map(u => ({ id: u.id, name: u.full_name, avatar: u.avatar_url }));
+                setAllAppUsers(filtered);
+                return;
+            }
+        }
+
+        // Fallback or if no workspace name found, show all (though per requirement we should ideally filter)
+        setAllAppUsers(userData.map(u => ({ id: u.id, name: u.full_name, avatar: u.avatar_url })));
     };
 
     const notifyByMention = async (text: string, sourceTitle: string) => {

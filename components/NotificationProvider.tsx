@@ -29,7 +29,25 @@ export const useNotifications = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [toasts, setToasts] = useState<AppNotification[]>([]);
-    const currentUserId = localStorage.getItem('user_id');
+    const [currentUserId, setCurrentUserId] = useState<string | null>(localStorage.getItem('user_id'));
+
+    // Check for user ID changes (e.g., login/logout)
+    useEffect(() => {
+        const checkUser = () => {
+            const id = localStorage.getItem('user_id');
+            if (id !== currentUserId) {
+                setCurrentUserId(id);
+            }
+        };
+
+        const interval = setInterval(checkUser, 2000);
+        window.addEventListener('storage', checkUser);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('storage', checkUser);
+        };
+    }, [currentUserId]);
 
     const fetchNotifications = useCallback(async () => {
         if (!currentUserId) return;
@@ -50,6 +68,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         fetchNotifications();
 
+        console.log('Subscribing to notifications for user:', currentUserId);
+
         // Realtime subscription
         const channel = supabase
             .channel(`notifications-${currentUserId}`)
@@ -59,35 +79,48 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
+                    // Note: Ensure RLS is enabled and Realtime is enabled for this table
                     filter: `recipient_id=eq.${currentUserId}`
                 },
                 async (payload) => {
-                    // Fetch actor details for the new notification
-                    const { data: actorData } = await supabase
-                        .from('app_users')
-                        .select('full_name, avatar_url')
-                        .eq('id', payload.new.actor_id)
-                        .single();
+                    console.log('New notification received via real-time:', payload);
 
-                    const newNotif = { ...payload.new, actor: actorData } as AppNotification;
+                    try {
+                        // Fetch actor details for the new notification
+                        const { data: actorData } = await supabase
+                            .from('app_users')
+                            .select('full_name, avatar_url')
+                            .eq('id', payload.new.actor_id)
+                            .single();
 
-                    setNotifications(prev => [newNotif, ...prev]);
+                        const newNotif = { ...payload.new, actor: actorData } as AppNotification;
 
-                    // Add to toasts
-                    setToasts(prev => {
-                        const newToasts = [...prev, newNotif];
-                        return newToasts.slice(-2); // Max 2 items
-                    });
+                        // Update list
+                        setNotifications(prev => [newNotif, ...prev]);
 
-                    // Remove toast after 5 seconds
-                    setTimeout(() => {
-                        setToasts(prev => prev.filter(t => t.id !== newNotif.id));
-                    }, 5000);
+                        // Add to toasts
+                        setToasts(prev => {
+                            // Don't duplicate toasts if multi-triggering
+                            if (prev.find(t => t.id === newNotif.id)) return prev;
+                            const newToasts = [...prev, newNotif];
+                            return newToasts.slice(-3); // Max 3 items
+                        });
+
+                        // Remove toast after 6 seconds (giving more time for user to see)
+                        setTimeout(() => {
+                            setToasts(prev => prev.filter(t => t.id !== newNotif.id));
+                        }, 6000);
+                    } catch (err) {
+                        console.error('Error handling real-time notification:', err);
+                    }
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                console.log('Notification subscription status:', status);
+            });
 
         return () => {
+            console.log('Unsubscribing from notifications');
             supabase.removeChannel(channel);
         };
     }, [currentUserId, fetchNotifications]);
