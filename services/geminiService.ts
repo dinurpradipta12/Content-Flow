@@ -2,12 +2,12 @@ import { GoogleGenAI } from "@google/genai";
 
 // Safe env access helper to prevent "process is not defined" error in browser
 const getApiKey = () => {
-    try {
-        if (typeof process !== 'undefined' && process.env) {
-            return process.env.API_KEY;
-        }
-    } catch (e) { }
-    return '';
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      return process.env.API_KEY;
+    }
+  } catch (e) { }
+  return '';
 };
 
 const apiKey = getApiKey();
@@ -18,7 +18,7 @@ const ai = new GoogleGenAI({ apiKey: apiKey || 'fallback_key_for_ui_load' });
 export const generateScript = async (topic: string, platform: string, contentType: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Buatlah naskah konten untuk platform ${platform}.
       Topik: ${topic}
       Jenis Konten: ${contentType}
@@ -39,7 +39,7 @@ export const generateScript = async (topic: string, platform: string, contentTyp
 export const analyzeContentPerformance = async (metrics: any, contentUrl: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Analisis performa konten berikut ini:
       URL: ${contentUrl}
       Data Metriks: ${JSON.stringify(metrics)}
@@ -56,12 +56,12 @@ export const analyzeContentPerformance = async (metrics: any, contentUrl: string
 export const getChartInsights = async (data: any[]): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Berikut adalah data performa konten bulanan: ${JSON.stringify(data)}. 
+      model: 'gemini-1.5-flash',
+      contents: `Berikut adalah data performa konten bulanan: ${JSON.stringify(data)}. 
         Berikan ringkasan singkat (maksimal 2 paragraf) tentang tren pertumbuhan dan apa yang harus difokuskan bulan depan.`
     });
     return response.text || "Tidak ada insight.";
   } catch (e) {
-      return "Gagal memuat insight.";
+    return "Gagal memuat insight.";
   }
 }
