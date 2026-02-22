@@ -4,6 +4,7 @@ create table if not exists public.workspace_chat_groups (
   created_at timestamp with time zone not null default now(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   name text not null,
+  icon text null default 'users',
   created_by uuid references public.app_users(id),
   constraint workspace_chat_groups_pkey primary key (id)
 );
@@ -39,14 +40,42 @@ create table if not exists public.workspace_chat_reads (
   constraint workspace_chat_reads_pkey primary key (message_id, user_id)
 );
 
--- RLS
+-- Enable RLS
 alter table public.workspace_chat_groups enable row level security;
 alter table public.workspace_chat_members enable row level security;
 alter table public.workspace_chat_messages enable row level security;
 alter table public.workspace_chat_reads enable row level security;
 
--- Policies (Allow all for demo simplicity)
-create policy "Allow all on workspace_chat_groups" on public.workspace_chat_groups for all using (true) with check (true);
-create policy "Allow all on workspace_chat_members" on public.workspace_chat_members for all using (true) with check (true);
-create policy "Allow all on workspace_chat_messages" on public.workspace_chat_messages for all using (true) with check (true);
-create policy "Allow all on workspace_chat_reads" on public.workspace_chat_reads for all using (true) with check (true);
+-- Policies (Idempotent Structure)
+
+-- 1. Workspace Chat Groups
+do $$
+begin
+  if not exists (select 1 from pg_policies where policyname = 'Allow all on workspace_chat_groups') then
+    create policy "Allow all on workspace_chat_groups" on public.workspace_chat_groups for all using (true) with check (true);
+  end if;
+end $$;
+
+-- 2. Workspace Chat Members
+do $$
+begin
+  if not exists (select 1 from pg_policies where policyname = 'Allow all on workspace_chat_members') then
+    create policy "Allow all on workspace_chat_members" on public.workspace_chat_members for all using (true) with check (true);
+  end if;
+end $$;
+
+-- 3. Workspace Chat Messages
+do $$
+begin
+  if not exists (select 1 from pg_policies where policyname = 'Allow all on workspace_chat_messages') then
+    create policy "Allow all on workspace_chat_messages" on public.workspace_chat_messages for all using (true) with check (true);
+  end if;
+end $$;
+
+-- 4. Workspace Chat Reads
+do $$
+begin
+  if not exists (select 1 from pg_policies where policyname = 'Allow all on workspace_chat_reads') then
+    create policy "Allow all on workspace_chat_reads" on public.workspace_chat_reads for all using (true) with check (true);
+  end if;
+end $$;

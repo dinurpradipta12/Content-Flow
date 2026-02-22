@@ -16,7 +16,10 @@ import {
     UserMinus,
     Search,
     ChevronRight,
-    AtSign
+    AtSign,
+    Edit2,
+    Save,
+    Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useNotifications } from '../NotificationProvider';
@@ -35,6 +38,7 @@ interface ChatGroup {
     id: string;
     name: string;
     workspace_id: string;
+    icon?: string;
     created_by: string;
 }
 
@@ -68,8 +72,12 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
     const [showGroupCreate, setShowGroupCreate] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+    const [editingGroup, setEditingGroup] = useState<ChatGroup | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editIcon, setEditIcon] = useState('users');
 
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const activeGroupRef = useRef<ChatGroup | null>(null);
     const { sendNotification } = useNotifications();
 
     const isAdmin = currentUser.role === 'Admin' || currentUser.role === 'Owner' || currentUser.role === 'Developer';
@@ -85,6 +93,7 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
     // 2. Fetch Messages when active group changes
     useEffect(() => {
         if (activeGroup) {
+            activeGroupRef.current = activeGroup;
             fetchMessages(activeGroup.id);
             markGroupAsRead(activeGroup.id);
         }
@@ -108,10 +117,8 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                 .select('id, full_name, avatar_url, role');
 
             if (userData) {
-                // Filter users who are in the workspace members list (or the admin)
                 const members = userData.filter(u => wsData.members.includes(u.avatar_url) || u.id === wsData.admin_id);
                 setWorkspaceMembers(members);
-                // Simulate online users (for demo, everyone in ws is online)
                 setOnlineUsers(members);
             }
         }
@@ -126,9 +133,8 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
         if (data) {
             setGroups(data);
             if (data.length > 0 && !activeGroup) {
-                setActiveGroup(data[0]); // Default to first (General)
+                setActiveGroup(data[0]);
             } else if (data.length === 0 && isAdmin) {
-                // Create default general group
                 createGroup("General", []);
             }
         }
@@ -140,13 +146,13 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
             .insert({
                 name,
                 workspace_id: workspaceId,
+                icon: 'users',
                 created_by: currentUser.id
             })
             .select()
             .single();
 
         if (data) {
-            // Add members
             const members = [currentUser.id, ...MemberIds].map(uid => ({
                 group_id: data.id,
                 user_id: uid
@@ -159,6 +165,22 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
         }
     };
 
+    const updateGroup = async () => {
+        if (!editingGroup) return;
+        const { error } = await supabase
+            .from('workspace_chat_groups')
+            .update({ name: editName, icon: editIcon })
+            .eq('id', editingGroup.id);
+
+        if (!error) {
+            fetchGroups();
+            if (activeGroup?.id === editingGroup.id) {
+                setActiveGroup({ ...activeGroup, name: editName, icon: editIcon });
+            }
+            setEditingGroup(null);
+        }
+    };
+
     const fetchMessages = async (groupId: string) => {
         const { data, error } = await supabase
             .from('workspace_chat_messages')
@@ -167,7 +189,6 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
             .order('created_at', { ascending: true });
 
         if (data) {
-            // Also fetch read receipts for these messages
             const { data: reads } = await supabase
                 .from('workspace_chat_reads')
                 .select('message_id, user_id')
@@ -184,19 +205,27 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
 
     const setupRealtime = () => {
         const channel = supabase
-            .channel(`workspace_chat:${workspaceId}`)
+            .channel(`workspace_chat_global:${workspaceId}`)
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'workspace_chat_messages' },
                 (payload) => {
                     const newMsg = payload.new as ChatMessage;
-                    if (activeGroup && newMsg.group_id === activeGroup.id) {
-                        setMessages(prev => [...prev, { ...newMsg, read_by: [] }]);
+                    if (activeGroupRef.current && newMsg.group_id === activeGroupRef.current.id) {
+                        setMessages(prev => {
+                            if (prev.some(m => m.id === newMsg.id)) return prev;
+                            return [...prev, { ...newMsg, read_by: [] }];
+                        });
                         markAsRead(newMsg.id);
                     } else {
                         setUnreadCount(prev => prev + 1);
                     }
                 }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'workspace_chat_groups' },
+                () => fetchGroups()
             )
             .on(
                 'postgres_changes',
@@ -219,13 +248,12 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
         await supabase.from('workspace_chat_reads').insert({
             message_id: messageId,
             user_id: currentUser.id,
-            group_id: activeGroup?.id
+            group_id: activeGroupRef.current?.id
         });
     };
 
     const markGroupAsRead = async (groupId: string) => {
-        // Find all unread messages in this group for current user
-        // For simplicity, just mark the latest one
+        // Implementation for marking all as read if needed
     };
 
     const handleSendMessage = async () => {
@@ -234,25 +262,44 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
         const content = input;
         const msgType = content.includes('@') ? 'mention' : 'text';
 
+        // Optimistic UI
+        const tempId = `temp-${Date.now()}`;
+        const optimisticMsg: ChatMessage = {
+            id: tempId,
+            group_id: activeGroup.id,
+            sender_id: currentUser.id,
+            sender_name: currentUser.name,
+            sender_avatar: currentUser.avatar || '',
+            content,
+            type: msgType,
+            reply_to_id: replyTo?.id,
+            metadata: {
+                reply_to: replyTo ? { name: replyTo.sender_name, content: replyTo.content } : null
+            },
+            created_at: new Date().toISOString(),
+            read_by: [currentUser.id]
+        };
+        setMessages(prev => [...prev, optimisticMsg]);
+        setInput('');
+        setReplyTo(null);
+
         const { data, error } = await supabase
             .from('workspace_chat_messages')
             .insert({
-                group_id: activeGroup.id,
-                sender_id: currentUser.id,
-                sender_name: currentUser.name,
-                sender_avatar: currentUser.avatar || '',
-                content,
-                type: msgType,
-                reply_to_id: replyTo?.id,
-                metadata: {
-                    reply_to: replyTo ? { name: replyTo.sender_name, content: replyTo.content } : null
-                }
+                group_id: optimisticMsg.group_id,
+                sender_id: optimisticMsg.sender_id,
+                sender_name: optimisticMsg.sender_name,
+                sender_avatar: optimisticMsg.sender_avatar,
+                content: optimisticMsg.content,
+                type: optimisticMsg.type,
+                reply_to_id: optimisticMsg.reply_to_id,
+                metadata: optimisticMsg.metadata
             })
             .select()
             .single();
 
         if (data) {
-            // Handle Mentions Notifications
+            setMessages(prev => prev.map(m => (m.id === tempId ? { ...data, read_by: [currentUser.id] } : m)));
             if (content.includes('@')) {
                 const mentions = content.match(/@(\w+)/g);
                 if (mentions) {
@@ -271,8 +318,6 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                     }
                 }
             }
-            setInput('');
-            setReplyTo(null);
             markAsRead(data.id);
         }
     };
@@ -300,7 +345,6 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
 
     return (
         <div className="fixed bottom-6 right-6 z-[9999]">
-            {/* Chat Trigger Button */}
             {!isOpen && (
                 <button
                     onClick={() => { setIsOpen(true); setUnreadCount(0); }}
@@ -312,39 +356,31 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                             {unreadCount}
                         </div>
                     )}
-                    <div className="absolute right-full mr-3 bg-white border-2 border-slate-900 px-3 py-1.5 rounded-xl font-black text-xs text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-hard">
-                        Workspace Chat
-                    </div>
                 </button>
             )}
 
-            {/* Chat Modal UI */}
             {isOpen && (
-                <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-white border-4 border-slate-900 rounded-3xl shadow-hard flex overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
-
-                    {/* Left: Chat Column */}
-                    <div className="flex-1 flex flex-col border-r-4 border-slate-900 bg-slate-50">
-                        {/* Header */}
-                        <div className="h-16 bg-white border-b-4 border-slate-900 flex items-center justify-between px-6 shrink-0">
+                <div className="absolute bottom-20 right-0 w-[750px] h-[550px] bg-white border-4 border-slate-900 rounded-3xl shadow-hard flex overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+                    <div className="flex-[2.2] flex flex-col border-r-4 border-slate-900 bg-slate-50">
+                        <div className="h-14 bg-white border-b-4 border-slate-900 flex items-center justify-between px-6 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-accent/10 rounded-xl border-2 border-slate-900 flex items-center justify-center">
-                                    <MessageSquare size={20} className="text-accent" />
+                                <div className="w-8 h-8 bg-accent/10 rounded-lg border-2 border-slate-900 flex items-center justify-center">
+                                    <MessageSquare size={16} className="text-accent" />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-slate-900 uppercase tracking-tight">{activeGroup?.name || 'Loading...'}</h3>
-                                    <p className="text-[10px] font-bold text-slate-400">READY TO COLLABORATE</p>
+                                    <h3 className="font-black text-slate-900 text-xs uppercase tracking-tight">{activeGroup?.name || 'Loading...'}</h3>
+                                    <p className="text-[8px] font-bold text-slate-400">TIMESTAMP: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-colors">
-                                <X size={24} />
+                            <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
 
-                        {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                            {messages.map((msg, idx) => {
+                            {messages.map((msg) => {
                                 const isMe = msg.sender_id === currentUser.id;
-                                const isAllRead = msg.read_by && (msg.read_by.length >= workspaceMembers.length - 1); // exclude sender? no, includes everyone
+                                const isAllRead = msg.read_by && (msg.read_by.length >= workspaceMembers.length);
 
                                 return (
                                     <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
@@ -352,41 +388,19 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                                             <div className="w-10 h-10 rounded-xl bg-white border-2 border-slate-900 flex items-center justify-center shrink-0 overflow-hidden shadow-[2px_2px_0px_0px_#0f172a]">
                                                 {msg.sender_avatar ? <img src={msg.sender_avatar} className="w-full h-full object-cover" /> : <Users size={20} />}
                                             </div>
-
                                             <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%] relative`}>
                                                 <div className="flex items-center gap-2 mb-1 px-1">
                                                     <span className="font-black text-[10px] text-slate-900 uppercase">{msg.sender_name}</span>
-                                                    <span className="text-[9px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <span className="text-[9px] font-bold text-slate-400">
                                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
-
-                                                {/* Reply Context */}
-                                                {msg.metadata?.reply_to && (
-                                                    <div className="mb-1 p-2 bg-slate-200/50 rounded-lg border-l-4 border-accent text-[10px] italic text-slate-500 truncate w-full">
-                                                        @{msg.metadata.reply_to.name}: {msg.metadata.reply_to.content}
-                                                    </div>
-                                                )}
-
-                                                {/* Chat Bubble */}
-                                                <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-hard relative ${isMe ? 'bg-accent text-white rounded-tr-none' : 'bg-white text-slate-900 rounded-tl-none'
-                                                    }`}>
+                                                <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-hard relative ${isMe ? 'bg-accent text-white rounded-tr-none' : 'bg-white text-slate-900 rounded-tl-none'}`}>
                                                     {msg.content}
-
-                                                    {/* Hover Actions inside bubble corner */}
                                                     <div className={`absolute -top-3 ${isMe ? 'right-0' : 'left-0'} opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20`}>
-                                                        <button
-                                                            onClick={() => setReplyTo(msg)}
-                                                            className="p-1.5 bg-white border-2 border-slate-900 rounded-lg text-slate-600 hover:text-accent shadow-hard"
-                                                        >
-                                                            <Reply size={12} />
-                                                        </button>
-                                                        <button className="p-1.5 bg-white border-2 border-slate-900 rounded-lg text-slate-600 hover:text-yellow-500 shadow-hard">
-                                                            <Smile size={12} />
-                                                        </button>
+                                                        <button onClick={() => setReplyTo(msg)} className="p-1.5 bg-white border-2 border-slate-900 rounded-lg text-slate-600 hover:text-accent shadow-hard"><Reply size={12} /></button>
+                                                        <button className="p-1.5 bg-white border-2 border-slate-900 rounded-lg text-slate-600 hover:text-yellow-500 shadow-hard"><Smile size={12} /></button>
                                                     </div>
-
-                                                    {/* Small Arrow for Read Receipt info */}
                                                     <div className="absolute -right-8 bottom-1 group/reads cursor-help flex items-center gap-1">
                                                         {isMe && (
                                                             <div className="flex">
@@ -394,21 +408,13 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                                                             </div>
                                                         )}
                                                         <ChevronRight size={10} className="text-slate-400 group-hover/reads:rotate-90 transition-transform" />
-
-                                                        {/* Read List Popover */}
                                                         <div className="absolute bottom-full right-0 mb-2 invisible group-hover/reads:visible bg-white border-2 border-slate-900 p-2 rounded-xl shadow-hard z-30 min-w-[120px]">
                                                             <p className="text-[10px] font-black text-slate-400 mb-1 border-b pb-1 uppercase italic tracking-tighter">Dibaca oleh:</p>
                                                             <div className="space-y-1">
                                                                 {msg.read_by?.map(uid => {
                                                                     const u = workspaceMembers.find(mu => mu.id === uid);
-                                                                    return u ? (
-                                                                        <div key={uid} className="flex items-center gap-2">
-                                                                            <img src={u.avatar_url} className="w-4 h-4 rounded-full border border-slate-900" />
-                                                                            <span className="text-[9px] font-black truncate">{u.full_name}</span>
-                                                                        </div>
-                                                                    ) : null;
+                                                                    return u ? <div key={uid} className="flex items-center gap-2"><img src={u.avatar_url} className="w-4 h-4 rounded-full border border-slate-900" /><span className="text-[9px] font-black">{u.full_name}</span></div> : null;
                                                                 })}
-                                                                {(!msg.read_by || msg.read_by.length === 0) && <p className="text-[9px] font-bold text-slate-400">Belum ada</p>}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -421,21 +427,19 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                             <div ref={chatEndRef} />
                         </div>
 
-                        {/* Input Area */}
-                        <div className="p-6 bg-white border-t-4 border-slate-900 shrink-0">
+                        <div className="p-4 bg-white border-t-4 border-slate-900 shrink-0">
                             {replyTo && (
-                                <div className="mb-3 p-3 bg-slate-50 border-2 border-dashed border-slate-900 rounded-xl flex items-center justify-between text-xs font-bold text-slate-500">
+                                <div className="mb-2 p-2 bg-slate-50 border-2 border-dashed border-slate-900 rounded-lg flex items-center justify-between text-[10px] font-bold text-slate-500">
                                     <div className="flex items-center gap-2 truncate">
-                                        <Reply size={14} className="text-accent" />
+                                        <Reply size={12} className="text-accent" />
                                         <span>Membalas @{replyTo.sender_name}: </span>
                                         <span className="italic truncate">"{replyTo.content}"</span>
                                     </div>
-                                    <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-red-50 text-red-500 rounded-lg"><X size={14} /></button>
+                                    <button onClick={() => setReplyTo(null)} className="p-1 hover:bg-red-50 text-red-500 rounded-lg"><X size={10} /></button>
                                 </div>
                             )}
 
                             <div className="flex gap-3 relative">
-                                {/* Mention List Popup */}
                                 {showMentionList && (
                                     <div className="absolute bottom-full mb-3 left-0 w-64 bg-white border-4 border-slate-900 rounded-2xl shadow-hard overflow-hidden z-20">
                                         <div className="p-3 border-b-2 border-slate-900 bg-accent/5 flex items-center gap-2">
@@ -443,23 +447,14 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                                             <span className="font-black text-[10px] uppercase tracking-tighter">Sebut Anggota</span>
                                         </div>
                                         <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                                            {workspaceMembers
-                                                .filter(m => m.full_name.toLowerCase().includes(mentionSearch.toLowerCase()))
-                                                .map(m => (
-                                                    <button
-                                                        key={m.id}
-                                                        onClick={() => handleMentionSelect(m.full_name)}
-                                                        className="w-full p-2 hover:bg-yellow-50 flex items-center gap-3 transition-colors border-b last:border-0 border-slate-100"
-                                                    >
-                                                        <img src={m.avatar_url} className="w-8 h-8 rounded-lg border-2 border-slate-900" />
-                                                        <span className="text-xs font-bold text-slate-800">{m.full_name}</span>
-                                                    </button>
-                                                ))
-                                            }
+                                            {workspaceMembers.filter(m => m.full_name.toLowerCase().includes(mentionSearch.toLowerCase())).map(m => (
+                                                <button key={m.id} onClick={() => handleMentionSelect(m.full_name)} className="w-full p-2 hover:bg-yellow-50 flex items-center gap-3 transition-colors border-b last:border-0 border-slate-100">
+                                                    <img src={m.avatar_url} className="w-8 h-8 rounded-lg border-2 border-slate-900" /><span className="text-xs font-bold text-slate-800">{m.full_name}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
-
                                 <div className="flex-1 relative">
                                     <input
                                         type="text"
@@ -467,135 +462,77 @@ export const WorkspaceChat: React.FC<WorkspaceChatProps> = ({ workspaceId, curre
                                         onChange={e => handleInputChange(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
                                         placeholder="Ketik pesan..."
-                                        className="w-full bg-slate-50 border-4 border-slate-900 rounded-2xl px-6 py-4 font-bold text-sm outline-none focus:bg-yellow-50 transition-colors shadow-hard"
+                                        className="w-full bg-slate-50 border-2 border-slate-900 rounded-xl px-4 py-2 font-bold text-[13px] outline-none focus:bg-yellow-50 transition-colors shadow-hard-mini"
                                     />
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-1">
-                                        <button className="p-2 text-slate-400 hover:text-accent transition-colors"><Smile size={20} /></button>
-                                    </div>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1"><button className="p-1 text-slate-400 hover:text-accent transition-colors"><Smile size={16} /></button></div>
                                 </div>
-                                <button
-                                    onClick={handleSendMessage}
-                                    className="bg-accent text-white p-4 rounded-2xl border-4 border-slate-900 shadow-hard hover:translate-y-1 hover:shadow-hard-pressed transition-all shrink-0"
-                                >
-                                    <Send size={24} />
-                                </button>
+                                <button onClick={handleSendMessage} className="bg-accent text-white p-3 rounded-xl border-2 border-slate-900 shadow-hard-mini hover:translate-y-1 hover:shadow-none transition-all shrink-0"><Send size={18} /></button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right: Tabs Column */}
                     <div className="w-[280px] flex flex-col shrink-0">
-                        {/* Tab Switchers */}
                         <div className="flex h-16 shrink-0 border-b-4 border-slate-900">
-                            <button
-                                onClick={() => setActiveTab('groups')}
-                                className={`flex-1 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-tighter ${activeTab === 'groups' ? 'bg-yellow-400' : 'bg-white hover:bg-slate-50'} transition-colors`}
-                            >
-                                <Users size={16} /> Groups
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('online')}
-                                className={`flex-1 flex items-center justify-center gap-2 border-l-4 border-slate-900 font-black text-xs uppercase tracking-tighter ${activeTab === 'online' ? 'bg-yellow-400' : 'bg-white hover:bg-slate-50'} transition-colors`}
-                            >
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Online
-                            </button>
+                            <button onClick={() => setActiveTab('groups')} className={`flex-1 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-tighter ${activeTab === 'groups' ? 'bg-yellow-400' : 'bg-white hover:bg-slate-50'}`}><Users size={16} /> Groups</button>
+                            <button onClick={() => setActiveTab('online')} className={`flex-1 flex items-center justify-center gap-2 border-l-4 border-slate-900 font-black text-xs uppercase tracking-tighter ${activeTab === 'online' ? 'bg-yellow-400' : 'bg-white hover:bg-slate-50'}`}><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Online</button>
                         </div>
-
-                        {/* Tab Content */}
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
                             {activeTab === 'groups' ? (
                                 <>
                                     <div className="flex items-center justify-between mb-2 px-2">
                                         <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-widest italic">Daftar Group</h4>
-                                        {isAdmin && (
-                                            <button onClick={() => setShowGroupCreate(true)} className="p-1.5 bg-accent text-white rounded-lg border-2 border-slate-900 hover:-translate-y-1 transition-all shadow-hard-mini">
-                                                <Plus size={12} />
-                                            </button>
-                                        )}
+                                        {isAdmin && <button onClick={() => setShowGroupCreate(true)} className="p-1.5 bg-accent text-white rounded-lg border-2 border-slate-900 hover:-translate-y-1 transition-all shadow-hard-mini"><Plus size={12} /></button>}
                                     </div>
-
-                                    {/* Group Lists */}
                                     <div className="space-y-2">
                                         {groups.map(group => (
-                                            <button
-                                                key={group.id}
-                                                onClick={() => setActiveGroup(group)}
-                                                className={`w-full p-4 rounded-2xl border-4 text-left transition-all relative overflow-hidden group/item ${activeGroup?.id === group.id
-                                                    ? 'bg-accent/5 border-accent shadow-hard-mini'
-                                                    : 'bg-white border-slate-900 hover:border-accent'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`p-2 rounded-xl border-2 border-slate-900 ${activeGroup?.id === group.id ? 'bg-accent text-white' : 'bg-slate-100'}`}>
-                                                        <Users size={14} />
+                                            <button key={group.id} onClick={() => setActiveGroup(group)} className={`w-full p-4 rounded-2xl border-4 text-left transition-all relative overflow-hidden group/item ${activeGroup?.id === group.id ? 'bg-accent/5 border-accent shadow-hard-mini' : 'bg-white border-slate-900 hover:border-accent'}`}>
+                                                <div className="flex items-center justify-between w-full">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-xl border-2 border-slate-900 ${activeGroup?.id === group.id ? 'bg-accent text-white' : 'bg-slate-100'}`}>{group.icon === 'image' ? <ImageIcon size={14} /> : <Users size={14} />}</div>
+                                                        <span className="font-black text-xs text-slate-800">{group.name}</span>
                                                     </div>
-                                                    <span className="font-black text-xs text-slate-800">{group.name}</span>
+                                                    {isAdmin && <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setEditName(group.name); setEditIcon(group.icon || 'users'); }} className="opacity-0 group-hover/item:opacity-100 p-2 text-slate-400 hover:text-accent transition-all"><Edit2 size={12} /></button>}
                                                 </div>
-                                                {isAdmin && group.name !== 'General' && (
-                                                    <button className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 p-2 text-slate-400 hover:text-red-500 transition-all">
-                                                        <Settings size={14} />
-                                                    </button>
-                                                )}
                                             </button>
                                         ))}
                                     </div>
-
-                                    {/* Group Create Modal Overlay inside tab */}
+                                    {editingGroup && (
+                                        <div className="bg-white p-4 rounded-2xl border-4 border-accent space-y-3 shadow-hard">
+                                            <div className="flex items-center justify-between"><p className="font-black text-[10px] uppercase text-accent">Edit Group Info</p><button onClick={() => setEditingGroup(null)}><X size={14} /></button></div>
+                                            <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full p-2 border-2 border-slate-900 rounded-lg font-bold text-xs" />
+                                            <div className="flex gap-2">
+                                                <button onClick={() => setEditIcon('users')} className={`flex-1 p-2 border-2 rounded-lg flex items-center justify-center ${editIcon === 'users' ? 'border-accent bg-accent/10' : 'border-slate-200'}`}><Users size={16} /></button>
+                                                <button onClick={() => setEditIcon('image')} className={`flex-1 p-2 border-2 rounded-lg flex items-center justify-center ${editIcon === 'image' ? 'border-accent bg-accent/10' : 'border-slate-200'}`}><ImageIcon size={16} /></button>
+                                            </div>
+                                            <Button onClick={updateGroup} className="w-full bg-accent text-white text-[10px] py-2">Simpan</Button>
+                                        </div>
+                                    )}
                                     {showGroupCreate && (
                                         <div className="bg-slate-900/5 p-4 rounded-2xl border-4 border-slate-900 border-dashed space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <p className="font-black text-[10px] uppercase text-slate-600">Buat Group Baru</p>
-                                                <button onClick={() => setShowGroupCreate(false)}><X size={14} /></button>
-                                            </div>
-                                            <input
-                                                type="text"
-                                                placeholder="Nama Group..."
-                                                value={newGroupName}
-                                                onChange={e => setNewGroupName(e.target.value)}
-                                                className="w-full p-2 border-2 border-slate-900 rounded-lg font-bold text-xs"
-                                            />
-                                            <p className="font-black text-[9px] uppercase text-slate-400">Pilih Anggota:</p>
+                                            <div className="flex items-center justify-between"><p className="font-black text-[10px] uppercase text-slate-600">Buat Group</p><button onClick={() => setShowGroupCreate(false)}><X size={14} /></button></div>
+                                            <input type="text" placeholder="Nama Group..." value={newGroupName} onChange={e => setNewGroupName(e.target.value)} className="w-full p-2 border-2 border-slate-900 rounded-lg font-bold text-xs" />
                                             <div className="max-h-32 overflow-y-auto space-y-1">
                                                 {workspaceMembers.map(m => (
                                                     <label key={m.id} className="flex items-center gap-2 cursor-pointer p-1 hover:bg-white rounded">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedMembers.includes(m.id)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) setSelectedMembers([...selectedMembers, m.id]);
-                                                                else setSelectedMembers(selectedMembers.filter(id => id !== m.id));
-                                                            }}
-                                                            className="accent-accent"
-                                                        />
+                                                        <input type="checkbox" checked={selectedMembers.includes(m.id)} onChange={(e) => { if (e.target.checked) setSelectedMembers([...selectedMembers, m.id]); else setSelectedMembers(selectedMembers.filter(id => id !== m.id)); }} className="accent-accent" />
                                                         <span className="text-[10px] font-bold truncate">{m.full_name}</span>
                                                     </label>
                                                 ))}
                                             </div>
-                                            <Button
-                                                onClick={() => createGroup(newGroupName, selectedMembers)}
-                                                disabled={!newGroupName.trim()}
-                                                className="w-full bg-accent text-white text-[10px] py-2"
-                                            >Buat Sekarang</Button>
+                                            <Button onClick={() => createGroup(newGroupName, selectedMembers)} disabled={!newGroupName.trim()} className="w-full bg-accent text-white text-[10px] py-2">Buat</Button>
                                         </div>
                                     )}
                                 </>
                             ) : (
                                 <>
-                                    <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-widest italic mb-4 px-2">Online (Workspace)</h4>
+                                    <h4 className="font-black text-[10px] text-slate-400 uppercase tracking-widest italic mb-4 px-2">Online</h4>
                                     <div className="space-y-3">
                                         {onlineUsers.map(user => (
                                             <div key={user.id} className="flex items-center justify-between p-3 bg-white border-2 border-slate-900 rounded-2xl shadow-hard-mini hover:bg-green-50 transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="relative">
-                                                        <img src={user.avatar_url} className="w-10 h-10 rounded-xl border-2 border-slate-900 shadow-hard-mini" />
-                                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-black text-xs text-slate-900 truncate max-w-[120px]">{user.full_name}</p>
-                                                        <p className="text-[9px] font-bold text-slate-400 uppercase">{user.role}</p>
-                                                    </div>
+                                                    <div className="relative"><img src={user.avatar_url} className="w-10 h-10 rounded-xl border-2 border-slate-900 shadow-hard-mini" /><div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" /></div>
+                                                    <div><p className="font-black text-xs text-slate-900 truncate max-w-[120px]">{user.full_name}</p><p className="text-[9px] font-bold text-slate-400 uppercase">{user.role}</p></div>
                                                 </div>
-                                                <button className="p-2 text-slate-300 hover:text-accent"><Send size={14} /></button>
                                             </div>
                                         ))}
                                     </div>
