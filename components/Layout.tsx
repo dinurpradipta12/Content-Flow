@@ -27,7 +27,8 @@ import {
     Briefcase,
     Users,
     Presentation,
-    Power
+    Power,
+    MessageSquare
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -372,6 +373,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     const mainNavItems = [
         { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+        { path: '/messages', label: 'Messages', icon: <MessageSquare size={20} /> },
         { path: '/plan', label: 'Content Plan', icon: <CalendarDays size={20} /> },
         { path: '/approval', label: 'Approval', icon: <CheckCircle size={20} /> },
         { path: '/insight', label: 'Content Data Insight', icon: <Presentation size={20} /> },

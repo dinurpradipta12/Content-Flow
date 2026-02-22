@@ -12,6 +12,7 @@ import { Login } from './pages/Login';
 import { UserManagement } from './pages/UserManagement';
 import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
+import { Messages } from './pages/Messages';
 import { NotificationProvider } from './components/NotificationProvider';
 
 // Auth Guard Component
@@ -62,6 +63,7 @@ const App: React.FC = () => {
           {/* Protected Routes */}
           <Route element={<RequireAuth />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="messages" element={<Messages />} />
             <Route path="plan" element={<ContentPlan />} />
             <Route path="plan/:id" element={<ContentPlanDetail />} />
             <Route path="approval" element={<Approval />} />
