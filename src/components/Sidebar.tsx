@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCarouselStore, CANVAS_SIZES } from '../store/useCarouselStore';
-import { Type, Image as ImageIcon, Palette, Layout, ChevronDown, Layers, Eye, EyeOff, Lock, Unlock, GripVertical, Save, FolderOpen, Loader2, Plus, Square, Circle, Upload, Download, Trash2 } from 'lucide-react';
+import { Type, Image as ImageIcon, Palette, Layout, ChevronDown, Layers, Eye, EyeOff, Lock, Unlock, GripVertical, Save, FolderOpen, Loader2, Plus, Square, Circle, Upload, Download, Trash2, X } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -172,6 +172,20 @@ export const Sidebar: React.FC = () => {
         reader.readAsText(file);
     };
 
+    const handleDeletePreset = async (preset: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm(`Hapus preset "${preset.name}"?`)) return;
+        try {
+            const { supabase } = await import('../services/supabaseClient');
+            const { error } = await supabase.from('carousel_presets').delete().eq('id', preset.id);
+            if (error) throw error;
+            fetchPresets();
+        } catch (err) {
+            console.error('Delete error', err);
+            alert('Gagal menghapus preset.');
+        }
+    };
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -218,55 +232,54 @@ export const Sidebar: React.FC = () => {
                     <div className="space-y-8">
                         {/* Presets */}
                         <section>
-                            <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 mb-3">
+                            <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 mb-2">
                                 <FolderOpen size={14} /> Presets
                             </label>
 
-                            {/* 3 Action Buttons */}
-                            <div className="grid grid-cols-3 gap-2 mb-4">
-                                {/* Save Preset */}
+                            {/* Action Pills — single row */}
+                            <div className="flex items-center gap-1.5 mb-3">
+                                {/* Save */}
                                 <button
                                     onClick={handleSavePreset}
                                     disabled={isSaving}
-                                    className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-accent text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 text-[10px] font-black tracking-wide"
-                                    title="Simpan preset ke database pribadi kamu"
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-accent text-white rounded-full border border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] hover:brightness-110 transition-all disabled:opacity-50 text-[10px] font-black"
+                                    title="Simpan preset"
                                 >
-                                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                    {isSaving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
                                     Save
                                 </button>
 
-                                {/* Export Preset – disabled if no presets */}
+                                {/* Export — Upload icon (kirim keluar = upload) */}
                                 <div className="relative group">
                                     <button
                                         disabled={presets.length === 0}
-                                        className="w-full flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-emerald-500 text-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-40 text-[10px] font-black tracking-wide"
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white rounded-full border border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] hover:brightness-110 transition-all disabled:opacity-40 text-[10px] font-black"
                                         title="Export preset ke file .cfpreset"
                                     >
-                                        <Download size={16} />
+                                        <Upload size={11} />
                                         Export
                                     </button>
-                                    {/* Export sub-menu */}
                                     {presets.length > 0 && (
-                                        <div className="hidden group-hover:flex absolute top-full left-0 right-0 z-50 flex-col bg-white border-2 border-slate-900 rounded-xl shadow-[4px_4px_0px_0px_#0f172a] overflow-hidden mt-1 min-w-[140px]">
+                                        <div className="hidden group-hover:flex absolute top-full left-0 z-50 flex-col bg-white border-2 border-slate-900 rounded-xl shadow-[4px_4px_0px_0px_#0f172a] overflow-hidden mt-1 min-w-[150px]">
                                             {presets.map(p => (
                                                 <button
                                                     key={p.id}
                                                     onClick={(e) => handleExportPreset(p, e)}
                                                     className="text-left px-3 py-2 text-xs font-bold hover:bg-emerald-50 truncate border-b border-slate-100 last:border-0"
                                                 >
-                                                    ↓ {p.name}
+                                                    ↑ {p.name}
                                                 </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Import Preset */}
+                                {/* Import — Download icon (terima dari luar = download) */}
                                 <label
-                                    className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-amber-400 text-slate-900 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer text-[10px] font-black tracking-wide"
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-amber-400 text-slate-900 rounded-full border border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] hover:brightness-110 transition-all cursor-pointer text-[10px] font-black"
                                     title="Import preset dari file .cfpreset"
                                 >
-                                    <Upload size={16} />
+                                    <Download size={11} />
                                     Import
                                     <input
                                         ref={importInputRef}
@@ -278,39 +291,48 @@ export const Sidebar: React.FC = () => {
                                 </label>
                             </div>
 
-                            {/* Presets List */}
-                            <div className="space-y-2">
-                                {isLoadingPresets ? (
-                                    <div className="flex justify-center py-4"><Loader2 className="animate-spin text-slate-300" size={20} /></div>
-                                ) : presets.length > 0 ? (
-                                    presets.map(preset => (
+                            {/* Presets Grid — small cards */}
+                            {isLoadingPresets ? (
+                                <div className="flex justify-center py-4"><Loader2 className="animate-spin text-slate-300" size={18} /></div>
+                            ) : presets.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {presets.map(preset => (
                                         <div
                                             key={preset.id}
-                                            className="group flex items-center gap-2 p-2.5 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors cursor-pointer"
+                                            className="group relative flex flex-col bg-slate-50 border-2 border-slate-900 rounded-xl p-2 hover:bg-yellow-50 transition-colors cursor-pointer overflow-hidden"
                                             onClick={() => handleLoadPreset(preset)}
+                                            title={`${preset.name}\n${preset.data?.pages?.length ?? 1} slide · ${preset.data?.canvasSize?.label ?? 'Custom'}`}
                                         >
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-black text-xs text-slate-900 truncate">{preset.name}</p>
-                                                <p className="text-[9px] font-bold text-slate-400">
-                                                    {preset.data?.pages?.length ?? 1} slide{(preset.data?.pages?.length ?? 1) > 1 ? 's' : ''} · {preset.data?.canvasSize?.label ?? 'Custom'}
-                                                </p>
+                                            {/* Name */}
+                                            <p className="font-black text-[11px] text-slate-900 leading-tight line-clamp-2 pr-5">{preset.name}</p>
+                                            <p className="text-[9px] font-bold text-slate-400 mt-0.5 truncate">{preset.data?.pages?.length ?? 1}s · {preset.data?.canvasSize?.label?.split('(')[0]?.trim() ?? 'Custom'}</p>
+
+                                            {/* Action buttons — top-right, visible on hover */}
+                                            <div className="absolute top-1 right-1 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => handleExportPreset(preset, e)}
+                                                    className="p-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-500 hover:text-white transition-colors"
+                                                    title="Export"
+                                                >
+                                                    <Upload size={9} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeletePreset(preset, e)}
+                                                    className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-500 hover:text-white transition-colors"
+                                                    title="Hapus preset"
+                                                >
+                                                    <Trash2 size={9} />
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={(e) => handleExportPreset(preset, e)}
-                                                className="opacity-0 group-hover:opacity-100 p-1.5 bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-300 hover:bg-emerald-500 hover:text-white transition-all"
-                                                title="Export preset ini"
-                                            >
-                                                <Download size={11} />
-                                            </button>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center py-6 px-4 border-2 border-dashed border-slate-200 rounded-xl">
-                                        <p className="text-[10px] font-bold text-slate-400 italic">Belum ada preset tersimpan</p>
-                                        <p className="text-[9px] text-slate-300 mt-1">Klik Save atau Import .cfpreset</p>
-                                    </div>
-                                )}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-5 px-3 border-2 border-dashed border-slate-200 rounded-xl">
+                                    <p className="text-[10px] font-bold text-slate-400 italic">Belum ada preset</p>
+                                    <p className="text-[9px] text-slate-300 mt-0.5">Save atau Import .cfpreset</p>
+                                </div>
+                            )}
                         </section>
 
                         {/* Canvas Size */}
