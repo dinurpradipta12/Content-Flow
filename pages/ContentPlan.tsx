@@ -58,6 +58,10 @@ export const ContentPlan: React.FC = () => {
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Derive role from localStorage — used for UI access control
+    const userRole = localStorage.getItem('user_role') || 'Member';
+    const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
+
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -115,14 +119,9 @@ export const ContentPlan: React.FC = () => {
                 const total = workspaceContent.length;
                 const published = workspaceContent.filter((c: any) => c.status === 'Published').length;
 
-                let currentMembers = ws.members || ['https://picsum.photos/40/40'];
-
-                if (freshAvatar) {
-                    if (ws.role === 'Owner') {
-                        if (currentMembers.length > 0) currentMembers[0] = freshAvatar;
-                        else currentMembers = [freshAvatar];
-                    }
-                }
+                // Use empty array as default — never use a placeholder avatar as default
+                // because it would bypass the membership check below
+                const currentMembers: string[] = ws.members || [];
 
                 return {
                     id: ws.id,
@@ -140,19 +139,26 @@ export const ContentPlan: React.FC = () => {
                 };
             });
 
-            // 4. Member Access Control: if user is NOT an admin/owner,
-            //    only show workspaces where their avatar_url is in members[]
+            // 4. Member Access Control:
+            //    - Admin/Owner/Developer: see ALL workspaces they own
+            //    - Member: ONLY see workspaces where their avatar_url is in members[]
+            //    - If freshAvatar is not available, member sees NOTHING (safest default)
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
-            if (!isAdminOrOwner && freshAvatar) {
-                mergedData = mergedData.filter(ws =>
-                    ws.members.some((m: string) => {
-                        try {
-                            return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar;
-                        } catch {
-                            return m === freshAvatar;
-                        }
-                    })
-                );
+            if (!isAdminOrOwner) {
+                if (!freshAvatar) {
+                    // No avatar = can't verify identity → show nothing
+                    mergedData = [];
+                } else {
+                    mergedData = mergedData.filter(ws =>
+                        ws.members.some((m: string) => {
+                            try {
+                                return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar;
+                            } catch {
+                                return m === freshAvatar;
+                            }
+                        })
+                    );
+                }
             }
 
             setWorkspaces(mergedData);
@@ -401,7 +407,6 @@ export const ContentPlan: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                     <Button
-                        // Style adjusted to match primary structure but with Tertiary (Yellow) color
                         className="bg-tertiary text-slate-900 hover:bg-[#FCD34D] whitespace-nowrap"
                         icon={<Users size={18} />}
                         onClick={() => setIsJoinModalOpen(true)}
@@ -409,13 +414,16 @@ export const ContentPlan: React.FC = () => {
                         Gabung Workspace
                     </Button>
 
-                    <Button
-                        icon={<Plus size={18} />}
-                        className="whitespace-nowrap"
-                        onClick={handleOpenCreateModal}
-                    >
-                        Buat Workspace
-                    </Button>
+                    {/* Only admins can create new workspaces */}
+                    {isAdminOrOwner && (
+                        <Button
+                            icon={<Plus size={18} />}
+                            className="whitespace-nowrap"
+                            onClick={handleOpenCreateModal}
+                        >
+                            Buat Workspace
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -553,9 +561,34 @@ export const ContentPlan: React.FC = () => {
                         </Card>
                     ))}
                     {workspaces.length === 0 && (
-                        <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
-                            <h3 className="text-slate-400 font-bold text-lg">Belum ada workspace.</h3>
-                            <Button className="mt-4" onClick={handleOpenCreateModal} icon={<Plus size={18} />}>Buat Baru Sekarang</Button>
+                        <div className="col-span-full py-16 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
+                            {isAdminOrOwner ? (
+                                // Admin: no workspaces yet
+                                <>
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/10 border-2 border-accent/20 flex items-center justify-center">
+                                        <Layers className="text-accent opacity-60" size={32} />
+                                    </div>
+                                    <h3 className="text-slate-700 font-black text-xl mb-1">Belum ada workspace</h3>
+                                    <p className="text-slate-400 font-medium text-sm mb-4">Buat workspace pertama Anda untuk mulai merencanakan konten.</p>
+                                    <Button onClick={handleOpenCreateModal} icon={<Plus size={18} />}>Buat Workspace Baru</Button>
+                                </>
+                            ) : (
+                                // Member: waiting to be invited
+                                <>
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-50 border-2 border-amber-200 flex items-center justify-center">
+                                        <Users className="text-amber-500 opacity-80" size={32} />
+                                    </div>
+                                    <h3 className="text-slate-700 font-black text-xl mb-1">Menunggu Undangan</h3>
+                                    <p className="text-slate-400 font-medium text-sm mb-4">Anda belum diundang ke workspace manapun.<br />Hubungi admin tim Anda atau masukkan kode undangan.</p>
+                                    <Button
+                                        className="bg-tertiary text-slate-900 hover:bg-[#FCD34D]"
+                                        icon={<Users size={18} />}
+                                        onClick={() => setIsJoinModalOpen(true)}
+                                    >
+                                        Masukkan Kode Undangan
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
@@ -745,6 +778,6 @@ export const ContentPlan: React.FC = () => {
                     </div>
                 </form>
             </Modal>
-        </div>
+        </div >
     );
 };
