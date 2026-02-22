@@ -334,10 +334,31 @@ export const TeamManagement: React.FC = () => {
     const handleAddKPI = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedUser) return;
-        const tm = teamMembers.find(t => t.full_name === selectedUser.full_name);
-        if (!tm) { alert('Team member record tidak ditemukan. Pastikan user terdaftar di Team Members.'); return; }
         setAddingKPI(true);
         try {
+            // Try to find existing team_member record
+            let tm = teamMembers.find(t =>
+                t.full_name === selectedUser.full_name ||
+                t.avatar_url === selectedUser.avatar_url
+            );
+
+            // Auto-create if not found
+            if (!tm) {
+                const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+                const { data: newTm, error: tmErr } = await supabase.from('team_members').insert([{
+                    full_name: selectedUser.full_name,
+                    role: selectedUser.role || 'Member',
+                    department: '',
+                    avatar_url: selectedUser.avatar_url,
+                    admin_id: tenantId,
+                    status: 'active'
+                }]).select().single();
+                if (tmErr) throw new Error('Gagal membuat team member record: ' + tmErr.message);
+                tm = newTm;
+                // Refresh teamMembers locally
+                setTeamMembers(prev => [...prev, newTm]);
+            }
+
             const { error } = await supabase.from('team_kpis').insert([{
                 member_id: tm.id,
                 metric_name: kpiForm.metric_name,
@@ -353,7 +374,7 @@ export const TeamManagement: React.FC = () => {
             setKpiForm({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', notes: '' });
             setShowAddKPI(false);
             fetchData();
-        } catch (err) { console.error(err); alert('Gagal menambahkan KPI.'); }
+        } catch (err: any) { console.error(err); alert('Gagal menambahkan KPI: ' + (err?.message || '')); }
         finally { setAddingKPI(false); }
     };
 
@@ -490,55 +511,39 @@ export const TeamManagement: React.FC = () => {
                                     <p className="font-bold">Belum ada anggota di workspace ini</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     {filteredUsers.map(user => {
                                         const rate = getKPICompletion(user);
-                                        const tm = teamMembers.find(t => t.full_name === user.full_name);
                                         return (
-                                            <Card
+                                            <div
                                                 key={user.id}
-                                                className="cursor-pointer hover:-translate-y-1 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] p-4 flex flex-col gap-3 bg-white transition-all group"
+                                                className="bg-white border-2 border-slate-900 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a] shadow-[2px_2px_0px_#0f172a] transition-all group"
                                                 onClick={() => handleOpenDetail(user)}
                                             >
-                                                {/* Top: Avatar left + Info right */}
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-2">
                                                     <img
                                                         src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                        className="w-16 h-16 rounded-2xl border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] object-cover group-hover:-rotate-3 transition-transform shrink-0"
+                                                        className="w-9 h-9 rounded-xl border-2 border-slate-900 object-cover shrink-0 group-hover:-rotate-3 transition-transform"
                                                         alt="Avatar"
                                                     />
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="font-heading font-black text-slate-900 text-lg leading-tight truncate">{user.full_name}</h4>
-                                                        <p className="text-xs font-bold text-slate-400 truncate mb-1">@{user.username}</p>
-                                                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase border-2 border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
-                                                            user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
-                                                                'bg-white text-slate-900'
-                                                            }`}>
-                                                            {user.role}
-                                                        </span>
-                                                        {tm?.department && (
-                                                            <span className="ml-1 inline-block px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 truncate max-w-[100px]">
-                                                                {tm.department}
-                                                            </span>
-                                                        )}
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-black text-xs text-slate-900 truncate leading-tight">{user.full_name}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 truncate">@{user.username}</p>
                                                     </div>
-                                                    <ChevronRight className="text-slate-300 shrink-0 group-hover:text-accent group-hover:translate-x-1 transition-all" size={20} />
                                                 </div>
-
-                                                {/* Bottom: KPI Progress */}
-                                                <div className="pt-2 border-t border-slate-100">
-                                                    <p className="text-[11px] font-black text-slate-500 text-center mb-2 uppercase tracking-widest">KPI Progress</p>
-                                                    <div className="w-full bg-slate-100 rounded-full h-2.5 border border-slate-200 overflow-hidden">
-                                                        <div
-                                                            className={`h-2.5 rounded-full transition-all ${rate >= minCompletionRate ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-500' : 'bg-red-500'
-                                                                }`}
-                                                            style={{ width: `${rate}%` }}
-                                                        />
+                                                <span className={`self-start inline-block px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
+                                                    user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
+                                                        'bg-slate-50 text-slate-700'
+                                                    }`}>{user.role}</span>
+                                                <div>
+                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div className={`h-full rounded-full ${rate >= minCompletionRate ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-400' : 'bg-red-500'
+                                                            }`} style={{ width: `${rate}%` }} />
                                                     </div>
-                                                    <p className={`text-xs font-black text-right mt-1 ${rate >= minCompletionRate ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-red-600'
-                                                        }`}>{rate}% Selesai</p>
+                                                    <p className={`text-[10px] font-bold text-right mt-0.5 ${rate >= minCompletionRate ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-red-500'
+                                                        }`}>{rate}%</p>
                                                 </div>
-                                            </Card>
+                                            </div>
                                         );
                                     })}
                                 </div>
@@ -698,13 +703,42 @@ export const TeamManagement: React.FC = () => {
                                 {showAddKPI && (
                                     <form onSubmit={handleAddKPI} className="mt-3 bg-white border-2 border-slate-900 rounded-xl p-4 space-y-3 shadow-[3px_3px_0px_#0f172a] animate-in fade-in slide-in-from-top-2">
                                         <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Tambah KPI Baru</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <input required placeholder="Nama Metrik" value={kpiForm.metric_name} onChange={e => setKpiForm(p => ({ ...p, metric_name: e.target.value }))} className="col-span-2 border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
-                                            <input placeholder="Kategori" value={kpiForm.category} onChange={e => setKpiForm(p => ({ ...p, category: e.target.value }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
-                                            <input placeholder="Period" value={kpiForm.period} onChange={e => setKpiForm(p => ({ ...p, period: e.target.value }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
-                                            <input type="number" placeholder="Target" value={kpiForm.target_value} onChange={e => setKpiForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
-                                            <input type="number" placeholder="Actual" value={kpiForm.actual_value} onChange={e => setKpiForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
-                                            <input placeholder="Unit (%, pcs...)" value={kpiForm.unit} onChange={e => setKpiForm(p => ({ ...p, unit: e.target.value }))} className="col-span-2 border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none" />
+                                        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                                            {/* Nama Metrik */}
+                                            <div className="col-span-2">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Nama Metrik *</label>
+                                                <input required placeholder="Contoh: Jumlah Post, Revenue, dll." value={kpiForm.metric_name} onChange={e => setKpiForm(p => ({ ...p, metric_name: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                            </div>
+                                            {/* Kategori */}
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Kategori</label>
+                                                <input placeholder="General, Sales, dll." value={kpiForm.category} onChange={e => setKpiForm(p => ({ ...p, category: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                            </div>
+                                            {/* Periode */}
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Periode</label>
+                                                <select value={kpiForm.period} onChange={e => setKpiForm(p => ({ ...p, period: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold bg-white focus:outline-none focus:bg-yellow-50">
+                                                    <option>Monthly</option>
+                                                    <option>Quarterly</option>
+                                                    <option>Yearly</option>
+                                                    <option>Weekly</option>
+                                                </select>
+                                            </div>
+                                            {/* Target */}
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Target</label>
+                                                <input type="number" min={0} placeholder="100" value={kpiForm.target_value} onChange={e => setKpiForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                            </div>
+                                            {/* Aktual */}
+                                            <div>
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Nilai Aktual</label>
+                                                <input type="number" min={0} placeholder="0" value={kpiForm.actual_value} onChange={e => setKpiForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                            </div>
+                                            {/* Unit */}
+                                            <div className="col-span-2">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Satuan (Unit)</label>
+                                                <input placeholder="%, pcs, rupiah, post, dll." value={kpiForm.unit} onChange={e => setKpiForm(p => ({ ...p, unit: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                            </div>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button type="submit" disabled={addingKPI} className="text-xs py-1.5">{addingKPI ? <Loader2 className="animate-spin" size={14} /> : 'Simpan KPI'}</Button>

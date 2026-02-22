@@ -16,6 +16,12 @@ interface TeamMember {
     status: string;
 }
 
+interface WorkspaceItem {
+    id: string;
+    name: string;
+    members: string[];
+}
+
 interface KPI {
     id: string;
     member_id: string;
@@ -51,6 +57,8 @@ const getStatusBadge = (rate: number) => {
 export const TeamKPIBoard: React.FC = () => {
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [kpis, setKpis] = useState<KPI[]>([]);
+    const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
+    const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('all');
     const [loading, setLoading] = useState(true);
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -74,12 +82,14 @@ export const TeamKPIBoard: React.FC = () => {
         setLoading(true);
         try {
             const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
-            const [membersRes, kpisRes] = await Promise.all([
+            const [membersRes, kpisRes, wsRes] = await Promise.all([
                 supabase.from('team_members').select('*').eq('admin_id', tenantId).order('full_name'),
                 supabase.from('team_kpis').select('*').order('created_at', { ascending: false }),
+                supabase.from('workspaces').select('id,name,members').eq('admin_id', tenantId).order('name'),
             ]);
             if (membersRes.data) setMembers(membersRes.data);
             if (kpisRes.data) setKpis(kpisRes.data);
+            if (wsRes.data) setWorkspaces(wsRes.data as WorkspaceItem[]);
         } catch (err) {
             console.error('Failed to fetch KPI data:', err);
         }
@@ -174,9 +184,18 @@ export const TeamKPIBoard: React.FC = () => {
     };
 
     // Stats
-    const totalMembers = members.length;
-    const avgCompletion = totalMembers > 0 ? Math.round(members.reduce((s, m) => s + getCompletionRate(m.id), 0) / totalMembers) : 0;
-    const onTrackCount = members.filter(m => getCompletionRate(m.id) >= 80).length;
+    const filteredMembers = selectedWorkspaceId === 'all'
+        ? members
+        : (() => {
+            const ws = workspaces.find(w => w.id === selectedWorkspaceId);
+            if (!ws) return members;
+            const wsAvatars = new Set(ws.members || []);
+            return members.filter(m => wsAvatars.has(m.avatar_url));
+        })();
+
+    const totalMembers = filteredMembers.length;
+    const avgCompletion = totalMembers > 0 ? Math.round(filteredMembers.reduce((s, m) => s + getCompletionRate(m.id), 0) / totalMembers) : 0;
+    const onTrackCount = filteredMembers.filter(m => getCompletionRate(m.id) >= 80).length;
 
     if (loading) {
         return (
@@ -248,66 +267,105 @@ export const TeamKPIBoard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Member Cards Grid */}
-            {members.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
-                    <Users className="mx-auto text-slate-300 mb-4" size={48} />
-                    <h3 className="text-lg font-bold text-slate-400">Belum ada anggota tim</h3>
-                    <p className="text-sm text-slate-400 mt-1">Klik "Add Member" untuk menambahkan anggota.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {members.map(member => {
-                        const rate = getCompletionRate(member.id);
-                        const color = getCompletionColor(rate);
-                        const badge = getStatusBadge(rate);
-                        const memberKPIs = getMemberKPIs(member.id);
-
-                        return (
-                            <div
-                                key={member.id}
-                                onClick={() => openDetail(member)}
-                                className="bg-white rounded-2xl border-2 border-slate-200 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 p-5 cursor-pointer transition-all duration-200 group"
-                            >
-                                {/* Avatar + Info */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <img
-                                        src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
-                                        alt={member.full_name}
-                                        className="w-12 h-12 rounded-full border-2 border-slate-200 object-cover group-hover:border-violet-300 transition-colors"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-slate-900 truncate">{member.full_name}</h3>
-                                        <p className="text-xs text-slate-500 truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
-                                    </div>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="mb-3">
-                                    <div className="flex justify-between items-center mb-1.5">
-                                        <span className="text-xs font-medium text-slate-500">KPI Completion</span>
-                                        <span className={`text-sm font-bold ${color.text}`}>{rate}%</span>
-                                    </div>
-                                    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full ${color.bg} rounded-full transition-all duration-700 ease-out`}
-                                            style={{ width: `${rate}%` }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Footer */}
-                                <div className="flex items-center justify-between">
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border ${badge.cls}`}>
-                                        {badge.icon} {badge.label}
-                                    </span>
-                                    <span className="text-[11px] text-slate-400">{memberKPIs.length} metrics</span>
-                                </div>
+            {/* Workspace Folder + Member Grid */}
+            <div className="flex gap-5">
+                {/* Left: Workspace Folders */}
+                {workspaces.length > 1 && (
+                    <div className="w-52 shrink-0">
+                        <div className="bg-white border-2 border-slate-900 rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
+                            <div className="p-3 border-b-2 border-slate-900 bg-violet-600">
+                                <p className="text-white font-black text-xs uppercase tracking-widest">Workspace</p>
                             </div>
-                        );
-                    })}
-                </div>
-            )}
+                            <div className="p-2 space-y-1">
+                                <button
+                                    onClick={() => setSelectedWorkspaceId('all')}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
+                                >
+                                    <Users size={13} /> Semua Workspace
+                                    <span className="ml-auto text-[10px] opacity-70">{members.length}</span>
+                                </button>
+                                {workspaces.map(ws => {
+                                    const wsAvatars = new Set(ws.members || []);
+                                    const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
+                                    return (
+                                        <button
+                                            key={ws.id}
+                                            onClick={() => setSelectedWorkspaceId(ws.id)}
+                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedWorkspaceId === ws.id ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
+                                        >
+                                            <span className="truncate flex-1 text-left">{ws.name}</span>
+                                            <span className="text-[10px] opacity-70">{count}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Right: Member Cards */}
+                <div className="flex-1">
+                    {filteredMembers.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
+                            <Users className="mx-auto text-slate-300 mb-4" size={48} />
+                            <h3 className="text-lg font-bold text-slate-400">Belum ada anggota tim</h3>
+                            <p className="text-sm text-slate-400 mt-1">Klik "Add Member" untuk menambahkan anggota.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {filteredMembers.map(member => {
+                                const rate = getCompletionRate(member.id);
+                                const color = getCompletionColor(rate);
+                                const badge = getStatusBadge(rate);
+                                const memberKPIs = getMemberKPIs(member.id);
+
+                                return (
+                                    <div
+                                        key={member.id}
+                                        onClick={() => openDetail(member)}
+                                        className="bg-white rounded-2xl border-2 border-slate-200 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 p-5 cursor-pointer transition-all duration-200 group"
+                                    >
+                                        {/* Avatar + Info */}
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <img
+                                                src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
+                                                alt={member.full_name}
+                                                className="w-12 h-12 rounded-full border-2 border-slate-200 object-cover group-hover:border-violet-300 transition-colors"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-slate-900 truncate">{member.full_name}</h3>
+                                                <p className="text-xs text-slate-500 truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Progress Bar */}
+                                        <div className="mb-3">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <span className="text-xs font-medium text-slate-500">KPI Completion</span>
+                                                <span className={`text-sm font-bold ${color.text}`}>{rate}%</span>
+                                            </div>
+                                            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full ${color.bg} rounded-full transition-all duration-700 ease-out`}
+                                                    style={{ width: `${rate}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Footer */}
+                                        <div className="flex items-center justify-between">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border ${badge.cls}`}>
+                                                {badge.icon} {badge.label}
+                                            </span>
+                                            <span className="text-[11px] text-slate-400">{memberKPIs.length} metrics</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div> {/* end flex-1 member cards */}
+            </div> {/* end workspace+cards flex */}
 
             {/* ====== DETAIL MODAL ====== */}
             <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title={selectedMember?.full_name || 'Detail'} maxWidth="max-w-3xl">
