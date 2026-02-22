@@ -50,10 +50,14 @@ export const BottomBar: React.FC = () => {
                             onClick={() => setCurrentPageIndex(index)}
                             style={{ backgroundColor: page.background }}
                         >
-                            <div className="absolute inset-0 flex flex-col p-2 pointer-events-none">
-                                <div className="text-[6px] font-black uppercase truncate opacity-50">{page.content.hook}</div>
-                                <div className="mt-auto text-[4px] font-bold opacity-30">Page {index + 1}</div>
-                            </div>
+                            {page.previewUrl ? (
+                                <img src={page.previewUrl} alt={`Page ${index + 1}`} className="w-full h-full object-contain pointer-events-none" />
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col p-2 pointer-events-none">
+                                    <div className="text-[6px] font-black uppercase truncate opacity-50">{page.content.hook}</div>
+                                    <div className="mt-auto text-[4px] font-bold opacity-30">Page {index + 1}</div>
+                                </div>
+                            )}
                             
                             {/* Page Actions */}
                             <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

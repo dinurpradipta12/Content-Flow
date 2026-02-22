@@ -40,7 +40,9 @@ import {
     ArrowRightToLine,
     AlignHorizontalJustifyCenter,
     AlignVerticalJustifyCenter,
-    X
+    X,
+    Group,
+    Ungroup
 } from 'lucide-react';
 
 export const Editor: React.FC = () => {
@@ -61,10 +63,13 @@ export const Editor: React.FC = () => {
         isPanningRef.current = isPanning;
     }, [isPanning]);
 
+    const isRestoringHistory = useRef(false);
+
     const saveCanvas = () => {
         if (!fabricCanvas.current) return;
         const json = fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst']);
-        updatePageElements(currentPageIndex, json.objects);
+        const previewUrl = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.2 });
+        updatePageElements(currentPageIndex, json.objects, previewUrl);
     };
     const [objectProps, setObjectProps] = useState({
         opacity: 1,
@@ -110,14 +115,23 @@ export const Editor: React.FC = () => {
 
     const [history, setHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
+    const historyRef = useRef<string[]>([]);
+    const historyIndexRef = useRef<number>(-1);
+
+    // Sync state with refs
+    useEffect(() => {
+        historyRef.current = history;
+        historyIndexRef.current = historyIndex;
+    }, [history, historyIndex]);
+
     const [clipboard, setClipboard] = useState<fabric.Object | null>(null);
     const [floatingMenuPos, setFloatingMenuPos] = useState({ top: 0, left: 0 });
 
     const addToHistory = () => {
-        if (!fabricCanvas.current) return;
+        if (!fabricCanvas.current || isRestoringHistory.current) return;
         const json = JSON.stringify(fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst']));
         setHistory(prev => {
-            const newHistory = prev.slice(0, historyIndex + 1);
+            const newHistory = prev.slice(0, historyIndexRef.current + 1);
             newHistory.push(json);
             return newHistory;
         });
@@ -125,23 +139,33 @@ export const Editor: React.FC = () => {
     };
 
     const handleUndo = async () => {
-        if (historyIndex <= 0 || !fabricCanvas.current) return;
-        const json = history[historyIndex - 1];
-        if (!json) return;
+        if (historyIndexRef.current <= 0 || !fabricCanvas.current) return;
+        isRestoringHistory.current = true;
+        const json = historyRef.current[historyIndexRef.current - 1];
+        if (!json) {
+            isRestoringHistory.current = false;
+            return;
+        }
         await fabricCanvas.current.loadFromJSON(JSON.parse(json));
         fabricCanvas.current.renderAll();
         updateLayers();
         setHistoryIndex(prev => prev - 1);
+        isRestoringHistory.current = false;
     };
 
     const handleRedo = async () => {
-        if (historyIndex >= history.length - 1 || !fabricCanvas.current) return;
-        const json = history[historyIndex + 1];
-        if (!json) return;
+        if (historyIndexRef.current >= historyRef.current.length - 1 || !fabricCanvas.current) return;
+        isRestoringHistory.current = true;
+        const json = historyRef.current[historyIndexRef.current + 1];
+        if (!json) {
+            isRestoringHistory.current = false;
+            return;
+        }
         await fabricCanvas.current.loadFromJSON(JSON.parse(json));
         fabricCanvas.current.renderAll();
         updateLayers();
         setHistoryIndex(prev => prev + 1);
+        isRestoringHistory.current = false;
     };
 
     const handleCopy = async () => {
@@ -222,29 +246,67 @@ export const Editor: React.FC = () => {
         addToHistory();
     };
 
+    const handleGroup = () => {
+        if (!fabricCanvas.current || !selectedObject || selectedObject.type !== 'activeSelection') return;
+        const activeSelection = selectedObject as fabric.ActiveSelection;
+        activeSelection.toGroup();
+        fabricCanvas.current.requestRenderAll();
+        updateLayers();
+        addToHistory();
+    };
+
+    const handleUngroup = () => {
+        if (!fabricCanvas.current || !selectedObject || selectedObject.type !== 'group') return;
+        const group = selectedObject as fabric.Group;
+        group.toActiveSelection();
+        fabricCanvas.current.requestRenderAll();
+        updateLayers();
+        addToHistory();
+    };
+
     useEffect(() => {
         if (!canvasRef.current) return;
+
+        setHistory([]);
+        setHistoryIndex(-1);
+        historyRef.current = [];
+        historyIndexRef.current = -1;
 
         const canvas = new fabric.Canvas(canvasRef.current, {
             backgroundColor: currentPage.background,
             preserveObjectStacking: true,
             selection: true,
             width: canvasSize.width,
-            height: canvasSize.height
+            height: canvasSize.height,
+            controlsAboveOverlay: true
         });
+
+        // Allow objects to be visible outside canvas bounds
+        if (canvas.wrapperEl) {
+            canvas.wrapperEl.style.overflow = 'visible';
+        }
+        if (canvas.lowerCanvasEl) {
+            canvas.lowerCanvasEl.style.overflow = 'visible';
+        }
+        if (canvas.upperCanvasEl) {
+            canvas.upperCanvasEl.style.overflow = 'visible';
+        }
 
         fabricCanvas.current = canvas;
 
-        // Initialize with content from store
-        if (currentPage.elements && currentPage.elements.length > 0) {
-            canvas.loadFromJSON({ objects: currentPage.elements }, () => {
+        const initCanvas = async () => {
+            if (currentPage.elements && currentPage.elements.length > 0) {
+                isRestoringHistory.current = true;
+                await canvas.loadFromJSON({ objects: currentPage.elements });
                 canvas.renderAll();
                 updateLayers();
+                isRestoringHistory.current = false;
                 addToHistory(); // Initial state
-            });
-        } else {
-             addToHistory(); // Initial empty state
-        }
+            } else {
+                addToHistory(); // Initial empty state
+            }
+        };
+        initCanvas();
 
         canvas.on('selection:created', (e) => {
             setSelectedObject(e.selected[0]);
@@ -363,14 +425,15 @@ export const Editor: React.FC = () => {
             
             if (type === 'reorder' && layers) {
                 const objects = canvas.getObjects();
-                const sortedObjects = [...layers].reverse().map(layer => 
-                    objects.find((obj: any) => obj.id === layer.id)
-                ).filter(Boolean);
-                
-                canvas.clear();
-                canvas.set('backgroundColor', currentPage.background);
-                sortedObjects.forEach(obj => canvas.add(obj as fabric.Object));
+                const reversedLayers = [...layers].reverse();
+                reversedLayers.forEach((layer, index) => {
+                    const obj = objects.find((o: any) => o.id === layer.id);
+                    if (obj) {
+                        canvas.moveObjectTo(obj, index);
+                    }
+                });
                 canvas.renderAll();
+                updateLayers();
                 addToHistory();
                 return;
             }
@@ -379,7 +442,15 @@ export const Editor: React.FC = () => {
             if (!obj) return;
 
             if (type === 'visibility') {
-                obj.set('visible', !obj.visible);
+                const isVisible = !obj.visible;
+                obj.set({
+                    visible: isVisible,
+                    evented: isVisible,
+                    selectable: isVisible
+                });
+                if (!isVisible) {
+                    canvas.discardActiveObject();
+                }
             } else if (type === 'lock') {
                 const isLocked = !obj.lockMovementX;
                 obj.set({
@@ -388,8 +459,13 @@ export const Editor: React.FC = () => {
                     lockScalingX: isLocked,
                     lockScalingY: isLocked,
                     lockRotation: isLocked,
-                    hasControls: !isLocked
+                    hasControls: !isLocked,
+                    selectable: !isLocked,
+                    evented: !isLocked
                 });
+                if (isLocked) {
+                    canvas.discardActiveObject();
+                }
             }
             canvas.renderAll();
             updateLayers();
@@ -440,6 +516,92 @@ export const Editor: React.FC = () => {
             addToHistory();
         };
 
+        const handleExport = async (e: any) => {
+            const { pages: selectedPages, format, quality } = e.detail;
+            
+            if (selectedPages.length === 1) {
+                const pageIndex = selectedPages[0];
+                const page = pages[pageIndex];
+                
+                let dataUrl = '';
+                if (pageIndex === currentPageIndex) {
+                    fabricCanvas.current?.discardActiveObject();
+                    fabricCanvas.current?.renderAll();
+                    dataUrl = fabricCanvas.current?.toDataURL({
+                        format: format === 'jpg' ? 'jpeg' : 'png',
+                        quality: quality / 100,
+                        multiplier: 1
+                    }) || '';
+                } else {
+                    const tempCanvasEl = document.createElement('canvas');
+                    tempCanvasEl.width = canvasSize.width;
+                    tempCanvasEl.height = canvasSize.height;
+                    const tempCanvas = new fabric.Canvas(tempCanvasEl, {
+                        backgroundColor: page.background,
+                        width: canvasSize.width,
+                        height: canvasSize.height
+                    });
+                    await tempCanvas.loadFromJSON({ objects: page.elements });
+                    tempCanvas.renderAll();
+                    dataUrl = tempCanvas.toDataURL({
+                        format: format === 'jpg' ? 'jpeg' : 'png',
+                        quality: quality / 100,
+                        multiplier: 1
+                    });
+                    tempCanvas.dispose();
+                }
+                
+                if (dataUrl) {
+                    const { saveAs } = await import('file-saver');
+                    saveAs(dataUrl, `arunika-page-${pageIndex + 1}.${format}`);
+                }
+            } else {
+                const JSZip = (await import('jszip')).default;
+                const { saveAs } = await import('file-saver');
+                const zip = new JSZip();
+                
+                for (const pageIndex of selectedPages) {
+                    const page = pages[pageIndex];
+                    let dataUrl = '';
+                    if (pageIndex === currentPageIndex) {
+                        fabricCanvas.current?.discardActiveObject();
+                        fabricCanvas.current?.renderAll();
+                        dataUrl = fabricCanvas.current?.toDataURL({
+                            format: format === 'jpg' ? 'jpeg' : 'png',
+                            quality: quality / 100,
+                            multiplier: 1
+                        }) || '';
+                    } else {
+                        const tempCanvasEl = document.createElement('canvas');
+                        tempCanvasEl.width = canvasSize.width;
+                        tempCanvasEl.height = canvasSize.height;
+                        const tempCanvas = new fabric.Canvas(tempCanvasEl, {
+                            backgroundColor: page.background,
+                            width: canvasSize.width,
+                            height: canvasSize.height
+                        });
+                        await tempCanvas.loadFromJSON({ objects: page.elements });
+                        tempCanvas.renderAll();
+                        dataUrl = tempCanvas.toDataURL({
+                            format: format === 'jpg' ? 'jpeg' : 'png',
+                            quality: quality / 100,
+                            multiplier: 1
+                        });
+                        tempCanvas.dispose();
+                    }
+                    
+                    if (dataUrl) {
+                        const base64Data = dataUrl.replace(/^data:image\/(png|jpeg);base64,/, "");
+                        zip.file(`arunika-page-${pageIndex + 1}.${format}`, base64Data, {base64: true});
+                    }
+                }
+                
+                const content = await zip.generateAsync({type: "blob"});
+                saveAs(content, "arunika-export.zip");
+            }
+        };
+
+        window.addEventListener('canvas:export', handleExport);
         window.addEventListener('canvas:action', handleCanvasAction);
         window.addEventListener('canvas:add', handleCanvasAdd);
 
@@ -504,6 +666,7 @@ export const Editor: React.FC = () => {
         window.addEventListener('keyup', handleKeyUp);
 
         return () => {
+            window.removeEventListener('canvas:export', handleExport);
             window.removeEventListener('canvas:action', handleCanvasAction);
             window.removeEventListener('canvas:add', handleCanvasAdd);
             window.removeEventListener('keydown', handleKeyDown);
@@ -766,18 +929,33 @@ export const Editor: React.FC = () => {
                     style={{ 
                         transform: `scale(${zoom})`,
                         width: canvasSize.width,
-                        height: canvasSize.height
+                        height: canvasSize.height,
+                        overflow: 'visible'
                     }}
                 >
-                    <canvas ref={canvasRef} />
+                    <canvas ref={canvasRef} style={{ overflow: 'visible' }} />
                 </div>
             </div>
 
             {/* Top Right Toolbar: Zoom & Fullscreen & Alignment */}
             <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
-                {/* Alignment Tools */}
+                {/* Arrange & Group Tools */}
                 {selectedObject && (
                     <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-1 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-right-4">
+                        {selectedObject.type === 'activeSelection' && (
+                            <button onClick={handleGroup} className="p-1.5 hover:bg-slate-100 rounded-md" title="Group"><Group size={16} /></button>
+                        )}
+                        {selectedObject.type === 'group' && (
+                            <button onClick={handleUngroup} className="p-1.5 hover:bg-slate-100 rounded-md" title="Ungroup"><Ungroup size={16} /></button>
+                        )}
+                        {(selectedObject.type === 'activeSelection' || selectedObject.type === 'group') && (
+                            <div className="w-px h-4 bg-slate-200 mx-1" />
+                        )}
+                        
+                        <button onClick={() => handleZIndex('forward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring Forward"><ArrowUp size={16} /></button>
+                        <button onClick={() => handleZIndex('backward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send Backward"><ArrowDown size={16} /></button>
+                        <div className="w-px h-4 bg-slate-200 mx-1" />
+                        
                         <button onClick={() => handleAlign('left')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Left"><AlignLeft size={16} /></button>
                         <button onClick={() => handleAlign('center')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Center"><AlignHorizontalJustifyCenter size={16} /></button>
                         <button onClick={() => handleAlign('right')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Right"><AlignRight size={16} /></button>
@@ -953,6 +1131,40 @@ export const Editor: React.FC = () => {
                                 </button>
                             </>
                         )}
+
+                        {/* Color Tool */}
+                        <div className="relative group">
+                            <button 
+                                onClick={() => setActiveTool(activeTool === 'color' ? null : 'color')}
+                                className={`p-3 rounded-xl transition-all ${activeTool === 'color' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                title="Color"
+                            >
+                                <Palette size={20} />
+                            </button>
+                            {activeTool === 'color' && (
+                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Color</h4>
+                                    <div className="space-y-4">
+                                        <div className="flex gap-2 flex-wrap">
+                                            {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6', 'transparent'].map(c => (
+                                                <button 
+                                                    key={c}
+                                                    onClick={() => handleColor(c)}
+                                                    className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.fill === c ? 'ring-2 ring-slate-900' : ''}`}
+                                                    style={{ backgroundColor: c === 'transparent' ? '#fff' : c, backgroundImage: c === 'transparent' ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)' : 'none', backgroundSize: '8px 8px', backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px' }}
+                                                />
+                                            ))}
+                                            <input 
+                                                type="color" 
+                                                value={objectProps.fill === 'transparent' ? '#000000' : objectProps.fill}
+                                                onChange={(e) => handleColor(e.target.value)}
+                                                className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Flip Tool */}
                         <div className="relative group">

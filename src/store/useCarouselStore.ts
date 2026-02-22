@@ -17,6 +17,7 @@ export interface CarouselPage {
     id: string;
     background: string;
     elements: any[]; // Fabric.js objects as JSON
+    previewUrl?: string;
     content: {
         hook: string;
         subHeadline: string;
@@ -50,7 +51,7 @@ interface CarouselState {
     deletePage: (index: number) => void;
     updatePageContent: (index: number, content: Partial<CarouselPage['content']>) => void;
     updatePageBackground: (index: number, background: string) => void;
-    updatePageElements: (index: number, elements: any[]) => void;
+    updatePageElements: (index: number, elements: any[], previewUrl?: string) => void;
     savePreset: (name: string) => Promise<void>;
     loadPresets: () => Promise<any[]>;
     uploadFont: (name: string, data: string) => Promise<void>;
@@ -139,9 +140,12 @@ export const useCarouselStore = create<CarouselState>((set, get) => ({
         return { pages: newPages };
     }),
 
-    updatePageElements: (index, elements) => set((state) => {
+    updatePageElements: (index, elements, previewUrl) => set((state) => {
         const newPages = [...state.pages];
         newPages[index] = { ...newPages[index], elements };
+        if (previewUrl) {
+            newPages[index].previewUrl = previewUrl;
+        }
         return { pages: newPages };
     }),
 

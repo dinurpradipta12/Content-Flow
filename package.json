@@ -17,6 +17,8 @@
     "@supabase/supabase-js": "^2.97.0",
     "clsx": "^2.1.1",
     "fabric": "^6.9.1",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.574.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
