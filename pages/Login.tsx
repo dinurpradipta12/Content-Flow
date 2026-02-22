@@ -54,13 +54,12 @@ export const Login: React.FC = () => {
                 // Check subscription end date
                 if (data.subscription_end) {
                     const endDate = new Date(data.subscription_end);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    endDate.setHours(0, 0, 0, 0);
-                    if (today > endDate) {
+                    const now = new Date();
+
+                    if (now > endDate) {
                         // Auto-deactivate in DB
                         await supabase.from('app_users').update({ is_active: false }).eq('id', data.id);
-                        throw new Error(`Langganan Anda berakhir pada ${endDate.toLocaleDateString('id-ID')}. Hubungi Developer/Admin untuk memperpanjang.`);
+                        throw new Error(`Langganan Anda berakhir pada ${endDate.toLocaleString('id-ID')}. Hubungi Developer/Admin untuk memperpanjang.`);
                     }
                 }
 
@@ -70,6 +69,11 @@ export const Login: React.FC = () => {
                 localStorage.setItem('user_name', data.full_name || data.username);
                 localStorage.setItem('user_role', data.role || 'Member');
                 localStorage.setItem('user_avatar', data.avatar_url || 'https://picsum.photos/40/40');
+                if (data.subscription_end) {
+                    localStorage.setItem('subscription_end', data.subscription_end);
+                } else {
+                    localStorage.removeItem('subscription_end');
+                }
                 navigate('/');
             }
 

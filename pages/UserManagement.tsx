@@ -97,7 +97,7 @@ export const UserManagement: React.FC = () => {
         setRegistering(true);
         try {
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.full_name)}`;
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date().toISOString();
 
             const insertData: any = {
                 full_name: form.full_name,
@@ -107,11 +107,12 @@ export const UserManagement: React.FC = () => {
                 role: 'Member',
                 avatar_url: avatarUrl,
                 is_active: true,
-                subscription_start: today,
+                subscription_start: now,
             };
             if (form.subscription_end) {
-                insertData.subscription_end = form.subscription_end;
+                insertData.subscription_end = new Date(form.subscription_end).toISOString();
             }
+
 
             const { error } = await supabase.from('app_users').insert([insertData]);
             if (error) throw error;
@@ -155,12 +156,12 @@ export const UserManagement: React.FC = () => {
             const updateData: any = { is_active: newStatus };
             if (newStatus && user.subscription_end) {
                 const endDate = new Date(user.subscription_end);
-                const today = new Date();
-                if (today > endDate) {
+                const now = new Date();
+                if (now > endDate) {
                     const newEnd = new Date();
                     newEnd.setDate(newEnd.getDate() + 30);
-                    updateData.subscription_end = newEnd.toISOString().split('T')[0];
-                    updateData.subscription_start = today.toISOString().split('T')[0];
+                    updateData.subscription_end = newEnd.toISOString();
+                    updateData.subscription_start = now.toISOString();
                 }
             }
             await supabase.from('app_users').update(updateData).eq('id', user.id);
@@ -211,15 +212,22 @@ export const UserManagement: React.FC = () => {
         navigator.clipboard.writeText(text);
     };
 
+    const formatForDatetimeLocal = (isoString?: string | null) => {
+        if (!isoString) return '';
+        const d = new Date(isoString);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+    };
+
     const getSubscriptionStatus = (user: AppUser) => {
         if (!user.is_active) return { label: 'Nonaktif', color: 'bg-red-100 text-red-700 border-red-200', active: false };
         if (!user.subscription_end) return { label: 'Aktif (Unlimited)', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', active: true };
         const end = new Date(user.subscription_end);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        end.setHours(0, 0, 0, 0);
-        if (today > end) return { label: 'Expired', color: 'bg-red-100 text-red-700 border-red-200', active: false };
-        const daysLeft = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const now = new Date();
+        if (now > end) return { label: 'Expired', color: 'bg-red-100 text-red-700 border-red-200', active: false };
+        const hoursLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
+        const daysLeft = Math.ceil(hoursLeft / 24);
+        if (daysLeft <= 1) return { label: `${hoursLeft} jam lagi`, color: 'bg-amber-100 text-amber-700 border-amber-200', active: true };
         if (daysLeft <= 7) return { label: `${daysLeft} hari lagi`, color: 'bg-amber-100 text-amber-700 border-amber-200', active: true };
         return { label: 'Aktif', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', active: true };
     };
@@ -360,7 +368,7 @@ export const UserManagement: React.FC = () => {
                                             <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Subscription Berakhir</label>
                                             <div className="relative">
                                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                <input type="date" value={form.subscription_end} onChange={e => setForm(f => ({ ...f, subscription_end: e.target.value }))}
+                                                <input type="datetime-local" value={form.subscription_end} onChange={e => setForm(f => ({ ...f, subscription_end: e.target.value }))}
                                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-violet-400 focus:bg-white transition-all" />
                                             </div>
                                             <p className="text-[10px] text-slate-400 mt-1">Kosongkan untuk akses unlimited. Subscription aktif otomatis sejak hari ini.</p>
@@ -437,7 +445,7 @@ export const UserManagement: React.FC = () => {
                                                             </td>
                                                             <td className="p-4 text-xs text-slate-500">
                                                                 {user.subscription_end
-                                                                    ? `s/d ${new Date(user.subscription_end).toLocaleDateString('id-ID')}`
+                                                                    ? `s/d ${new Date(user.subscription_end).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                                                                     : <span className="text-slate-400">Unlimited</span>
                                                                 }
                                                             </td>
@@ -578,9 +586,12 @@ export const UserManagement: React.FC = () => {
                                                 <div className="bg-slate-50 rounded-xl border border-slate-200 p-3">
                                                     <p className="text-[10px] text-slate-400 font-medium mb-1">Berakhir</p>
                                                     <input
-                                                        type="date"
-                                                        value={selectedUser.subscription_end || ''}
-                                                        onChange={e => handleUpdateSubscriptionEnd(selectedUser.id, e.target.value)}
+                                                        type="datetime-local"
+                                                        value={formatForDatetimeLocal(selectedUser.subscription_end)}
+                                                        onChange={e => {
+                                                            const isoString = e.target.value ? new Date(e.target.value).toISOString() : '';
+                                                            handleUpdateSubscriptionEnd(selectedUser.id, isoString);
+                                                        }}
                                                         className="w-full text-sm font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
                                                     />
                                                 </div>

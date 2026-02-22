@@ -26,7 +26,8 @@ import {
     Shield,
     Briefcase,
     Users,
-    Presentation
+    Presentation,
+    Power
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -103,8 +104,12 @@ create table if not exists public.app_users (
 alter table public.app_users add column if not exists job_title text;
 alter table public.app_users add column if not exists email text;
 alter table public.app_users add column if not exists is_active boolean default true;
-alter table public.app_users add column if not exists subscription_start date default current_date;
-alter table public.app_users add column if not exists subscription_end date;
+alter table public.app_users add column if not exists subscription_start timestamptz default current_timestamp;
+alter table public.app_users add column if not exists subscription_end timestamptz;
+
+-- Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
+alter table public.app_users alter column subscription_start type timestamptz using subscription_start::timestamptz;
+alter table public.app_users alter column subscription_end type timestamptz using subscription_end::timestamptz;
 
 -- 4. Table: App Config (Global Branding)
 create table if not exists public.app_config (
@@ -207,8 +212,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
 
-    // Role Change Notification State
+    // Role & Subscription Notification State
     const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
+    const [showSubExpiredModal, setShowSubExpiredModal] = useState(false);
 
     // Network State
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
@@ -326,29 +332,59 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { path: '/script', label: 'Team KPI Board', icon: <BarChart2 size={20} /> },
     ];
 
-    // Listen for Role Changes via Realtime
+    // Listen for Role & Subscription Changes via Realtime + Local Poll
     useEffect(() => {
         const currentUserId = localStorage.getItem('user_id');
         if (!currentUserId) return;
 
-        const roleChannel = supabase
-            .channel('app_users_role_checker')
+        // 1. Realtime Listener
+        const userChannel = supabase
+            .channel('app_users_status_checker')
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${currentUserId}` },
-                (payload: any) => {
+                async (payload: any) => {
                     const newRole = payload.new.role;
                     const oldRole = localStorage.getItem('user_role');
-                    // If the role was changed from what we have cached, show the warning modal
+
+                    // A. Role check
                     if (newRole && oldRole && newRole !== oldRole) {
                         setShowRoleChangeModal(true);
+                    }
+
+                    // B. Active & Sub check
+                    if (payload.new.is_active === false) {
+                        setShowSubExpiredModal(true);
+                    }
+                    if (payload.new.subscription_end) {
+                        localStorage.setItem('subscription_end', payload.new.subscription_end);
+                        if (new Date() > new Date(payload.new.subscription_end)) {
+                            // Auto deactivate
+                            await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
+                            setShowSubExpiredModal(true);
+                        }
+                    } else {
+                        localStorage.removeItem('subscription_end'); // unlimited
                     }
                 }
             )
             .subscribe();
 
+        // 2. Local Polling for Time-based Expiration
+        const subInterval = setInterval(async () => {
+            const subEnd = localStorage.getItem('subscription_end');
+            if (subEnd) {
+                if (new Date() > new Date(subEnd)) {
+                    setShowSubExpiredModal(true);
+                    await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
+                    localStorage.removeItem('subscription_end'); // prevent looping updates
+                }
+            }
+        }, 10000); // Check every 10 seconds
+
         return () => {
-            supabase.removeChannel(roleChannel);
+            supabase.removeChannel(userChannel);
+            clearInterval(subInterval);
         };
     }, []);
 
@@ -793,6 +829,28 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         className="mt-6 w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl shadow-hard border-2 border-slate-900 hover:bg-slate-700 transition-colors"
                     >
                         Login Ulang Sekarang
+                    </button>
+                </div>
+            </Modal>
+
+            {/* --- SUBSCRIPTION EXPIRED NOTIFICATION MODAL --- */}
+            <Modal isOpen={showSubExpiredModal} onClose={() => { }} title="Akses Ditangguhkan">
+                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
+                        <Power className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800">Akses Anda Terhenti</h3>
+                    <p className="text-slate-500 text-sm max-w-sm">
+                        Masa aktif subscription Anda telah habis atau akun Anda telah dinonaktifkan. Silakan hubungi Administrator/Developer untuk memperpanjang akses Anda.
+                    </p>
+                    <button
+                        onClick={() => {
+                            localStorage.clear();
+                            navigate('/login');
+                        }}
+                        className="mt-6 w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl shadow-hard border-2 border-red-700 hover:bg-red-600 transition-colors"
+                    >
+                        Keluar dari Aplikasi
                     </button>
                 </div>
             </Modal>
