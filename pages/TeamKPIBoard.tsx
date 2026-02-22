@@ -67,6 +67,7 @@ export const TeamKPIBoard: React.FC = () => {
     const [periodFilter, setPeriodFilter] = useState('all');
 
     const isAdmin = ['Admin', 'Owner', 'Developer'].includes(localStorage.getItem('user_role') || '');
+    const currentUserAvatar = localStorage.getItem('user_avatar') || '';
 
     // Add member form
     const [newMember, setNewMember] = useState({ full_name: '', role: '', department: '', avatar_url: '' });
@@ -214,15 +215,50 @@ export const TeamKPIBoard: React.FC = () => {
         setIsDetailOpen(true);
     };
 
-    // Stats
-    const filteredMembers = selectedWorkspaceId === 'all'
-        ? members
-        : (() => {
+    // ============================================================
+    // WORKSPACE-BASED ACCESS CONTROL (for members)
+    // ============================================================
+    // Workspaces that the current user belongs to (based on avatar_url in members[])
+    const myWorkspaces = isAdmin
+        ? workspaces  // admins see all workspaces they own
+        : workspaces.filter(ws =>
+            (ws.members || []).some(m => {
+                try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
+                catch { return m === currentUserAvatar; }
+            })
+        );
+
+    // All avatar_urls of members who share at least one workspace with current user
+    const myWorkspaceAvatarSets: Set<string>[] = myWorkspaces.map(ws => new Set(ws.members || []));
+    const peersAvatarSet = new Set<string>();
+    myWorkspaceAvatarSets.forEach(setOfAvatars => setOfAvatars.forEach(av => peersAvatarSet.add(av)));
+
+    // Stats & display: filter members by workspace filter + access control
+    const filteredMembers = (() => {
+        let base: typeof members;
+
+        if (selectedWorkspaceId === 'all') {
+            if (isAdmin) {
+                base = members; // admin sees all
+            } else {
+                // member sees only peers from their workspaces
+                base = currentUserAvatar
+                    ? members.filter(m => peersAvatarSet.has(m.avatar_url))
+                    : [];
+            }
+        } else {
             const ws = workspaces.find(w => w.id === selectedWorkspaceId);
-            if (!ws) return members;
-            const wsAvatars = new Set(ws.members || []);
-            return members.filter(m => wsAvatars.has(m.avatar_url));
-        })();
+            if (!ws) {
+                base = [];
+            } else {
+                const wsAvatars = new Set(ws.members || []);
+                base = members.filter(m => wsAvatars.has(m.avatar_url));
+            }
+        }
+
+        return base;
+    })();
+
 
     const totalMembers = filteredMembers.length;
     const avgCompletion = totalMembers > 0 ? Math.round(filteredMembers.reduce((s, m) => s + getCompletionRate(m.id), 0) / totalMembers) : 0;
@@ -258,12 +294,15 @@ export const TeamKPIBoard: React.FC = () => {
                     >
                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
-                    <button
-                        onClick={() => setIsAddMemberOpen(true)}
-                        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-lg shadow-violet-200"
-                    >
-                        <Plus size={16} /> Add Member
-                    </button>
+                    {/* Only admins can add new members */}
+                    {isAdmin && (
+                        <button
+                            onClick={() => setIsAddMemberOpen(true)}
+                            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-lg shadow-violet-200"
+                        >
+                            <Plus size={16} /> Add Member
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -300,8 +339,8 @@ export const TeamKPIBoard: React.FC = () => {
 
             {/* Workspace Folder + Member Grid */}
             <div className="flex gap-5">
-                {/* Left: Workspace Folders */}
-                {workspaces.length > 1 && (
+                {/* Left: Workspace Folders — only show workspaces accessible to current user */}
+                {myWorkspaces.length > 1 && (
                     <div className="w-52 shrink-0">
                         <div className="bg-white border-2 border-slate-900 rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
                             <div className="p-3 border-b-2 border-slate-900 bg-violet-600">
@@ -313,9 +352,9 @@ export const TeamKPIBoard: React.FC = () => {
                                     className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
                                 >
                                     <Users size={13} /> Semua Workspace
-                                    <span className="ml-auto text-[10px] opacity-70">{members.length}</span>
+                                    <span className="ml-auto text-[10px] opacity-70">{filteredMembers.length}</span>
                                 </button>
-                                {workspaces.map(ws => {
+                                {myWorkspaces.map(ws => {
                                     const wsAvatars = new Set(ws.members || []);
                                     const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
                                     return (
@@ -339,8 +378,21 @@ export const TeamKPIBoard: React.FC = () => {
                     {filteredMembers.length === 0 ? (
                         <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
                             <Users className="mx-auto text-slate-300 mb-4" size={48} />
-                            <h3 className="text-lg font-bold text-slate-400">Belum ada anggota tim</h3>
-                            <p className="text-sm text-slate-400 mt-1">Klik "Add Member" untuk menambahkan anggota.</p>
+                            {!isAdmin && myWorkspaces.length === 0 ? (
+                                // Member with no workspace access
+                                <>
+                                    <h3 className="text-lg font-bold text-slate-500">Belum Bergabung ke Workspace</h3>
+                                    <p className="text-sm text-slate-400 mt-1 max-w-xs mx-auto">
+                                        Anda belum tergabung dalam workspace apapun. Hubungi admin untuk mendapatkan undangan.
+                                    </p>
+                                </>
+                            ) : (
+                                // Admin or member in workspace but no members yet
+                                <>
+                                    <h3 className="text-lg font-bold text-slate-400">Belum ada anggota tim</h3>
+                                    <p className="text-sm text-slate-400 mt-1">Tidak ada anggota di workspace ini.</p>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
