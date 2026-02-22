@@ -72,35 +72,54 @@ export const ContentDataInsight: React.FC = () => {
         setLoading(true);
         try {
             const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role') || 'Member';
+            const userAvatar = localStorage.getItem('user_avatar') || '';
+            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
+
+            // Fetch all workspaces for this admin tenant
             const { data: wsData } = await supabase
                 .from('workspaces')
-                .select('account_name')
+                .select('id, account_name, members')
                 .eq('admin_id', tenantId);
 
             if (wsData) {
+                // For members: only show workspaces they belong to
+                const accessibleWorkspaces = !isAdminOrOwner && userAvatar
+                    ? wsData.filter((w: any) =>
+                        (w.members || []).some((m: string) => {
+                            try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
+                            catch { return m === userAvatar; }
+                        })
+                    )
+                    : wsData;
+
                 const uniqueAccounts = Array.from(new Set(
-                    wsData.map((w: any) => w.account_name).filter((n: string) => n && n.trim() !== '')
+                    accessibleWorkspaces.map((w: any) => w.account_name).filter((n: string) => n && n.trim() !== '')
                 ));
                 setAccounts(uniqueAccounts as string[]);
-            }
 
-            // Using !inner to enforce filtering by parent table's admin_id
-            const { data: items, error } = await supabase
-                .from('content_items')
-                .select(`*, workspaces!inner(name, account_name, admin_id)`)
-                .eq('status', 'Published')
-                .eq('workspaces.admin_id', tenantId)
-                .order('date', { ascending: true });
+                // Get the IDs of accessible workspaces for content filtering
+                const accessibleIds = accessibleWorkspaces.map((w: any) => w.id);
 
-            if (error) throw error;
+                // Fetch content items only from accessible workspaces
+                const { data: items, error } = await supabase
+                    .from('content_items')
+                    .select(`*, workspaces!inner(name, account_name, admin_id)`)
+                    .eq('status', 'Published')
+                    .eq('workspaces.admin_id', tenantId)
+                    .in('workspace_id', accessibleIds.length > 0 ? accessibleIds : ['__none__'])
+                    .order('date', { ascending: true });
 
-            if (items) {
-                const formattedItems = items.map((item: any) => ({
-                    ...item,
-                    contentLink: item.content_link,
-                    workspaces: item.workspaces
-                }));
-                setData(formattedItems);
+                if (error) throw error;
+
+                if (items) {
+                    const formattedItems = items.map((item: any) => ({
+                        ...item,
+                        contentLink: item.content_link,
+                        workspaces: item.workspaces
+                    }));
+                    setData(formattedItems);
+                }
             }
         } catch (err) {
             console.error("Error fetching insights:", err);
@@ -515,8 +534,8 @@ export const ContentDataInsight: React.FC = () => {
                                 <p className="font-black text-slate-800 text-lg">{getPeriodLabel()}</p>
                             </div>
                             <div className={`px-4 py-2 rounded-lg font-bold text-white uppercase text-sm ${selectedMetric === 'reach' ? 'bg-blue-500' :
-                                    selectedMetric === 'er' ? 'bg-pink-500' :
-                                        selectedMetric === 'interactions' ? 'bg-purple-600' : 'bg-yellow-400 text-black'
+                                selectedMetric === 'er' ? 'bg-pink-500' :
+                                    selectedMetric === 'interactions' ? 'bg-purple-600' : 'bg-yellow-400 text-black'
                                 }`}>
                                 {selectedMetric}
                             </div>

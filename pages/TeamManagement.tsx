@@ -4,7 +4,7 @@ import { Workspace } from '../types';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
-import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target } from 'lucide-react';
+import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save } from 'lucide-react';
 
 interface AppUser {
     id: string;
@@ -56,9 +56,13 @@ export const TeamManagement: React.FC = () => {
 
     // KPI Add Form
     const [showAddKPI, setShowAddKPI] = useState(false);
-    const [kpiForm, setKpiForm] = useState({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', notes: '' });
+    const [kpiForm, setKpiForm] = useState({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
     const [addingKPI, setAddingKPI] = useState(false);
     const [minCompletionRate, setMinCompletionRate] = useState(80);
+    // KPI Edit
+    const [editingKPIId, setEditingKPIId] = useState<string | null>(null);
+    const [editKPIForm, setEditKPIForm] = useState({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
+    const [savingEditKPI, setSavingEditKPI] = useState(false);
 
     const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
@@ -355,7 +359,6 @@ export const TeamManagement: React.FC = () => {
                 }]).select().single();
                 if (tmErr) throw new Error('Gagal membuat team member record: ' + tmErr.message);
                 tm = newTm;
-                // Refresh teamMembers locally
                 setTeamMembers(prev => [...prev, newTm]);
             }
 
@@ -367,15 +370,49 @@ export const TeamManagement: React.FC = () => {
                 actual_value: kpiForm.actual_value,
                 unit: kpiForm.unit,
                 period: kpiForm.period,
-                period_date: new Date().toISOString().split('T')[0],
+                period_date: kpiForm.period_date,
                 notes: kpiForm.notes
             }]);
             if (error) throw error;
-            setKpiForm({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', notes: '' });
+            setKpiForm({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
             setShowAddKPI(false);
             fetchData();
         } catch (err: any) { console.error(err); alert('Gagal menambahkan KPI: ' + (err?.message || '')); }
         finally { setAddingKPI(false); }
+    };
+
+    const handleOpenEditKPI = (kpi: KPI) => {
+        setEditingKPIId(kpi.id);
+        setEditKPIForm({
+            metric_name: kpi.metric_name,
+            category: kpi.category,
+            target_value: kpi.target_value,
+            actual_value: kpi.actual_value,
+            unit: kpi.unit,
+            period: kpi.period,
+            period_date: kpi.period_date ?? new Date().toISOString().split('T')[0],
+            notes: kpi.notes ?? '',
+        });
+    };
+
+    const handleSaveEditKPI = async (kpiId: string) => {
+        setSavingEditKPI(true);
+        try {
+            const { error } = await supabase.from('team_kpis').update({
+                metric_name: editKPIForm.metric_name,
+                category: editKPIForm.category,
+                target_value: editKPIForm.target_value,
+                actual_value: editKPIForm.actual_value,
+                unit: editKPIForm.unit,
+                period: editKPIForm.period,
+                period_date: editKPIForm.period_date,
+                notes: editKPIForm.notes,
+            }).eq('id', kpiId);
+            if (error) throw error;
+            setEditingKPIId(null);
+            fetchData();
+        } catch (err: any) { alert('Gagal menyimpan: ' + err?.message); }
+        finally { setSavingEditKPI(false); }
     };
 
     return (
@@ -739,6 +776,11 @@ export const TeamManagement: React.FC = () => {
                                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Satuan (Unit)</label>
                                                 <input placeholder="%, pcs, rupiah, post, dll." value={kpiForm.unit} onChange={e => setKpiForm(p => ({ ...p, unit: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
+                                            {/* Tanggal Periode */}
+                                            <div className="col-span-2">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Tanggal Periode</label>
+                                                <input type="date" value={kpiForm.period_date} onChange={e => setKpiForm(p => ({ ...p, period_date: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                            </div>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button type="submit" disabled={addingKPI} className="text-xs py-1.5">{addingKPI ? <Loader2 className="animate-spin" size={14} /> : 'Simpan KPI'}</Button>
@@ -760,14 +802,33 @@ export const TeamManagement: React.FC = () => {
                                         const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
                                         const pVal = Math.min(progress, 100);
                                         const isSuccess = pVal >= minCompletionRate;
+                                        const isEditingThis = editingKPIId === kpi.id;
                                         return (
-                                            <div key={kpi.id} className="bg-white p-4 rounded-xl border-2 border-slate-200 hover:border-slate-900 transition-colors">
+                                            <div key={kpi.id} className={`bg-white p-4 rounded-xl border-2 transition-colors ${isEditingThis ? 'border-violet-400 shadow-[2px_2px_0px_#7c3aed]' : 'border-slate-200 hover:border-slate-900'}`}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <h5 className="font-bold text-slate-900 text-sm truncate pr-2">{kpi.metric_name}</h5>
                                                     <div className="flex items-center gap-1.5 shrink-0">
                                                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${isSuccess ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-red-50 text-red-600 border-red-200'
                                                             }`}>{isSuccess ? '✓ Berhasil' : '✗ Perlu Ditingkatkan'}</span>
                                                         <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shadow-sm">{kpi.period}</span>
+                                                        {/* Edit button */}
+                                                        {!isEditingThis ? (
+                                                            <button
+                                                                onClick={() => handleOpenEditKPI(kpi)}
+                                                                className="p-1.5 hover:bg-violet-50 text-slate-400 hover:text-violet-600 rounded-lg transition-colors"
+                                                                title="Edit KPI"
+                                                            >
+                                                                <Edit3 size={12} />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => setEditingKPIId(null)}
+                                                                className="p-1.5 hover:bg-slate-100 text-slate-400 rounded-lg transition-colors"
+                                                                title="Tutup"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-between items-end mb-1">
@@ -777,6 +838,57 @@ export const TeamManagement: React.FC = () => {
                                                 <div className="w-full bg-slate-100 rounded-full h-2 border border-slate-200 overflow-hidden">
                                                     <div className={`h-2 rounded-full ${pVal >= minCompletionRate ? 'bg-emerald-500' : pVal >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${pVal}%` }} />
                                                 </div>
+
+                                                {/* Inline Edit Form */}
+                                                {isEditingThis && (
+                                                    <div className="mt-3 pt-3 border-t-2 border-violet-100 space-y-2 animate-in fade-in slide-in-from-top-2">
+                                                        <p className="text-[10px] font-black text-violet-600 uppercase tracking-wide">Edit KPI</p>
+                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                                                            <div className="col-span-2">
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Nama Metrik</label>
+                                                                <input value={editKPIForm.metric_name} onChange={e => setEditKPIForm(p => ({ ...p, metric_name: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Kategori</label>
+                                                                <input value={editKPIForm.category} onChange={e => setEditKPIForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Periode</label>
+                                                                <select value={editKPIForm.period} onChange={e => setEditKPIForm(p => ({ ...p, period: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold bg-white focus:outline-none focus:border-violet-400">
+                                                                    <option>Monthly</option><option>Quarterly</option><option>Yearly</option><option>Weekly</option>
+                                                                </select>
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Tanggal Periode</label>
+                                                                <input type="date" value={editKPIForm.period_date} onChange={e => setEditKPIForm(p => ({ ...p, period_date: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Target</label>
+                                                                <input type="number" min={0} value={editKPIForm.target_value} onChange={e => setEditKPIForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Aktual</label>
+                                                                <input type="number" min={0} value={editKPIForm.actual_value} onChange={e => setEditKPIForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                            <div className="col-span-2">
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Satuan (Unit)</label>
+                                                                <input value={editKPIForm.unit} onChange={e => setEditKPIForm(p => ({ ...p, unit: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                            <div className="col-span-2">
+                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Catatan</label>
+                                                                <input placeholder="Catatan..." value={editKPIForm.notes} onChange={e => setEditKPIForm(p => ({ ...p, notes: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleSaveEditKPI(kpi.id)}
+                                                            disabled={savingEditKPI}
+                                                            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white px-3 py-1.5 rounded-lg text-xs font-black transition-colors"
+                                                        >
+                                                            {savingEditKPI ? <Loader2 className="animate-spin" size={11} /> : <Save size={11} />}
+                                                            {savingEditKPI ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })

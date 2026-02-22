@@ -51,7 +51,7 @@ const getCompletionColor = (rate: number) => {
 const getStatusBadge = (rate: number) => {
     if (rate >= 80) return { label: 'On Track', icon: <CheckCircle size={12} />, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
     if (rate >= 50) return { label: 'In Progress', icon: <Clock size={12} />, cls: 'bg-amber-50 text-amber-700 border-amber-200' };
-    return { label: 'Behind', icon: <AlertCircle size={12} />, cls: 'bg-red-50 text-red-700 border-red-200' };
+    return { label: 'Di Bawah Target', icon: <AlertCircle size={12} />, cls: 'bg-red-50 text-red-700 border-red-200' };
 };
 
 export const TeamKPIBoard: React.FC = () => {
@@ -66,13 +66,19 @@ export const TeamKPIBoard: React.FC = () => {
     const [isAddKPIOpen, setIsAddKPIOpen] = useState(false);
     const [periodFilter, setPeriodFilter] = useState('all');
 
+    const isAdmin = ['Admin', 'Owner', 'Developer'].includes(localStorage.getItem('user_role') || '');
+
     // Add member form
     const [newMember, setNewMember] = useState({ full_name: '', role: '', department: '', avatar_url: '' });
     // Add KPI form
     const [newKPI, setNewKPI] = useState({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
-    // Edit KPI
+    // Edit KPI (admin)
     const [editingKPI, setEditingKPI] = useState<string | null>(null);
     const [editValues, setEditValues] = useState<{ actual_value: number; notes: string }>({ actual_value: 0, notes: '' });
+    // Member: slide-in actual input panel
+    const [showMemberInput, setShowMemberInput] = useState(false);
+    const [memberActuals, setMemberActuals] = useState<Record<string, { actual_value: number; notes: string }>>({});
+    const [savingActuals, setSavingActuals] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -170,6 +176,31 @@ export const TeamKPIBoard: React.FC = () => {
         }).eq('id', kpiId);
         setEditingKPI(null);
         fetchData();
+    };
+
+    const openMemberInputPanel = (memberKPIs: KPI[]) => {
+        const initials: Record<string, { actual_value: number; notes: string }> = {};
+        memberKPIs.forEach(k => { initials[k.id] = { actual_value: k.actual_value, notes: k.notes || '' }; });
+        setMemberActuals(initials);
+        setShowMemberInput(true);
+    };
+
+    const handleSaveMemberActuals = async () => {
+        setSavingActuals(true);
+        try {
+            await Promise.all(
+                (Object.entries(memberActuals) as [string, { actual_value: number; notes: string }][]).map(([kpiId, vals]) =>
+                    supabase.from('team_kpis').update({ actual_value: vals.actual_value, notes: vals.notes }).eq('id', kpiId)
+                )
+            );
+            fetchData();
+            setShowMemberInput(false);
+            // Auto-close detail modal with slight delay for slide-back effect
+            setTimeout(() => setIsDetailOpen(false), 400);
+        } catch (err) {
+            console.error(err);
+        }
+        setSavingActuals(false);
     };
 
     const handleDeleteKPI = async (kpiId: string) => {
@@ -368,7 +399,7 @@ export const TeamKPIBoard: React.FC = () => {
             </div> {/* end workspace+cards flex */}
 
             {/* ====== DETAIL MODAL ====== */}
-            <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title={selectedMember?.full_name || 'Detail'} maxWidth="max-w-3xl">
+            <Modal isOpen={isDetailOpen} onClose={() => { setIsDetailOpen(false); setShowMemberInput(false); }} title={selectedMember?.full_name || 'Detail'} maxWidth="max-w-4xl">
                 {selectedMember && (() => {
                     const memberKPIs = getMemberKPIs(selectedMember.id);
                     const rate = getCompletionRate(selectedMember.id);
@@ -376,139 +407,181 @@ export const TeamKPIBoard: React.FC = () => {
                     const badge = getStatusBadge(rate);
 
                     return (
-                        <div className="space-y-6">
-                            {/* Member Header */}
-                            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                                <img
-                                    src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
-                                    alt={selectedMember.full_name}
-                                    className="w-16 h-16 rounded-full border-2 border-slate-200 object-cover"
-                                />
-                                <div className="flex-1">
-                                    <h2 className="text-lg font-bold text-slate-900">{selectedMember.full_name}</h2>
-                                    <p className="text-sm text-slate-500">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
-                                    <div className="flex items-center gap-3 mt-2">
-                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${badge.cls}`}>
-                                            {badge.icon} {badge.label}
-                                        </span>
-                                        <span className={`text-sm font-bold ${color.text}`}>{rate}% Complete</span>
+                        <div className="flex gap-0 overflow-hidden transition-all duration-300" style={{ minHeight: 420 }}>
+                            {/* ====== LEFT CARD: Member Profile + KPI List ====== */}
+                            <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto ${showMemberInput ? 'w-1/2 pr-4' : 'w-full'}`}>
+                                {/* Member Header */}
+                                <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-violet-50 to-slate-50 rounded-2xl border-2 border-slate-200 mb-4 shrink-0">
+                                    <img
+                                        src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
+                                        alt={selectedMember.full_name}
+                                        className="w-14 h-14 rounded-2xl border-2 border-slate-200 object-cover shadow"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-base font-black text-slate-900 truncate">{selectedMember.full_name}</h2>
+                                        <p className="text-xs text-slate-500 truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
+                                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${badge.cls}`}>
+                                                {badge.icon} {badge.label}
+                                            </span>
+                                            <span className={`text-sm font-black ${color.text}`}>{rate}%</span>
+                                        </div>
                                     </div>
+                                    {isAdmin && (
+                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-colors shrink-0" title="Hapus anggota">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={() => handleDeleteMember(selectedMember.id)}
-                                    className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-lg transition-colors"
-                                    title="Hapus anggota"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
 
-                            {/* Period Filter + Add KPI */}
-                            <div className="flex items-center justify-between">
-                                <select
-                                    value={periodFilter}
-                                    onChange={e => setPeriodFilter(e.target.value)}
-                                    className="bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-violet-400 transition-colors"
-                                >
-                                    {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                                </select>
-                                <button
-                                    onClick={() => setIsAddKPIOpen(true)}
-                                    className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors"
-                                >
-                                    <Plus size={14} /> Add KPI
-                                </button>
-                            </div>
-
-                            {/* KPI List */}
-                            {memberKPIs.length === 0 ? (
-                                <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                                    <Target className="mx-auto text-slate-300 mb-2" size={32} />
-                                    <p className="text-sm text-slate-400 font-medium">Belum ada KPI untuk periode ini</p>
+                                {/* Period Filter + Action Button */}
+                                <div className="flex items-center justify-between mb-3 shrink-0">
+                                    <select
+                                        value={periodFilter}
+                                        onChange={e => setPeriodFilter(e.target.value)}
+                                        className="bg-white border-2 border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-violet-400 transition-colors"
+                                    >
+                                        {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                    </select>
+                                    {isAdmin ? (
+                                        <button
+                                            onClick={() => setIsAddKPIOpen(true)}
+                                            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors"
+                                        >
+                                            <Plus size={13} /> Tambah KPI
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => openMemberInputPanel(memberKPIs)}
+                                            disabled={memberKPIs.length === 0 || showMemberInput}
+                                            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors"
+                                        >
+                                            <Edit3 size={13} /> Input Pencapaian
+                                        </button>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {memberKPIs.map(kpi => {
-                                        const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
-                                        const kpiColor = getCompletionColor(kpiRate);
-                                        const isEditing = editingKPI === kpi.id;
 
-                                        return (
-                                            <div key={kpi.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition-colors">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="font-semibold text-slate-800 text-sm truncate">{kpi.metric_name}</h4>
-                                                        <p className="text-[11px] text-slate-400">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 ml-2">
-                                                        {!isEditing ? (
-                                                            <>
-                                                                <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors">
-                                                                    <Edit3 size={14} />
-                                                                </button>
-                                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors">
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1.5 hover:bg-emerald-50 text-emerald-500 rounded-lg transition-colors">
-                                                                    <Save size={14} />
-                                                                </button>
-                                                                <button onClick={() => setEditingKPI(null)} className="p-1.5 hover:bg-slate-100 text-slate-400 rounded-lg transition-colors">
-                                                                    <X size={14} />
-                                                                </button>
-                                                            </>
+                                {/* KPI List */}
+                                {memberKPIs.length === 0 ? (
+                                    <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                                        <Target className="mx-auto text-slate-300 mb-2" size={28} />
+                                        <p className="text-sm text-slate-400 font-medium">Belum ada KPI untuk periode ini</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 overflow-y-auto flex-1 pr-0.5" style={{ maxHeight: 300 }}>
+                                        {memberKPIs.map(kpi => {
+                                            const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
+                                            const kpiColor = getCompletionColor(kpiRate);
+                                            const isEditing = editingKPI === kpi.id;
+
+                                            return (
+                                                <div key={kpi.id} className="bg-white border-2 border-slate-200 rounded-xl p-3 hover:border-violet-200 transition-colors">
+                                                    <div className="flex items-start justify-between mb-1.5">
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-bold text-slate-800 text-xs truncate">{kpi.metric_name}</h4>
+                                                            <p className="text-[10px] text-slate-400">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
+                                                        </div>
+                                                        {isAdmin && (
+                                                            <div className="flex items-center gap-1 ml-2 shrink-0">
+                                                                {!isEditing ? (
+                                                                    <>
+                                                                        <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors" title="Edit KPI"><Edit3 size={12} /></button>
+                                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Hapus"><Trash2 size={12} /></button>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1 hover:bg-emerald-50 text-emerald-500 rounded-lg transition-colors"><Save size={12} /></button>
+                                                                        <button onClick={() => setEditingKPI(null)} className="p-1 hover:bg-slate-100 text-slate-400 rounded-lg transition-colors"><X size={12} /></button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
+                                                    {/* Progress bar */}
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div className={`h-full ${kpiColor.bg} rounded-full`} style={{ width: `${kpiRate}%` }} />
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold ${kpiColor.text}`}>{kpiRate}%</span>
+                                                    </div>
+                                                    {/* Values */}
+                                                    <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                                                        <span>Target: <strong className="text-slate-700">{kpi.target_value}{kpi.unit}</strong></span>
+                                                        {isEditing ? (
+                                                            <span className="flex items-center gap-1">
+                                                                Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-14 border border-violet-300 rounded px-1 py-0.5 text-xs font-bold text-violet-700 focus:outline-none" onClick={e => e.stopPropagation()} />{kpi.unit}
+                                                            </span>
+                                                        ) : (
+                                                            <span>Actual: <strong className="text-slate-700">{kpi.actual_value}{kpi.unit}</strong></span>
+                                                        )}
+                                                    </div>
+                                                    {isEditing && (
+                                                        <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-2 w-full border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-violet-300" onClick={e => e.stopPropagation()} />
+                                                    )}
                                                 </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
 
-                                                {/* Progress */}
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex-1">
-                                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div className={`h-full ${kpiColor.bg} rounded-full transition-all duration-500`} style={{ width: `${kpiRate}%` }} />
+                            {/* ====== RIGHT CARD: Member Actual Input Slide Panel ====== */}
+                            <div className={`transition-all duration-300 ease-in-out ${showMemberInput ? 'w-1/2 opacity-100 pl-4 border-l-2 border-emerald-200' : 'w-0 opacity-0 overflow-hidden'}`}>
+                                {showMemberInput && (
+                                    <div className="flex flex-col h-full">
+                                        {/* Panel header */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div>
+                                                <h3 className="font-black text-slate-900 text-sm">✏️ Input Pencapaian</h3>
+                                                <p className="text-[10px] text-slate-400">Isi nilai aktual yang telah dicapai bulan ini</p>
+                                            </div>
+                                            <button onClick={() => setShowMemberInput(false)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+
+                                        {/* Per-KPI inputs */}
+                                        <div className="flex-1 overflow-y-auto space-y-3 pr-0.5" style={{ maxHeight: 320 }}>
+                                            {memberKPIs.map(kpi => (
+                                                <div key={kpi.id} className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3">
+                                                    <p className="text-xs font-black text-slate-700 truncate mb-0.5">{kpi.metric_name}</p>
+                                                    <p className="text-[10px] text-slate-400 mb-2">{kpi.period} · Target: <strong>{kpi.target_value}{kpi.unit}</strong></p>
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <label className="text-[9px] font-black text-emerald-700 uppercase tracking-wide block mb-0.5">Nilai Aktual ({kpi.unit})</label>
+                                                            <input
+                                                                type="number" min={0}
+                                                                value={memberActuals[kpi.id]?.actual_value ?? kpi.actual_value}
+                                                                onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], actual_value: Number(e.target.value) } }))}
+                                                                className="w-full border-2 border-emerald-300 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-800 focus:outline-none focus:border-emerald-500 bg-white"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Catatan</label>
+                                                            <input
+                                                                type="text" placeholder="Keterangan pencapaian..."
+                                                                value={memberActuals[kpi.id]?.notes ?? kpi.notes ?? ''}
+                                                                onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], notes: e.target.value } }))}
+                                                                className="w-full border-2 border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-300 bg-white"
+                                                            />
                                                         </div>
                                                     </div>
-                                                    <span className={`text-xs font-bold ${kpiColor.text} whitespace-nowrap`}>{kpiRate}%</span>
                                                 </div>
+                                            ))}
+                                        </div>
 
-                                                {/* Target vs Actual */}
-                                                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-                                                    <span>Target: <strong className="text-slate-700">{kpi.target_value}{kpi.unit}</strong></span>
-                                                    {isEditing ? (
-                                                        <span className="flex items-center gap-1">
-                                                            Actual:
-                                                            <input
-                                                                type="number"
-                                                                value={editValues.actual_value}
-                                                                onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))}
-                                                                className="w-20 border border-violet-300 rounded px-2 py-0.5 text-xs font-bold text-violet-700 focus:outline-none"
-                                                                onClick={e => e.stopPropagation()}
-                                                            />
-                                                            {kpi.unit}
-                                                        </span>
-                                                    ) : (
-                                                        <span>Actual: <strong className="text-slate-700">{kpi.actual_value}{kpi.unit}</strong></span>
-                                                    )}
-                                                    {kpi.notes && !isEditing && <span className="text-slate-400 truncate max-w-[150px]" title={kpi.notes}>📝 {kpi.notes}</span>}
-                                                </div>
-
-                                                {isEditing && (
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Notes (optional)"
-                                                        value={editValues.notes}
-                                                        onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))}
-                                                        className="mt-2 w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-violet-300"
-                                                        onClick={e => e.stopPropagation()}
-                                                    />
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                                        {/* Save button */}
+                                        <button
+                                            onClick={handleSaveMemberActuals}
+                                            disabled={savingActuals}
+                                            className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white py-2.5 rounded-xl font-black text-sm transition-colors shadow-lg shadow-emerald-100"
+                                        >
+                                            {savingActuals ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                                            {savingActuals ? 'Menyimpan...' : 'Simpan & Tutup'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     );
                 })()}

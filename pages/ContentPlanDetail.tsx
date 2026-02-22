@@ -410,6 +410,7 @@ export const ContentPlanDetail: React.FC = () => {
         try {
             // 0. Sync Latest User Avatar
             const userId = localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role') || 'Member';
             const tenantId = localStorage.getItem('tenant_id') || userId;
             const { data: userData } = await supabase.from('app_users').select('avatar_url').eq('id', userId).single();
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
@@ -422,6 +423,19 @@ export const ContentPlanDetail: React.FC = () => {
                 .single();
 
             if (wsError) throw new Error("Akses Ditolak atau Workspace tidak ditemukan.");
+
+            // Member Access Control: if user is NOT admin/owner, verify they are in members[]
+            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
+            if (!isAdminOrOwner && freshAvatar) {
+                const wsMembers: string[] = ws.members || [];
+                const isMember = wsMembers.some(m => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar; }
+                    catch { return m === freshAvatar; }
+                });
+                if (!isMember) {
+                    throw new Error("Akses Ditolak. Anda tidak lagi menjadi anggota workspace ini.");
+                }
+            }
 
             // ... (existing invite code logic) ...
             let currentCode = ws.invite_code;
@@ -943,10 +957,10 @@ export const ContentPlanDetail: React.FC = () => {
                                                             onChange={(e) => handleQuickUpdateStatus(task.id, e.target.value as ContentStatus)}
                                                             onClick={(e) => e.stopPropagation()}
                                                             className={`appearance-none outline-none font-bold text-xs py-1.5 pl-3 pr-8 rounded-full border-2 cursor-pointer transition-colors w-full min-w-[120px] ${task.status === ContentStatus.TODO ? 'bg-slate-50 border-slate-300 text-slate-600' :
-                                                                    task.status === ContentStatus.IN_PROGRESS ? 'bg-purple-50 border-purple-300 text-purple-700' :
-                                                                        task.status === ContentStatus.REVIEW ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                                                                            task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 border-pink-300 text-pink-700' :
-                                                                                'bg-emerald-50 border-emerald-300 text-emerald-700'
+                                                                task.status === ContentStatus.IN_PROGRESS ? 'bg-purple-50 border-purple-300 text-purple-700' :
+                                                                    task.status === ContentStatus.REVIEW ? 'bg-amber-50 border-amber-300 text-amber-700' :
+                                                                        task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 border-pink-300 text-pink-700' :
+                                                                            'bg-emerald-50 border-emerald-300 text-emerald-700'
                                                                 }`}
                                                         >
                                                             {Object.values(ContentStatus).map((s) => (
@@ -1149,8 +1163,8 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl flex flex-col justify-center items-center text-center hover:border-accent transition-colors">
                                 <span className="text-[10px] font-bold text-slate-400 tracking-wider">Prioritas</span>
                                 <div className={`mt-1 px-3 py-1 rounded-lg text-sm font-black tracking-wide border-2 ${selectedTask.priority === ContentPriority.HIGH ? 'bg-red-100 border-red-300 text-red-600' :
-                                        selectedTask.priority === ContentPriority.MEDIUM ? 'bg-amber-100 border-amber-300 text-amber-600' :
-                                            'bg-slate-100 border-slate-300 text-slate-600'
+                                    selectedTask.priority === ContentPriority.MEDIUM ? 'bg-amber-100 border-amber-300 text-amber-600' :
+                                        'bg-slate-100 border-slate-300 text-slate-600'
                                     }`}>
                                     {selectedTask.priority}
                                 </div>
@@ -1182,10 +1196,10 @@ export const ContentPlanDetail: React.FC = () => {
                             <span className="text-xs font-bold text-slate-400 tracking-wide mr-2">Quick Stats:</span>
 
                             <div className={`px-4 py-1.5 rounded-full border-2 text-sm font-bold flex items-center gap-2 ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-100 border-slate-300 text-slate-600' :
-                                    selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-purple-100 border-purple-300 text-purple-700' :
-                                        selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-100 border-amber-300 text-amber-700' :
-                                            selectedTask.status === ContentStatus.SCHEDULED ? 'bg-pink-100 border-pink-300 text-pink-700' :
-                                                'bg-emerald-100 border-emerald-300 text-emerald-700'
+                                selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-purple-100 border-purple-300 text-purple-700' :
+                                    selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-100 border-amber-300 text-amber-700' :
+                                        selectedTask.status === ContentStatus.SCHEDULED ? 'bg-pink-100 border-pink-300 text-pink-700' :
+                                            'bg-emerald-100 border-emerald-300 text-emerald-700'
                                 }`}>
                                 <div className={`w-2 h-2 rounded-full ${selectedTask.status === ContentStatus.PUBLISHED ? 'bg-emerald-500' : 'bg-current'
                                     }`}></div>

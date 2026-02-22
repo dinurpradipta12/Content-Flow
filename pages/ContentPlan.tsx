@@ -86,12 +86,13 @@ export const ContentPlan: React.FC = () => {
         try {
             // 0. Get Current User Info for Syncing
             const userId = localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role') || 'Member';
             const { data: userData } = await supabase.from('app_users').select('avatar_url, name').eq('id', userId).single();
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
             const freshName = userData?.name || localStorage.getItem('user_name') || 'Anda';
             setCurrentUserName(freshName);
 
-            // 1. Fetch Workspaces
+            // 1. Fetch Workspaces — all workspaces under this admin tenant
             const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
             const { data: wsData, error: wsError } = await supabase
                 .from('workspaces')
@@ -109,23 +110,18 @@ export const ContentPlan: React.FC = () => {
             if (contentError) throw contentError;
 
             // 3. Merge Data & Sync Avatar
-            const mergedData: WorkspaceData[] = wsData.map((ws: any) => {
+            let mergedData: WorkspaceData[] = wsData.map((ws: any) => {
                 const workspaceContent = contentData.filter((c: any) => c.workspace_id === ws.id);
                 const total = workspaceContent.length;
                 const published = workspaceContent.filter((c: any) => c.status === 'Published').length;
 
-                // Sync Logic: If I am the creator/owner (role Owner), ensure my fresh avatar is the first member
-                // If I am just a member, ensure my fresh avatar replaces my old one in the list (simple approximation)
                 let currentMembers = ws.members || ['https://picsum.photos/40/40'];
 
                 if (freshAvatar) {
                     if (ws.role === 'Owner') {
-                        // Force update owner avatar at index 0
                         if (currentMembers.length > 0) currentMembers[0] = freshAvatar;
                         else currentMembers = [freshAvatar];
                     }
-                    // Note: Ideally we match by User ID, but since members is string[], 
-                    // for this version we trust the Owner flag for the first slot.
                 }
 
                 return {
@@ -144,10 +140,24 @@ export const ContentPlan: React.FC = () => {
                 };
             });
 
+            // 4. Member Access Control: if user is NOT an admin/owner,
+            //    only show workspaces where their avatar_url is in members[]
+            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
+            if (!isAdminOrOwner && freshAvatar) {
+                mergedData = mergedData.filter(ws =>
+                    ws.members.some((m: string) => {
+                        try {
+                            return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar;
+                        } catch {
+                            return m === freshAvatar;
+                        }
+                    })
+                );
+            }
+
             setWorkspaces(mergedData);
         } catch (error) {
             console.error("Error fetching workspaces:", error);
-            // alert("Gagal memuat data workspace. Cek konsol.");
         } finally {
             setLoading(false);
         }
