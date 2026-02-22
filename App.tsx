@@ -7,29 +7,29 @@ import { ContentPlanDetail } from './pages/ContentPlanDetail';
 import { Approval } from './pages/Approval';
 import { ContentDataInsight } from './pages/ContentDataInsight';
 import { CarouselMaker } from './pages/CarouselMaker';
-import { ScriptCreator } from './pages/ScriptCreator';
+import { TeamKPIBoard } from './pages/TeamKPIBoard';
 import { Login } from './pages/Login';
 import { UserManagement } from './pages/UserManagement';
 import { Profile } from './pages/Profile';
 
 // Auth Guard Component
 const RequireAuth = () => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-    return (
-        <Layout>
-            <Outlet />
-        </Layout>
-    );
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
 };
 
 const PlaceholderPage = ({ title }: { title: string }) => (
-    <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
-        <h2 className="text-2xl font-black text-slate-400 font-heading">{title}</h2>
-        <p className="text-slate-500">Halaman ini sedang dalam pengembangan.</p>
-    </div>
+  <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
+    <h2 className="text-2xl font-black text-slate-400 font-heading">{title}</h2>
+    <p className="text-slate-500">Halaman ini sedang dalam pengembangan.</p>
+  </div>
 );
 
 const App: React.FC = () => {
@@ -37,24 +37,24 @@ const App: React.FC = () => {
     <HashRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        
+
         {/* Protected Routes */}
         <Route element={<RequireAuth />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="plan" element={<ContentPlan />} />
-            <Route path="plan/:id" element={<ContentPlanDetail />} />
-            <Route path="approval" element={<Approval />} />
-            <Route path="insight" element={<ContentDataInsight />} />
-            <Route path="carousel" element={<CarouselMaker />} />
-            <Route path="script" element={<ScriptCreator />} />
-            <Route path="profile" element={<Profile />} />
-            
-            {/* Admin Routes */}
-            <Route path="admin/team" element={<PlaceholderPage title="Team Management" />} />
-            <Route path="admin/workspace" element={<PlaceholderPage title="Workspace Settings" />} />
-            
-            {/* Developer Routes */}
-            <Route path="admin/users" element={<UserManagement />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="plan" element={<ContentPlan />} />
+          <Route path="plan/:id" element={<ContentPlanDetail />} />
+          <Route path="approval" element={<Approval />} />
+          <Route path="insight" element={<ContentDataInsight />} />
+          <Route path="carousel" element={<CarouselMaker />} />
+          <Route path="script" element={<TeamKPIBoard />} />
+          <Route path="profile" element={<Profile />} />
+
+          {/* Admin Routes */}
+          <Route path="admin/team" element={<PlaceholderPage title="Team Management" />} />
+          <Route path="admin/workspace" element={<PlaceholderPage title="Workspace Settings" />} />
+
+          {/* Developer Routes */}
+          <Route path="admin/users" element={<UserManagement />} />
         </Route>
       </Routes>
     </HashRouter>

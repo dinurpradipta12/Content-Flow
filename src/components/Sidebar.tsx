@@ -33,8 +33,8 @@ const SortableLayerItem: React.FC<{ layer: any }> = ({ layer }) => {
                 <GripVertical size={16} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-black uppercase truncate">{layer.name}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase">{layer.type}</p>
+                <p className="text-xs font-bold truncate">{layer.name}</p>
+                <p className="text-[10px] font-bold text-slate-400">{layer.type}</p>
             </div>
             <div className="flex items-center gap-1">
                 <button 
@@ -152,13 +152,13 @@ export const Sidebar: React.FC = () => {
             <div className="flex border-b-4 border-slate-900 shrink-0">
                 <button 
                     onClick={() => setActiveTab('content')}
-                    className={`flex-1 py-4 font-black uppercase text-xs tracking-widest transition-colors ${activeTab === 'content' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 font-bold text-xs tracking-widest transition-colors ${activeTab === 'content' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
                 >
                     Content
                 </button>
                 <button 
                     onClick={() => setActiveTab('layers')}
-                    className={`flex-1 py-4 font-black uppercase text-xs tracking-widest transition-colors border-l-4 border-slate-900 ${activeTab === 'layers' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 font-bold text-xs tracking-widest transition-colors border-l-4 border-slate-900 ${activeTab === 'layers' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
                 >
                     Layers
                 </button>
@@ -170,7 +170,7 @@ export const Sidebar: React.FC = () => {
                         {/* Presets */}
                         <section>
                             <div className="flex items-center justify-between mb-3">
-                                <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
+                                <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400">
                                     <FolderOpen size={14} /> Presets
                                 </label>
                                 <button 
@@ -189,7 +189,7 @@ export const Sidebar: React.FC = () => {
                                         <button 
                                             key={preset.id}
                                             onClick={() => handleLoadPreset(preset)}
-                                            className="w-full text-left p-3 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors font-bold text-xs truncate uppercase"
+                                            className="w-full text-left p-3 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors font-bold text-xs truncate"
                                         >
                                             {preset.name}
                                         </button>
@@ -202,7 +202,7 @@ export const Sidebar: React.FC = () => {
 
                         {/* Canvas Size */}
                         <section>
-                            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
+                            <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 mb-3">
                                 <Layout size={14} /> Canvas Size
                             </label>
                             <div className="relative">
@@ -224,7 +224,7 @@ export const Sidebar: React.FC = () => {
 
                         {/* Background */}
                         <section>
-                            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
+                            <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 mb-3">
                                 <Palette size={14} /> Background
                             </label>
                             <div className="flex gap-2 flex-wrap">
@@ -249,7 +249,7 @@ export const Sidebar: React.FC = () => {
 
                         {/* Add Elements */}
                         <section className="space-y-4">
-                            <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
+                            <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400">
                                 <Plus size={14} /> Add Elements
                             </label>
                             
@@ -259,18 +259,18 @@ export const Sidebar: React.FC = () => {
                                     className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
                                 >
                                     <Type size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-black uppercase">Add Text</span>
+                                    <span className="text-[10px] font-bold">Add Text</span>
                                 </button>
                                 <button 
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'rect' } }))}
                                     className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
                                 >
                                     <Square size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-black uppercase">Add Shape</span>
+                                    <span className="text-[10px] font-bold">Add Shape</span>
                                 </button>
                                 <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
                                     <ImageIcon size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-black uppercase">Add Image</span>
+                                    <span className="text-[10px] font-bold">Add Image</span>
                                     <input 
                                         type="file" 
                                         className="hidden" 
@@ -292,11 +292,11 @@ export const Sidebar: React.FC = () => {
                                     className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
                                 >
                                     <Circle size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-black uppercase">Add Circle</span>
+                                    <span className="text-[10px] font-bold">Add Circle</span>
                                 </button>
                                 <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
                                     <Upload size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-black uppercase text-center">Upload Font</span>
+                                    <span className="text-[10px] font-bold text-center">Upload Font</span>
                                     <input 
                                         type="file" 
                                         className="hidden" 
@@ -328,7 +328,7 @@ export const Sidebar: React.FC = () => {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
+                        <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 mb-4">
                             <Layers size={14} /> Layers Order
                         </label>
                         

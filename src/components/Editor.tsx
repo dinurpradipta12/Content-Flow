@@ -224,25 +224,27 @@ export const Editor: React.FC = () => {
         const canvasHeight = fabricCanvas.current.height || 0;
         const objWidth = selectedObject.getScaledWidth();
         const objHeight = selectedObject.getScaledHeight();
+        const originX = selectedObject.originX || 'left';
+        const originY = selectedObject.originY || 'top';
 
         switch (alignment) {
             case 'left':
-                selectedObject.set({ left: 0 });
+                selectedObject.set({ left: originX === 'center' ? objWidth / 2 : originX === 'right' ? objWidth : 0 });
                 break;
             case 'center':
-                selectedObject.set({ left: (canvasWidth - objWidth) / 2 });
+                selectedObject.set({ left: originX === 'center' ? canvasWidth / 2 : originX === 'right' ? canvasWidth / 2 + objWidth / 2 : (canvasWidth - objWidth) / 2 });
                 break;
             case 'right':
-                selectedObject.set({ left: canvasWidth - objWidth });
+                selectedObject.set({ left: originX === 'center' ? canvasWidth - objWidth / 2 : originX === 'right' ? canvasWidth : canvasWidth - objWidth });
                 break;
             case 'top':
-                selectedObject.set({ top: 0 });
+                selectedObject.set({ top: originY === 'center' ? objHeight / 2 : originY === 'bottom' ? objHeight : 0 });
                 break;
             case 'middle':
-                selectedObject.set({ top: (canvasHeight - objHeight) / 2 });
+                selectedObject.set({ top: originY === 'center' ? canvasHeight / 2 : originY === 'bottom' ? canvasHeight / 2 + objHeight / 2 : (canvasHeight - objHeight) / 2 });
                 break;
             case 'bottom':
-                selectedObject.set({ top: canvasHeight - objHeight });
+                selectedObject.set({ top: originY === 'center' ? canvasHeight - objHeight / 2 : originY === 'bottom' ? canvasHeight : canvasHeight - objHeight });
                 break;
         }
         selectedObject.setCoords();
@@ -1001,13 +1003,13 @@ export const Editor: React.FC = () => {
                     <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-1 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-right-4">
                         {/* Group / Ungroup */}
                         {isActiveSelection && (
-                            <button onClick={handleGroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold text-[11px] uppercase tracking-wide transition-colors" title="Group selected layers">
+                            <button onClick={handleGroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold text-[11px] transition-colors" title="Group selected layers">
                                 <Group size={14} />
                                 <span>Group</span>
                             </button>
                         )}
                         {isGroup && (
-                            <button onClick={handleUngroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold text-[11px] uppercase tracking-wide transition-colors" title="Ungroup layers">
+                            <button onClick={handleUngroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold text-[11px] transition-colors" title="Ungroup layers">
                                 <Ungroup size={14} />
                                 <span>Ungroup</span>
                             </button>
@@ -1085,10 +1087,10 @@ export const Editor: React.FC = () => {
                                     </button>
                                     {activeTool === 'typography' && (
                                         <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                            <h4 className="font-black text-xs uppercase tracking-widest mb-3">Typography</h4>
+                                            <h4 className="font-black text-xs mb-3">Typography</h4>
                                             <div className="space-y-4">
                                                 <div className="space-y-1">
-                                                    <span className="text-[10px] font-bold uppercase text-slate-500">Font Family</span>
+                                                    <span className="text-[10px] font-bold text-slate-500">Font Family</span>
                                                     <select
                                                         value={objectProps.fontFamily}
                                                         onChange={(e) => handleFontFamily(e.target.value)}
@@ -1099,7 +1101,7 @@ export const Editor: React.FC = () => {
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <div className="flex-1 space-y-1">
-                                                        <span className="text-[10px] font-bold uppercase text-slate-500">Size</span>
+                                                        <span className="text-[10px] font-bold text-slate-500">Size</span>
                                                         <input
                                                             type="number"
                                                             value={objectProps.fontSize}
@@ -1108,7 +1110,7 @@ export const Editor: React.FC = () => {
                                                         />
                                                     </div>
                                                     <div className="flex-1 space-y-1">
-                                                        <span className="text-[10px] font-bold uppercase text-slate-500">Color</span>
+                                                        <span className="text-[10px] font-bold text-slate-500">Color</span>
                                                         <div className="flex items-center gap-2 h-[34px] bg-slate-50 border-2 border-slate-200 rounded-lg px-2">
                                                             <input
                                                                 type="color"
@@ -1157,10 +1159,10 @@ export const Editor: React.FC = () => {
                                     </button>
                                     {activeTool === 'spacing' && (
                                         <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                            <h4 className="font-black text-xs uppercase tracking-widest mb-3">Spacing</h4>
+                                            <h4 className="font-black text-xs mb-3">Spacing</h4>
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
-                                                    <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                         <span>Letter Spacing</span>
                                                         <span>{objectProps.charSpacing}</span>
                                                     </div>
@@ -1172,7 +1174,7 @@ export const Editor: React.FC = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                         <span>Line Height</span>
                                                         <span>{objectProps.lineHeight}</span>
                                                     </div>
@@ -1220,7 +1222,7 @@ export const Editor: React.FC = () => {
                             </button>
                             {activeTool === 'color' && (
                                 <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Color</h4>
+                                    <h4 className="font-black text-xs mb-3">Color</h4>
                                     <div className="space-y-4">
                                         <div className="flex gap-2 flex-wrap">
                                             {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6', 'transparent'].map(c => (
@@ -1254,7 +1256,7 @@ export const Editor: React.FC = () => {
                             </button>
                             {activeTool === 'flip' && (
                                 <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-40 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Flip</h4>
+                                    <h4 className="font-black text-xs mb-3">Flip</h4>
                                     <div className="flex gap-2">
                                         <button onClick={() => handleFlip('x')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipX ? 'bg-slate-100' : ''}`}><FlipHorizontal className="mx-auto" size={20} /></button>
                                         <button onClick={() => handleFlip('y')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipY ? 'bg-slate-100' : ''}`}><FlipVertical className="mx-auto" size={20} /></button>
@@ -1276,9 +1278,9 @@ export const Editor: React.FC = () => {
                             </button>
                             {activeTool === 'opacity' && (
                                 <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Opacity</h4>
+                                    <h4 className="font-black text-xs mb-3">Opacity</h4>
                                     <div className="space-y-2">
-                                        <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                             <span>Value</span>
                                             <span>{Math.round(objectProps.opacity * 100)}%</span>
                                         </div>
@@ -1305,10 +1307,10 @@ export const Editor: React.FC = () => {
 
                             {activeTool === 'stroke' && (
                                 <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Stroke Settings</h4>
+                                    <h4 className="font-black text-xs mb-3">Stroke Settings</h4>
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                 <span>Width</span>
                                                 <span>{objectProps.strokeWidth}px</span>
                                             </div>
@@ -1321,7 +1323,7 @@ export const Editor: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <span className="text-[10px] font-bold uppercase text-slate-500">Position</span>
+                                            <span className="text-[10px] font-bold text-slate-500">Position</span>
                                             <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
                                                 <button
                                                     onClick={() => handleStroke({ strokeType: 'middle' })}
@@ -1339,7 +1341,7 @@ export const Editor: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <span className="text-[10px] font-bold uppercase text-slate-500">Color</span>
+                                            <span className="text-[10px] font-bold text-slate-500">Color</span>
                                             <div className="flex gap-2 flex-wrap">
                                                 {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
                                                     <button
@@ -1374,10 +1376,10 @@ export const Editor: React.FC = () => {
 
                             {activeTool === 'shadow' && (
                                 <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs uppercase tracking-widest mb-3">Shadow Settings</h4>
+                                    <h4 className="font-black text-xs mb-3">Shadow Settings</h4>
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                 <span>Distance (Value)</span>
                                                 <span>{objectProps.shadowDistance}px</span>
                                             </div>
@@ -1390,7 +1392,7 @@ export const Editor: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                 <span>Blur</span>
                                                 <span>{objectProps.shadowBlur}px</span>
                                             </div>
@@ -1403,7 +1405,7 @@ export const Editor: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                 <span>Rotation</span>
                                                 <span>{objectProps.shadowAngle}°</span>
                                             </div>
@@ -1416,7 +1418,7 @@ export const Editor: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                 <span>Opacity</span>
                                                 <span>{Math.round(objectProps.shadowOpacity * 100)}%</span>
                                             </div>
@@ -1429,7 +1431,7 @@ export const Editor: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <span className="text-[10px] font-bold uppercase text-slate-500">Color</span>
+                                            <span className="text-[10px] font-bold text-slate-500">Color</span>
                                             <div className="flex gap-2 flex-wrap">
                                                 {['#000000', '#0f172a', '#94a3b8', '#f27d26'].map(c => (
                                                     <button
@@ -1464,9 +1466,9 @@ export const Editor: React.FC = () => {
                                 </button>
                                 {activeTool === 'radius' && (
                                     <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                        <h4 className="font-black text-xs uppercase tracking-widest mb-3">Corner Radius</h4>
+                                        <h4 className="font-black text-xs mb-3">Corner Radius</h4>
                                         <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
                                                 <span>Value</span>
                                                 <span>{objectProps.cornerRadius}px</span>
                                             </div>
