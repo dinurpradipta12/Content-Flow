@@ -25,6 +25,24 @@ const RequireAuth = () => {
   );
 };
 
+// Admin Guard: Developer, Admin, Owner
+const RequireAdmin = ({ children }: { children: React.ReactElement }) => {
+  const role = localStorage.getItem('user_role') || 'Member';
+  if (role !== 'Developer' && role !== 'Admin' && role !== 'Owner') {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
+// Developer Guard: Developer only
+const RequireDeveloper = ({ children }: { children: React.ReactElement }) => {
+  const role = localStorage.getItem('user_role') || 'Member';
+  if (role !== 'Developer') {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
     <h2 className="text-2xl font-black text-slate-400 font-heading">{title}</h2>
@@ -49,12 +67,12 @@ const App: React.FC = () => {
           <Route path="script" element={<TeamKPIBoard />} />
           <Route path="profile" element={<Profile />} />
 
-          {/* Admin Routes */}
-          <Route path="admin/team" element={<PlaceholderPage title="Team Management" />} />
-          <Route path="admin/workspace" element={<PlaceholderPage title="Workspace Settings" />} />
+          {/* Admin Routes (Developer + Admin) */}
+          <Route path="admin/team" element={<RequireAdmin><PlaceholderPage title="Team Management" /></RequireAdmin>} />
+          <Route path="admin/workspace" element={<RequireAdmin><PlaceholderPage title="Workspace Settings" /></RequireAdmin>} />
 
-          {/* Developer Routes */}
-          <Route path="admin/users" element={<UserManagement />} />
+          {/* Developer Routes (Developer only) */}
+          <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
         </Route>
       </Routes>
     </HashRouter>

@@ -183,6 +183,18 @@ drop policy if exists "Enable all access" on public.team_kpis;
 
 create policy "Enable all access" on public.team_members for all using (true) with check (true);
 create policy "Enable all access" on public.team_kpis for all using (true) with check (true);
+
+-- Enable Realtime for live profile sync
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'app_users'
+  ) then
+    alter publication supabase_realtime add table public.app_users;
+  end if;
+end
+$$;
 `;
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
