@@ -680,7 +680,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </header>
 
                 <main className="flex-1 p-4 md:px-6 md:py-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar">
-                    <div className="max-w-[1600px] mx-auto animate-bounce-in h-full flex flex-col">
+                    <div className="animate-bounce-in h-full flex flex-col">
                         {children}
                     </div>
                 </main>
