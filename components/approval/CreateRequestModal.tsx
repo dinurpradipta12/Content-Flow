@@ -34,21 +34,40 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
     };
 
     const notifyByMention = async (text: string, sourceTitle: string) => {
-        if (!text || typeof text !== 'string' || !text.includes('@')) return;
-        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
-        if (mentions) {
-            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
-            for (const name of uniqueNames) {
-                const user = users.find(u => (u.full_name || u.username) === name);
-                if (user) {
-                    await sendNotification({
-                        recipientId: user.id,
-                        type: 'MENTION',
-                        title: 'Anda disebut dalam Pengajuan',
-                        content: `menyebut Anda dalam pengajuan baru: ${sourceTitle}`,
-                    });
+        if (!text || typeof text !== 'string') return;
+
+        const mentionedIds = new Set<string>();
+
+        // 1. Traditional @mentions
+        if (text.includes('@')) {
+            const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+            if (mentions) {
+                const names = mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1));
+                for (const name of names) {
+                    const user = users.find(u => (u.full_name || u.username) === name);
+                    if (user) mentionedIds.add(user.id);
                 }
             }
+        }
+
+        // 2. Scan for full names (even without @) - Global mentioning
+        users.forEach(user => {
+            const fullName = user.full_name?.toLowerCase();
+            const userName = user.username?.toLowerCase();
+            const lowerText = text.toLowerCase();
+            if ((fullName && lowerText.includes(fullName)) || (userName && lowerText.includes(userName))) {
+                mentionedIds.add(user.id);
+            }
+        });
+
+        // Send notifications
+        for (const userId of Array.from(mentionedIds)) {
+            await sendNotification({
+                recipientId: userId,
+                type: 'MENTION',
+                title: 'Anda disebut dalam Pengajuan',
+                content: `menyebut Anda dalam pengajuan baru: ${sourceTitle}`,
+            });
         }
     };
 

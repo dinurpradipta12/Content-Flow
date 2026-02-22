@@ -97,21 +97,37 @@ export const TeamKPIBoard: React.FC = () => {
     };
 
     const notifyByMention = async (text: string, sourceTitle: string) => {
-        if (!text || !text.includes('@')) return;
-        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
-        if (mentions) {
-            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
-            for (const name of uniqueNames) {
-                const user = allAppUsers.find(u => u.name === name);
-                if (user) {
-                    await sendNotification({
-                        recipientId: user.id,
-                        type: 'MENTION',
-                        title: 'Anda disebut di KPI Board',
-                        content: `menyebut Anda dalam catatan KPI: ${sourceTitle}`,
-                    });
+        if (!text) return;
+
+        const mentionedIds = new Set<string>();
+
+        // 1. Traditional @mentions
+        if (text.includes('@')) {
+            const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+            if (mentions) {
+                const names = mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1));
+                for (const name of names) {
+                    const user = allAppUsers.find(u => u.name === name);
+                    if (user) mentionedIds.add(user.id);
                 }
             }
+        }
+
+        // 2. Scan for full names (even without @) - As requested for global mentions
+        allAppUsers.forEach(user => {
+            if (user.name && text.toLowerCase().includes(user.name.toLowerCase())) {
+                mentionedIds.add(user.id);
+            }
+        });
+
+        // Send notifications
+        for (const userId of mentionedIds) {
+            await sendNotification({
+                recipientId: userId,
+                type: 'MENTION',
+                title: 'Anda disebut di KPI Board',
+                content: `menyebut Anda dalam catatan KPI: ${sourceTitle}`,
+            });
         }
     };
 

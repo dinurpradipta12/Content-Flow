@@ -49,6 +49,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
     const { sendNotification } = useNotifications();
     const [allAppUsers, setAllAppUsers] = useState<{ id: string, name: string }[]>([]);
+    const [targetApproverId, setTargetApproverId] = useState<string>('');
+    const [sendingReminder, setSendingReminder] = useState(false);
 
     useEffect(() => {
         if (isOpen && request) {
@@ -69,21 +71,37 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     };
 
     const notifyByMention = async (text: string, sourceTitle: string) => {
-        if (!text || !text.includes('@')) return;
-        const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
-        if (mentions) {
-            const uniqueNames = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))];
-            for (const name of uniqueNames) {
-                const user = allAppUsers.find(u => u.name === name);
-                if (user) {
-                    await sendNotification({
-                        recipientId: user.id,
-                        type: 'MENTION',
-                        title: 'Anda disebut dalam Approval',
-                        content: `menyebut Anda dalam diskusi approval: ${sourceTitle}`,
-                    });
+        if (!text) return;
+
+        const mentionedIds = new Set<string>();
+
+        // 1. Traditional @mentions
+        if (text.includes('@')) {
+            const mentions = text.match(/@\[([^\]]+)\]|@(\w+)/g);
+            if (mentions) {
+                const names = mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1));
+                for (const name of names) {
+                    const user = allAppUsers.find(u => u.name === name);
+                    if (user) mentionedIds.add(user.id);
                 }
             }
+        }
+
+        // 2. Scan for full names (even without @) - Global mentioning
+        allAppUsers.forEach(user => {
+            if (user.name && text.toLowerCase().includes(user.name.toLowerCase())) {
+                mentionedIds.add(user.id);
+            }
+        });
+
+        // Send notifications
+        for (const userId of mentionedIds) {
+            await sendNotification({
+                recipientId: userId,
+                type: 'MENTION',
+                title: 'Anda disebut dalam Approval',
+                content: `menyebut Anda dalam diskusi approval: ${sourceTitle}`,
+            });
         }
     };
 
@@ -158,6 +176,32 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
         setChatInput('');
         setSelectedFile(null);
+    };
+
+    const handleSendReminder = async () => {
+        if (!targetApproverId || !request) return;
+        setSendingReminder(true);
+        try {
+            const targetUser = allAppUsers.find(u => u.id === targetApproverId);
+            if (!targetUser) return;
+
+            const deadline = request.form_data.tanggal_posting
+                ? new Date(request.form_data.tanggal_posting).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                : 'secepatnya';
+
+            await sendNotification({
+                recipientId: targetApproverId,
+                type: 'CONTENT_APPROVAL',
+                title: 'Pengajuan Approval Baru',
+                content: `${request.requester_name} telah mengajukan permintaan ${request.template?.name || 'Konten'} ke kamu, segera cek sebelum ${deadline}`,
+            });
+
+            alert(`Notifikasi telah dikirim ke ${targetUser.name}`);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSendingReminder(false);
+        }
     };
 
     if (!request) return null;
@@ -315,6 +359,35 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                 <ImageIcon size={28} className="text-accent" /> Lampiran Konten
                             </h3>
                             {renderFiles()}
+                        </div>
+
+                        {/* User Assignment for Approval Notification */}
+                        <div className="bg-amber-50 border-4 border-amber-900/20 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#f59e0b20] mb-8">
+                            <h3 className="font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-3 text-amber-900">
+                                <Bell size={24} /> Teruskan ke Approver
+                            </h3>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <select
+                                    value={targetApproverId}
+                                    onChange={(e) => setTargetApproverId(e.target.value)}
+                                    className="flex-1 bg-white border-4 border-slate-900 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:ring-4 focus:ring-amber-400/50 appearance-none"
+                                >
+                                    <option value="">Pilih Member...</option>
+                                    {allAppUsers.map(user => (
+                                        <option key={user.id} value={user.id}>{user.name}</option>
+                                    ))}
+                                </select>
+                                <Button
+                                    onClick={handleSendReminder}
+                                    disabled={!targetApproverId || sendingReminder}
+                                    className="bg-slate-900 text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#f59e0b] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#f59e0b] transition-all"
+                                >
+                                    {sendingReminder ? 'Mengirim...' : 'Kirim Notifikasi'}
+                                </Button>
+                            </div>
+                            <p className="text-[10px] font-bold text-amber-800/60 mt-3 uppercase tracking-widest">
+                                User yang dipilih akan menerima notifikasi untuk mengecek pengajuan ini
+                            </p>
                         </div>
 
                         {/* Timeline Lark Style */}

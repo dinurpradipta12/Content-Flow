@@ -637,6 +637,9 @@ export const ContentPlanDetail: React.FC = () => {
         e.preventDefault();
         if (!id) return;
 
+        const currentUserName = localStorage.getItem('user_name') || 'Seseorang';
+        const wsName = workspaceData.name;
+
         const oldTask = modalMode === 'edit' ? tasks.find(t => t.id === editingId) : null;
 
         const payload = {
@@ -659,11 +662,11 @@ export const ContentPlanDetail: React.FC = () => {
 
                 // Notify Approver if assigned
                 if (payload.approval) {
-                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `menunjuk Anda sebagai approver untuk konten: ${payload.title}`);
+                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`);
                 }
                 // Notify PIC if assigned
                 if (payload.pic) {
-                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `menugaskan Anda sebagai PIC untuk konten: ${payload.title}`);
+                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} telah menugaskan Anda sebagai PIC untuk konten: ${payload.title} di workspace ${wsName}`);
                 }
             } else if (modalMode === 'edit' && editingId) {
                 const { error } = await supabase.from('content_items').update(payload).eq('id', editingId);
@@ -682,24 +685,38 @@ export const ContentPlanDetail: React.FC = () => {
 
                 // Notify if PIC changed
                 if (oldTask && oldTask.pic !== payload.pic && payload.pic) {
-                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `menugaskan Anda sebagai PIC baru untuk konten: ${payload.title}`);
+                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} menugaskan Anda sebagai PIC baru untuk konten: ${payload.title} di workspace ${wsName}`);
                 }
 
                 if (oldTask && oldTask.approval !== payload.approval && payload.approval) {
                     // Notify if Approver changed
-                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `menunjuk Anda sebagai approver untuk konten: ${payload.title}`);
+                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`);
                 }
             }
 
-            // Detect @mentions in script (for both Create/Edit)
-            if (payload.script && payload.script.includes('@')) {
-                const mentions = payload.script.match(/@\[([^\]]+)\]|@(\w+)/g);
-                if (mentions) {
-                    const uniqueNames: string[] = [...new Set(mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1)))] as string[];
-                    for (const name of uniqueNames) {
-                        // Notify if mentioned
-                        await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten: ${payload.title}`);
+            // Detect mentions and names in script (for both Create/Edit)
+            if (payload.script) {
+                const mentionedNames = new Set<string>();
+
+                // 1. Traditional @mentions
+                if (payload.script.includes('@')) {
+                    const mentions = payload.script.match(/@\[([^\]]+)\]|@(\w+)/g);
+                    if (mentions) {
+                        const names = mentions.map(m => m.startsWith('@[') ? m.slice(2, -1) : m.slice(1));
+                        names.forEach(n => mentionedNames.add(n));
                     }
+                }
+
+                // 2. Scan for full names (even without @) - Global mentioning
+                teamMembers.forEach(m => {
+                    if (m.name && payload.script.toLowerCase().includes(m.name.toLowerCase())) {
+                        mentionedNames.add(m.name);
+                    }
+                });
+
+                // Send notifications
+                for (const name of Array.from(mentionedNames)) {
+                    await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten: ${payload.title}`);
                 }
             }
 
