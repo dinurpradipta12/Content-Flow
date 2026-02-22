@@ -5,7 +5,7 @@ import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
 import {
     Users, Trash2, RefreshCw, Loader2, Shield, UserPlus, Hash, Mail, Key, Globe,
-    Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers
+    Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search
 } from 'lucide-react';
 
 interface AppUser {
@@ -33,6 +33,7 @@ export const UserManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Current user role
     const currentUserRole = localStorage.getItem('user_role') || 'Member';
@@ -220,16 +221,24 @@ export const UserManagement: React.FC = () => {
     };
 
     const getSubscriptionStatus = (user: AppUser) => {
-        if (!user.is_active) return { label: 'Nonaktif', color: 'bg-red-100 text-red-700 border-red-200', active: false };
-        if (!user.subscription_end) return { label: 'Aktif (Unlimited)', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', active: true };
+        if (!user.is_active) return { label: 'Nonaktif', color: 'bg-red-100 text-red-800 border-red-300', active: false };
+        if (!user.subscription_end) return { label: 'Aktif (Unlimited)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', active: true };
+
         const end = new Date(user.subscription_end);
         const now = new Date();
-        if (now > end) return { label: 'Expired', color: 'bg-red-100 text-red-700 border-red-200', active: false };
-        const hoursLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
-        const daysLeft = Math.ceil(hoursLeft / 24);
-        if (daysLeft <= 1) return { label: `${hoursLeft} jam lagi`, color: 'bg-amber-100 text-amber-700 border-amber-200', active: true };
-        if (daysLeft <= 7) return { label: `${daysLeft} hari lagi`, color: 'bg-amber-100 text-amber-700 border-amber-200', active: true };
-        return { label: 'Aktif', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', active: true };
+
+        if (now > end) return { label: 'Expired', color: 'bg-red-100 text-red-800 border-red-300', active: false };
+
+        const msLeft = end.getTime() - now.getTime();
+        const minutesLeft = Math.floor(msLeft / (1000 * 60));
+        const hoursLeft = Math.floor(minutesLeft / 60);
+        const daysLeft = Math.floor(hoursLeft / 24);
+
+        if (minutesLeft < 60) return { label: `${minutesLeft} menit lagi`, color: 'bg-amber-100 text-amber-800 border-amber-300', active: true };
+        if (hoursLeft < 24) return { label: `${hoursLeft} jam lagi`, color: 'bg-amber-100 text-amber-800 border-amber-300', active: true };
+        if (daysLeft <= 7) return { label: `${daysLeft} hari lagi`, color: 'bg-amber-100 text-amber-800 border-amber-300', active: true };
+
+        return { label: 'Aktif', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', active: true };
     };
 
     useEffect(() => {
@@ -301,85 +310,75 @@ export const UserManagement: React.FC = () => {
 
                         {/* ===== REGISTRATION FORM ===== */}
                         <div className="w-full lg:w-[380px] shrink-0">
-                            <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden sticky top-6">
-                                <div className="p-5 pb-4 border-b border-slate-100">
-                                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 border-2 border-slate-200">
-                                        <UserPlus className="text-slate-600" size={22} />
+                            <div className="bg-white rounded-2xl border-4 border-slate-900 overflow-hidden sticky top-6 shadow-hard">
+                                <div className="p-5 pb-4 border-b-4 border-slate-900 bg-emerald-300 relative">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 rounded-full blur-xl mix-blend-overlay"></div>
+                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] relative z-10">
+                                        <UserPlus className="text-slate-900" size={22} />
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-800">Undang Anggota</h3>
+                                    <h3 className="text-xl font-heading font-black text-slate-900 relative z-10">Undang Anggota</h3>
                                 </div>
 
                                 <form onSubmit={handleRegister} className="p-5 space-y-4">
                                     {/* Nama */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Nama Anggota</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Nama Anggota</label>
                                         <input type="text" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-violet-400 focus:bg-white transition-all"
+                                            className="w-full bg-white border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                             placeholder="Nama Lengkap" />
                                     </div>
                                     {/* Email */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Email Pribadi Anggota</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Email Pribadi Anggota</label>
                                         <div className="relative">
-                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                             <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-violet-400 focus:bg-white transition-all"
+                                                className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="user@gmail.com" />
                                         </div>
                                     </div>
                                     {/* Username */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Username Unik</label>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Username Unik</label>
                                         <div className="relative">
-                                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                             <input type="text" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-violet-400 focus:bg-white transition-all"
+                                                className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="contoh: andi_dev" />
                                         </div>
                                     </div>
                                     {/* Password */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Password Sementara</label>
-                                        <div className="relative">
-                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Password Sementara</label>
+                                        <div className="relative group">
+                                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                             <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-violet-400 focus:bg-white transition-all"
+                                                className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-10 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="Min. 6 Karakter" />
-                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 z-10">
                                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
                                         </div>
                                     </div>
-                                    {/* Target Workspace */}
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Target Workspace</label>
-                                        <div className="relative">
-                                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                            <select value={form.workspace_id} onChange={e => setForm(f => ({ ...f, workspace_id: e.target.value }))}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-violet-400 focus:bg-white transition-all appearance-none cursor-pointer">
-                                                <option value="">Pilih workspace (opsional)</option>
-                                                {workspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
-                                            </select>
-                                        </div>
-                                    </div>
+
                                     {/* Subscription Period - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">Subscription Berakhir</label>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Subscription Berakhir</label>
                                             <div className="relative">
-                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                                 <input type="datetime-local" value={form.subscription_end} onChange={e => setForm(f => ({ ...f, subscription_end: e.target.value }))}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-violet-400 focus:bg-white transition-all" />
+                                                    className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all" />
                                             </div>
-                                            <p className="text-[10px] text-slate-400 mt-1">Kosongkan untuk akses unlimited. Subscription aktif otomatis sejak hari ini.</p>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-1">Kosongkan untuk akses unlimited.</p>
                                         </div>
                                     )}
 
-                                    {formError && <div className="bg-red-50 text-red-600 text-xs font-medium px-3 py-2 rounded-lg border border-red-200">{formError}</div>}
-                                    {formSuccess && <div className="bg-emerald-50 text-emerald-600 text-xs font-medium px-3 py-2 rounded-lg border border-emerald-200">{formSuccess}</div>}
+                                    {formError && <div className="bg-red-50 text-red-600 font-bold text-xs px-3 py-2 rounded-xl border-2 border-red-200">{formError}</div>}
+                                    {formSuccess && <div className="bg-emerald-50 text-emerald-600 font-bold text-xs px-3 py-2 rounded-xl border-2 border-emerald-200">{formSuccess}</div>}
 
                                     <button type="submit" disabled={registering}
-                                        className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-violet-200 border-2 border-violet-700 flex items-center justify-center gap-2 text-sm">
+                                        className="w-full bg-accent hover:bg-violet-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[2px_2px_0px_#0f172a] hover:translate-x-[2px] hover:translate-y-[2px] flex items-center justify-center gap-2 text-sm uppercase tracking-wide">
                                         {registering ? <><Loader2 className="animate-spin" size={16} /> Mendaftarkan...</> : 'Daftarkan User'}
                                     </button>
                                 </form>
@@ -388,82 +387,104 @@ export const UserManagement: React.FC = () => {
 
                         {/* ===== USER TABLE ===== */}
                         <div className="flex-1 min-w-0">
-                            <Card className="overflow-hidden p-0">
-                                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                    <div className="flex items-center gap-2">
-                                        <Users className="text-slate-400" size={18} />
-                                        <h3 className="font-bold text-slate-700 text-sm">Daftar User ({users.length})</h3>
+                            <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-hard flex flex-col overflow-hidden">
+                                <div className="px-6 py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-primary relative gap-4">
+                                    {/* Geometric detail */}
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 blur-2xl rounded-full"></div>
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
+                                            <Users className="text-slate-800" size={20} />
+                                        </div>
+                                        <h3 className="font-heading font-black text-white text-xl">Daftar User ({users.length})</h3>
+                                    </div>
+
+                                    {/* SEARCH BAR */}
+                                    <div className="relative w-full sm:w-64 z-10">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Cari nama / username..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent transition-all shadow-[2px_2px_0px_#0f172a]"
+                                        />
                                     </div>
                                 </div>
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto bg-white">
                                     <table className="w-full text-left">
-                                        <thead className="bg-slate-50 border-b-2 border-slate-100">
+                                        <thead className="bg-slate-50 border-b-4 border-slate-900">
                                             <tr>
-                                                <th className="p-4 text-xs font-bold text-slate-500">User</th>
-                                                <th className="p-4 text-xs font-bold text-slate-500">Username</th>
-                                                <th className="p-4 text-xs font-bold text-slate-500">Role</th>
-                                                <th className="p-4 text-xs font-bold text-slate-500">Status</th>
-                                                <th className="p-4 text-xs font-bold text-slate-500">Subscription</th>
-                                                <th className="p-4 text-xs font-bold text-slate-500 text-right">Action</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">User</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Username</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Status</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest text-right">Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100">
+                                        <tbody className="divide-y-2 divide-slate-100">
                                             {loading ? (
                                                 <tr><td colSpan={6} className="p-8 text-center text-slate-400"><div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" size={20} /> Memuat data...</div></td></tr>
                                             ) : users.length === 0 ? (
                                                 <tr><td colSpan={6} className="p-8 text-center text-slate-400 font-bold">Tidak ada user.</td></tr>
                                             ) : (
-                                                users.map(user => {
-                                                    const subStatus = getSubscriptionStatus(user);
-                                                    return (
-                                                        <tr key={user.id} className="hover:bg-violet-50/50 transition-colors cursor-pointer" onClick={() => openDetail(user)}>
-                                                            <td className="p-4">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="relative">
-                                                                        <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                                            className="w-10 h-10 rounded-full border border-slate-200 bg-slate-200 object-cover" alt="Avatar" />
-                                                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                                users
+                                                    .filter(u =>
+                                                        (u.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                                        u.username.toLowerCase().includes(searchQuery.toLowerCase())
+                                                    )
+                                                    .map(user => {
+                                                        const subStatus = getSubscriptionStatus(user);
+                                                        return (
+                                                            <tr key={user.id} className="hover:bg-violet-50/50 transition-colors cursor-pointer" onClick={() => openDetail(user)}>
+                                                                <td className="p-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="relative">
+                                                                            <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
+                                                                                className="w-10 h-10 rounded-full border border-slate-200 bg-slate-200 object-cover" alt="Avatar" />
+                                                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="font-bold text-slate-800 block text-sm">{user.full_name || 'No Name'}</span>
+                                                                            {user.email && <span className="text-[11px] text-slate-400">{user.email}</span>}
+                                                                        </div>
                                                                     </div>
-                                                                    <div>
-                                                                        <span className="font-bold text-slate-800 block text-sm">{user.full_name || 'No Name'}</span>
-                                                                        {user.email && <span className="text-[11px] text-slate-400">{user.email}</span>}
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                            <td className="p-4 font-mono text-sm text-slate-600">@{user.username}</td>
-                                                            <td className="p-4">
-                                                                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${user.role === 'Developer' ? 'bg-slate-800 text-white border-slate-900' :
-                                                                    user.role === 'Admin' || user.role === 'Owner' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                                                                        'bg-slate-100 text-slate-600 border-slate-200'
-                                                                    }`}>{user.role}</span>
-                                                            </td>
-                                                            <td className="p-4">
-                                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${subStatus.color}`}>
-                                                                    {subStatus.active ? <CheckCircle size={11} /> : <XCircle size={11} />}
-                                                                    {subStatus.label}
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-4 text-xs text-slate-500">
-                                                                {user.subscription_end
-                                                                    ? `s/d ${new Date(user.subscription_end).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                                    : <span className="text-slate-400">Unlimited</span>
-                                                                }
-                                                            </td>
-                                                            <td className="p-4 text-right">
-                                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id, user.username); }}
-                                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                                    title="Hapus User" disabled={user.username === 'arunika'}>
-                                                                    <Trash2 size={18} />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })
+                                                                </td>
+                                                                <td className="p-4 font-mono text-sm text-slate-600">@{user.username}</td>
+                                                                <td className="p-4">
+                                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${user.role === 'Developer' ? 'bg-slate-800 text-white border-slate-900' :
+                                                                        user.role === 'Admin' || user.role === 'Owner' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                                                            'bg-slate-100 text-slate-600 border-slate-200'
+                                                                        }`}>{user.role}</span>
+                                                                </td>
+                                                                <td className="p-4">
+                                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${subStatus.color}`}>
+                                                                        {subStatus.active ? <CheckCircle size={11} /> : <XCircle size={11} />}
+                                                                        {subStatus.label}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-xs text-slate-500">
+                                                                    {user.subscription_end
+                                                                        ? `s/d ${new Date(user.subscription_end).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                                        : <span className="text-slate-400">Unlimited</span>
+                                                                    }
+                                                                </td>
+                                                                <td className="p-4 text-right">
+                                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id, user.username); }}
+                                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                        title="Hapus User" disabled={user.username === 'arunika'}>
+                                                                        <Trash2 size={18} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })
                                             )}
                                         </tbody>
                                     </table>
                                 </div>
-                            </Card>
+                            </div>
                         </div>
                     </div>
 
@@ -474,41 +495,41 @@ export const UserManagement: React.FC = () => {
                             return (
                                 <div className="space-y-6">
                                     {/* User Header */}
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-start gap-4 p-4 border-2 border-slate-900 rounded-2xl bg-slate-50 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
                                         <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                            className="w-20 h-20 rounded-2xl border-2 border-slate-200 object-cover" alt="Avatar" />
-                                        <div>
-                                            <h3 className="text-xl font-bold text-slate-800">{selectedUser.full_name}</h3>
-                                            <p className="text-sm text-slate-500">@{selectedUser.username}</p>
+                                            className="w-20 h-20 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-white" alt="Avatar" />
+                                        <div className="relative z-10">
+                                            <h3 className="text-xl font-heading font-black text-slate-900">{selectedUser.full_name}</h3>
+                                            <p className="text-sm font-bold text-slate-500">@{selectedUser.username}</p>
                                             {/* Role Selector */}
-                                            <div className="mt-1.5 flex items-center gap-2">
-                                                <Users size={12} className="text-slate-400" />
+                                            <div className="mt-2 flex items-center gap-2">
                                                 {(isDeveloper || isAdmin) && selectedUser.username !== 'arunika' ? (
                                                     <select
                                                         value={selectedUser.role}
                                                         onChange={e => handleChangeRole(selectedUser.id, e.target.value)}
-                                                        className="bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none focus:border-violet-400 cursor-pointer"
+                                                        className="bg-white border-2 border-slate-900 rounded-lg px-3 py-1 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer shadow-[2px_2px_0px_#0f172a]"
                                                     >
                                                         <option value="Member">Member</option>
                                                         <option value="Admin">Admin</option>
                                                         {isDeveloper && <option value="Developer">Developer</option>}
                                                     </select>
                                                 ) : (
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${selectedUser.role === 'Developer' ? 'bg-slate-800 text-white border-slate-900' :
-                                                        selectedUser.role === 'Admin' || selectedUser.role === 'Owner' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                                                            'bg-slate-100 text-slate-600 border-slate-200'
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border-2 shadow-[2px_2px_0px_#0f172a] ${selectedUser.role === 'Developer' ? 'bg-slate-900 text-white border-slate-900' :
+                                                        selectedUser.role === 'Admin' || selectedUser.role === 'Owner' ? 'bg-accent text-white border-slate-900' :
+                                                            'bg-white text-slate-900 border-slate-900'
                                                         }`}>
                                                         {selectedUser.role}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="ml-auto">
+                                        <div className="ml-auto relative z-10">
                                             {isDeveloper && (
                                                 <button onClick={() => handleDeleteUser(selectedUser.id, selectedUser.username)}
-                                                    className="p-2.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-colors border border-transparent hover:border-red-200"
+                                                    className="p-3 bg-white text-slate-900 hover:bg-red-500 hover:text-white rounded-xl transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a]"
                                                     disabled={selectedUser.username === 'arunika'} title="Hapus User">
-                                                    <Trash2 size={18} />
+                                                    <Trash2 size={20} />
                                                 </button>
                                             )}
                                         </div>
@@ -516,23 +537,24 @@ export const UserManagement: React.FC = () => {
 
                                     {/* Keanggotaan Workspace */}
                                     <div>
-                                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
-                                            <Layers size={14} /> Keanggotaan Workspace
+                                        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <Layers size={16} /> Keanggotaan Workspace
                                         </h4>
-                                        <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                                        <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
                                             {workspaces.length > 0 ? (
-                                                <div className="space-y-2">
+                                                <div className="space-y-3">
                                                     {workspaces.slice(0, 3).map(ws => (
-                                                        <div key={ws.id} className="flex items-center justify-between">
-                                                            <div>
-                                                                <span className="text-sm font-medium text-slate-700">{ws.name}</span>
-                                                                <span className="ml-2 px-2 py-0.5 text-[10px] font-bold bg-slate-200 text-slate-600 rounded">Member</span>
+                                                        <div key={ws.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-900">
+                                                            <Globe className="text-slate-400" size={16} />
+                                                            <div className="flex-1">
+                                                                <span className="text-sm font-bold text-slate-900">{ws.name}</span>
                                                             </div>
+                                                            <span className="px-2.5 py-1 text-xs font-bold bg-accent text-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded">Member</span>
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-slate-400">Belum ada workspace.</p>
+                                                <p className="text-sm text-slate-500 font-bold p-2">Belum ada workspace.</p>
                                             )}
                                         </div>
                                     </div>
@@ -540,19 +562,19 @@ export const UserManagement: React.FC = () => {
                                     {/* Status Akun - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
-                                                <Power size={14} /> Status Akun
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                                <Power size={16} /> Status Akun
                                             </h4>
-                                            <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedUser.is_active !== false ? 'bg-emerald-100' : 'bg-red-100'}`}>
-                                                        {selectedUser.is_active !== false ? <CheckCircle className="text-emerald-600" size={20} /> : <XCircle className="text-red-500" size={20} />}
+                                            <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center ${selectedUser.is_active !== false ? 'bg-emerald-300' : 'bg-red-300'}`}>
+                                                        {selectedUser.is_active !== false ? <CheckCircle className="text-slate-900" size={24} /> : <XCircle className="text-slate-900" size={24} />}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-700">
-                                                            {selectedUser.is_active !== false ? 'User dapat login' : 'Akun dinonaktifkan'}
+                                                        <p className="text-sm font-black text-slate-900">
+                                                            {selectedUser.is_active !== false ? 'User Dapat Login' : 'Akun Dinonaktifkan'}
                                                         </p>
-                                                        <p className="text-[11px] text-slate-400">
+                                                        <p className="text-xs font-bold text-slate-500">
                                                             {subStatus.label}
                                                         </p>
                                                     </div>
@@ -560,9 +582,9 @@ export const UserManagement: React.FC = () => {
                                                 {/* Toggle */}
                                                 <button
                                                     onClick={() => handleToggleActive(selectedUser)}
-                                                    className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${selectedUser.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                                    className={`relative w-16 h-8 rounded-full border-2 border-slate-900 transition-colors duration-200 shadow-inner ${selectedUser.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`}
                                                 >
-                                                    <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-200 ${selectedUser.is_active !== false ? 'translate-x-7' : 'translate-x-0.5'}`} />
+                                                    <div className={`absolute top-0.5 w-6 h-6 bg-white border-2 border-slate-900 rounded-full shadow-[1px_1px_0px_#0f172a] transition-transform duration-200 ${selectedUser.is_active !== false ? 'translate-x-8' : 'translate-x-0.5'}`} />
                                                 </button>
                                             </div>
                                         </div>
@@ -571,20 +593,20 @@ export const UserManagement: React.FC = () => {
                                     {/* Subscription Period - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
-                                                <Calendar size={14} /> Periode Subscription
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                                <Calendar size={16} /> Periode Subscription
                                             </h4>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-slate-50 rounded-xl border border-slate-200 p-3">
-                                                    <p className="text-[10px] text-slate-400 font-medium mb-1">Mulai</p>
-                                                    <p className="text-sm font-bold text-slate-700">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 text-center">
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Mulai</p>
+                                                    <p className="text-sm font-black text-slate-900">
                                                         {selectedUser.subscription_start
                                                             ? new Date(selectedUser.subscription_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
                                                             : '-'}
                                                     </p>
                                                 </div>
-                                                <div className="bg-slate-50 rounded-xl border border-slate-200 p-3">
-                                                    <p className="text-[10px] text-slate-400 font-medium mb-1">Berakhir</p>
+                                                <div className="bg-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 relative hover:shadow-[4px_4px_0px_#0f172a] transition-all">
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 text-center">Berakhir</p>
                                                     <input
                                                         type="datetime-local"
                                                         value={formatForDatetimeLocal(selectedUser.subscription_end)}
@@ -592,50 +614,50 @@ export const UserManagement: React.FC = () => {
                                                             const isoString = e.target.value ? new Date(e.target.value).toISOString() : '';
                                                             handleUpdateSubscriptionEnd(selectedUser.id, isoString);
                                                         }}
-                                                        className="w-full text-sm font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
+                                                        className="w-full text-sm font-black text-slate-900 bg-transparent text-center focus:outline-none cursor-pointer"
                                                     />
                                                 </div>
                                             </div>
-                                            <p className="text-[10px] text-slate-400 mt-1.5">Kosongkan tanggal berakhir untuk akses unlimited.</p>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-2 text-center">Kosongkan tanggal berakhir untuk akses unlimited.</p>
                                         </div>
                                     )}
 
                                     {/* Password User - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
-                                                <Key size={14} /> Password User
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                                <Key size={16} /> Password User
                                             </h4>
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between">
-                                                    <span className="text-sm font-mono text-slate-700">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 bg-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] px-4 py-3 flex items-center justify-between">
+                                                    <span className="text-sm font-mono font-bold text-slate-900">
                                                         {showDetailPassword ? selectedUser.password : '••••••••'}
                                                     </span>
-                                                    <button onClick={() => setShowDetailPassword(!showDetailPassword)} className="text-slate-400 hover:text-slate-600 ml-2">
-                                                        {showDetailPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    <button onClick={() => setShowDetailPassword(!showDetailPassword)} className="text-slate-500 hover:text-slate-900 ml-2">
+                                                        {showDetailPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                     </button>
                                                 </div>
                                                 <button onClick={() => copyToClipboard(selectedUser.password)}
-                                                    className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-violet-600 hover:border-violet-300 transition-colors" title="Copy password">
-                                                    <Copy size={16} />
+                                                    className="p-3 bg-white border-2 border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-slate-900 hover:bg-accent hover:text-white hover:shadow-[4px_4px_0px_#0f172a] transition-all" title="Copy password">
+                                                    <Copy size={20} />
                                                 </button>
                                             </div>
-                                            <p className="text-[10px] text-slate-400 mt-1.5 italic">Hanya password yang dibuat oleh Admin via Team Space yang terlihat disini.</p>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-2 italic">Hanya password yang dibuat oleh Admin via Team Space yang terlihat.</p>
                                         </div>
                                     )}
 
                                     {/* Beri Akses Workspace Lain */}
                                     <div>
-                                        <h4 className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2">
-                                            <Globe size={14} /> Beri Akses Workspace Lain
+                                        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <Globe size={16} /> Beri Akses Workspace Lain
                                         </h4>
-                                        <div className="flex items-center gap-2">
-                                            <select className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-violet-400 transition-colors appearance-none cursor-pointer">
+                                        <div className="flex items-center gap-3">
+                                            <select className="flex-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer">
                                                 <option value="">Pilih Workspace...</option>
                                                 {workspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
                                             </select>
-                                            <button className="p-3 bg-violet-100 border border-violet-200 rounded-xl text-violet-600 hover:bg-violet-200 transition-colors">
-                                                <UserPlus size={16} />
+                                            <button className="p-3 bg-accent border-2 border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-white hover:shadow-[4px_4px_0px_#0f172a] transition-all">
+                                                <UserPlus size={20} />
                                             </button>
                                         </div>
                                     </div>

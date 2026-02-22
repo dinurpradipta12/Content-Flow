@@ -63,9 +63,26 @@ export const Login: React.FC = () => {
                     }
                 }
 
+                // Check Admin's subscription if user is a sub-member
+                if (data.admin_id) {
+                    const { data: adminData } = await supabase.from('app_users').select('subscription_end, is_active').eq('id', data.admin_id).single();
+                    if (adminData) {
+                        if (adminData.is_active === false) {
+                            throw new Error("Akun Administrator Anda telah dinonaktifkan. Anda tidak dapat login sementara waktu.");
+                        }
+                        if (adminData.subscription_end) {
+                            const adminEnd = new Date(adminData.subscription_end);
+                            if (new Date() > adminEnd) {
+                                throw new Error("Akses ditolak: Langganan Administrator tim Anda telah berakhir.");
+                            }
+                        }
+                    }
+                }
+
                 // Login Success
                 localStorage.setItem('isAuthenticated', 'true');
                 localStorage.setItem('user_id', data.id);
+                localStorage.setItem('tenant_id', data.admin_id || data.id);
                 localStorage.setItem('user_name', data.full_name || data.username);
                 localStorage.setItem('user_role', data.role || 'Member');
                 localStorage.setItem('user_avatar', data.avatar_url || 'https://picsum.photos/40/40');

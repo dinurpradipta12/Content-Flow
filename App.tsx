@@ -10,6 +10,7 @@ import { CarouselMaker } from './pages/CarouselMaker';
 import { TeamKPIBoard } from './pages/TeamKPIBoard';
 import { Login } from './pages/Login';
 import { UserManagement } from './pages/UserManagement';
+import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
 
 // Auth Guard Component
@@ -68,7 +69,7 @@ const App: React.FC = () => {
           <Route path="profile" element={<Profile />} />
 
           {/* Admin Routes (Developer + Admin) */}
-          <Route path="admin/team" element={<RequireAdmin><PlaceholderPage title="Team Management" /></RequireAdmin>} />
+          <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
           <Route path="admin/workspace" element={<RequireAdmin><PlaceholderPage title="Workspace Settings" /></RequireAdmin>} />
 
           {/* Developer Routes (Developer only) */}

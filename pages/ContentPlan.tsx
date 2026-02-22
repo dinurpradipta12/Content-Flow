@@ -27,7 +27,7 @@ const renderPlatformIcon = (code: string) => {
         case 'IG': return <div key="IG" title="Instagram" className={`bg-pink-100 text-pink-600 ${style}`}><Instagram size={18} /></div>;
         case 'TK': return <div key="TK" title="TikTok" className={`bg-black text-white ${style}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
             </svg>
         </div>;
         case 'LI': return <div key="LI" title="LinkedIn" className={`bg-blue-100 text-blue-700 ${style}`}><Linkedin size={18} /></div>;
@@ -47,7 +47,7 @@ const getAccountStyle = (platforms: string[]) => {
     if (platforms.includes('FB')) return 'bg-blue-50 text-blue-600 border-blue-200';
     if (platforms.includes('TK')) return 'bg-slate-900 text-white border-slate-700';
     if (platforms.includes('TH')) return 'bg-slate-100 text-slate-900 border-slate-300';
-    
+
     return 'bg-slate-50 text-slate-600 border-slate-200';
 };
 
@@ -57,7 +57,7 @@ export const ContentPlan: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -76,7 +76,7 @@ export const ContentPlan: React.FC = () => {
         profileLinks: {} as Record<string, string>,
         accountNames: {} as Record<string, string> // New: Store usernames per platform
     });
-    
+
     const [currentUserName, setCurrentUserName] = useState('Anda');
 
     // --- SUPABASE INTEGRATION ---
@@ -115,13 +115,13 @@ export const ContentPlan: React.FC = () => {
                 // Sync Logic: If I am the creator/owner (role Owner), ensure my fresh avatar is the first member
                 // If I am just a member, ensure my fresh avatar replaces my old one in the list (simple approximation)
                 let currentMembers = ws.members || ['https://picsum.photos/40/40'];
-                
+
                 if (freshAvatar) {
                     if (ws.role === 'Owner') {
-                         // Force update owner avatar at index 0
-                         if (currentMembers.length > 0) currentMembers[0] = freshAvatar;
-                         else currentMembers = [freshAvatar];
-                    } 
+                        // Force update owner avatar at index 0
+                        if (currentMembers.length > 0) currentMembers[0] = freshAvatar;
+                        else currentMembers = [freshAvatar];
+                    }
                     // Note: Ideally we match by User ID, but since members is string[], 
                     // for this version we trust the Owner flag for the first slot.
                 }
@@ -153,7 +153,7 @@ export const ContentPlan: React.FC = () => {
 
     useEffect(() => {
         fetchWorkspaces();
-        
+
         const handleClickOutside = () => setActiveMenu(null);
         document.addEventListener('click', handleClickOutside);
 
@@ -248,7 +248,7 @@ export const ContentPlan: React.FC = () => {
 
     const handleSaveWorkspace = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         const colors: ('violet' | 'pink' | 'yellow' | 'green')[] = ['violet', 'pink', 'yellow', 'green'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
         const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
@@ -303,7 +303,7 @@ export const ContentPlan: React.FC = () => {
                 .select('*')
                 .eq('invite_code', joinCode)
                 .single();
-            
+
             if (error || !data) {
                 alert("Kode workspace tidak valid atau tidak ditemukan.");
                 return;
@@ -312,16 +312,16 @@ export const ContentPlan: React.FC = () => {
             // 2. Check if already joined (Assuming based on avatar for this demo as we don't have proper user IDs)
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
             const currentMembers: string[] = data.members || [];
-            
+
             // Simple duplication check
             if (!currentMembers.includes(currentUserAvatar)) {
-                 const updatedMembers = [...currentMembers, currentUserAvatar];
-                 const { error: updateError } = await supabase
+                const updatedMembers = [...currentMembers, currentUserAvatar];
+                const { error: updateError } = await supabase
                     .from('workspaces')
                     .update({ members: updatedMembers })
                     .eq('id', data.id);
-                 
-                 if (updateError) throw updateError;
+
+                if (updateError) throw updateError;
             }
 
             alert(`Berhasil bergabung ke workspace: ${data.name}`);
@@ -344,13 +344,13 @@ export const ContentPlan: React.FC = () => {
             } else {
                 newPlatforms = [...prev.platforms, code];
             }
-            
+
             // Auto-generate profile link placeholder if not exists
             const newLinks = { ...prev.profileLinks };
             if (!exists && !newLinks[code]) {
-                newLinks[code] = ''; 
+                newLinks[code] = '';
             }
-            
+
             return { ...prev, platforms: newPlatforms, profileLinks: newLinks };
         });
     };
@@ -385,19 +385,19 @@ export const ContentPlan: React.FC = () => {
                     <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight">Workspace Konten</h2>
                     <p className="text-slate-500 font-medium mt-2">Pilih workspace untuk mulai mengelola konten.</p>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
-                    <Button 
+                    <Button
                         // Style adjusted to match primary structure but with Tertiary (Yellow) color
                         className="bg-tertiary text-slate-900 hover:bg-[#FCD34D] whitespace-nowrap"
-                        icon={<Users size={18}/>} 
+                        icon={<Users size={18} />}
                         onClick={() => setIsJoinModalOpen(true)}
                     >
                         Gabung Workspace
                     </Button>
-                    
-                    <Button 
-                        icon={<Plus size={18}/>} 
+
+                    <Button
+                        icon={<Plus size={18} />}
                         className="whitespace-nowrap"
                         onClick={handleOpenCreateModal}
                     >
@@ -417,21 +417,21 @@ export const ContentPlan: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {/* Workspace Cards */}
                     {workspaces.map((ws) => (
-                        <Card 
-                            key={ws.id} 
+                        <Card
+                            key={ws.id}
                             className="h-[320px] flex flex-col cursor-pointer hover:-translate-y-2 overflow-hidden relative"
                             headerColor={ws.color}
                             onClick={() => navigate(`/plan/${ws.id}`)}
                         >
                             {/* --- LOGO BACKGROUND (Decorative) --- */}
                             {ws.logoUrl ? (
-                                <img 
-                                    src={ws.logoUrl} 
+                                <img
+                                    src={ws.logoUrl}
                                     alt="bg-logo"
                                     className="absolute -top-6 -right-6 w-40 h-40 object-contain opacity-10 rotate-12 pointer-events-none z-0"
                                 />
                             ) : (
-                                <Layers 
+                                <Layers
                                     className="absolute -top-6 -right-6 w-40 h-40 text-slate-400 opacity-5 rotate-12 pointer-events-none z-0"
                                 />
                             )}
@@ -445,10 +445,10 @@ export const ContentPlan: React.FC = () => {
                                         </React.Fragment>
                                     ))}
                                 </div>
-                                
+
                                 {/* Menu Button & Dropdown */}
                                 <div className="relative">
-                                    <button 
+                                    <button
                                         className={`p-1.5 rounded-full transition-colors border-2 border-transparent ${activeMenu === ws.id ? 'bg-slate-100 border-slate-200' : 'hover:bg-slate-100'}`}
                                         onClick={(e) => toggleMenu(e, ws.id)}
                                     >
@@ -457,15 +457,15 @@ export const ContentPlan: React.FC = () => {
 
                                     {activeMenu === ws.id && (
                                         <div className="absolute right-0 top-full mt-2 w-56 bg-white border-2 border-slate-800 rounded-xl shadow-hard z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                            <button 
+                                            <button
                                                 onClick={(e) => handleOpenEditModal(e, ws)}
                                                 className="w-full text-left px-4 py-3 hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3 transition-colors"
                                             >
-                                                <Edit size={16} className="text-accent"/>
+                                                <Edit size={16} className="text-accent" />
                                                 Edit Info Workspace
                                             </button>
                                             <div className="h-[2px] bg-slate-100 w-full"></div>
-                                            <button 
+                                            <button
                                                 onClick={(e) => handleDeleteWorkspace(e, ws.id)}
                                                 className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-500 font-bold flex items-center gap-3 transition-colors"
                                             >
@@ -482,7 +482,7 @@ export const ContentPlan: React.FC = () => {
                                 {/* Logo display in card */}
                                 {ws.logoUrl && (
                                     <div className="w-12 h-12 flex-shrink-0 bg-white rounded-lg border border-slate-200 overflow-hidden p-1 shadow-sm">
-                                         <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
+                                        <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
                                     </div>
                                 )}
                                 <h3 className="text-2xl font-black font-heading text-slate-800 leading-tight line-clamp-1 drop-shadow-sm" title={ws.name}>{ws.name}</h3>
@@ -496,7 +496,7 @@ export const ContentPlan: React.FC = () => {
 
                                 {ws.accountName && (
                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border-2 ${getAccountStyle(ws.platforms)}`}>
-                                        <AtSign size={12}/>
+                                        <AtSign size={12} />
                                         {ws.accountName.replace('@', '')}
                                     </span>
                                 )}
@@ -509,7 +509,7 @@ export const ContentPlan: React.FC = () => {
                                     <span>{ws.totalContent > 0 ? Math.round((ws.publishedCount / ws.totalContent) * 100) : 0}%</span>
                                 </div>
                                 <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
-                                    <div 
+                                    <div
                                         className={`h-full rounded-full ${ws.color === 'violet' ? 'bg-accent' : ws.color === 'pink' ? 'bg-secondary' : 'bg-tertiary'} border-r-2 border-slate-900/10 transition-all duration-500`}
                                         style={{ width: `${ws.totalContent > 0 ? (ws.publishedCount / ws.totalContent) * 100 : 0}%` }}
                                     ></div>
@@ -522,14 +522,19 @@ export const ContentPlan: React.FC = () => {
 
                             {/* 5. Footer Row: Members & Action (Pushed to bottom) */}
                             <div className="mt-auto pt-4 border-t-2 border-slate-100 border-dashed flex items-center justify-between gap-3 relative z-10">
-                                <div className="flex -space-x-2 overflow-hidden flex-shrink-0">
-                                    {ws.members.map((url, i) => (
-                                        <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover" alt="Member" />
+                                <div className="flex -space-x-2 overflow-hidden flex-shrink-0 items-center">
+                                    {ws.members.slice(0, 3).map((url, i) => (
+                                        <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover z-20" alt="Member" />
                                     ))}
+                                    {ws.members.length > 3 && (
+                                        <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 z-10 relative">
+                                            +{ws.members.length - 3}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="text-accent font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all whitespace-nowrap min-w-0">
-                                    <span>Buka Board</span> 
-                                    <ArrowRight size={16} className="flex-shrink-0"/>
+                                    <span>Buka Board</span>
+                                    <ArrowRight size={16} className="flex-shrink-0" />
                                 </div>
                             </div>
                         </Card>
@@ -537,7 +542,7 @@ export const ContentPlan: React.FC = () => {
                     {workspaces.length === 0 && (
                         <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
                             <h3 className="text-slate-400 font-bold text-lg">Belum ada workspace.</h3>
-                            <Button className="mt-4" onClick={handleOpenCreateModal} icon={<Plus size={18}/>}>Buat Baru Sekarang</Button>
+                            <Button className="mt-4" onClick={handleOpenCreateModal} icon={<Plus size={18} />}>Buat Baru Sekarang</Button>
                         </div>
                     )}
                 </div>
@@ -550,22 +555,22 @@ export const ContentPlan: React.FC = () => {
                 title={modalMode === 'create' ? 'Buat Workspace Baru' : 'Edit Info Workspace'}
             >
                 <form onSubmit={handleSaveWorkspace} className="space-y-5">
-                    
+
                     {/* Top Section: Logo & Basic Info */}
                     <div className="flex gap-4">
                         <div className="flex-shrink-0">
                             <label className="font-bold text-xs text-slate-600 block mb-1">Logo</label>
-                            
+
                             {/* Hidden File Input */}
-                            <input 
-                                type="file" 
+                            <input
+                                type="file"
                                 ref={fileInputRef}
                                 onChange={handleImageUpload}
                                 accept="image/png, image/jpeg"
                                 className="hidden"
                             />
 
-                            <div 
+                            <div
                                 onClick={triggerFileInput}
                                 className="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-accent hover:border-accent cursor-pointer transition-colors relative overflow-hidden group"
                             >
@@ -577,18 +582,18 @@ export const ContentPlan: React.FC = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <Upload size={24} className="mb-1"/>
+                                        <Upload size={24} className="mb-1" />
                                         <span className="text-[10px] font-bold text-center px-1">Upload PNG</span>
                                     </>
                                 )}
                             </div>
                         </div>
                         <div className="flex-1 space-y-4">
-                            <Input 
-                                label="Nama Workspace" 
-                                placeholder="Contoh: Arunika Personal" 
+                            <Input
+                                label="Nama Workspace"
+                                placeholder="Contoh: Arunika Personal"
                                 value={formData.name}
-                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
                             />
                         </div>
@@ -599,12 +604,12 @@ export const ContentPlan: React.FC = () => {
                         <label className="font-bold text-xs text-slate-600 mb-2 block ml-1">Platform (Pilih Minimal 1)</label>
                         <div className="flex flex-wrap gap-3 mb-4">
                             {[
-                                { id: 'IG', label: 'Instagram', icon: <Instagram size={18}/>, color: 'hover:bg-pink-50 hover:border-pink-200 hover:text-pink-600' },
-                                { id: 'TK', label: 'TikTok', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-black' },
-                                { id: 'YT', label: 'YouTube', icon: <Youtube size={18}/>, color: 'hover:bg-red-50 hover:border-red-200 hover:text-red-600' },
-                                { id: 'LI', label: 'LinkedIn', icon: <Linkedin size={18}/>, color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700' },
-                                { id: 'FB', label: 'Facebook', icon: <Facebook size={18}/>, color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600' },
-                                { id: 'TH', label: 'Threads', icon: <AtSign size={18}/>, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900' },
+                                { id: 'IG', label: 'Instagram', icon: <Instagram size={18} />, color: 'hover:bg-pink-50 hover:border-pink-200 hover:text-pink-600' },
+                                { id: 'TK', label: 'TikTok', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-black' },
+                                { id: 'YT', label: 'YouTube', icon: <Youtube size={18} />, color: 'hover:bg-red-50 hover:border-red-200 hover:text-red-600' },
+                                { id: 'LI', label: 'LinkedIn', icon: <Linkedin size={18} />, color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700' },
+                                { id: 'FB', label: 'Facebook', icon: <Facebook size={18} />, color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600' },
+                                { id: 'TH', label: 'Threads', icon: <AtSign size={18} />, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900' },
                             ].map((p) => {
                                 const isSelected = formData.platforms.includes(p.id);
                                 return (
@@ -612,11 +617,10 @@ export const ContentPlan: React.FC = () => {
                                         key={p.id}
                                         type="button"
                                         onClick={() => togglePlatform(p.id)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all font-bold text-sm ${
-                                            isSelected 
-                                            ? 'bg-slate-800 border-slate-800 text-white shadow-hard' 
-                                            : `bg-white border-slate-200 text-slate-500 ${p.color}`
-                                        }`}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all font-bold text-sm ${isSelected
+                                                ? 'bg-slate-800 border-slate-800 text-white shadow-hard'
+                                                : `bg-white border-slate-200 text-slate-500 ${p.color}`
+                                            }`}
                                     >
                                         {p.icon}
                                         {p.label}
@@ -633,22 +637,22 @@ export const ContentPlan: React.FC = () => {
                                     <div key={code} className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-200 last:border-0 last:pb-0">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 flex justify-center text-slate-400">
-                                                {code === 'IG' ? <Instagram size={16}/> : 
-                                                 code === 'YT' ? <Youtube size={16}/> : 
-                                                 code === 'LI' ? <Linkedin size={16}/> : 
-                                                 code === 'FB' ? <Facebook size={16}/> : 
-                                                 code === 'TH' ? <AtSign size={16}/> : <span className="font-bold text-xs">{code}</span>}
+                                                {code === 'IG' ? <Instagram size={16} /> :
+                                                    code === 'YT' ? <Youtube size={16} /> :
+                                                        code === 'LI' ? <Linkedin size={16} /> :
+                                                            code === 'FB' ? <Facebook size={16} /> :
+                                                                code === 'TH' ? <AtSign size={16} /> : <span className="font-bold text-xs">{code}</span>}
                                             </div>
-                                            <Input 
+                                            <Input
                                                 placeholder={`Username ${code === 'IG' ? 'Instagram' : code} (e.g. @arunika)`}
                                                 value={formData.accountNames[code] || ''}
                                                 onChange={(e) => handleAccountNameChange(code, e.target.value)}
                                                 className="h-9 text-xs"
-                                                icon={<AtSign size={14}/>}
+                                                icon={<AtSign size={14} />}
                                             />
                                         </div>
                                         <div className="flex-1">
-                                            <Input 
+                                            <Input
                                                 placeholder={`Link Profile ${code === 'IG' ? 'Instagram' : code}...`}
                                                 value={formData.profileLinks[code] || ''}
                                                 onChange={(e) => handleProfileLinkChange(code, e.target.value)}
@@ -663,27 +667,27 @@ export const ContentPlan: React.FC = () => {
 
                     {/* Description & Period */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input 
-                            label="Periode Workspace (Bulan)" 
+                        <Input
+                            label="Periode Workspace (Bulan)"
                             type="month"
                             value={formData.period}
-                            onChange={(e) => setFormData({...formData, period: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, period: e.target.value })}
                         />
                         <div className="flex flex-col gap-1">
-                             <label className="font-bold text-xs text-slate-600 ml-1">Owner</label>
-                             <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-500 cursor-not-allowed">
+                            <label className="font-bold text-xs text-slate-600 ml-1">Owner</label>
+                            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-500 cursor-not-allowed">
                                 <User size={18} />
                                 <span className="font-bold text-sm">{currentUserName} (Anda)</span>
-                             </div>
+                            </div>
                         </div>
                     </div>
 
-                    <Textarea 
-                        label="Keterangan Workspace" 
+                    <Textarea
+                        label="Keterangan Workspace"
                         placeholder="Deskripsikan tujuan workspace ini..."
                         className="min-h-[100px]"
                         value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
 
                     {/* Footer Actions */}
@@ -709,7 +713,7 @@ export const ContentPlan: React.FC = () => {
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-600 mb-2">
                         Masukkan kode undangan yang diberikan oleh pemilik workspace untuk bergabung. Anda akan otomatis ditambahkan sebagai member.
                     </div>
-                    <Input 
+                    <Input
                         label="Kode Undangan"
                         placeholder="Contoh: X7K9L2"
                         value={joinCode}
@@ -718,11 +722,11 @@ export const ContentPlan: React.FC = () => {
                         className="uppercase font-mono tracking-widest text-center text-lg"
                         maxLength={6}
                     />
-                     <div className="pt-4 flex justify-end gap-3">
+                    <div className="pt-4 flex justify-end gap-3">
                         <Button type="button" variant="secondary" onClick={() => setIsJoinModalOpen(false)}>
                             Batal
                         </Button>
-                        <Button type="submit" icon={<Users size={18}/>}>
+                        <Button type="submit" icon={<Users size={18} />}>
                             Gabung Sekarang
                         </Button>
                     </div>
