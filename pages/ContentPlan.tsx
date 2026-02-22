@@ -92,9 +92,11 @@ export const ContentPlan: React.FC = () => {
             setCurrentUserName(freshName);
 
             // 1. Fetch Workspaces
+            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
             const { data: wsData, error: wsError } = await supabase
                 .from('workspaces')
                 .select('*')
+                .eq('admin_id', tenantId)
                 .order('created_at', { ascending: false });
 
             if (wsError) throw wsError;
@@ -265,7 +267,8 @@ export const ContentPlan: React.FC = () => {
                         period: formData.period,
                         account_name: formData.accountName,
                         logo_url: formData.logoUrl, // Base64 string is saved here
-                        members: [currentUserAvatar] // Use current user avatar for sync accuracy
+                        members: [currentUserAvatar], // Use current user avatar for sync accuracy
+                        admin_id: localStorage.getItem('tenant_id') || localStorage.getItem('user_id')
                     }
                 ]).select();
 
@@ -618,8 +621,8 @@ export const ContentPlan: React.FC = () => {
                                         type="button"
                                         onClick={() => togglePlatform(p.id)}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all font-bold text-sm ${isSelected
-                                                ? 'bg-slate-800 border-slate-800 text-white shadow-hard'
-                                                : `bg-white border-slate-200 text-slate-500 ${p.color}`
+                                            ? 'bg-slate-800 border-slate-800 text-white shadow-hard'
+                                            : `bg-white border-slate-200 text-slate-500 ${p.color}`
                                             }`}
                                     >
                                         {p.icon}

@@ -73,8 +73,9 @@ export const TeamKPIBoard: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
+            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
             const [membersRes, kpisRes] = await Promise.all([
-                supabase.from('team_members').select('*').order('full_name'),
+                supabase.from('team_members').select('*').eq('admin_id', tenantId).order('full_name'),
                 supabase.from('team_kpis').select('*').order('created_at', { ascending: false }),
             ]);
             if (membersRes.data) setMembers(membersRes.data);
@@ -116,11 +117,13 @@ export const TeamKPIBoard: React.FC = () => {
 
     const handleAddMember = async () => {
         if (!newMember.full_name.trim()) return;
+        const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
         const { error } = await supabase.from('team_members').insert([{
             full_name: newMember.full_name,
             role: newMember.role || 'Member',
             department: newMember.department,
             avatar_url: newMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(newMember.full_name)}`,
+            admin_id: tenantId
         }]);
         if (!error) {
             setNewMember({ full_name: '', role: '', department: '', avatar_url: '' });

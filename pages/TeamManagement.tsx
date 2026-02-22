@@ -44,9 +44,11 @@ export const TeamManagement: React.FC = () => {
         setLoading(true);
         try {
             // Fetch workspaces that current user is a part of
+            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
             const { data: wsData, error: wsError } = await supabase
                 .from('workspaces')
                 .select('*')
+                .eq('admin_id', tenantId)
                 .order('name');
             if (wsError) throw wsError;
 
@@ -59,8 +61,13 @@ export const TeamManagement: React.FC = () => {
             }
             setWorkspaces(myWorkspaces);
 
-            if (myWorkspaces.length > 0 && !selectedWorkspace) {
-                setSelectedWorkspace(myWorkspaces[0]);
+            if (myWorkspaces.length > 0) {
+                if (!selectedWorkspace) {
+                    setSelectedWorkspace(myWorkspaces[0]);
+                } else {
+                    const updatedSelected = myWorkspaces.find(w => w.id === selectedWorkspace.id);
+                    if (updatedSelected) setSelectedWorkspace(updatedSelected);
+                }
             }
 
             // Fetch all users to map avatars

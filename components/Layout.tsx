@@ -335,9 +335,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Listen for Role & Subscription Changes via Realtime + Local Poll
     useEffect(() => {
         const currentUserId = localStorage.getItem('user_id');
+        const tenantId = localStorage.getItem('tenant_id');
         if (!currentUserId) return;
 
-        // 1. Realtime Listener
+        // 1. Realtime Listener for Current User
         const userChannel = supabase
             .channel('app_users_status_checker')
             .on(
@@ -370,7 +371,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             )
             .subscribe();
 
-        // 2. Local Polling for Time-based Expiration
+        // 1b. Realtime Listener for Admin/Tenant (Auto Logout if Admin Deactivated)
+        let tenantChannel: any = null;
+        if (tenantId && tenantId !== currentUserId) {
+            tenantChannel = supabase
+                .channel('app_users_admin_checker')
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${tenantId}` },
+                    (payload: any) => {
+                        if (payload.new.is_active === false) {
+                            alert("Sesi berakhir karena Administrator tim Anda telah dinonaktifkan.");
+                            localStorage.clear();
+                            navigate('/login');
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
+        // 2. Local Polling for Time-based Expiration & Tenant Check
         const subInterval = setInterval(async () => {
             const subEnd = localStorage.getItem('subscription_end');
             if (subEnd) {
@@ -380,10 +400,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     localStorage.removeItem('subscription_end'); // prevent looping updates
                 }
             }
-        }, 10000); // Check every 10 seconds
+
+            // Check Admin Status periodically just in case realtime drops
+            if (tenantId && tenantId !== currentUserId) {
+                const { data: adminData } = await supabase.from('app_users').select('is_active').eq('id', tenantId).single();
+                if (adminData && adminData.is_active === false) {
+                    alert("Akses dihentikan: Administrator tim Anda sudah tidak aktif.");
+                    localStorage.clear();
+                    navigate('/login');
+                }
+            }
+
+        }, 15000); // Check every 15 seconds
 
         return () => {
             supabase.removeChannel(userChannel);
+            if (tenantChannel) supabase.removeChannel(tenantChannel);
             clearInterval(subInterval);
         };
     }, []);

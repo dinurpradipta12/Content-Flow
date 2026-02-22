@@ -27,6 +27,7 @@ create table if not exists public.approval_requests (
   current_step_index int not null default 0,
   status text not null default 'Pending',
   form_data jsonb not null,
+  admin_id uuid null references public.app_users(id) on delete cascade,
   constraint approval_requests_pkey primary key (id),
   constraint approval_requests_template_id_fkey foreign key (template_id) references approval_templates (id) on delete cascade
 );
@@ -111,13 +112,15 @@ export const getTemplates = async (): Promise<ApprovalTemplate[]> => {
 };
 
 export const getRequests = async (): Promise<ApprovalRequest[]> => {
+    const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
     const { data, error } = await supabase
         .from('approval_requests')
         .select(`*, template:approval_templates(*)`)
+        .eq('admin_id', tenantId)
         .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     // Map template relation manually if needed, but Supabase handles simple joins well
     return data.map((req: any) => ({
         ...req,
@@ -137,6 +140,7 @@ export const getLogs = async (requestId: string): Promise<ApprovalLog[]> => {
 
 export const createRequest = async (template: ApprovalTemplate, formData: any, user: any) => {
     // 1. Create Request
+    const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
     const { data, error } = await supabase
         .from('approval_requests')
         .insert({
@@ -146,7 +150,8 @@ export const createRequest = async (template: ApprovalTemplate, formData: any, u
             requester_avatar: user.avatar || '',
             current_step_index: 0,
             status: 'Pending',
-            form_data: formData
+            form_data: formData,
+            admin_id: tenantId
         })
         .select()
         .single();
@@ -162,21 +167,21 @@ export const createRequest = async (template: ApprovalTemplate, formData: any, u
 export const processApproval = async (request: ApprovalRequest, action: 'Approve' | 'Reject' | 'Return', comment: string, user: any) => {
     const steps = request.template?.workflow_steps || [];
     const currentStep = steps[request.current_step_index];
-    
+
     let nextStatus: any = request.status;
     let nextStepIndex = request.current_step_index;
 
     if (action === 'Approve') {
         // Check for next step
         const nextStep = steps[request.current_step_index + 1];
-        
+
         if (nextStep) {
             // Check condition for next step
             if (nextStep.condition) {
                 const { field, operator, value } = nextStep.condition;
                 const formValue = request.form_data[field];
                 let conditionMet = false;
-                
+
                 // Simple evaluation
                 if (operator === '>') conditionMet = Number(formValue) > Number(value);
                 else if (operator === '<') conditionMet = Number(formValue) < Number(value);
@@ -192,7 +197,7 @@ export const processApproval = async (request: ApprovalRequest, action: 'Approve
                     // Let's assume if condition not met, we skip this step and go to next.
                     // But wait, if condition is for Director Approval > 10jt, and amount is 5jt, we skip Director.
                     // So we are DONE if no more steps after skipping.
-                    
+
                     const nextNextStep = steps[request.current_step_index + 2];
                     if (nextNextStep) {
                         nextStepIndex += 2;

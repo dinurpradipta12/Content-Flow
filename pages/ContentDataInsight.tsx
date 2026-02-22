@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { Select, Input } from '../components/ui/Input'; // Import Input component
 import { Modal } from '../components/ui/Modal'; // Import Modal
-import { 
-    Filter, 
-    Trash2, 
-    Instagram, 
-    Calendar, 
-    TrendingUp, 
+import {
+    Filter,
+    Trash2,
+    Instagram,
+    Calendar,
+    TrendingUp,
     RefreshCw,
     Loader2,
     Zap,
@@ -26,13 +26,13 @@ import {
     Eye,
     BarChart2
 } from 'lucide-react';
-import { 
-    LineChart, 
-    Line, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
     ResponsiveContainer,
     AreaChart,
     Area
@@ -46,13 +46,13 @@ export const ContentDataInsight: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
     const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-    
+
     // Filters State
     const [filterPlatform, setFilterPlatform] = useState<string>('all');
     const [filterAccount, setFilterAccount] = useState<string>('all');
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
-    
+
     const [accounts, setAccounts] = useState<string[]>([]);
 
     // --- MANUAL INPUT STATE ---
@@ -71,7 +71,12 @@ export const ContentDataInsight: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data: wsData } = await supabase.from('workspaces').select('account_name');
+            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const { data: wsData } = await supabase
+                .from('workspaces')
+                .select('account_name')
+                .eq('admin_id', tenantId);
+
             if (wsData) {
                 const uniqueAccounts = Array.from(new Set(
                     wsData.map((w: any) => w.account_name).filter((n: string) => n && n.trim() !== '')
@@ -79,10 +84,12 @@ export const ContentDataInsight: React.FC = () => {
                 setAccounts(uniqueAccounts as string[]);
             }
 
+            // Using !inner to enforce filtering by parent table's admin_id
             const { data: items, error } = await supabase
                 .from('content_items')
-                .select(`*, workspaces (name, account_name)`)
+                .select(`*, workspaces!inner(name, account_name, admin_id)`)
                 .eq('status', 'Published')
+                .eq('workspaces.admin_id', tenantId)
                 .order('date', { ascending: true });
 
             if (error) throw error;
@@ -127,7 +134,7 @@ export const ContentDataInsight: React.FC = () => {
 
             if (error) throw error;
 
-            setData(prev => prev.map(item => 
+            setData(prev => prev.map(item =>
                 item.id === id ? { ...item, metrics: metricsData as any } : item
             ));
             setExpandedRowId(id);
@@ -175,7 +182,7 @@ export const ContentDataInsight: React.FC = () => {
             const timestamp = new Date().toISOString();
             // Preserve existing metrics data (like caption/username) but overwrite numbers
             const existingMetrics = selectedItemForInput.metrics || {};
-            
+
             const updatedMetrics = {
                 ...existingMetrics,
                 ...manualMetrics,
@@ -190,10 +197,10 @@ export const ContentDataInsight: React.FC = () => {
 
             if (error) throw error;
 
-            setData(prev => prev.map(item => 
+            setData(prev => prev.map(item =>
                 item.id === selectedItemForInput.id ? { ...item, metrics: updatedMetrics as any } : item
             ));
-            
+
             setIsManualModalOpen(false);
             setExpandedRowId(selectedItemForInput.id); // Auto expand to show result
 
@@ -256,17 +263,17 @@ export const ContentDataInsight: React.FC = () => {
         // If Instagram, use Reach as denominator if available
         if (filterPlatform === Platform.INSTAGRAM && totalReach > 0) {
             er = (totalInteractions / totalReach) * 100;
-        } 
+        }
         // For others (or if Reach is 0), use Views
         else if (totalViews > 0) {
             er = (totalInteractions / totalViews) * 100;
         }
 
-        return { 
-            reach: totalReach, 
-            views: totalViews, 
-            interactions: totalInteractions, 
-            er 
+        return {
+            reach: totalReach,
+            views: totalViews,
+            interactions: totalInteractions,
+            er
         };
     }, [filteredData, filterPlatform]);
 
@@ -278,7 +285,7 @@ export const ContentDataInsight: React.FC = () => {
             const startMonth = start.toLocaleDateString('id-ID', { month: 'long' });
             const endMonth = end.toLocaleDateString('id-ID', { month: 'long' });
             const year = end.getFullYear();
-            
+
             if (startMonth === endMonth) {
                 return `Periode ${startMonth} ${year}`;
             }
@@ -302,13 +309,13 @@ export const ContentDataInsight: React.FC = () => {
 
         // Group by Date
         const groupedByDate: Record<string, number> = {};
-        
+
         // Sort data by date ascending first
         const sortedData = [...filteredData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         sortedData.forEach(item => {
             const dateKey = new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-            
+
             if (!groupedByDate[dateKey]) groupedByDate[dateKey] = 0;
 
             const m = item.metrics || {};
@@ -342,32 +349,32 @@ export const ContentDataInsight: React.FC = () => {
 
         // Special handling for ER Chart Data
         if (selectedMetric === 'er') {
-             const dailyTotals: Record<string, { interactions: number, denominator: number }> = {};
-             
-             sortedData.forEach(item => {
+            const dailyTotals: Record<string, { interactions: number, denominator: number }> = {};
+
+            sortedData.forEach(item => {
                 const dateKey = new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
                 if (!dailyTotals[dateKey]) dailyTotals[dateKey] = { interactions: 0, denominator: 0 };
-                
+
                 const m = item.metrics || {};
                 const interactions = calculateInteractions(m);
                 const reach = (m as any).reach || 0;
                 const views = m.views || 0;
 
                 dailyTotals[dateKey].interactions += interactions;
-                
+
                 if (item.platform === Platform.INSTAGRAM && reach > 0) {
                     dailyTotals[dateKey].denominator += reach;
                 } else {
                     dailyTotals[dateKey].denominator += views;
                 }
-             });
+            });
 
-             return Object.keys(dailyTotals).map(date => ({
-                 name: date,
-                 value: dailyTotals[date].denominator > 0 
+            return Object.keys(dailyTotals).map(date => ({
+                name: date,
+                value: dailyTotals[date].denominator > 0
                     ? parseFloat(((dailyTotals[date].interactions / dailyTotals[date].denominator) * 100).toFixed(2))
                     : 0
-             }));
+            }));
         }
 
         return Object.keys(groupedByDate).map(date => ({
@@ -382,7 +389,7 @@ export const ContentDataInsight: React.FC = () => {
         const last = chartData[chartData.length - 1].value;
         const prev = chartData[chartData.length - 2].value;
         const diff = last - prev;
-        
+
         if (diff > 0) return `🔥 Tren Positif! Performa ${selectedMetric?.toUpperCase()} meningkat pada tanggal ${chartData[chartData.length - 1].name}.`;
         if (diff < 0) return `📉 Perhatian: Terjadi penurunan ${selectedMetric?.toUpperCase()} dibandingkan tanggal sebelumnya.`;
         return "⚡ Performa stabil.";
@@ -400,7 +407,7 @@ export const ContentDataInsight: React.FC = () => {
                         Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.
                     </p>
                 </div>
-                
+
                 {/* Period Indicator Badge */}
                 <div className="bg-white border-2 border-slate-800 px-4 py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default">
                     <span className="font-heading font-black text-slate-800 text-sm uppercase tracking-wide flex items-center gap-2">
@@ -412,10 +419,10 @@ export const ContentDataInsight: React.FC = () => {
 
             {/* Summary Cards - Colorful & Solid */}
             <div className={`grid gap-4 ${filterPlatform === Platform.TIKTOK ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
-                
+
                 {/* Reach Card */}
                 {filterPlatform !== Platform.TIKTOK && (
-                    <div 
+                    <div
                         onClick={() => setSelectedMetric('reach')}
                         className="bg-blue-500 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                     >
@@ -435,11 +442,11 @@ export const ContentDataInsight: React.FC = () => {
                 )}
 
                 {/* Engagement Rate */}
-                <div 
+                <div
                     onClick={() => setSelectedMetric('er')}
                     className="bg-pink-500 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                 >
-                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
                         <TrendingUp size={80} className="text-white" />
                     </div>
                     <div className="relative z-10 text-white">
@@ -454,11 +461,11 @@ export const ContentDataInsight: React.FC = () => {
                 </div>
 
                 {/* Interactions */}
-                <div 
+                <div
                     onClick={() => setSelectedMetric('interactions')}
                     className="bg-purple-600 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                 >
-                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
                         <Zap size={80} className="text-white" />
                     </div>
                     <div className="relative z-10 text-white">
@@ -473,11 +480,11 @@ export const ContentDataInsight: React.FC = () => {
                 </div>
 
                 {/* Views */}
-                <div 
+                <div
                     onClick={() => setSelectedMetric('views')}
                     className="bg-yellow-400 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                 >
-                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
                         <Eye size={80} className="text-black" />
                     </div>
                     <div className="relative z-10 text-slate-900">
@@ -507,11 +514,10 @@ export const ContentDataInsight: React.FC = () => {
                                 <p className="text-xs font-bold text-slate-500 uppercase">Periode Data</p>
                                 <p className="font-black text-slate-800 text-lg">{getPeriodLabel()}</p>
                             </div>
-                            <div className={`px-4 py-2 rounded-lg font-bold text-white uppercase text-sm ${
-                                selectedMetric === 'reach' ? 'bg-blue-500' :
-                                selectedMetric === 'er' ? 'bg-pink-500' :
-                                selectedMetric === 'interactions' ? 'bg-purple-600' : 'bg-yellow-400 text-black'
-                            }`}>
+                            <div className={`px-4 py-2 rounded-lg font-bold text-white uppercase text-sm ${selectedMetric === 'reach' ? 'bg-blue-500' :
+                                    selectedMetric === 'er' ? 'bg-pink-500' :
+                                        selectedMetric === 'interactions' ? 'bg-purple-600' : 'bg-yellow-400 text-black'
+                                }`}>
                                 {selectedMetric}
                             </div>
                         </div>
@@ -524,39 +530,39 @@ export const ContentDataInsight: React.FC = () => {
                                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={
                                                 selectedMetric === 'reach' ? '#3B82F6' :
-                                                selectedMetric === 'er' ? '#EC4899' :
-                                                selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
-                                            } stopOpacity={0.3}/>
+                                                    selectedMetric === 'er' ? '#EC4899' :
+                                                        selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
+                                            } stopOpacity={0.3} />
                                             <stop offset="95%" stopColor={
                                                 selectedMetric === 'reach' ? '#3B82F6' :
-                                                selectedMetric === 'er' ? '#EC4899' :
-                                                selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
-                                            } stopOpacity={0}/>
+                                                    selectedMetric === 'er' ? '#EC4899' :
+                                                        selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
+                                            } stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                     <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickMargin={10} />
                                     <YAxis stroke="#64748b" fontSize={12} />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: '#fff', 
-                                            border: '2px solid #1e293b', 
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: '#fff',
+                                            border: '2px solid #1e293b',
                                             borderRadius: '8px',
                                             boxShadow: '4px 4px 0px 0px #1e293b'
                                         }}
                                         itemStyle={{ fontWeight: 'bold', color: '#1e293b' }}
                                     />
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="value" 
+                                    <Area
+                                        type="monotone"
+                                        dataKey="value"
                                         stroke={
                                             selectedMetric === 'reach' ? '#3B82F6' :
-                                            selectedMetric === 'er' ? '#EC4899' :
-                                            selectedMetric === 'interactions' ? '#9333EA' : '#CA8A04'
-                                        } 
+                                                selectedMetric === 'er' ? '#EC4899' :
+                                                    selectedMetric === 'interactions' ? '#9333EA' : '#CA8A04'
+                                        }
                                         strokeWidth={3}
-                                        fillOpacity={1} 
-                                        fill="url(#colorValue)" 
+                                        fillOpacity={1}
+                                        fill="url(#colorValue)"
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -590,11 +596,11 @@ export const ContentDataInsight: React.FC = () => {
                 <div className="bg-slate-50 border-b-2 border-slate-200 p-3 flex flex-col xl:flex-row gap-3 items-center justify-between">
                     <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
                         <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-500 font-bold text-xs">
-                            <Filter size={14} /> 
+                            <Filter size={14} />
                             <span className="hidden sm:inline">Filter:</span>
                         </div>
                         <div className="w-36 md:w-40">
-                            <Select 
+                            <Select
                                 value={filterPlatform}
                                 onChange={(e) => setFilterPlatform(e.target.value)}
                                 options={[
@@ -609,7 +615,7 @@ export const ContentDataInsight: React.FC = () => {
                             />
                         </div>
                         <div className="w-36 md:w-40">
-                            <Select 
+                            <Select
                                 value={filterAccount}
                                 onChange={(e) => setFilterAccount(e.target.value)}
                                 options={[{ label: 'Semua Akun', value: 'all' }, ...accounts.map(acc => ({ label: acc, value: acc }))]}
@@ -618,9 +624,9 @@ export const ContentDataInsight: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-2 h-9">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Periode</span>
-                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-bold text-slate-700 outline-none bg-transparent w-24"/>
+                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-bold text-slate-700 outline-none bg-transparent w-24" />
                             <span className="text-slate-300">-</span>
-                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-bold text-slate-700 outline-none bg-transparent w-24"/>
+                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-bold text-slate-700 outline-none bg-transparent w-24" />
                         </div>
                         {(filterPlatform !== 'all' || filterAccount !== 'all' || startDate || endDate) && (
                             <button onClick={resetFilters} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
@@ -629,7 +635,7 @@ export const ContentDataInsight: React.FC = () => {
                         )}
                     </div>
                     <div className="flex-shrink-0 w-full xl:w-auto flex justify-end">
-                        <Button variant="secondary" size="sm" onClick={fetchData} icon={<RefreshCw size={14}/>} className="h-9 text-xs">Refresh Data</Button>
+                        <Button variant="secondary" size="sm" onClick={fetchData} icon={<RefreshCw size={14} />} className="h-9 text-xs">Refresh Data</Button>
                     </div>
                 </div>
 
@@ -665,7 +671,7 @@ export const ContentDataInsight: React.FC = () => {
                             ) : (
                                 filteredData.map((item) => (
                                     <React.Fragment key={item.id}>
-                                        <tr 
+                                        <tr
                                             className={`transition-colors cursor-pointer ${expandedRowId === item.id ? 'bg-purple-50' : 'hover:bg-slate-50'}`}
                                             onClick={() => toggleRow(item.id)}
                                         >
@@ -674,7 +680,7 @@ export const ContentDataInsight: React.FC = () => {
                                             </td>
                                             <td className="p-4 align-middle">
                                                 <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-                                                    <Calendar size={16} className="text-slate-400"/>
+                                                    <Calendar size={16} className="text-slate-400" />
                                                     {item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                                 </div>
                                             </td>
@@ -683,24 +689,24 @@ export const ContentDataInsight: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
                                                     <div className="flex items-center gap-1 text-slate-500">
-                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={12}/> : 
-                                                         item.platform === Platform.TIKTOK ? (
-                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                                                            </svg>
-                                                         ) : <Globe size={12}/>}
+                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={12} /> :
+                                                            item.platform === Platform.TIKTOK ? (
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                                                                </svg>
+                                                            ) : <Globe size={12} />}
                                                         <span className="text-[10px] font-bold">@{item.workspaces?.account_name || '-'}</span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            
+
                                             <td className="p-4 align-middle">
                                                 {item.contentLink ? (
-                                                     <a 
-                                                        href={item.contentLink} 
-                                                        target="_blank" 
-                                                        rel="noreferrer" 
-                                                        onClick={e => e.stopPropagation()} 
+                                                    <a
+                                                        href={item.contentLink}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        onClick={e => e.stopPropagation()}
                                                         className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100"
                                                     >
                                                         <LinkIcon size={12} /> Link Tersedia
@@ -754,7 +760,7 @@ export const ContentDataInsight: React.FC = () => {
                                                         {/* Left: Detailed Metrics with NEW FORMULA */}
                                                         <div className="flex-1 space-y-4">
                                                             <div className="flex justify-between items-center">
-                                                                <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={18} className="text-accent"/> Detailed Metrics</h4>
+                                                                <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={18} className="text-accent" /> Detailed Metrics</h4>
                                                                 {(item.metrics as any)?.isManual && (
                                                                     <span className="text-[10px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-200">
                                                                         Data Manual
@@ -765,7 +771,7 @@ export const ContentDataInsight: React.FC = () => {
                                                                 <div className="grid grid-cols-2 gap-4">
                                                                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                                         <div className="absolute top-0 right-0 p-1">
-                                                                            <TrendingUp size={64} className="text-slate-50 opacity-50 -rotate-12"/>
+                                                                            <TrendingUp size={64} className="text-slate-50 opacity-50 -rotate-12" />
                                                                         </div>
                                                                         <div className="flex justify-between items-start mb-2 relative z-10">
                                                                             <span className="text-xs font-bold text-slate-400 uppercase">Engagement Rate (ER)</span>
@@ -779,7 +785,7 @@ export const ContentDataInsight: React.FC = () => {
                                                                     </div>
                                                                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                                         <div className="absolute top-0 right-0 p-1">
-                                                                            <Zap size={64} className="text-slate-50 opacity-50 -rotate-12"/>
+                                                                            <Zap size={64} className="text-slate-50 opacity-50 -rotate-12" />
                                                                         </div>
                                                                         <div className="flex justify-between items-start mb-2 relative z-10">
                                                                             <span className="text-xs font-bold text-slate-400 uppercase">Total Interaksi</span>
@@ -807,8 +813,8 @@ export const ContentDataInsight: React.FC = () => {
                                                         {/* Right: Content Details & Insights (REPLACED CAPTION) */}
                                                         <div className="flex-1 bg-white p-5 rounded-xl border-2 border-slate-200 shadow-sm relative">
                                                             <div className="absolute top-0 right-0 bg-yellow-400 text-slate-900 text-[10px] font-black px-2 py-1 rounded-bl-lg border-l border-b border-slate-800">CONTENT DETAILS</div>
-                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-4"><FileText size={18} className="text-slate-400"/> Insight & Details</h4>
-                                                            
+                                                            <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-4"><FileText size={18} className="text-slate-400" /> Insight & Details</h4>
+
                                                             <div className="space-y-4">
                                                                 <div className="grid grid-cols-2 gap-3">
                                                                     <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
@@ -824,7 +830,7 @@ export const ContentDataInsight: React.FC = () => {
 
                                                             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                                                                 <div className="flex items-center gap-1">
-                                                                     <span className="text-[10px] text-slate-300 font-mono">Last updated: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : '-'}</span>
+                                                                    <span className="text-[10px] text-slate-300 font-mono">Last updated: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : '-'}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -844,14 +850,14 @@ export const ContentDataInsight: React.FC = () => {
             {isManualModalOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-white border-2 border-slate-800 overflow-hidden">
-                        
+
                         {/* Header Pop Art */}
                         <div className="px-6 py-4 border-b-2 border-slate-800 bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -z-0"></div>
                             <h3 className="font-bold font-heading text-lg tracking-tight flex items-center gap-2 z-10">
                                 <Edit3 size={20} /> Input Metrics Manual
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setIsManualModalOpen(false)}
                                 className="bg-black/20 hover:bg-black/30 text-white p-1.5 rounded-lg transition-all z-10"
                             >
@@ -869,67 +875,67 @@ export const ContentDataInsight: React.FC = () => {
                                 {selectedItemForInput?.platform === Platform.INSTAGRAM && (
                                     <div className="col-span-2">
                                         <div className="flex flex-col gap-1 w-full">
-                                            <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><BarChart2 size={12}/> Reach / Jangkauan</label>
-                                            <input 
-                                                type="number" 
+                                            <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><BarChart2 size={12} /> Reach / Jangkauan</label>
+                                            <input
+                                                type="number"
                                                 className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                                 value={manualMetrics.reach}
-                                                onChange={(e) => setManualMetrics({...manualMetrics, reach: parseInt(e.target.value) || 0})}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, reach: parseInt(e.target.value) || 0 })}
                                             />
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Eye size={12}/> Total Views</label>
-                                    <input 
-                                        type="number" 
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Eye size={12} /> Total Views</label>
+                                    <input
+                                        type="number"
                                         className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.views}
-                                        onChange={(e) => setManualMetrics({...manualMetrics, views: parseInt(e.target.value) || 0})}
+                                        onChange={(e) => setManualMetrics({ ...manualMetrics, views: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Heart size={12}/> Likes</label>
-                                    <input 
-                                        type="number" 
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Heart size={12} /> Likes</label>
+                                    <input
+                                        type="number"
                                         className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.likes}
-                                        onChange={(e) => setManualMetrics({...manualMetrics, likes: parseInt(e.target.value) || 0})}
+                                        onChange={(e) => setManualMetrics({ ...manualMetrics, likes: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><MessageSquare size={12}/> Comments</label>
-                                    <input 
-                                        type="number" 
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><MessageSquare size={12} /> Comments</label>
+                                    <input
+                                        type="number"
                                         className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.comments}
-                                        onChange={(e) => setManualMetrics({...manualMetrics, comments: parseInt(e.target.value) || 0})}
+                                        onChange={(e) => setManualMetrics({ ...manualMetrics, comments: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Share2 size={12}/> Shares</label>
-                                    <input 
-                                        type="number" 
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Share2 size={12} /> Shares</label>
+                                    <input
+                                        type="number"
                                         className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.shares}
-                                        onChange={(e) => setManualMetrics({...manualMetrics, shares: parseInt(e.target.value) || 0})}
+                                        onChange={(e) => setManualMetrics({ ...manualMetrics, shares: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Bookmark size={12}/> Saves</label>
-                                    <input 
-                                        type="number" 
+                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
+                                    <input
+                                        type="number"
                                         className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.saves}
-                                        onChange={(e) => setManualMetrics({...manualMetrics, saves: parseInt(e.target.value) || 0})}
+                                        onChange={(e) => setManualMetrics({ ...manualMetrics, saves: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                             </div>
 
                             <div className="pt-4 border-t-2 border-slate-100 flex justify-end gap-3">
                                 <Button type="button" variant="secondary" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
-                                <Button type="submit" className="bg-pink-500 hover:bg-pink-600 border-pink-700" icon={<Save size={18}/>}>
+                                <Button type="submit" className="bg-pink-500 hover:bg-pink-600 border-pink-700" icon={<Save size={18} />}>
                                     Simpan Metrics
                                 </Button>
                             </div>
