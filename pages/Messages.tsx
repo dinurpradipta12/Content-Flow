@@ -26,6 +26,7 @@ import {
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useNotifications } from '../components/NotificationProvider';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 interface Workspace {
     id: string;
@@ -63,6 +64,8 @@ interface ChatMessage {
 const COMMON_EMOJIS = ['👍', '❤️', '🔥', '😂', '😮', '😢', '🙏', '💯', '✅', '🚀', '✨', '🙌'];
 
 export const Messages: React.FC = () => {
+    const { config } = useAppConfig();
+
     // Current User
     const currentUser = {
         id: localStorage.getItem('user_id') || '',
@@ -526,8 +529,12 @@ export const Messages: React.FC = () => {
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center border-2 border-slate-900"><MessageSquare className="text-accent" size={24} /></div>
                             <div>
-                                <h2 className="font-black text-2xl text-slate-900 uppercase tracking-tighter truncate max-w-[300px] leading-none mb-1">{selectedWorkspace?.name}</h2>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">#{activeGroup?.name || 'GENERAL'} <span className="mx-2">•</span> {workspaceMembers.length} Tim</p>
+                                <h2 className="font-black text-2xl text-slate-900 uppercase tracking-tighter truncate max-w-[300px] leading-none mb-1">
+                                    {config?.page_titles?.['messages']?.title || selectedWorkspace?.name || 'MESSAGES'}
+                                </h2>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                    {config?.page_titles?.['messages']?.subtitle || `#${activeGroup?.name || 'GENERAL'} • ${workspaceMembers.length} Tim`}
+                                </p>
                             </div>
                         </div>
                     </div>

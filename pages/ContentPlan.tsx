@@ -8,6 +8,7 @@ import { useNotifications } from '../components/NotificationProvider';
 import { Search, Plus, Instagram, Video, ArrowRight, MoreHorizontal, Linkedin, Youtube, Facebook, AtSign, Edit, Trash2, User, Image as ImageIcon, Loader2, Upload, Users, Ticket, Layers } from 'lucide-react';
 import { Workspace } from '../types';
 import { supabase } from '../services/supabaseClient';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 interface WorkspaceData extends Workspace {
     totalContent: number;
@@ -55,6 +56,7 @@ const getAccountStyle = (platforms: string[]) => {
 export const ContentPlan: React.FC = () => {
     const navigate = useNavigate();
     const { sendNotification } = useNotifications();
+    const { config } = useAppConfig();
     const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -93,9 +95,9 @@ export const ContentPlan: React.FC = () => {
             // 0. Get Current User Info for Syncing
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
-            const { data: userData } = await supabase.from('app_users').select('avatar_url, name').eq('id', userId).single();
+            const { data: userData } = await supabase.from('app_users').select('avatar_url, full_name').eq('id', userId).single();
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
-            const freshName = userData?.name || localStorage.getItem('user_name') || 'Anda';
+            const freshName = userData?.full_name || localStorage.getItem('user_name') || 'Anda';
             setCurrentUserName(freshName);
 
             // 1. Fetch Workspaces — all workspaces under this admin tenant
@@ -412,8 +414,8 @@ export const ContentPlan: React.FC = () => {
             {/* Page Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b-2 border-slate-100 pb-6">
                 <div>
-                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight">Workspace Konten</h2>
-                    <p className="text-slate-500 font-medium mt-2">Pilih workspace untuk mulai mengelola konten.</p>
+                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight">{config?.page_titles?.['plan']?.title || 'Workspace Konten'}</h2>
+                    <p className="text-slate-500 font-medium mt-2">{config?.page_titles?.['plan']?.subtitle || 'Pilih workspace untuk mulai mengelola konten.'}</p>
                 </div>
 
                 <div className="flex items-center gap-3">

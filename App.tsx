@@ -13,7 +13,9 @@ import { UserManagement } from './pages/UserManagement';
 import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
+import { WorkspaceSettings } from './pages/WorkspaceSettings';
 import { NotificationProvider } from './components/NotificationProvider';
+import { AppConfigProvider } from './components/AppConfigProvider';
 
 // Auth Guard Component
 const RequireAuth = () => {
@@ -56,31 +58,33 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 const App: React.FC = () => {
   return (
     <HashRouter>
-      <NotificationProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+      <AppConfigProvider>
+        <NotificationProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          {/* Protected Routes */}
-          <Route element={<RequireAuth />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="plan" element={<ContentPlan />} />
-            <Route path="plan/:id" element={<ContentPlanDetail />} />
-            <Route path="approval" element={<Approval />} />
-            <Route path="insight" element={<ContentDataInsight />} />
-            <Route path="carousel" element={<CarouselMaker />} />
-            <Route path="script" element={<TeamKPIBoard />} />
-            <Route path="profile" element={<Profile />} />
+            {/* Protected Routes */}
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="plan" element={<ContentPlan />} />
+              <Route path="plan/:id" element={<ContentPlanDetail />} />
+              <Route path="approval" element={<Approval />} />
+              <Route path="insight" element={<ContentDataInsight />} />
+              <Route path="carousel" element={<CarouselMaker />} />
+              <Route path="script" element={<TeamKPIBoard />} />
+              <Route path="profile" element={<Profile />} />
 
-            {/* Admin Routes (Developer + Admin) */}
-            <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
-            <Route path="admin/workspace" element={<RequireAdmin><PlaceholderPage title="Workspace Settings" /></RequireAdmin>} />
+              {/* Admin Routes (Developer + Admin) */}
+              <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
 
-            {/* Developer Routes (Developer only) */}
-            <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
-          </Route>
-        </Routes>
-      </NotificationProvider>
+              {/* Developer Routes (Developer only) */}
+              <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
+              <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
+            </Route>
+          </Routes>
+        </NotificationProvider>
+      </AppConfigProvider>
     </HashRouter>
   );
 };

@@ -40,8 +40,10 @@ import {
 import { supabase } from '../services/supabaseClient';
 import { ContentItem, Platform } from '../types';
 import { analyzeContentLink } from '../services/scraperService';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 export const ContentDataInsight: React.FC = () => {
+    const { config } = useAppConfig();
     const [data, setData] = useState<ContentItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -107,7 +109,7 @@ export const ContentDataInsight: React.FC = () => {
                     .select(`*, workspaces!inner(name, account_name, admin_id)`)
                     .eq('status', 'Published')
                     .eq('workspaces.admin_id', tenantId)
-                    .in('workspace_id', accessibleIds.length > 0 ? accessibleIds : ['__none__'])
+                    .in('workspace_id', accessibleIds.length > 0 ? accessibleIds : ['00000000-0000-0000-0000-000000000000'])
                     .order('date', { ascending: true });
 
                 if (error) throw error;
@@ -420,10 +422,10 @@ export const ContentDataInsight: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
                 <div>
                     <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-3">
-                        Content Data Insight
+                        {config?.page_titles?.['insight']?.title || 'Content Data Insight'}
                     </h2>
                     <p className="text-slate-500 font-medium mt-2">
-                        Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.
+                        {config?.page_titles?.['insight']?.subtitle || 'Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.'}
                     </p>
                 </div>
 

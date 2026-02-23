@@ -37,6 +37,7 @@ import { Workspace } from '../types';
 import { updateSupabaseConfig, checkConnectionLatency, supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from './NotificationProvider';
+import { useAppConfig } from './AppConfigProvider';
 import { CheckCircle2 } from 'lucide-react';
 
 interface LayoutProps {
@@ -238,6 +239,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const location = useLocation();
 
+    // Global Config
+    const { config } = useAppConfig();
+
     // Settings State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
@@ -372,13 +376,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }, [branding]);
 
     const mainNavItems = [
-        { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        { path: '/messages', label: 'Messages', icon: <MessageSquare size={20} /> },
-        { path: '/plan', label: 'Content Plan', icon: <CalendarDays size={20} /> },
-        { path: '/approval', label: 'Approval', icon: <CheckCircle size={20} /> },
-        { path: '/insight', label: 'Content Data Insight', icon: <Presentation size={20} /> },
-        { path: '/carousel', label: 'Carousel Maker', icon: <ImageIcon size={20} /> },
-        { path: '/script', label: 'Team KPI Board', icon: <BarChart2 size={20} /> },
+        { id: 'dashboard', path: '/', defaultLabel: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+        { id: 'messages', path: '/messages', defaultLabel: 'Messages', icon: <MessageSquare size={20} /> },
+        { id: 'plan', path: '/plan', defaultLabel: 'Content Plan', icon: <CalendarDays size={20} /> },
+        { id: 'approval', path: '/approval', defaultLabel: 'Approval', icon: <CheckCircle size={20} /> },
+        { id: 'insight', path: '/insight', defaultLabel: 'Content Data Insight', icon: <Presentation size={20} /> },
+        { id: 'carousel', path: '/carousel', defaultLabel: 'Carousel Maker', icon: <ImageIcon size={20} /> },
+        { id: 'kpi', path: '/script', defaultLabel: 'Team KPI Board', icon: <BarChart2 size={20} /> },
     ];
 
     // Listen for Role & Subscription Changes via Realtime + Local Poll
@@ -633,21 +637,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="px-2 pt-4 pb-2">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 pb-1 mb-2">Work Station</p>
                     </div>
-                    {mainNavItems.map((item) => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            className={({ isActive }) => `
+                    {mainNavItems
+                        .filter(item => !(config?.hidden_pages || []).includes(item.id))
+                        .map((item) => (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200
                 ${isActive
-                                    ? 'bg-accent text-white shadow-hard border-2 border-slate-800 translate-x-1'
-                                    : 'text-slate-600 hover:bg-transparent hover:text-slate-900 hover:translate-x-1'}
+                                        ? 'bg-accent text-white shadow-hard border-2 border-slate-800 translate-x-1'
+                                        : 'text-slate-600 hover:bg-transparent hover:text-slate-900 hover:translate-x-1'}
               `}
-                        >
-                            {item.icon}
-                            {item.label}
-                        </NavLink>
-                    ))}
+                            >
+                                {item.icon}
+                                {config?.page_titles?.[item.id]?.title || item.defaultLabel}
+                            </NavLink>
+                        ))}
 
                     {isAdmin && (
                         <>

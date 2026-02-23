@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 import { NotificationType } from '../types';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 interface TeamMember {
     id: string;
@@ -57,6 +58,7 @@ const getStatusBadge = (rate: number) => {
 };
 
 export const TeamKPIBoard: React.FC = () => {
+    const { config } = useAppConfig();
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [kpis, setKpis] = useState<KPI[]>([]);
     const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
@@ -344,9 +346,9 @@ export const TeamKPIBoard: React.FC = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <BarChart3 className="text-violet-500" size={28} />
-                        Team KPI Board
+                        {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1">Monitor performa dan pencapaian tim secara real-time</p>
+                    <p className="text-slate-500 text-sm mt-1">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <select

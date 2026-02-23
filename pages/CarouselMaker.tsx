@@ -5,8 +5,10 @@ import { BottomBar } from '../src/components/BottomBar';
 import { Sparkles, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCarouselStore } from '../src/store/useCarouselStore';
 import { NotesPanel } from '../src/components/NotesPanel';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 export const CarouselMaker: React.FC = () => {
+    const { config } = useAppConfig();
     const [brandLogo, setBrandLogo] = useState('');
     const [brandName, setBrandName] = useState('Arunika');
     const [isNotesOpen, setIsNotesOpen] = useState(false);
@@ -39,7 +41,7 @@ export const CarouselMaker: React.FC = () => {
                             <Sparkles size={20} className="text-white" />
                         </div>
                     )}
-                    <h1 className="font-black text-xl tracking-tighter leading-tight break-words">Arunika Carousel</h1>
+                    <h1 className="font-black text-xl tracking-tighter leading-tight break-words">{config?.page_titles?.['carousel']?.title || 'Arunika Carousel'}</h1>
                 </div>
 
                 <div className="flex items-center gap-4">

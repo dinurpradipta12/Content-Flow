@@ -7,6 +7,7 @@ import { ApprovalRequest, ApprovalTemplate } from '../types/approval';
 import { Plus, RefreshCw, Database, Code, CheckCircle, Copy } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 export const Approval: React.FC = () => {
     const [requests, setRequests] = useState<ApprovalRequest[]>([]);
@@ -16,6 +17,7 @@ export const Approval: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+    const { config } = useAppConfig();
 
     // Mock Current User (In real app, get from Context/Auth)
     const currentUser = {
@@ -81,10 +83,10 @@ export const Approval: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2 shrink-0">
                 <div>
                     <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-3">
-                        Approval System
+                        {config?.page_titles?.['approval']?.title || 'Approval System'}
                     </h2>
                     <p className="text-slate-500 font-medium mt-2">
-                        Kelola pengajuan dan persetujuan dengan alur kerja dinamis.
+                        {config?.page_titles?.['approval']?.subtitle || 'Kelola pengajuan dan persetujuan dengan alur kerja dinamis.'}
                     </p>
                 </div>
                 <div className="flex gap-3">

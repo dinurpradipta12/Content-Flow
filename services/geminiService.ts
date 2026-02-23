@@ -20,6 +20,7 @@ const apiKey = getApiKey();
 const ai = new GoogleGenAI({ apiKey: apiKey || 'fallback_key_for_ui_load' });
 
 export const generateScript = async (topic: string, platform: string, contentType: string): Promise<string> => {
+  if (!apiKey || apiKey === 'fallback_key_for_ui_load') return "Silahkan atur API Key Gemini pada file .env";
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -41,6 +42,7 @@ export const generateScript = async (topic: string, platform: string, contentTyp
 };
 
 export const analyzeContentPerformance = async (metrics: any, contentUrl: string): Promise<string> => {
+  if (!apiKey || apiKey === 'fallback_key_for_ui_load') return "Bulum ada API Key Gemini yang diatur. Fitur AI tidak dapat digunakan.";
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',
@@ -58,6 +60,7 @@ export const analyzeContentPerformance = async (metrics: any, contentUrl: string
 };
 
 export const getChartInsights = async (data: any[]): Promise<string> => {
+  if (!apiKey || apiKey === 'fallback_key_for_ui_load') return "Belum ada API Key Gemini yang diatur. Fitur Insight AI dinonaktifkan.";
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-1.5-flash',

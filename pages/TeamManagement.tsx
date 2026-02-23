@@ -6,6 +6,7 @@ import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save, Bell } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 interface AppUser {
     id: string;
@@ -39,6 +40,7 @@ interface KPI {
 }
 
 export const TeamManagement: React.FC = () => {
+    const { config } = useAppConfig();
     const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
     const [allWorkspaces, setAllWorkspaces] = useState<WorkspaceData[]>([]);
     const [users, setUsers] = useState<AppUser[]>([]);
@@ -465,9 +467,9 @@ export const TeamManagement: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-2">
                 <div>
                     <h2 className="text-3xl md:text-5xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        Team Management
+                        {config?.page_titles?.['team']?.title || 'Team Management'}
                     </h2>
-                    <p className="text-slate-500 font-bold mt-2">Kelola akses anggota dalam workspace spesifik Anda.</p>
+                    <p className="text-slate-500 font-bold mt-2">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
                 </div>
                 <div className="flex z-10">
                     <Button
