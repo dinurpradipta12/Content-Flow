@@ -345,7 +345,35 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
         fetchGlobalConfig();
 
-        // 3. Listen for User Updates (Sync between Profile page and Layout)
+        // 3. Fetch Latest User Profile from Supabase
+        const fetchUserProfile = async () => {
+            const userId = localStorage.getItem('user_id');
+            if (!userId) return;
+
+            try {
+                const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title').eq('id', userId).single();
+                if (data && !error) {
+                    const profileData = {
+                        name: data.full_name || 'User',
+                        role: data.role || 'Member',
+                        avatar: data.avatar_url || 'https://picsum.photos/40/40',
+                        jobTitle: data.job_title || ''
+                    };
+                    setUserProfile(profileData);
+
+                    // Keep localStorage in sync
+                    localStorage.setItem('user_name', profileData.name);
+                    localStorage.setItem('user_role', profileData.role);
+                    localStorage.setItem('user_avatar', profileData.avatar);
+                    localStorage.setItem('user_job_title', profileData.jobTitle);
+                }
+            } catch (err) {
+                console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
+            }
+        };
+        fetchUserProfile();
+
+        // 4. Listen for User Updates (Sync between Profile page and Layout)
         const handleUserUpdate = () => {
             setUserProfile({
                 name: localStorage.getItem('user_name') || 'User',
@@ -617,18 +645,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }`}
             >
                 {/* Logo Area */}
-                <div className="h-auto min-h-24 flex items-center px-6 border-b-2 border-slate-100 shrink-0 py-4">
-                    <div className="flex items-center gap-3 w-full">
-                        {branding.appLogo ? (
-                            <img src={branding.appLogo} className="w-10 h-10 object-contain shrink-0" alt="Logo" />
+                <div className="h-auto flex items-center justify-center px-6 shrink-0 py-8">
+                    <div className="flex items-center justify-center w-full">
+                        {config?.app_logo || branding.appLogo ? (
+                            <img src={config?.app_logo || branding.appLogo} className="w-full max-h-24 object-contain" alt="Logo" />
                         ) : (
-                            <div className="w-10 h-10 bg-tertiary rounded-full border-2 border-slate-800 flex items-center justify-center flex-shrink-0">
-                                <Layers size={20} className="text-slate-800" />
+                            <div className="w-16 h-16 bg-tertiary rounded-full border-2 border-slate-800 flex items-center justify-center flex-shrink-0">
+                                <Layers size={28} className="text-slate-800" />
                             </div>
                         )}
-                        <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight leading-tight break-words whitespace-normal">
-                            {branding.appName}
-                        </h1>
                     </div>
                 </div>
 

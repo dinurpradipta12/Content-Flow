@@ -466,7 +466,7 @@ export const TeamManagement: React.FC = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-2">
                 <div>
-                    <h2 className="text-3xl md:text-5xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-3">
+                    <h2 className="text-4xl md:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-3">
                         {config?.page_titles?.['team']?.title || 'Team Management'}
                     </h2>
                     <p className="text-slate-500 font-bold mt-2">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
@@ -490,7 +490,7 @@ export const TeamManagement: React.FC = () => {
                     <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="p-4 bg-primary flex items-center gap-3">
                             <Layers className="text-white" size={24} />
-                            <h3 className="font-heading font-black text-white text-lg">My Workspaces</h3>
+                            <h3 className="font-heading font-black text-white text-lg">Workspace</h3>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
                             {loading && !workspaces.length ? (
@@ -536,7 +536,7 @@ export const TeamManagement: React.FC = () => {
                                     <Users className="text-slate-800" size={20} />
                                 </div>
                                 <h3 className="font-heading font-black text-white text-xl">
-                                    Anggota di {selectedWorkspace ? selectedWorkspace.name : '...'}
+                                    Anggota di Workspace {selectedWorkspace ? selectedWorkspace.name : '...'}
                                 </h3>
                             </div>
 

@@ -414,7 +414,7 @@ export const ContentPlan: React.FC = () => {
             {/* Page Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b-2 border-slate-100 pb-6">
                 <div>
-                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight">{config?.page_titles?.['plan']?.title || 'Workspace Konten'}</h2>
+                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight">{config?.page_titles?.['plan']?.title || 'Content Plan Workspace'}</h2>
                     <p className="text-slate-500 font-medium mt-2">{config?.page_titles?.['plan']?.subtitle || 'Pilih workspace untuk mulai mengelola konten.'}</p>
                 </div>
 
@@ -567,7 +567,7 @@ export const ContentPlan: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="text-accent font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all whitespace-nowrap min-w-0">
-                                    <span>Buka Board</span>
+                                    <span>Buka Content Plan</span>
                                     <ArrowRight size={16} className="flex-shrink-0" />
                                 </div>
                             </div>

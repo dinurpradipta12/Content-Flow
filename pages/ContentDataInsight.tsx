@@ -666,10 +666,10 @@ export const ContentDataInsight: React.FC = () => {
                         <thead className="bg-white border-b-2 border-slate-100 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="p-4 w-10"></th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Tanggal</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px] bg-white">Konten</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Tanggal Posting</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px] bg-white">Judul Konten</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Link Postingan</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center bg-white min-w-[280px]">Quick Metrics</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center bg-white min-w-[280px]">Result Metrics</th>
                                 <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right bg-white">Action</th>
                             </tr>
                         </thead>

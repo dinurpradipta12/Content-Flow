@@ -5,9 +5,13 @@ import { Input } from '../components/ui/Input';
 import { Layers, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
+    const { config } = useAppConfig();
+    const appLogo = config?.app_logo || localStorage.getItem('app_logo');
+
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -86,6 +90,7 @@ export const Login: React.FC = () => {
                 localStorage.setItem('user_name', data.full_name || data.username);
                 localStorage.setItem('user_role', data.role || 'Member');
                 localStorage.setItem('user_avatar', data.avatar_url || 'https://picsum.photos/40/40');
+                localStorage.setItem('user_job_title', data.job_title || '');
                 if (data.subscription_end) {
                     localStorage.setItem('subscription_end', data.subscription_end);
                 } else {
@@ -109,12 +114,15 @@ export const Login: React.FC = () => {
                 <div className="absolute bottom-[-20px] right-[-20px] w-32 h-32 bg-secondary rounded-full border-2 border-slate-800 -z-10"></div>
 
                 <Card className="shadow-2xl relative">
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center mx-auto mb-4 shadow-hard">
-                            <Layers className="text-white" size={32} />
-                        </div>
-                        <h1 className="text-3xl font-black font-heading text-slate-800">Arunika Flow</h1>
-                        <p className="text-slate-500">Masuk untuk mengelola kontenmu.</p>
+                    <div className="text-center mb-8 flex flex-col items-center justify-center">
+                        {appLogo ? (
+                            <img src={appLogo} className="w-full max-w-[200px] max-h-24 object-contain mx-auto mb-4" alt="Logo" />
+                        ) : (
+                            <div className="w-16 h-16 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center mx-auto mb-4 shadow-hard">
+                                <Layers className="text-white" size={32} />
+                            </div>
+                        )}
+                        <p className="text-slate-500 mt-2">Masuk untuk mengelola kontenmu.</p>
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
