@@ -64,6 +64,7 @@ export const Sidebar: React.FC = () => {
         currentPageIndex,
         updatePageContent,
         updatePageBackground,
+        updateAllPageBackgrounds,
         canvasSize,
         setCanvasSize,
         currentLayers,
@@ -78,9 +79,18 @@ export const Sidebar: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [presets, setPresets] = useState<any[]>([]);
     const [isLoadingPresets, setIsLoadingPresets] = useState(false);
+    const [applyBgToAll, setApplyBgToAll] = useState(false);
     const importInputRef = React.useRef<HTMLInputElement>(null);
 
     const currentPage = pages[currentPageIndex];
+
+    const handleBackgroundChange = (color: string) => {
+        if (applyBgToAll) {
+            updateAllPageBackgrounds(color);
+        } else {
+            updatePageBackground(currentPageIndex, color);
+        }
+    };
 
     useEffect(() => {
         if (activeTab === 'content') {
@@ -346,7 +356,10 @@ export const Sidebar: React.FC = () => {
                                     value={canvasSize.id}
                                     onChange={(e) => {
                                         const size = CANVAS_SIZES.find(s => s.id === e.target.value);
-                                        if (size) setCanvasSize(size);
+                                        if (size) {
+                                            setCanvasSize(size);
+                                            window.dispatchEvent(new CustomEvent('canvas:resize', { detail: { newSize: size } }));
+                                        }
                                     }}
                                     className="w-full bg-slate-50 border-4 border-slate-900 rounded-xl px-4 py-3 font-bold text-sm appearance-none focus:outline-none focus:bg-yellow-50 transition-colors cursor-pointer"
                                 >
@@ -367,7 +380,7 @@ export const Sidebar: React.FC = () => {
                                 {['#ffffff', '#f8fafc', '#f27d26', '#0f172a', '#10b981', '#ef4444', '#3b82f6'].map(color => (
                                     <button
                                         key={color}
-                                        onClick={() => updatePageBackground(currentPageIndex, color)}
+                                        onClick={() => handleBackgroundChange(color)}
                                         className={`w-10 h-10 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] transition-transform hover:-translate-y-1 ${currentPage.background === color ? 'ring-4 ring-accent ring-offset-2' : ''}`}
                                         style={{ backgroundColor: color }}
                                     />
@@ -377,9 +390,23 @@ export const Sidebar: React.FC = () => {
                                     <input
                                         type="color"
                                         className="absolute inset-0 opacity-0 cursor-pointer"
-                                        onChange={(e) => updatePageBackground(currentPageIndex, e.target.value)}
+                                        onChange={(e) => handleBackgroundChange(e.target.value)}
                                     />
                                 </label>
+                            </div>
+                            <div className="mt-4 flex bg-slate-100 rounded-xl p-1 border-2 border-slate-200">
+                                <button
+                                    onClick={() => setApplyBgToAll(false)}
+                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-colors ${!applyBgToAll ? 'bg-white shadow border-slate-200 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Hanya Page Ini
+                                </button>
+                                <button
+                                    onClick={() => setApplyBgToAll(true)}
+                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-colors ${applyBgToAll ? 'bg-white shadow border-slate-200 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Terapkan ke Semua
+                                </button>
                             </div>
                         </section>
 

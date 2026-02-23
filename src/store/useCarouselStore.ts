@@ -9,9 +9,10 @@ export type CanvasSize = {
 };
 
 export const CANVAS_SIZES: CanvasSize[] = [
-    { id: 'ig-portrait', label: 'Instagram Portrait (4:5)', width: 1080, height: 1350 },
     { id: 'ig-square', label: 'Instagram Square (1:1)', width: 1080, height: 1080 },
-    { id: 'linkedin-post', label: 'LinkedIn Post', width: 1200, height: 627 },
+    { id: 'ig-portrait', label: 'Instagram Portrait (4:5)', width: 1080, height: 1350 },
+    { id: 'ig-story', label: 'Instagram Story (9:16)', width: 1080, height: 1920 },
+    { id: 'tiktok-carousel', label: 'Tiktok Carousel (9:16)', width: 1080, height: 1920 },
 ];
 
 export interface CarouselPage {
@@ -52,6 +53,7 @@ interface CarouselState {
     deletePage: (index: number) => void;
     updatePageContent: (index: number, content: Partial<CarouselPage['content']>) => void;
     updatePageBackground: (index: number, background: string) => void;
+    updateAllPageBackgrounds: (background: string) => void;
     updatePageElements: (index: number, elements: any[], previewUrl?: string) => void;
     savePreset: (name: string, presetData?: { pages: CarouselPage[], canvasSize: CanvasSize }) => Promise<void>;
     loadPresets: () => Promise<any[]>;
@@ -160,6 +162,11 @@ export const useCarouselStore = create<CarouselState>()(
             updatePageBackground: (index, background) => set((state) => {
                 const newPages = [...state.pages];
                 newPages[index] = { ...newPages[index], background };
+                return { pages: newPages };
+            }),
+
+            updateAllPageBackgrounds: (background) => set((state) => {
+                const newPages = state.pages.map(page => ({ ...page, background }));
                 return { pages: newPages };
             }),
 

@@ -727,15 +727,49 @@ export const Editor: React.FC = () => {
         };
     }, [currentPageIndex, referenceData]);
 
-    // Resize canvas when canvasSize changes — WITHOUT destroying/recreating canvas or elements
+    // Only passively sync size for preset loads, no shifting
     useEffect(() => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        canvas.setWidth(canvasSize.width);
-        canvas.setHeight(canvasSize.height);
-        canvas.renderAll();
-        // Removed saveCanvas() here as it can overwrite preset data during load
-    }, [canvasSize.id]);
+        if (canvas.width !== canvasSize.width || canvas.height !== canvasSize.height) {
+            canvas.setWidth(canvasSize.width);
+            canvas.setHeight(canvasSize.height);
+            canvas.renderAll();
+        }
+    }, [canvasSize.width, canvasSize.height]);
+
+    // Handle manual resize with centering logic
+    useEffect(() => {
+        const handleCanvasResize = (e: any) => {
+            const { newSize } = e.detail;
+            const canvas = fabricCanvas.current;
+            if (!canvas) return;
+
+            const oldWidth = canvas.width || newSize.width;
+            const oldHeight = canvas.height || newSize.height;
+
+            canvas.setWidth(newSize.width);
+            canvas.setHeight(newSize.height);
+
+            const deltaX = (newSize.width - oldWidth) / 2;
+            const deltaY = (newSize.height - oldHeight) / 2;
+
+            if (deltaX !== 0 || deltaY !== 0) {
+                canvas.getObjects().forEach((obj) => {
+                    obj.set({
+                        left: (obj.left || 0) + deltaX,
+                        top: (obj.top || 0) + deltaY
+                    });
+                    obj.setCoords();
+                });
+                saveCanvas();
+            }
+            canvas.renderAll();
+        };
+
+        window.addEventListener('canvas:resize', handleCanvasResize);
+        return () => window.removeEventListener('canvas:resize', handleCanvasResize);
+    }, []);
 
     // Handle Preset Load Event
     useEffect(() => {
@@ -746,7 +780,7 @@ export const Editor: React.FC = () => {
             const firstPage = newPages[0];
             if (firstPage) {
                 isRestoringHistory.current = true;
-                canvas.backgroundColor = firstPage.background;
+                canvas.set('backgroundColor', firstPage.background || '#ffffff');
                 await canvas.loadFromJSON({ objects: firstPage.elements });
                 canvas.renderAll();
                 updateLayers();
@@ -1016,12 +1050,13 @@ export const Editor: React.FC = () => {
             {/* Canvas Wrapper for Zoom */}
             <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-200">
                 <div
-                    className="transition-transform duration-200 ease-out shadow-[20px_20px_0px_0px_#0f172a] border-4 border-slate-900 bg-white"
+                    className="transition-transform duration-200 ease-out shadow-[20px_20px_0px_0px_#0f172a] border-4 border-slate-900"
                     style={{
                         transform: `scale(${zoom})`,
                         width: canvasSize.width,
                         height: canvasSize.height,
-                        overflow: 'visible'
+                        overflow: 'visible',
+                        backgroundColor: currentPage.background || '#ffffff'
                     }}
                 >
                     <canvas ref={canvasRef} style={{ overflow: 'visible' }} />
