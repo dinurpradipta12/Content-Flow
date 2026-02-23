@@ -72,10 +72,13 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
                 (payload) => {
                     const newConfig = payload.new as AppConfig;
                     setConfig(newConfig);
-                    if (currentVersion && newConfig.app_version !== currentVersion) {
-                        setChangelog(newConfig.changelog);
-                        setShowUpdateModal(true);
-                    }
+                    setCurrentVersion(prev => {
+                        if (prev && newConfig.app_version !== prev) {
+                            setChangelog(newConfig.changelog);
+                            setShowUpdateModal(true);
+                        }
+                        return newConfig.app_version;
+                    });
                 }
             )
             .subscribe();
@@ -83,7 +86,7 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [currentVersion]);
+    }, []);
 
     return (
         <AppConfigContext.Provider value={{ config, loading }}>

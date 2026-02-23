@@ -99,8 +99,9 @@ export const WorkspaceSettings: React.FC = () => {
 
             if (error) throw error;
             alert('Konfigurasi antarmuka berhasil disimpan secara global!');
-        } catch (err) {
-            alert('Gagal menyimpan konfigurasi.');
+        } catch (err: any) {
+            console.error('Save Interface Error:', err);
+            alert(`Gagal menyimpan konfigurasi: ${err.message || JSON.stringify(err)}`);
         } finally {
             setSaving(false);
         }
@@ -174,7 +175,8 @@ export const WorkspaceSettings: React.FC = () => {
     const SQL_TEMPLATES = [
         { name: 'Core Tables', code: '-- Create all base tables\nCREATE TABLE workspaces ...' },
         { name: 'App Config Extension', code: '-- Add missing columns\nALTER TABLE app_config ADD COLUMN page_titles JSONB ...' },
-        { name: 'Chat System', code: '-- Chat & Messages\nCREATE TABLE workspace_chat_messages ...' }
+        { name: 'Chat System', code: '-- Chat & Messages\nCREATE TABLE workspace_chat_messages ...' },
+        { name: 'Enable Realtime App Config', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;' }
     ];
 
     if (loading && !config) {
