@@ -318,29 +318,18 @@ export const Dashboard: React.FC = () => {
     const [workspaces, setWorkspaces] = useState<any[]>([]);
     useEffect(() => {
         const fetchWs = async () => {
-            const userId = localStorage.getItem('user_id');
+            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
             const userRole = localStorage.getItem('user_role');
 
-            let query = supabase.from('workspaces').select('*').order('name');
+            const { data } = await supabase.from('workspaces').select('*').eq('admin_id', tenantId).order('name');
 
-            if (userRole === 'Owner' || userRole === 'Admin') {
-                query = query.eq('admin_id', userId);
-            } else if (userRole === 'Member') {
-                const { data: memberData } = await supabase
-                    .from('workspace_members')
-                    .select('workspace_id')
-                    .eq('user_id', userId);
-
-                if (memberData && memberData.length > 0) {
-                    query = query.in('id', memberData.map(d => d.workspace_id));
-                } else {
-                    setWorkspaces([]);
-                    return;
-                }
+            let myWorkspaces = data || [];
+            if (userRole !== 'Developer') {
+                myWorkspaces = myWorkspaces.filter((w: any) => (w.members || []).includes(currentUserAvatar));
             }
 
-            const { data } = await query;
-            setWorkspaces(data || []);
+            setWorkspaces(myWorkspaces);
         };
         fetchWs();
     }, []);
