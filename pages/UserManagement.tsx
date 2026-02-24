@@ -326,7 +326,7 @@ export const UserManagement: React.FC = () => {
     }, [users]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 flex-1 flex flex-col min-h-0">
             {/* Access guard: Member = no access */}
             {!isAdmin && !isDeveloper && (
                 <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
@@ -339,7 +339,7 @@ export const UserManagement: React.FC = () => {
             {(isAdmin || isDeveloper) && (
                 <>
                     {/* Header */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center shrink-0">
                         <div>
                             <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                                 <Shield className="text-violet-500" size={26} />
@@ -353,7 +353,7 @@ export const UserManagement: React.FC = () => {
                     </div>
 
                     {/* Main: Form + Table side-by-side */}
-                    <div className="flex flex-col lg:flex-row gap-6">
+                    <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
 
                         {/* ===== REGISTRATION FORM ===== */}
                         <div className="w-full lg:w-[380px] shrink-0">

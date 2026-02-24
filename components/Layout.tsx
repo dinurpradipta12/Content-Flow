@@ -643,204 +643,150 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         setActiveTab(activeTab === tab ? null : tab);
     };
 
+    type NavItem = {
+        id: string;
+        path: string;
+        label: string;
+        icon: React.ElementType;
+        badge?: number | null;
+        adminOnly?: boolean;
+        developerOnly?: boolean;
+    };
+
+    const NAV_ITEMS: Record<string, NavItem[]> = {
+        'Work Station': [
+            { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
+            { id: 'messages', path: '/messages', label: 'Messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : null },
+            { id: 'plan', path: '/plan', label: 'Content Plan', icon: CalendarDays },
+            { id: 'approval', path: '/approval', label: 'Team Approval System', icon: CheckCircle },
+            { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
+            { id: 'carousel', path: '/carousel', label: 'Aruneeka Carousel', icon: ImageIcon },
+            { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
+        ],
+        'Admin Zone': [
+            { id: 'team', path: '/admin/team', label: 'Team Mgmt', icon: Briefcase, adminOnly: true },
+        ],
+        'Superuser': [
+            { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
+            { id: 'inbox', path: '/admin/inbox', label: 'Developer Inbox', icon: Inbox, developerOnly: true },
+            { id: 'workspace', path: '/admin/workspace', label: 'Workspace Settings', icon: Settings, developerOnly: true },
+        ]
+    };
+
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-background">
-            {/* Sidebar */}
+        <div className="flex h-screen w-full overflow-hidden bg-background relative">
+            {/* Sidebar (Fixed position always) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r-2 border-slate-200 transform transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                    }`}
+                className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r-2 border-slate-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                {/* Logo Area */}
                 <div className="h-auto flex items-center justify-center px-6 shrink-0 py-8">
                     <div className="flex items-center justify-center w-full">
                         {config?.app_logo || branding.appLogo ? (
                             <img src={config?.app_logo || branding.appLogo} className="w-full max-h-24 object-contain" alt="Logo" />
                         ) : (
-                            <div className="w-16 h-16 bg-tertiary rounded-full border-2 border-slate-800 flex items-center justify-center flex-shrink-0">
-                                <Layers size={28} className="text-slate-800" />
+                            <div className="w-16 h-16 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center mx-auto shadow-hard">
+                                <Layers className="text-white" size={32} />
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 px-4 py-2 space-y-2 overflow-y-auto custom-scrollbar">
-                    <div className="px-2 pt-4 pb-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 pb-1 mb-2">Work Station</p>
-                    </div>
-                    {mainNavItems
-                        .filter(item => !(config?.hidden_pages || []).includes(item.id))
-                        .map((item) => (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                className={({ isActive }) => `
-                flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200
-                ${isActive
-                                        ? 'bg-accent text-white shadow-hard border-2 border-slate-800 translate-x-1'
-                                        : 'text-slate-600 hover:bg-transparent hover:text-slate-900 hover:translate-x-1'}
-              `}
-                            >
-                                {item.icon}
-                                {config?.page_titles?.[item.id]?.title || item.defaultLabel}
-                            </NavLink>
-                        ))}
-
-                    {isAdmin && (
-                        <>
-                            <div className="px-2 pt-6 pb-2">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 pb-1 mb-2">Admin Zone</p>
+                <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
+                    {Object.entries(NAV_ITEMS).map(([section, items]) => {
+                        const filteredItems = items.filter(item => {
+                            if (item.adminOnly && !isAdmin) return false;
+                            if (item.developerOnly && !isDeveloper) return false;
+                            return true;
+                        });
+                        if (filteredItems.length === 0) return null;
+                        return (
+                            <div key={section} className="mb-8 font-heading">
+                                <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{section}</h3>
+                                <div className="space-y-1">
+                                    {filteredItems.map((item) => (
+                                        <button
+                                            key={item.path}
+                                            onClick={() => navigate(item.path)}
+                                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-accent text-white shadow-hard-mini translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'group-hover:text-accent transition-colors'} />
+                                                <span className="font-bold text-sm tracking-tight">{item.label}</span>
+                                            </div>
+                                            {item.badge && (
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${location.pathname === item.path ? 'bg-white text-accent' : 'bg-accent text-white'}`}>{item.badge}</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <NavLink to="/admin/team" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-secondary text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-secondary hover:translate-x-1'}`}>
-                                <Briefcase size={20} /> Team Mgmt
-                            </NavLink>
-                        </>
-                    )}
+                        );
+                    })}
+                </div>
 
-                    {isDeveloper && (
-                        <>
-                            <div className="px-2 pt-6 pb-2">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b-2 border-slate-100 pb-1 mb-2">Superuser</p>
-                            </div>
-                            <NavLink to="/admin/users" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
-                                <Users size={20} /> User Management
-                            </NavLink>
-                            <NavLink to="/admin/inbox" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
-                                <Inbox size={20} /> Developer Inbox
-                            </NavLink>
-                            <NavLink to="/admin/workspace" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
-                                <Settings size={20} /> Workspace Settings
-                            </NavLink>
-                        </>
-                    )}
-                </nav>
-
-                <div className="p-4 border-t-2 border-slate-100 shrink-0">
-                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 border-2 border-transparent transition-all">
+                <div className="p-4 mt-auto border-t-2 border-slate-50 shrink-0">
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold text-sm">
                         <LogOut size={20} /> Sign Out
                     </button>
                     <p className="text-xs text-slate-400 font-bold text-center mt-4">v{config?.app_version || '1.0.0'} {config?.app_name || branding.appName}</p>
                 </div>
             </aside>
 
-            {/* Main Wrapper */}
-            <div className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isSidebarOpen ? 'md:pl-72' : 'pl-0'}`}>
-                {/* Floating Navbar */}
-                <header className="mt-4 shrink-0 z-30 mx-4 md:mx-6 mb-2 h-16 bg-white rounded-2xl border-2 border-slate-800 shadow-hard flex items-center justify-between px-4 transition-all">
+            {/* Main Wrapper - Uses padding left instead of flex width sharing */}
+            <div className={`flex flex-col h-screen overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0'}`}>
+                <header className="mt-4 shrink-0 z-30 mx-4 md:mx-6 mb-2 h-16 bg-white rounded-2xl border-2 border-slate-800 shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors">
-                            <Menu size={20} />
-                        </button>
-                        {!isSidebarOpen && (
-                            <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight flex items-center gap-1">{branding.appName}</h1>
-                        )}
+                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
+                        {!isSidebarOpen && <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight shrink-0 truncate">{branding.appName}</h1>}
                     </div>
 
-                    <div className="flex items-center gap-3 md:gap-4">
-                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`} title={`Latency: ${latency.toFixed(0)}ms`}>
-                            <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
-                            <span className="hidden sm:inline">{getNetworkLabel()}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 relative" ref={notificationRef}>
-                            <button
-                                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                                className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-50'}`}
-                            >
-                                <Bell size={18} />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black animate-in fade-in zoom-in duration-300">
-                                        {unreadCount > 9 ? '9+' : unreadCount}
-                                    </span>
-                                )}
-                            </button>
-
-                            {/* NOTIFICATION POPUP OVERLAY */}
-                            {isNotificationOpen && (
-                                <div className="absolute top-full right-0 mt-3 w-[480px] bg-white border-2 border-slate-800 shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {/* Header */}
-                                    <div className="px-6 py-4 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                        <div className="flex items-center gap-2">
-                                            <Bell size={16} className="text-accent" />
-                                            <span className="font-black font-heading text-sm text-slate-800 tracking-tight text-lg">Notifikasi</span>
+                    <div className="flex items-center gap-3 md:gap-6">
+                        <div className="flex items-center gap-3 md:gap-4">
+                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
+                                <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
+                                <span className="hidden sm:inline">{getNetworkLabel()}</span>
+                            </div>
+                            <div className="flex items-center gap-1 relative" ref={notificationRef}>
+                                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-50'}`}>
+                                    <Bell size={18} />
+                                    {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                </button>
+                                {isNotificationOpen && (
+                                    <div className="absolute top-full right-0 mt-3 w-[400px] bg-white border-2 border-slate-800 shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="px-6 py-4 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                            <div className="flex items-center gap-2"><Bell size={16} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-lg">Notifikasi</span></div>
+                                            {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg">Tandai Semua Dibaca</button>}
                                         </div>
-                                        {unreadCount > 0 && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    markAllAsRead();
-                                                }}
-                                                className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg"
-                                            >
-                                                Tandai Semua Dibaca
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
-                                        {notifications.length === 0 ? (
-                                            <div className="py-12 flex flex-col items-center justify-center text-slate-400">
-                                                <Bell size={40} className="opacity-10 mb-3" />
-                                                <p className="font-bold text-sm">Tidak ada notifikasi</p>
-                                            </div>
-                                        ) : (
-                                            <div className="divide-y divide-slate-50">
-                                                {notifications.map((notif) => (
-                                                    <div
-                                                        key={notif.id}
-                                                        className={`p-4 flex gap-3 transition-colors hover:bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`}
-                                                        onClick={() => {
-                                                            handleNotificationClick(notif);
-                                                            setIsNotificationOpen(false);
-                                                        }}
-                                                    >
-                                                        {!notif.is_read && (
-                                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>
-                                                        )}
-                                                        <div className="shrink-0">
-                                                            {notif.actor?.avatar_url ? (
-                                                                <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-slate-200 object-cover" />
-                                                            ) : (
-                                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                                                                    <User size={18} />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex justify-between items-start mb-0.5">
-                                                                <h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5>
-                                                                <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">
-                                                                    {new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
+                                        <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
+                                            {notifications.length === 0 ? (
+                                                <div className="py-12 flex flex-col items-center justify-center text-slate-400"><Bell size={40} className="opacity-10 mb-3" /><p className="font-bold text-sm">Tidak ada notifikasi</p></div>
+                                            ) : (
+                                                <div className="divide-y divide-slate-50">
+                                                    {notifications.map((notif) => (
+                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                            {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
+                                                            <div className="shrink-0">
+                                                                {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-slate-200 object-cover" /> : <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200"><User size={18} /></div>}
                                                             </div>
-                                                            <p className="text-xs font-bold text-slate-600 leading-snug">
-                                                                <span className="text-slate-900">{notif.actor?.full_name}</span> {notif.content}
-                                                            </p>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                                                                <p className="text-xs font-bold text-slate-600 leading-snug"><span className="text-slate-900">{notif.actor?.full_name}</span> {notif.content}</p>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-
-                                    {/* Footer */}
-                                    <div className="p-3 bg-slate-50/50 border-t-2 border-slate-100 text-center">
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Aktivitas Terbaru Anda</p>
-                                    </div>
-                                </div>
-                            )}
-                            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-full transition-all">
-                                <Settings size={18} />
-                            </button>
+                                )}
+                            </div>
+                            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-full transition-all"><Settings size={18} /></button>
                         </div>
 
                         <div className="h-6 w-[2px] bg-slate-100"></div>
-
                         <div className="flex items-center gap-3 pl-1 cursor-pointer group" onClick={() => navigate('/profile')}>
                             <div className="text-right hidden md:block">
                                 <p className="font-bold text-xs text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
-                                {/* Display Job Title first, fallback to Role */}
                                 <p className="text-[10px] text-slate-500 font-medium">{userProfile.jobTitle || userProfile.role}</p>
                             </div>
                             <div className="relative">
@@ -851,211 +797,109 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                 </header>
 
-                <main className="flex-1 p-4 md:px-6 md:py-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background">
-                    <div className="animate-bounce-in min-h-full flex flex-col">
+                <main className="flex-1 flex flex-col p-4 md:px-6 md:py-8 md:pb-8 pb-20 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full">
+                    <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
                         {children}
                     </div>
                 </main>
             </div>
 
-            {/* --- SETTINGS MODAL --- */}
+            {/* --- MODALS --- */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Pengaturan Aplikasi">
                 <div className="space-y-4">
-
-                    {/* 1. PROFILE SECTION */}
                     <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
                         <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-slate-800'}`}>
                             <div className="flex items-center gap-3"><User size={20} className={activeTab === 'profile' ? 'text-white' : 'text-accent'} /> Informasi Pengguna</div>
                             {activeTab === 'profile' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                         {activeTab === 'profile' && (
-                            <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-bl-full -z-0"></div>
-                                <form onSubmit={handleSaveProfile} className="space-y-5 relative z-10">
+                            <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300">
+                                <form onSubmit={handleSaveProfile} className="space-y-5">
                                     <div className="flex items-center gap-6">
                                         <div className="relative group cursor-pointer w-20 h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-slate-50 shadow-sm">
                                             <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
-                                                <Upload className="text-white" size={20} />
-                                            </div>
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={20} /></div>
                                             <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'user')} />
                                         </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-lg text-slate-800">Foto Profil</h4>
-                                            <p className="text-sm text-slate-500">Klik avatar untuk mengganti.</p>
-                                        </div>
+                                        <div className="flex-1"><h4 className="font-bold text-lg text-slate-800">Foto Profil</h4><p className="text-sm text-slate-500">Klik avatar untuk mengganti.</p></div>
                                     </div>
-
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Input label="Nama Lengkap" value={userProfile.name} onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })} />
-                                        <Input label="Jabatan / Job Title" placeholder="Contoh: Social Media Manager" value={userProfile.jobTitle} onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })} />
+                                        <Input label="Jabatan" value={userProfile.jobTitle} onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })} />
                                     </div>
-
                                     <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-slate-600 ml-1">Role Aplikasi (Access Level)</label>
-                                        <select
-                                            className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
-                                            value={userProfile.role}
-                                            onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })}
-                                            disabled={!isAdmin && userProfile.role !== 'Developer'} // Prevent standard users from promoting themselves
-                                        >
-                                            <option value="Member">Member</option>
-                                            <option value="Admin">Admin</option>
-                                            <option value="Owner">Owner</option>
-                                            <option value="Developer">Developer (Superuser)</option>
+                                        <label className="font-bold text-xs text-slate-600 ml-1">Role Aplikasi</label>
+                                        <select className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
+                                            <option value="Member">Member</option><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Developer">Developer</option>
                                         </select>
                                     </div>
-
-                                    <div className="pt-2 flex justify-end">
-                                        <Button type="submit" className="bg-accent" icon={<CheckCircle size={16} />}>Simpan Profil</Button>
-                                    </div>
+                                    <div className="pt-2 flex justify-end"><Button type="submit" className="bg-accent" icon={<CheckCircle size={16} />}>Simpan Profil</Button></div>
                                 </form>
                             </div>
                         )}
                     </div>
 
-                    {/* 2. BRANDING SECTION (Admin Only) */}
                     {isAdmin && (
-                        <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
-                            <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-slate-800'}`}>
-                                <div className="flex items-center gap-3"><Palette size={20} className={activeTab === 'branding' ? 'text-white' : 'text-secondary'} /> Tampilan Aplikasi (Admin)</div>
-                                {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                            </button>
-                            {activeTab === 'branding' && (
-                                <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-bl-full -z-0"></div>
-                                    <form onSubmit={handleSaveBranding} className="space-y-6 relative z-10">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="font-bold text-sm text-slate-600">Logo Sidebar</label>
-                                                <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white hover:border-secondary transition-colors group relative cursor-pointer">
-                                                    <div className="w-14 h-14 bg-white border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">
-                                                        {branding.appLogo ? (
-                                                            <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" />
-                                                        ) : (
-                                                            <Layers className="text-slate-300" size={24} />
-                                                        )}
+                        <>
+                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
+                                <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-slate-800'}`}>
+                                    <div className="flex items-center gap-3"><Palette size={20} className={activeTab === 'branding' ? 'text-white' : 'text-secondary'} /> Tampilan Aplikasi (Admin)</div>
+                                    {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </button>
+                                {activeTab === 'branding' && (
+                                    <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300">
+                                        <form onSubmit={handleSaveBranding} className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="font-bold text-sm text-slate-600">Logo Sidebar</label>
+                                                    <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white transition-colors relative cursor-pointer group">
+                                                        <div className="w-14 h-14 bg-white border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}</div>
+                                                        <div><p className="font-bold text-slate-700 text-sm">Upload PNG</p></div>
+                                                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-700 text-sm">Upload PNG</p>
-                                                        <p className="text-[10px] text-slate-400">Transparan</p>
-                                                    </div>
-                                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="font-bold text-sm text-slate-600">Browser Favicon</label>
-                                                <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white hover:border-secondary transition-colors group relative cursor-pointer">
-                                                    <div className="w-14 h-14 bg-white border-2 border-slate-200 rounded-lg flex items-center justify-center">
-                                                        {branding.appFavicon ? (
-                                                            <img src={branding.appFavicon} alt="Favicon" className="w-8 h-8 object-contain" />
-                                                        ) : (
-                                                            <Globe className="text-slate-300" size={24} />
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-700 text-sm">Upload Icon</p>
-                                                        <p className="text-[10px] text-slate-400">32x32 px</p>
-                                                    </div>
-                                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'favicon')} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <Input label="Nama Aplikasi" value={branding.appName} onChange={(e) => setBranding({ ...branding, appName: e.target.value })} />
-                                        <div className="pt-2 flex justify-end">
-                                            <Button type="submit" className="bg-secondary" icon={<CheckCircle size={16} />}>Simpan Global (Database)</Button>
-                                        </div>
-                                    </form>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* 3. INTEGRATION SECTION (Admin Only) */}
-                    {isAdmin && (
-                        <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'integration' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
-                            <button onClick={() => toggleTab('integration')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'integration' ? 'bg-tertiary text-slate-800' : 'text-slate-800'}`}>
-                                <div className="flex items-center gap-3"><Database size={20} className={activeTab === 'integration' ? 'text-slate-800' : 'text-tertiary'} /> Database & API (Admin)</div>
-                                {activeTab === 'integration' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                            </button>
-                            {activeTab === 'integration' && (
-                                <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-tertiary/10 rounded-bl-full -z-0"></div>
-                                    <div className="relative z-10 space-y-6">
-                                        <form onSubmit={handleSaveIntegration} className="space-y-4">
-                                            <div className="bg-blue-50 p-4 rounded-xl border-2 border-blue-100 text-sm text-blue-800 flex gap-3 shadow-sm">
-                                                <AlertCircle size={20} className="shrink-0 mt-0.5 text-blue-500" />
-                                                <div className="space-y-1">
-                                                    <p className="font-bold">Konfigurasi Supabase</p>
-                                                    <p>Pastikan URL dan Key berasal dari Dashboard Supabase Anda.</p>
-                                                </div>
-                                            </div>
-                                            <Input label="Supabase Project URL" value={sbConfig.url} onChange={(e) => setSbConfig({ ...sbConfig, url: e.target.value })} placeholder="https://..." />
-                                            <Input label="Supabase Anon Key" value={sbConfig.key} onChange={(e) => setSbConfig({ ...sbConfig, key: e.target.value })} type="password" placeholder="eyJh..." />
-                                            <div className="flex justify-end">
-                                                <Button type="submit" className="bg-tertiary text-slate-800 hover:bg-yellow-400" icon={<CheckCircle size={16} />}>Update Koneksi</Button>
-                                            </div>
+                                            <Input label="Nama Aplikasi" value={branding.appName} onChange={(e) => setBranding({ ...branding, appName: e.target.value })} />
+                                            <div className="pt-2 flex justify-end"><Button type="submit" className="bg-secondary" icon={<CheckCircle size={16} />}>Simpan Global</Button></div>
                                         </form>
-                                        <div className="border-t-2 border-slate-100 pt-6">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <div className="bg-slate-800 text-white p-1.5 rounded-lg"><Code size={16} /></div>
-                                                <h4 className="font-bold text-slate-800">SQL Setup Script</h4>
-                                            </div>
-                                            <p className="text-xs text-slate-500 mb-2">Jalankan script ini di Supabase SQL Editor untuk membuat tabel yang diperlukan.</p>
-                                            <div className="relative group">
-                                                <textarea readOnly className="w-full h-40 bg-slate-900 text-green-400 text-xs font-mono p-4 rounded-xl outline-none resize-none border-2 border-slate-700 focus:border-tertiary transition-colors" value={INITIAL_SQL_SCRIPT} />
-                                                <button onClick={() => { navigator.clipboard.writeText(INITIAL_SQL_SCRIPT); alert("SQL Script disalin!"); }} className="absolute top-3 right-3 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all opacity-0 group-hover:opacity-100 backdrop-blur-md">Copy Code</button>
-                                            </div>
-                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'integration' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
+                                <button onClick={() => toggleTab('integration')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'integration' ? 'bg-tertiary text-slate-800' : 'text-slate-800'}`}>
+                                    <div className="flex items-center gap-3"><Database size={20} className={activeTab === 'integration' ? 'text-slate-800' : 'text-tertiary'} /> Database & API (Admin)</div>
+                                    {activeTab === 'integration' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </button>
+                                {activeTab === 'integration' && (
+                                    <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300">
+                                        <form onSubmit={handleSaveIntegration} className="space-y-4">
+                                            <Input label="Supabase Project URL" value={sbConfig.url} onChange={(e) => setSbConfig({ ...sbConfig, url: e.target.value })} />
+                                            <Input label="Supabase Anon Key" value={sbConfig.key} onChange={(e) => setSbConfig({ ...sbConfig, key: e.target.value })} type="password" />
+                                            <div className="flex justify-end"><Button type="submit" className="bg-tertiary text-slate-800" icon={<CheckCircle size={16} />}>Update Koneksi</Button></div>
+                                        </form>
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
                 </div>
             </Modal>
 
-            {/* --- ROLE CHANGE NOTIFICATION MODAL --- */}
             <Modal isOpen={showRoleChangeModal} onClose={() => { }} title="Pemberitahuan Sistem">
                 <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                    <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2">
-                        <Shield className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">Perubahan Akses/Role</h3>
-                    <p className="text-slate-500 text-sm max-w-sm">
-                        Administrator telah mengubah Role atau level akses Anda. Untuk mencegah masalah sinkronisasi dan keamanan, Anda diharuskan untuk login ulang.
-                    </p>
-                    <button
-                        onClick={() => {
-                            localStorage.clear();
-                            navigate('/login');
-                        }}
-                        className="mt-6 w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl shadow-hard border-2 border-slate-900 hover:bg-slate-700 transition-colors"
-                    >
-                        Login Ulang Sekarang
-                    </button>
+                    <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2"><Shield className="w-8 h-8" /></div>
+                    <h3 className="text-xl font-bold text-slate-800">Perubahan Akses</h3>
+                    <p className="text-slate-500 text-sm">Role Anda telah berubah. Silakan login ulang.</p>
+                    <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard">Login Ulang</button>
                 </div>
             </Modal>
 
-            {/* --- SUBSCRIPTION EXPIRED NOTIFICATION MODAL --- */}
             <Modal isOpen={showSubExpiredModal} onClose={() => { }} title="Akses Ditangguhkan">
                 <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
-                        <Power className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">Akses Anda Terhenti</h3>
-                    <p className="text-slate-500 text-sm max-w-sm">
-                        Masa aktif subscription Anda telah habis atau akun Anda telah dinonaktifkan. Silakan hubungi Administrator/Developer untuk memperpanjang akses Anda.
-                    </p>
-                    <button
-                        onClick={() => {
-                            localStorage.clear();
-                            navigate('/login');
-                        }}
-                        className="mt-6 w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl shadow-hard border-2 border-red-700 hover:bg-red-600 transition-colors"
-                    >
-                        Keluar dari Aplikasi
-                    </button>
+                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><Power className="w-8 h-8" /></div>
+                    <h3 className="text-xl font-bold text-slate-800">Akses Terhenti</h3>
+                    <p className="text-slate-500 text-sm">Masa aktif subscription habis.</p>
+                    <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
                 </div>
             </Modal>
         </div>

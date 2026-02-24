@@ -27,13 +27,14 @@
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <style>
-    /* Global Design System Overrides */
     html,
-    body {
+    body,
+    #root {
       width: 100%;
       height: 100%;
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
 
     body {
@@ -42,20 +43,16 @@
       /* Warm Cream */
       color: #1E293B;
       /* Slate 800 */
-      zoom: 0.8;
-      height: 125%;
-      /* 1 / 0.8 */
-      width: 125%;
-      /* 1 / 0.8 */
+      zoom: 0.9;
     }
 
-    /* Fix min-h-screen and h-screen for zoom 0.8 */
+    /* Override min-h-screen and h-screen to use percentages for zoom compatibility */
     .min-h-screen {
-      min-height: 125vh !important;
+      min-height: 100% !important;
     }
 
     .h-screen {
-      height: 125vh !important;
+      height: 100% !important;
     }
 
     h1,

@@ -502,7 +502,7 @@ export const Messages: React.FC = () => {
     if (!isLoaded) return <div className="p-20 text-center font-black animate-pulse text-slate-400">Loading...</div>;
 
     return (
-        <div className="flex bg-white rounded-[40px] border-4 border-slate-900 shadow-hard h-[calc(100vh-140px)] overflow-hidden">
+        <div className="flex bg-white rounded-[40px] border-4 border-slate-900 shadow-hard flex-1 min-h-0 overflow-hidden">
             {/* Workspace Sidebar */}
             <div className={`bg-slate-50 border-r-4 border-slate-900 flex flex-col items-center py-8 gap-6 transition-all duration-500 ease-in-out ${showWsSidebar ? 'w-24' : 'w-0 opacity-0 -translate-x-full overflow-hidden'}`}>
                 {workspaces.map(ws => (

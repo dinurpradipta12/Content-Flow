@@ -53,7 +53,7 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 h-full min-h-[600px]">
+        <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
             {/* Left Sidebar: Folders */}
             <div className="w-full md:w-64 shrink-0 flex flex-col gap-4">
                 <div className="bg-white border-4 border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#0f172a] h-full overflow-y-auto custom-scrollbar">

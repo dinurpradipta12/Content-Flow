@@ -139,7 +139,7 @@ export const CarouselMaker: React.FC = () => {
     };
 
     return (
-        <div className={`flex flex-col bg-slate-50 font-sans text-slate-900 h-[calc(100vh-100px)] relative border-4 border-slate-900 rounded-3xl overflow-hidden shadow-[12px_12px_0px_0px_#0f172a] theme-${currentTheme}`}>
+        <div className={`flex flex-col bg-slate-50 font-sans text-slate-900 flex-1 min-h-0 relative border-4 border-slate-900 rounded-3xl overflow-hidden shadow-[12px_12px_0px_0px_#0f172a] theme-${currentTheme}`}>
             {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme] }} />}
 
             {showThemeModal && (
@@ -235,10 +235,10 @@ export const CarouselMaker: React.FC = () => {
             </header>
 
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden min-h-0">
                 <Sidebar />
-                <div className="flex-1 flex overflow-hidden relative">
-                    <div className="flex-1 flex flex-col overflow-hidden relative transition-all duration-300">
+                <div className="flex-1 flex overflow-hidden relative min-h-0">
+                    <div className="flex-1 flex flex-col overflow-hidden relative transition-all duration-300 min-h-0">
                         <Editor />
                         <BottomBar />
                     </div>

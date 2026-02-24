@@ -494,7 +494,7 @@ export const TeamManagement: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6 pb-12 animate-in fade-in duration-300 relative w-full h-full min-h-[85vh]">
+        <div className="space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
             {/* Page Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-2">
                 <div>
@@ -516,9 +516,9 @@ export const TeamManagement: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-6 h-[75vh]">
+            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
                 {/* LEFT: WORKSPACES LIST */}
-                <div className="w-full lg:w-1/3 flex flex-col gap-4">
+                <div className="w-full lg:w-1/3 flex flex-col gap-4 min-h-0">
                     <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="p-4 bg-primary flex items-center gap-3">
                             <Layers className="text-white" size={24} />
@@ -557,7 +557,7 @@ export const TeamManagement: React.FC = () => {
                 </div>
 
                 {/* RIGHT: USERS LIST IN WORKSPACE */}
-                <div className="w-full lg:w-2/3 flex flex-col">
+                <div className="w-full lg:w-2/3 flex flex-col min-h-0">
                     <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="px-6 py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-4">
                             {/* Geometric detail */}

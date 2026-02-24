@@ -262,7 +262,7 @@ export const Sidebar: React.FC = () => {
     };
 
     return (
-        <div className="w-80 bg-white border-r-4 border-slate-900 flex flex-col h-full overflow-hidden">
+        <div className="w-80 bg-white border-r-4 border-slate-900 flex flex-col overflow-hidden min-h-0 flex-shrink-0">
             {/* Tabs */}
             <div className="flex border-b-4 border-slate-900 shrink-0">
                 <button
@@ -279,7 +279,7 @@ export const Sidebar: React.FC = () => {
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 min-h-0">
                 {activeTab === 'content' ? (
                     <div className="space-y-8">
                         {/* Presets */}
