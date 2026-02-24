@@ -149,6 +149,28 @@ on conflict (id) do nothing;
 alter table public.workspaces enable row level security;
 alter table public.content_items enable row level security;
 alter table public.app_users enable row level security;
+
+-- 8. Table: Global Broadcasts
+create table if not exists public.global_broadcasts (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  sender_id uuid references app_users(id),
+  title text not null,
+  message text not null,
+  type text default 'Announcement',
+  is_active boolean default true,
+  constraint global_broadcasts_pkey primary key (id)
+);
+
+-- Enable RLS & Realtime
+alter table public.global_broadcasts enable row level security;
+do $$ begin
+  if not exists (select 1 from pg_policies where policyname = 'Public view for global_broadcasts') then
+    create policy "Public view for global_broadcasts" on public.global_broadcasts for select using (true);
+  end if;
+end $$;
+alter publication supabase_realtime add table global_broadcasts;
+
 alter table public.app_config enable row level security;
 
 drop policy if exists "Enable all access" on public.workspaces;
@@ -295,7 +317,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
 
     // Global Config
-    const { config } = useAppConfig();
+    const { config, loading: configLoading } = useAppConfig();
 
     // Settings State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -328,6 +350,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showRenewalSuccessModal, setShowRenewalSuccessModal] = useState(false);
 
+    // Broadcast State
+    const [activeBroadcast, setActiveBroadcast] = useState<{ id: string, title: string, message: string, type: string } | null>(null);
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+
     // Network State
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
     const [latency, setLatency] = useState(0);
@@ -342,9 +368,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Branding State
     const [branding, setBranding] = useState({
-        appName: 'Arunika',
-        appLogo: '',
-        appFavicon: '',
+        appName: localStorage.getItem('app_name') || 'Arunika',
+        appLogo: localStorage.getItem('app_logo') || '',
+        appFavicon: localStorage.getItem('app_favicon') || '',
     });
 
     // Integration State
@@ -412,33 +438,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         checkNetwork();
         const interval = setInterval(checkNetwork, 10000);
 
-        // 2. Fetch Global Branding from Supabase
-        const fetchGlobalConfig = async () => {
-            try {
-                const { data, error } = await supabase.from('app_config').select('*').single();
-                if (data && !error) {
-                    setBranding({
-                        appName: data.app_name || 'Arunika',
-                        appLogo: data.app_logo || '',
-                        appFavicon: data.app_favicon || ''
-                    });
-                    // Sync to local storage for backup
-                    localStorage.setItem('app_name', data.app_name);
-                    localStorage.setItem('app_logo', data.app_logo);
-                    localStorage.setItem('app_favicon', data.app_favicon);
-                } else {
-                    // Fallback to local storage if DB fetch fails or empty
-                    setBranding({
-                        appName: localStorage.getItem('app_name') || 'Arunika',
-                        appLogo: localStorage.getItem('app_logo') || '',
-                        appFavicon: localStorage.getItem('app_favicon') || '',
-                    });
-                }
-            } catch (e) {
-                console.log("Branding fetch skipped (offline or config missing)");
-            }
-        };
-        fetchGlobalConfig();
+        // Global Config is now managed by AppConfigProvider
         fetchUserProfile();
 
         // 4. Listen for User Updates (Sync between Profile page and Layout)
@@ -452,9 +452,51 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
         window.addEventListener('user_updated', handleUserUpdate);
 
+        // 5. Global Event Listeners
+        const handleOpenPayment = () => setShowPaymentModal(true);
+        window.addEventListener('open-payment-modal', handleOpenPayment);
+
+        // 6. Fetch Global Broadcast
+        const fetchLatestBroadcast = async () => {
+            const { data } = await supabase
+                .from('global_broadcasts')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (data) {
+                const seenId = localStorage.getItem('seen_broadcast_id');
+                if (seenId !== data.id) {
+                    setActiveBroadcast(data);
+                    setShowBroadcastModal(true);
+                }
+            }
+        };
+        fetchLatestBroadcast();
+
+        // 7. Realtime Listener for New Broadcasts
+        const broadcastChannel = supabase
+            .channel('global_broadcast_listener')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'global_broadcasts' },
+                (payload: any) => {
+                    const newMsg = payload.new;
+                    if (newMsg.is_active && newMsg.sender_id !== localStorage.getItem('user_id')) {
+                        setActiveBroadcast(newMsg);
+                        setShowBroadcastModal(true);
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             clearInterval(interval);
             window.removeEventListener('user_updated', handleUserUpdate);
+            window.removeEventListener('open-payment-modal', handleOpenPayment);
+            supabase.removeChannel(broadcastChannel);
         };
     }, []);
 
@@ -470,6 +512,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (branding.appFavicon) link.href = branding.appFavicon;
         else if (branding.appLogo) link.href = branding.appLogo;
     }, [branding]);
+
+    // Sync local branding state with global config
+    useEffect(() => {
+        if (config) {
+            setBranding({
+                appName: config.app_name || 'Arunika',
+                appLogo: config.app_logo || '',
+                appFavicon: config.app_favicon || ''
+            });
+            // Update cache for next refresh
+            localStorage.setItem('app_name', config.app_name);
+            localStorage.setItem('app_logo', config.app_logo);
+            localStorage.setItem('app_favicon', config.app_favicon);
+        }
+    }, [config]);
 
     const mainNavItems = [
         { id: 'dashboard', path: '/', defaultLabel: 'Dashboard', icon: <LayoutDashboard size={20} /> },
@@ -914,6 +971,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                             const isHidden = config?.hidden_pages?.includes(item.id);
 
+                            // Safety: While loading for the first time (no cache), 
+                            // assume hidden for everything except dashboard to prevent flickering.
+                            if (!config && configLoading && item.id !== 'dashboard') return false;
+
                             if (CORE_PAGES.includes(item.id)) {
                                 if (isHidden) return false;
                             } else {
@@ -1214,6 +1275,41 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </p>
                     <Button onClick={() => setShowRenewalSuccessModal(false)} className="w-full bg-slate-900 mt-4">
                         Tutup
+                    </Button>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={showBroadcastModal}
+                onClose={() => {
+                    if (activeBroadcast) {
+                        localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
+                    }
+                    setShowBroadcastModal(false);
+                }}
+                title={activeBroadcast?.type || 'Pengumuman'}
+            >
+                <div className="p-6 space-y-4 text-center">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-2 border-4 border-slate-900 shadow-hard-mini ${activeBroadcast?.type === 'Promo' ? 'bg-amber-400' : activeBroadcast?.type === 'Maintenance' ? 'bg-red-400' : 'bg-accent'
+                        }`}>
+                        <Bell className="text-white" size={32} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 font-heading leading-tight uppercase italic">{activeBroadcast?.title}</h3>
+                        <p className="text-slate-500 font-bold mt-2 leading-relaxed">
+                            {activeBroadcast?.message}
+                        </p>
+                    </div>
+                    <Button
+                        onClick={() => {
+                            if (activeBroadcast) {
+                                localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
+                            }
+                            setShowBroadcastModal(false);
+                        }}
+                        className="w-full h-12 mt-4"
+                    >
+                        MENGERTI
                     </Button>
                 </div>
             </Modal>

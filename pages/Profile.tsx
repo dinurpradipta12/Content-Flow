@@ -18,6 +18,9 @@ interface UserData {
   job_title?: string;
   created_at: string;
   email?: string;
+  subscription_start?: string;
+  subscription_end?: string;
+  subscription_code?: string;
 }
 
 interface KPI {
@@ -341,6 +344,45 @@ export const Profile: React.FC = () => {
               </div>
             </div>
 
+          </div>
+        </Card>
+
+        {/* Subscription Card */}
+        <Card title="Status Berlangganan" icon={<Shield size={20} />} headerColor="emerald">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 py-2">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border-2 border-emerald-100 shrink-0">
+                <Zap size={24} fill="currentColor" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Paket Saat Ini</p>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-black text-2xl text-slate-800">{user.subscription_code || 'Free Member'}</h4>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border-2 shadow-sm ${new Date(user.subscription_end || '') > new Date() ? 'bg-emerald-500 text-white border-slate-900 shadow-[2px_2px_0px_#1E293B]' : 'bg-red-500 text-white border-slate-900 shadow-[2px_2px_0px_#1E293B]'
+                    }`}>
+                    {new Date(user.subscription_end || '') > new Date() ? 'Aktif' : 'Expired'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Masa Aktif Hingga</p>
+                <p className="font-bold text-slate-700">
+                  {user.subscription_end ? new Date(user.subscription_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Tidak Terbatas'}
+                </p>
+              </div>
+              <button
+                onClick={() => window.dispatchEvent(new Event('open-payment-modal'))}
+                className="px-6 py-2 bg-slate-900 text-white font-black rounded-xl border-2 border-slate-900 shadow-hard-mini hover:bg-emerald-500 transition-all hover:-translate-y-1 active:translate-y-0"
+              >
+                UPGRADE / PERPANJANG
+              </button>
+            </div>
+            <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest leading-relaxed">
+              Klik upgrade untuk memilih paket baru dan memperpanjang akses eksklusif Anda.
+            </p>
           </div>
         </Card>
 

@@ -42,8 +42,11 @@ const AppConfigContext = createContext<AppConfigContextType>(defaultContext);
 export const useAppConfig = () => useContext(AppConfigContext);
 
 export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
-    const [config, setConfig] = useState<AppConfig | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [config, setConfig] = useState<AppConfig | null>(() => {
+        const cached = localStorage.getItem('app_config');
+        return cached ? JSON.parse(cached) : null;
+    });
+    const [loading, setLoading] = useState(!localStorage.getItem('app_config'));
 
     // Version Check
     const [currentVersion, setCurrentVersion] = useState<string | null>(null);
@@ -55,6 +58,8 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
             const { data, error } = await supabase.from('app_config').select('*').single();
             if (data) {
                 setConfig(data);
+                localStorage.setItem('app_config', JSON.stringify(data));
+
                 if (currentVersion === null) {
                     setCurrentVersion(data.app_version); // Initial version mount
                 } else if (data.app_version !== currentVersion) {
@@ -80,6 +85,7 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
                 (payload) => {
                     const newConfig = payload.new as AppConfig;
                     setConfig(newConfig);
+                    localStorage.setItem('app_config', JSON.stringify(newConfig));
                     setCurrentVersion(prev => {
                         if (prev && newConfig.app_version !== prev) {
                             setChangelog(newConfig.changelog);

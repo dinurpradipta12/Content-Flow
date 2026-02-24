@@ -19,7 +19,8 @@ import {
     Code,
     Smartphone,
     Rocket,
-    CreditCard
+    CreditCard,
+    Send
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 
@@ -74,6 +75,12 @@ export const WorkspaceSettings: React.FC = () => {
 
     // Form States
     const [changelogInput, setChangelogInput] = useState('');
+
+    // Broadcast State
+    const [broadcastTitle, setBroadcastTitle] = useState('');
+    const [broadcastMessage, setBroadcastMessage] = useState('');
+    const [broadcastType, setBroadcastType] = useState('Announcement');
+    const [sendingBroadcast, setSendingBroadcast] = useState(false);
     const [sbUrl, setSbUrl] = useState(localStorage.getItem('sb_url') || '');
     const [sbKey, setSbKey] = useState(localStorage.getItem('sb_key') || '');
 
@@ -170,6 +177,35 @@ export const WorkspaceSettings: React.FC = () => {
             alert('Gagal mengirim update.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSendBroadcast = async () => {
+        if (!broadcastTitle || !broadcastMessage) {
+            alert('Judul dan pesan harus diisi!');
+            return;
+        }
+
+        setSendingBroadcast(true);
+        try {
+            const { error } = await supabase.from('global_broadcasts').insert({
+                sender_id: localStorage.getItem('user_id'),
+                title: broadcastTitle,
+                message: broadcastMessage,
+                type: broadcastType,
+                is_active: true
+            });
+
+            if (error) throw error;
+
+            alert('Broadcast berhasil dikirim ke seluruh user!');
+            setBroadcastTitle('');
+            setBroadcastMessage('');
+        } catch (err: any) {
+            console.error('Broadcast error:', err);
+            alert('Gagal mengirim broadcast: ' + err.message);
+        } finally {
+            setSendingBroadcast(false);
         }
     };
 
@@ -367,6 +403,63 @@ export const WorkspaceSettings: React.FC = () => {
 
                                 <p className="text-[10px] font-bold text-slate-500 text-center leading-relaxed">
                                     Tombol ini akan memperbarui versi di seluruh database user secara realtime. User akan diminta untuk meraload halaman.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Global Broadcast Card */}
+                        <div className="bg-white border-4 border-slate-900 rounded-3xl overflow-hidden shadow-hard h-fit">
+                            <div className="bg-accent p-6 border-b-4 border-slate-900 flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
+                                    <Bell size={20} className="text-accent" />
+                                </div>
+                                <h3 className="font-black text-white text-xl uppercase tracking-tighter">Global Broadcast</h3>
+                            </div>
+                            <div className="p-8 space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Judul Broadcast</label>
+                                    <input
+                                        value={broadcastTitle}
+                                        onChange={e => setBroadcastTitle(e.target.value)}
+                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:border-accent outline-none transition-all"
+                                        placeholder="Contoh: Promo Ramadhan 50%!"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Tipe Pesan</label>
+                                    <select
+                                        value={broadcastType}
+                                        onChange={e => setBroadcastType(e.target.value)}
+                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:border-accent outline-none transition-all"
+                                    >
+                                        <option value="Announcement">Announcement</option>
+                                        <option value="Promo">Promo / Diskon</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Isi Pesan</label>
+                                    <textarea
+                                        rows={4}
+                                        value={broadcastMessage}
+                                        onChange={e => setBroadcastMessage(e.target.value)}
+                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900 focus:border-accent outline-none transition-all"
+                                        placeholder="Tuliskan pesan broadcast di sini..."
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={handleSendBroadcast}
+                                    disabled={sendingBroadcast}
+                                    className="w-full bg-slate-900 hover:bg-accent text-white font-black py-4 rounded-2xl border-4 border-slate-900 shadow-hard transition-all flex items-center justify-center gap-3 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                                >
+                                    <Send size={20} />
+                                    {sendingBroadcast ? 'MENGIRIM...' : 'KIRIM BROADCAST GLOBAL'}
+                                </button>
+                                <p className="text-[10px] font-bold text-slate-400 text-center leading-relaxed italic">
+                                    Pesan ini akan muncul sebagai popup modal secara realtime di layar seluruh user yang sedang aktif.
                                 </p>
                             </div>
                         </div>
