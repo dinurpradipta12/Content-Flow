@@ -263,6 +263,9 @@ alter table public.developer_inbox add column if not exists amount numeric;
 alter table public.developer_inbox add column if not exists proof_url text;
 alter table public.developer_inbox add column if not exists duration_days int;
 
+-- Fix Not-Null Constraint on subscription_code for renewals
+alter table public.developer_inbox alter column subscription_code drop not null;
+
 alter table public.notifications enable row level security;
 alter table public.developer_inbox enable row level security;
 
@@ -721,19 +724,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     // UI Helpers
-    const [selectedPackage, setSelectedPackage] = useState('');
+    const [selectedPackageId, setSelectedPackageId] = useState('');
     const [paymentProof, setPaymentProof] = useState('');
 
     useEffect(() => {
-        if (!selectedPackage) {
+        if (!selectedPackageId) {
             if (config?.payment_config?.packages?.length) {
                 const first = config.payment_config.packages[0];
-                setSelectedPackage(`${first.name} (Rp ${first.price.toLocaleString('id-ID')})`);
+                setSelectedPackageId(first.id);
             } else {
-                setSelectedPackage('1 Bulan (Rp 150.000)');
+                setSelectedPackageId('1-month');
             }
         }
-    }, [config, selectedPackage]);
+    }, [config, selectedPackageId]);
 
     const handlePaymentProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -758,12 +761,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             // Extract numeric price and duration if available from selectedPackage string
             // selectedPackage format: "Package Name (Rp 150.000)"
+            // Extract data from selectedPackageId
             let amount = 0;
-            let packageName = selectedPackage;
+            let packageName = selectedPackageId; // Fallback
             let durationDays = 30; // Default
 
             if (config?.payment_config?.packages) {
-                const pkg = config.payment_config.packages.find(p => `${p.name} (Rp ${p.price.toLocaleString('id-ID')})` === selectedPackage);
+                const pkg = config.payment_config.packages.find(p => p.id === selectedPackageId);
                 if (pkg) {
                     amount = pkg.price;
                     packageName = pkg.name;
@@ -776,6 +780,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 sender_name: userProfile.name,
                 sender_email: userEmail,
                 sender_username: username,
+                subscription_code: userProfile.subscription_code || '', // Pass current code as fallback
                 type: 'renewal',
                 package_name: packageName,
                 amount: amount,
@@ -1132,20 +1137,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Pilih Paket Langganan</label>
                         <select
                             className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:border-accent transition-colors"
-                            value={selectedPackage}
-                            onChange={(e) => setSelectedPackage(e.target.value)}
+                            value={selectedPackageId}
+                            onChange={(e) => setSelectedPackageId(e.target.value)}
                         >
                             {config?.payment_config?.packages?.length ? (
                                 config.payment_config.packages.map(pkg => (
-                                    <option key={pkg.id} value={`${pkg.name} (Rp ${pkg.price.toLocaleString('id-ID')})`}>
+                                    <option key={pkg.id} value={pkg.id}>
                                         {pkg.name} (Rp {pkg.price.toLocaleString('id-ID')})
                                     </option>
                                 ))
                             ) : (
                                 <>
-                                    <option value="1 Bulan (Rp 150.000)">1 Bulan (Rp 150.000)</option>
-                                    <option value="3 Bulan (Rp 400.000)">3 Bulan (Rp 400.000)</option>
-                                    <option value="Lifetime (Rp 1.500.000)">Lifetime (Rp 1.500.000)</option>
+                                    <option value="1-month">1 Bulan (Rp 150.000)</option>
+                                    <option value="3-month">3 Bulan (Rp 400.000)</option>
+                                    <option value="lifetime">Lifetime (Rp 1.500.000)</option>
                                 </>
                             )}
                         </select>

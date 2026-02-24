@@ -448,7 +448,7 @@ export const WorkspaceSettings: React.FC = () => {
                                                         });
                                                     }}
                                                     className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
-                                                    placeholder="Nama Paket (cth: 1 Bulan)"
+                                                    placeholder="Nama Paket"
                                                 />
                                                 <input
                                                     type="number"
@@ -462,9 +462,26 @@ export const WorkspaceSettings: React.FC = () => {
                                                             return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
                                                         });
                                                     }}
-                                                    className="w-1/3 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
-                                                    placeholder="Harga (Rp)"
+                                                    className="w-28 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                    placeholder="Harga"
                                                 />
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        value={pkg.durationDays || 30}
+                                                        onChange={e => {
+                                                            const days = Number(e.target.value);
+                                                            setConfig(prev => {
+                                                                if (!prev) return null;
+                                                                const newPkgs = [...(prev.payment_config?.packages || [])];
+                                                                newPkgs[idx].durationDays = days;
+                                                                return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
+                                                            });
+                                                        }}
+                                                        className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-accent outline-none"
+                                                    />
+                                                    <span className="text-[10px] font-black text-slate-400">HARI</span>
+                                                </div>
                                                 <button
                                                     onClick={() => {
                                                         setConfig(prev => {
