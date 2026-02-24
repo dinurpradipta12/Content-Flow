@@ -95,7 +95,10 @@ export const DeveloperInbox: React.FC = () => {
 
             const { error: updateErr } = await supabase
                 .from('app_users')
-                .update({ is_verified: true })
+                .update({
+                    is_verified: true,
+                    subscription_package: msg.package_name || 'Free'
+                })
                 .eq('id', msg.user_id);
 
             if (updateErr) throw updateErr;
@@ -144,6 +147,7 @@ export const DeveloperInbox: React.FC = () => {
                 .from('app_users')
                 .update({
                     subscription_end: newExpiry.toISOString(),
+                    subscription_package: msg.package_name || 'Free',
                     is_active: true // Pastikan aktif kembali jika sebelumnya suspend
                 })
                 .eq('id', msg.user_id);

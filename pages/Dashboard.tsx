@@ -55,6 +55,37 @@ export const Dashboard: React.FC = () => {
     const [tzLabel, setTzLabel] = useState('WIB');
     const [nextPrayerState, setNextPrayerState] = useState({ name: '-', time: '-', countdown: '-' });
 
+    // Sync from DB
+    useEffect(() => {
+        const syncPreferences = async () => {
+            const userId = localStorage.getItem('user_id');
+            if (!userId) return;
+
+            const { data, error } = await supabase
+                .from('app_users')
+                .select('religion, city, timezone')
+                .eq('id', userId)
+                .single();
+
+            if (data && !error) {
+                if (data.religion) {
+                    setReligion(data.religion);
+                    localStorage.setItem('user_religion', data.religion);
+                    setIsSelectingReligion(false);
+                }
+                if (data.city) {
+                    setManualCity(data.city);
+                    localStorage.setItem('user_city', data.city);
+                }
+                if (data.timezone) {
+                    setManualTz(data.timezone);
+                    localStorage.setItem('user_tz', data.timezone);
+                }
+            }
+        };
+        syncPreferences();
+    }, []);
+
     useEffect(() => {
         let isCancelled = false;
 
@@ -241,10 +272,16 @@ export const Dashboard: React.FC = () => {
         return () => clearInterval(intv);
     }, [prayerData]);
 
-    const handleSetReligion = (rel: string) => {
+    const handleSetReligion = async (rel: string) => {
         localStorage.setItem('user_religion', rel);
         setReligion(rel);
         setIsSelectingReligion(false);
+
+        // Save to DB
+        const userId = localStorage.getItem('user_id');
+        if (userId) {
+            await supabase.from('app_users').update({ religion: rel }).eq('id', userId);
+        }
     };
 
 
@@ -872,10 +909,19 @@ export const Dashboard: React.FC = () => {
                                                     <option value="WIT">WIT (Waktu Indonesia Timur)</option>
                                                 </select>
                                                 <button
-                                                    onClick={() => {
+                                                    onClick={async () => {
                                                         localStorage.setItem('user_city', manualCity);
                                                         localStorage.setItem('user_tz', manualTz);
                                                         setIsSelectingReligion(false);
+
+                                                        // Save to DB
+                                                        const userId = localStorage.getItem('user_id');
+                                                        if (userId) {
+                                                            await supabase.from('app_users').update({
+                                                                city: manualCity,
+                                                                timezone: manualTz
+                                                            }).eq('id', userId);
+                                                        }
                                                     }}
                                                     className="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
                                                 >
@@ -953,98 +999,98 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        {/* Daily Checklist */}
-                        <div id="daily-checklist" className="space-y-4 pt-10">
-                            <div className="flex items-center gap-3 mb-6">
-                                <CheckCircle size={28} className="text-slate-800" strokeWidth={2.5} />
-                                <h2 className="text-2xl font-bold font-heading text-slate-800">Checklist</h2>
-                            </div>
-                            <div className="bg-white rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
-                                <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
-                                    {checklists.length === 0 ? (
-                                        <div className="text-center py-10">
-                                            <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <Check size={24} className="text-slate-300" />
-                                            </div>
-                                            <p className="text-slate-500 font-bold text-sm">Checklist Anda kosong.<br />Tambahkan tugas hari ini!</p>
-                                        </div>
-                                    ) : (
-                                        checklists.map(c => (
-                                            <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors">
-                                                <button onClick={() => toggleChecklist(c.id)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300 text-transparent'}`}>
-                                                    <Check size={14} className={c.done ? 'opacity-100' : 'opacity-0'} />
-                                                </button>
-                                                <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{c.text}</p>
-                                                <button onClick={() => deleteChecklist(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                                <form onSubmit={addChecklist} className="flex gap-2">
-                                    <input
-                                        className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
-                                        placeholder="Tugas baru..."
-                                        value={newChecklist}
-                                        onChange={e => setNewChecklist(e.target.value)}
-                                    />
-                                    <button type="submit" className="w-12 h-11 bg-slate-900 border-2 border-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-800 transition-colors shadow-hard-mini shrink-0">
-                                        <Plus size={20} />
-                                    </button>
-                                </form>
-                            </div>
+                    {/* Daily Checklist */}
+                    <div id="daily-checklist" className="space-y-4 pt-10">
+                        <div className="flex items-center gap-3 mb-6">
+                            <CheckCircle size={28} className="text-slate-800" strokeWidth={2.5} />
+                            <h2 className="text-2xl font-bold font-heading text-slate-800">Checklist</h2>
                         </div>
-
-                        {/* KPI Targets Preview */}
-                        <div className="space-y-4 pt-10">
-                            <div className="flex items-center gap-3 mb-6">
-                                <TrendingUp size={28} className="text-slate-800" strokeWidth={2.5} />
-                                <h2 className="text-2xl font-bold font-heading text-slate-800">KPI Targets</h2>
-                            </div>
-                            <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
-                                <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl mb-4">
-                                    <p className="text-xs font-bold text-yellow-800">
-                                        Berikut adalah target bulan ini yang terkoneksi pada performa kerja Anda secara personal.
-                                    </p>
-                                </div>
-                                <div className="space-y-4">
-                                    {kpis.length === 0 ? (
-                                        <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">
-                                            <p className="text-sm font-bold text-slate-400">Belum ada target KPI yang diassign untuk profil Anda bulan ini. ✨</p>
+                        <div className="bg-white rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
+                            <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
+                                {checklists.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <Check size={24} className="text-slate-300" />
                                         </div>
-                                    ) : (
-                                        kpis.map((kpi, idx) => {
-                                            const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
-                                            const isCompleted = kpi.actual_value >= kpi.target_value;
-                                            return (
-                                                <div key={kpi.id || idx} className="bg-white border-2 border-slate-100 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <h4 className="font-black text-slate-800 text-sm truncate pr-4">{kpi.metric_name}</h4>
-                                                        <span className="text-[10px] font-black bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                                                            {kpis[idx].actual_value} / {kpis[idx].target_value} {kpi.unit}
-                                                        </span>
-                                                    </div>
-                                                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-accent'}`}
-                                                            style={{ width: `${Math.min(progress, 100)}%` }}
-                                                        ></div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                                <Button className="w-full mt-6" variant="secondary" onClick={() => navigate('/script')}>
-                                    Lihat Board KPI Saya <ArrowRight size={16} className="ml-2" />
-                                </Button>
+                                        <p className="text-slate-500 font-bold text-sm">Checklist Anda kosong.<br />Tambahkan tugas hari ini!</p>
+                                    </div>
+                                ) : (
+                                    checklists.map(c => (
+                                        <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors">
+                                            <button onClick={() => toggleChecklist(c.id)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300 text-transparent'}`}>
+                                                <Check size={14} className={c.done ? 'opacity-100' : 'opacity-0'} />
+                                            </button>
+                                            <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{c.text}</p>
+                                            <button onClick={() => deleteChecklist(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
                             </div>
+                            <form onSubmit={addChecklist} className="flex gap-2">
+                                <input
+                                    className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
+                                    placeholder="Tugas baru..."
+                                    value={newChecklist}
+                                    onChange={e => setNewChecklist(e.target.value)}
+                                />
+                                <button type="submit" className="w-12 h-11 bg-slate-900 border-2 border-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-800 transition-colors shadow-hard-mini shrink-0">
+                                    <Plus size={20} />
+                                </button>
+                            </form>
                         </div>
                     </div>
 
+                    {/* KPI Targets Preview */}
+                    <div className="space-y-4 pt-10">
+                        <div className="flex items-center gap-3 mb-6">
+                            <TrendingUp size={28} className="text-slate-800" strokeWidth={2.5} />
+                            <h2 className="text-2xl font-bold font-heading text-slate-800">KPI Targets</h2>
+                        </div>
+                        <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
+                            <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl mb-4">
+                                <p className="text-xs font-bold text-yellow-800">
+                                    Berikut adalah target bulan ini yang terkoneksi pada performa kerja Anda secara personal.
+                                </p>
+                            </div>
+                            <div className="space-y-4">
+                                {kpis.length === 0 ? (
+                                    <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">
+                                        <p className="text-sm font-bold text-slate-400">Belum ada target KPI yang diassign untuk profil Anda bulan ini. ✨</p>
+                                    </div>
+                                ) : (
+                                    kpis.map((kpi, idx) => {
+                                        const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
+                                        const isCompleted = kpi.actual_value >= kpi.target_value;
+                                        return (
+                                            <div key={kpi.id || idx} className="bg-white border-2 border-slate-100 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="font-black text-slate-800 text-sm truncate pr-4">{kpi.metric_name}</h4>
+                                                    <span className="text-[10px] font-black bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                                        {kpis[idx].actual_value} / {kpis[idx].target_value} {kpi.unit}
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-accent'}`}
+                                                        style={{ width: `${Math.min(progress, 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                            <Button className="w-full mt-6" variant="secondary" onClick={() => navigate('/script')}>
+                                Lihat Board KPI Saya <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     );

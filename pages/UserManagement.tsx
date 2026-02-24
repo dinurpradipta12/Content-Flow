@@ -8,6 +8,7 @@ import {
     Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search,
     ShieldCheck, ShieldX, AlertTriangle
 } from 'lucide-react';
+import { useAppConfig } from '../components/AppConfigProvider';
 
 interface AppUser {
     id: string;
@@ -22,6 +23,7 @@ interface AppUser {
     subscription_start: string | null;
     subscription_end: string | null;
     subscription_code: string | null;
+    subscription_package: string | null;
     created_at: string;
     parent_user_id?: string | null;
     invited_by?: string | null;
@@ -39,6 +41,9 @@ export const UserManagement: React.FC = () => {
     const [registering, setRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    const { config } = useAppConfig();
+    const availablePackages = config?.payment_config?.packages || [];
 
     // Current user role
     const currentUserRole = localStorage.getItem('user_role') || 'Member';
@@ -59,6 +64,7 @@ export const UserManagement: React.FC = () => {
         password: '',
         workspace_id: '',
         subscription_end: '',
+        subscription_package: '',
     });
     const [formError, setFormError] = useState('');
     const [formSuccess, setFormSuccess] = useState('');
@@ -115,6 +121,7 @@ export const UserManagement: React.FC = () => {
                 avatar_url: avatarUrl,
                 is_active: true,
                 subscription_start: now,
+                subscription_package: form.subscription_package || 'Free',
             };
             if (form.subscription_end) {
                 insertData.subscription_end = new Date(form.subscription_end).toISOString();
@@ -125,7 +132,7 @@ export const UserManagement: React.FC = () => {
             if (error) throw error;
 
             setFormSuccess(`User "${form.username}" berhasil didaftarkan!`);
-            setForm({ full_name: '', email: '', username: '', password: '', workspace_id: '', subscription_end: '' });
+            setForm({ full_name: '', email: '', username: '', password: '', workspace_id: '', subscription_end: '', subscription_package: '' });
             fetchUsers();
             setTimeout(() => setFormSuccess(''), 4000);
         } catch (err: any) {
@@ -245,6 +252,19 @@ export const UserManagement: React.FC = () => {
             fetchUsers();
             if (selectedUser?.id === userId) {
                 setSelectedUser(prev => prev ? { ...prev, subscription_end: newEnd || null } : null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleUpdateSubscriptionPackage = async (userId: string, newPackage: string) => {
+        if (!isDeveloper) { alert('Hanya Developer yang dapat mengubah paket langganan.'); return; }
+        try {
+            await supabase.from('app_users').update({ subscription_package: newPackage }).eq('id', userId);
+            fetchUsers();
+            if (selectedUser?.id === userId) {
+                setSelectedUser(prev => prev ? { ...prev, subscription_package: newPackage } : null);
             }
         } catch (err) {
             console.error(err);
@@ -422,6 +442,19 @@ export const UserManagement: React.FC = () => {
                                         </div>
                                     )}
 
+                                    {/* Subscription Package */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Subscription Package</label>
+                                        <select value={form.subscription_package} onChange={e => setForm(f => ({ ...f, subscription_package: e.target.value }))}
+                                            className="w-full bg-white border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all">
+                                            <option value="">Pilih Paket (Default: Free)</option>
+                                            <option value="Free">Free</option>
+                                            {availablePackages.map(pkg => (
+                                                <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
                                     {formError && <div className="bg-red-50 text-red-600 font-bold text-xs px-3 py-2 rounded-xl border-2 border-red-200">{formError}</div>}
                                     {formSuccess && <div className="bg-emerald-50 text-emerald-600 font-bold text-xs px-3 py-2 rounded-xl border-2 border-emerald-200">{formSuccess}</div>}
 
@@ -468,7 +501,8 @@ export const UserManagement: React.FC = () => {
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Invited By</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Verifikasi</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Status</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Status</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Package</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest text-right">Action</th>
                                             </tr>
@@ -539,7 +573,12 @@ export const UserManagement: React.FC = () => {
                                                                         {subStatus.label}
                                                                     </span>
                                                                 </td>
-                                                                <td className="p-4 text-xs text-slate-500">
+                                                                <td className="p-4 hidden lg:table-cell">
+                                                                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">
+                                                                        {user.subscription_package || 'Free'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-xs text-slate-500 hidden lg:table-cell">
                                                                     {user.subscription_end
                                                                         ? `s/d ${new Date(user.subscription_end).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                                                                         : <span className="text-slate-400">Unlimited</span>
@@ -798,6 +837,27 @@ export const UserManagement: React.FC = () => {
                                                 </div>
                                             </div>
                                             <p className="text-[10px] font-bold text-slate-400 mt-2 text-center">Kosongkan tanggal berakhir untuk akses unlimited.</p>
+                                        </div>
+                                    )}
+
+                                    {/* Subscription Package - Developer Only */}
+                                    {isDeveloper && (
+                                        <div>
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                                <Layers size={16} /> Subscription Package
+                                            </h4>
+                                            <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
+                                                <select
+                                                    value={selectedUser.subscription_package || 'Free'}
+                                                    onChange={e => handleUpdateSubscriptionPackage(selectedUser.id, e.target.value)}
+                                                    className="w-full bg-white border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
+                                                >
+                                                    <option value="Free">Free</option>
+                                                    {availablePackages.map(pkg => (
+                                                        <option key={pkg.id} value={pkg.name}>{pkg.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
                                     )}
 

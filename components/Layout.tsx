@@ -114,6 +114,10 @@ alter table public.app_users add column if not exists subscription_start timesta
 alter table public.app_users add column if not exists subscription_end timestamptz;
 alter table public.app_users add column if not exists subscription_code text;
 alter table public.app_users add column if not exists is_verified boolean default false;
+alter table public.app_users add column if not exists religion text;
+alter table public.app_users add column if not exists city text;
+alter table public.app_users add column if not exists timezone text;
+alter table public.app_users add column if not exists subscription_package text;
 
 -- Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
 alter table public.app_users alter column subscription_start type timestamptz using subscription_start::timestamptz;
@@ -939,21 +943,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {daysToSubExp !== null && daysToSubExp <= 5 && (
                         <div
                             onClick={() => setShowPaymentModal(true)}
-                            className="w-full bg-red-50 border-4 border-slate-900 rounded-2xl p-4 cursor-pointer hover:bg-red-100 transition-all shadow-hard mb-6 relative overflow-hidden group"
+                            className="w-full bg-red-500 border-4 border-slate-900 rounded-[24px] p-6 cursor-pointer hover:bg-red-600 transition-all shadow-[8px_8px_0px_#000] mb-8 relative group overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-red-200 rounded-full -mr-8 -mt-8 opacity-50 group-hover:scale-150 transition-transform"></div>
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
-                                        <AlertTriangle size={14} className="text-white" />
+                            <div className="relative z-10 text-white">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
+                                        <AlertTriangle size={20} className="text-red-600" />
                                     </div>
-                                    <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Peringatan Langganan</span>
+                                    <span className="text-xs font-black uppercase tracking-[0.2em]">Peringatan</span>
                                 </div>
-                                <p className="text-sm font-black text-slate-900 leading-tight">
-                                    {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} hari lagi`} masa berlangganan anda akan habis. Segera perpanjang akun Anda agar akses tidak terhenti.
+                                <h3 className="text-xl font-black leading-tight mb-2">
+                                    {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} Hari Lagi`} Langganan Habis!
+                                </h3>
+                                <p className="text-sm font-bold text-white/90 leading-relaxed mb-6">
+                                    Segera perpanjang akun Anda agar akses tidak terhenti.
                                 </p>
-                                <button className="mt-4 w-full text-xs bg-slate-900 text-white font-black py-2.5 rounded-xl uppercase tracking-widest hover:bg-red-600 transition-colors border-2 border-slate-900 shadow-[4px_4px_0px_#fca5a5]">
-                                    Perpanjang Sekarang
+                                <button className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl Lowercase tracking-widest hover:bg-slate-800 transition-all border-2 border-slate-900 shadow-[4px_4px_0px_#fff] active:translate-y-1 active:shadow-none">
+                                    Tutup Banner
                                 </button>
                             </div>
                         </div>
