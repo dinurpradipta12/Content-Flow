@@ -315,11 +315,31 @@ export const Dashboard: React.FC = () => {
         saveChecklists(newList);
     };
 
-    // 5. Workspaces
     const [workspaces, setWorkspaces] = useState<any[]>([]);
     useEffect(() => {
         const fetchWs = async () => {
-            const { data } = await supabase.from('workspaces').select('*').order('name');
+            const userId = localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role');
+
+            let query = supabase.from('workspaces').select('*').order('name');
+
+            if (userRole === 'Owner' || userRole === 'Admin') {
+                query = query.eq('admin_id', userId);
+            } else if (userRole === 'Member') {
+                const { data: memberData } = await supabase
+                    .from('workspace_members')
+                    .select('workspace_id')
+                    .eq('user_id', userId);
+
+                if (memberData && memberData.length > 0) {
+                    query = query.in('id', memberData.map(d => d.workspace_id));
+                } else {
+                    setWorkspaces([]);
+                    return;
+                }
+            }
+
+            const { data } = await query;
             setWorkspaces(data || []);
         };
         fetchWs();
@@ -548,15 +568,15 @@ export const Dashboard: React.FC = () => {
 
                     {/* Minimalist Analytics Chart */}
                     <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8">
-                        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-8">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto">
-                                <div className="flex items-center gap-3">
+                        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-6 mb-8">
+                            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-4 w-full 2xl:w-auto flex-wrap">
+                                <div className="flex items-center gap-3 shrink-0">
                                     <TrendingUp size={24} className="text-slate-800" />
                                     <h3 className="text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
                                 </div>
-                                <div className="flex gap-2 w-full sm:w-auto">
+                                <div className="flex flex-wrap gap-2 w-full xl:w-auto">
                                     <select
-                                        className="flex-1 sm:flex-none px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
+                                        className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
                                         value={filterPlatform}
                                         onChange={(e) => setFilterPlatform(e.target.value)}
                                     >
@@ -566,7 +586,7 @@ export const Dashboard: React.FC = () => {
                                         ))}
                                     </select>
                                     <select
-                                        className="flex-1 sm:flex-none px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
+                                        className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
                                         value={filterWs}
                                         onChange={(e) => setFilterWs(e.target.value)}
                                     >
@@ -575,7 +595,7 @@ export const Dashboard: React.FC = () => {
                                             <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>
                                         ))}
                                     </select>
-                                    <div className="flex gap-1">
+                                    <div className="flex flex-wrap gap-2">
                                         <select
                                             className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
                                             value={filterMonth}
@@ -597,7 +617,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
                                     <button
                                         key={metric}
