@@ -952,7 +952,7 @@ export const Dashboard: React.FC = () => {
                                 <CheckCircle size={28} className="text-slate-800" strokeWidth={2.5} />
                                 <h2 className="text-2xl font-bold font-heading text-slate-800">Checklist</h2>
                             </div>
-                            <div className="bg-white rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col h-full min-h-[300px]">
+                            <div className="bg-white rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
                                 <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
                                     {checklists.length === 0 ? (
                                         <div className="text-center py-10">

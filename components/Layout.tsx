@@ -851,7 +851,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                 </header>
 
-                <main className="flex-1 p-4 md:px-6 md:py-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar">
+                <main className="flex-1 p-4 md:px-6 md:py-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background">
                     <div className="animate-bounce-in min-h-full flex flex-col">
                         {children}
                     </div>

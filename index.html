@@ -28,8 +28,12 @@
     rel="stylesheet">
   <style>
     /* Global Design System Overrides */
-    html {
+    html,
+    body {
+      width: 100%;
       height: 100%;
+      margin: 0;
+      padding: 0;
     }
 
     body {
@@ -39,12 +43,19 @@
       color: #1E293B;
       /* Slate 800 */
       zoom: 0.8;
-      min-height: 100%;
+      height: 125%;
+      /* 1 / 0.8 */
+      width: 125%;
+      /* 1 / 0.8 */
     }
 
-    /* Fix min-h-screen for zoom 0.8 — scale viewport height */
+    /* Fix min-h-screen and h-screen for zoom 0.8 */
     .min-h-screen {
-      min-height: calc(100vh / 0.8) !important;
+      min-height: 125vh !important;
+    }
+
+    .h-screen {
+      height: 125vh !important;
     }
 
     h1,
