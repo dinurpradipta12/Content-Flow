@@ -263,12 +263,12 @@ export const Dashboard: React.FC = () => {
 
                 if (!userFullName && !userAvatar) return;
 
-                // Find team member linked to this user
-                const { data: tmData } = await supabase
-                    .from('team_members')
-                    .select('id')
-                    .or(`full_name.eq."${userFullName}",avatar_url.eq."${userAvatar}"`)
-                    .maybeSingle();
+                let tmData = null;
+                const { data: allMembers } = await supabase.from('team_members').select('id, full_name, avatar_url');
+
+                if (allMembers) {
+                    tmData = allMembers.find(m => m.full_name === userFullName || m.avatar_url === userAvatar);
+                }
 
                 if (tmData) {
                     const { data: kData, error } = await supabase
@@ -622,8 +622,8 @@ export const Dashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="h-[250px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-[250px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                 <AreaChart data={chartData}>
                                     <defs>
                                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -677,8 +677,8 @@ export const Dashboard: React.FC = () => {
                                 <CheckCircle size={24} className="text-slate-800" />
                                 <h3 className="text-xl font-bold font-heading text-slate-800">Status Distribution</h3>
                             </div>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <PieChart>
                                         <Pie
                                             data={statusDistribution}
@@ -709,8 +709,8 @@ export const Dashboard: React.FC = () => {
                                 <Layers size={24} className="text-slate-800" />
                                 <h3 className="text-xl font-bold font-heading text-slate-800">Content Pillars</h3>
                             </div>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <PieChart>
                                         <Pie
                                             data={pillarDistribution}
