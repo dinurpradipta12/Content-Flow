@@ -26,12 +26,12 @@ export const Welcome: React.FC = () => {
             </div>
 
             <div className="relative z-10 max-w-lg w-full text-center">
-                {/* Logo - centered */}
-                <div className="mx-auto w-36 h-36 bg-white rounded-3xl shadow-[8px_8px_0px_0px_#0f172a] border-4 border-slate-900 flex items-center justify-center mb-10 transform -rotate-3 hover:rotate-0 transition-transform duration-500 hover:shadow-[12px_12px_0px_0px_#0f172a]">
+                {/* Logo - centered, full logo without box */}
+                <div className="mx-auto mb-10 flex items-center justify-center">
                     {appLogo ? (
-                        <img src={appLogo} alt={appName} className="w-28 h-28 object-contain" />
+                        <img src={appLogo} alt={appName} className="w-full max-w-[320px] max-h-36 object-contain" />
                     ) : (
-                        <div className="text-5xl font-black text-slate-900">{appName.charAt(0)}</div>
+                        <div className="text-6xl font-black text-slate-900">{appName}</div>
                     )}
                 </div>
 

@@ -15,6 +15,9 @@ export const Register: React.FC = () => {
     });
     const [errorStatus, setErrorStatus] = useState('');
     const [success, setSuccess] = useState(false);
+    const [registeredUserId, setRegisteredUserId] = useState('');
+    const [sendingInbox, setSendingInbox] = useState(false);
+    const [inboxSent, setInboxSent] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,29 +59,28 @@ export const Register: React.FC = () => {
             // Insert new user into db mapping
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.fullName)}`;
             const now = new Date().toISOString();
+            const newUserId = crypto.randomUUID();
 
             const insertData = {
-                id: crypto.randomUUID(),
+                id: newUserId,
                 full_name: form.fullName,
                 email: form.email,
                 username: form.username,
                 password: form.password,
-                role: 'Member',
+                role: 'Admin', // New admin registration with subscription
                 avatar_url: avatarUrl,
-                is_active: true, // They can't login yet anyway due to is_verified = false
+                is_active: true,
                 subscription_start: now,
                 subscription_code: form.subscriptionCode || null,
-                is_verified: false // Must be verified by Admin/Developer
+                is_verified: false // Must be verified by Developer
             };
 
             const { error } = await supabase.from('app_users').insert([insertData]);
 
             if (error) { throw error; }
 
+            setRegisteredUserId(newUserId);
             setSuccess(true);
-            setTimeout(() => {
-                navigate('/login');
-            }, 8000);
 
         } catch (err: any) {
             console.error(err);
@@ -88,26 +90,96 @@ export const Register: React.FC = () => {
         }
     };
 
+    const handleSendToInbox = async () => {
+        if (!registeredUserId || !form.subscriptionCode) return;
+        setSendingInbox(true);
+        try {
+            const { error } = await supabase.from('developer_inbox').insert([{
+                sender_name: form.fullName,
+                sender_email: form.email,
+                sender_username: form.username,
+                subscription_code: form.subscriptionCode,
+                user_id: registeredUserId,
+                message: `${form.fullName} telah mengirimkan kode konfirmasi sebagai berikut untuk bisa di verifikasi. Kode user: ${form.subscriptionCode}`,
+                is_read: false,
+                is_resolved: false
+            }]);
+
+            if (error) throw error;
+            setInboxSent(true);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengirim pesan ke Developer Inbox. Silakan hubungi via WhatsApp.');
+        } finally {
+            setSendingInbox(false);
+        }
+    };
+
+    const handleSendWhatsApp = () => {
+        const waNumber = '6281234567890'; // Developer WhatsApp number - replace as needed
+        const message = encodeURIComponent(
+            `Halo Developer Aruneeka,\n\nSaya telah mendaftar akun baru dengan informasi berikut:\n\nNama: ${form.fullName}\nEmail: ${form.email}\nUsername: ${form.username}\nKode Langganan: ${form.subscriptionCode}\n\nMohon diverifikasi agar akun saya dapat diaktifkan.\n\nTerima kasih!`
+        );
+        window.open(`https://wa.me/${waNumber}?text=${message}`, '_blank');
+    };
+
     if (success) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-                <div className="max-w-md w-full bg-emerald-50 border-4 border-emerald-500 rounded-3xl p-8 text-center shadow-[8px_8px_0px_0px_#10b981] animate-in slide-in-from-bottom-4">
-                    <div className="w-20 h-20 bg-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-emerald-900 border-dashed">
-                        <UserPlus size={40} className="text-emerald-900" />
+                <div className="max-w-lg w-full bg-white border-4 border-slate-900 rounded-3xl p-8 text-center shadow-[8px_8px_0px_0px_#0f172a]">
+                    <div className="w-20 h-20 bg-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-slate-900">
+                        <UserPlus size={40} className="text-slate-900" />
                     </div>
-                    <h2 className="text-3xl font-black text-emerald-900 mb-4">Pendaftaran Berhasil!</h2>
-                    <p className="text-emerald-700 font-medium mb-6 leading-relaxed">
+                    <h2 className="text-3xl font-black text-slate-900 mb-3">Pendaftaran Berhasil!</h2>
+                    <p className="text-slate-600 font-medium mb-6 leading-relaxed">
                         Terima kasih, <strong>{form.fullName}</strong>. Akun Anda telah tersimpan di sistem kami.
                         <br /><br />
-                        Saat ini akun Anda sedang menunggu <strong>verifikasi dari Administrator</strong>.
-                        {form.subscriptionCode && (
-                            <> Kami akan mencocokkan kode unik <code className="bg-emerald-200 px-2 py-0.5 rounded font-mono text-sm">{form.subscriptionCode}</code> Anda.</>
-                        )}
-                        {' '}Jika berhasil divalidasi, Anda dapat langsung login.
+                        Saat ini akun Anda sedang menunggu <strong>verifikasi dari Developer</strong>.
                     </p>
+
+                    {/* Subscription Code Display */}
+                    {form.subscriptionCode && (
+                        <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-5 mb-6">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Kode Unik Langganan Anda</p>
+                            <p className="text-3xl font-black text-slate-900 tracking-[0.3em] font-mono">{form.subscriptionCode}</p>
+                            <p className="text-xs text-slate-500 font-medium mt-3 leading-relaxed">
+                                Kirimkan kode ini ke Developer untuk proses verifikasi melalui salah satu metode berikut:
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Action Buttons: WhatsApp & Inbox */}
+                    {form.subscriptionCode && (
+                        <div className="flex flex-col gap-3 mb-6">
+                            <button
+                                onClick={handleSendWhatsApp}
+                                className="w-full py-3.5 bg-emerald-500 text-white font-black rounded-xl border-2 border-emerald-700 hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 text-sm shadow-[2px_2px_0px_#064e3b]"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                                Kirim via WhatsApp
+                            </button>
+                            <button
+                                onClick={handleSendToInbox}
+                                disabled={inboxSent || sendingInbox}
+                                className={`w-full py-3.5 font-black rounded-xl border-2 transition-colors flex items-center justify-center gap-2 text-sm ${inboxSent
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-400 cursor-default'
+                                    : 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800 shadow-[2px_2px_0px_#334155]'
+                                    }`}
+                            >
+                                {sendingInbox ? (
+                                    <><Loader2 size={18} className="animate-spin" /> Mengirim...</>
+                                ) : inboxSent ? (
+                                    <><Info size={18} /> ✓ Pesan Terkirim ke Inbox Developer</>
+                                ) : (
+                                    <><Mail size={18} /> Kirim ke Inbox Developer</>
+                                )}
+                            </button>
+                        </div>
+                    )}
+
                     <button
                         onClick={() => navigate('/login')}
-                        className="w-full py-4 text-emerald-900 font-black rounded-xl border-4 border-emerald-900 bg-white hover:bg-emerald-100 transition-colors"
+                        className="w-full py-3.5 text-slate-900 font-black rounded-xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors text-sm"
                     >
                         Kembali ke halaman Login
                     </button>

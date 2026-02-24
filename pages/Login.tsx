@@ -121,11 +121,9 @@ export const Login: React.FC = () => {
                 <Card className="shadow-2xl relative">
                     <div className="text-center mb-8 flex flex-col items-center justify-center">
                         {appLogo ? (
-                            <img src={appLogo} className="w-full max-w-[200px] max-h-24 object-contain mx-auto mb-4" alt="Logo" />
+                            <img src={appLogo} className="w-full max-w-[280px] max-h-32 object-contain mx-auto mb-4" alt="Logo" />
                         ) : (
-                            <div className="w-16 h-16 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center mx-auto mb-4 shadow-hard">
-                                <Layers className="text-white" size={32} />
-                            </div>
+                            <div className="text-4xl font-black text-slate-900 mb-4">{config?.app_name || 'Aruneeka'}</div>
                         )}
                         <p className="text-slate-500 mt-2">Masuk untuk mengelola kontenmu.</p>
                     </div>

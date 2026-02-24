@@ -23,6 +23,8 @@ interface AppUser {
     subscription_end: string | null;
     subscription_code: string | null;
     created_at: string;
+    parent_user_id?: string | null;
+    invited_by?: string | null;
 }
 
 interface Workspace {
@@ -463,6 +465,7 @@ export const UserManagement: React.FC = () => {
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">User</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Username</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Invited By</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Verifikasi</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Status</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
@@ -503,6 +506,16 @@ export const UserManagement: React.FC = () => {
                                                                         user.role === 'Admin' || user.role === 'Owner' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                                                                             'bg-slate-100 text-slate-600 border-slate-200'
                                                                         }`}>{user.role}</span>
+                                                                </td>
+                                                                <td className="p-4">
+                                                                    {user.invited_by ? (
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-xs font-bold text-slate-700">{user.invited_by}</span>
+                                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Admin Invited</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-xs font-bold text-slate-400">Self Register</span>
+                                                                    )}
                                                                 </td>
                                                                 <td className="p-4">
                                                                     {user.role === 'Developer' ? (
@@ -596,6 +609,38 @@ export const UserManagement: React.FC = () => {
                                         </div>
                                     </div>
 
+                                    {/* Detail Pendaftaran */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Metode Daftar</p>
+                                            <div className="flex items-center gap-2">
+                                                {selectedUser.invited_by ? (
+                                                    <>
+                                                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
+                                                        <span className="text-sm font-black text-slate-900">Admin Invited</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                                        <span className="text-sm font-black text-slate-900">Self Register</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {selectedUser.invited_by && (
+                                                <p className="text-xs font-bold text-slate-500 mt-1">Oleh: {selectedUser.invited_by}</p>
+                                            )}
+                                        </div>
+                                        <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 text-right">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Terdaftar Pada</p>
+                                            <p className="text-sm font-black text-slate-900">
+                                                {new Date(selectedUser.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </p>
+                                            <p className="text-xs font-bold text-slate-500">
+                                                {new Date(selectedUser.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                                            </p>
+                                        </div>
+                                    </div>
+
                                     {/* Verification Section - Developer Only */}
                                     {isDeveloper && selectedUser.role !== 'Developer' && (
                                         <div>
@@ -634,8 +679,8 @@ export const UserManagement: React.FC = () => {
                                                                 onClick={() => handleVerifyUser(selectedUser)}
                                                                 disabled={!verifyCodeInput.trim() || verifyCodeInput.trim().toUpperCase() !== (selectedUser.subscription_code || '').trim().toUpperCase()}
                                                                 className={`px-5 py-2.5 rounded-xl font-black text-sm border-2 border-slate-900 transition-all flex items-center gap-2 ${verifyCodeInput.trim() && verifyCodeInput.trim().toUpperCase() === (selectedUser.subscription_code || '').trim().toUpperCase()
-                                                                        ? 'bg-emerald-400 text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-0.5'
-                                                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70'
+                                                                    ? 'bg-emerald-400 text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-0.5'
+                                                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70'
                                                                     }`}
                                                             >
                                                                 <ShieldCheck size={16} /> Verifikasi

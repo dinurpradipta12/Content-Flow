@@ -28,7 +28,8 @@ import {
     Users,
     Presentation,
     Power,
-    MessageSquare
+    MessageSquare,
+    Inbox
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -704,6 +705,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <NavLink to="/admin/users" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
                                 <Users size={20} /> User Management
                             </NavLink>
+                            <NavLink to="/admin/inbox" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
+                                <Inbox size={20} /> Developer Inbox
+                            </NavLink>
                             <NavLink to="/admin/workspace" className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-hard border-2 border-slate-800' : 'text-slate-600 hover:text-slate-900 hover:translate-x-1'}`}>
                                 <Settings size={20} /> Workspace Settings
                             </NavLink>
@@ -848,7 +852,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </header>
 
                 <main className="flex-1 p-4 md:px-6 md:py-8 pb-24 overflow-y-auto overflow-x-hidden custom-scrollbar">
-                    <div className="animate-bounce-in h-full flex flex-col">
+                    <div className="animate-bounce-in min-h-full flex flex-col">
                         {children}
                     </div>
                 </main>

@@ -13,6 +13,7 @@ import { Welcome } from './pages/Welcome';
 import { Terms } from './pages/Terms';
 import { Register } from './pages/Register';
 import { UserManagement } from './pages/UserManagement';
+import { DeveloperInbox } from './pages/DeveloperInbox';
 import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
@@ -87,6 +88,7 @@ const App: React.FC = () => {
               {/* Developer Routes (Developer only) */}
               <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
               <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
+              <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />
             </Route>
           </Routes>
         </NotificationProvider>

@@ -20,6 +20,8 @@ interface AppUser {
     subscription_start: string | null;
     subscription_end: string | null;
     created_at: string;
+    parent_user_id?: string;
+    invited_by?: string;
 }
 
 interface WorkspaceData extends Workspace {
@@ -224,6 +226,26 @@ export const TeamManagement: React.FC = () => {
     const [isInviteOpen, setIsInviteOpen] = useState(false);
     const [inviteForm, setInviteForm] = useState({ full_name: '', username: '', password: '' });
     const [inviting, setInviting] = useState(false);
+    const [inviteSuccess, setInviteSuccess] = useState<{ username: string; password: string; fullName: string } | null>(null);
+
+    const getLoginLink = () => {
+        return `${window.location.origin}${window.location.pathname}#/login`;
+    };
+
+    const handleCopyLoginInfo = () => {
+        if (!inviteSuccess) return;
+        const text = `Halo ${inviteSuccess.fullName},\n\nAkun Anda telah dibuat di Aruneeka.\n\nLink Login: ${getLoginLink()}\nUsername: ${inviteSuccess.username}\nPassword: ${inviteSuccess.password}\n\nSilakan login dan segera ganti password Anda.`;
+        navigator.clipboard.writeText(text);
+        alert('Info login berhasil disalin!');
+    };
+
+    const handleShareViaWhatsApp = () => {
+        if (!inviteSuccess) return;
+        const text = encodeURIComponent(
+            `Halo ${inviteSuccess.fullName},\n\nAkun Anda telah dibuat di Aruneeka.\n\nLink Login: ${getLoginLink()}\nUsername: ${inviteSuccess.username}\nPassword: ${inviteSuccess.password}\n\nSilakan login dan segera ganti password Anda.`
+        );
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    };
 
     const handleInviteUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -231,12 +253,10 @@ export const TeamManagement: React.FC = () => {
         setInviting(true);
 
         const adminId = localStorage.getItem('user_id');
+        const adminName = localStorage.getItem('user_name') || 'Admin';
         const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inviteForm.full_name)}`;
 
         try {
-            // Include admin_id to strictly bind them to this admin tenant
-            // If they don't have the table altered yet, it will error, but we skip if it errors on that column
-            // We just send data without admin_id if not strictly needed or handle fallback
             let insertData: any = {
                 full_name: inviteForm.full_name,
                 username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
@@ -244,7 +264,10 @@ export const TeamManagement: React.FC = () => {
                 role: 'Member',
                 avatar_url: avatarUrl,
                 is_active: true,
-                subscription_start: new Date().toISOString()
+                is_verified: true, // Admin-invited users are auto-verified
+                subscription_start: new Date().toISOString(),
+                parent_user_id: adminId, // Track parent admin
+                invited_by: adminName // Track who invited
             };
             if (adminId) {
                 insertData.admin_id = adminId;
@@ -259,14 +282,18 @@ export const TeamManagement: React.FC = () => {
 
             if (wsError) throw wsError;
 
-            alert('Berhasil mendaftarkan dan menambahkan ke workspace!');
+            // Show success with login link
+            setInviteSuccess({
+                username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
+                password: inviteForm.password,
+                fullName: inviteForm.full_name
+            });
             setInviteForm({ full_name: '', username: '', password: '' });
-            setIsInviteOpen(false);
             fetchData();
         } catch (error: any) {
             console.error('Invite error', error);
-            if (error?.message?.includes('admin_id')) {
-                // Temporary fallback if admin_id is not yet migrated
+            if (error?.message?.includes('admin_id') || error?.message?.includes('parent_user_id') || error?.message?.includes('invited_by')) {
+                // Temporary fallback if columns are not yet migrated
                 let insertData = {
                     full_name: inviteForm.full_name,
                     username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
@@ -274,14 +301,19 @@ export const TeamManagement: React.FC = () => {
                     role: 'Member',
                     avatar_url: avatarUrl,
                     is_active: true,
+                    is_verified: true,
                     subscription_start: new Date().toISOString()
                 };
                 const { error: fallbackError } = await supabase.from('app_users').insert([insertData]);
                 if (!fallbackError) {
                     const updatedMembers = [...(selectedWorkspace.members || []), avatarUrl];
                     await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', selectedWorkspace.id);
+                    setInviteSuccess({
+                        username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
+                        password: inviteForm.password,
+                        fullName: inviteForm.full_name
+                    });
                     setInviteForm({ full_name: '', username: '', password: '' });
-                    setIsInviteOpen(false);
                     fetchData();
                     return;
                 }
@@ -557,24 +589,80 @@ export const TeamManagement: React.FC = () => {
 
                         {/* Invite Form inline dropdown */}
                         {isInviteOpen && selectedWorkspace && (
-                            <form onSubmit={handleInviteUser} className="bg-emerald-50 border-b-4 border-slate-900 border-dashed p-6 animate-in fade-in slide-in-from-top-4">
-                                <h4 className="font-black text-slate-900 mb-4 tracking-wide text-sm flex items-center gap-2">
-                                    <UserMinus size={16} />
-                                    Daftarkan & Undang Member Baru
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
-                                    <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
-                                    <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
-                                </div>
-                                <div className="mt-4 flex gap-3">
-                                    <Button type="submit" disabled={inviting}>
-                                        {inviting ? <Loader2 className="animate-spin" size={16} /> : 'Daftarkan & Tambahkan'}
-                                    </Button>
-                                    <Button type="button" variant="secondary" onClick={() => setIsInviteOpen(false)}>Batal</Button>
-                                </div>
-                                <p className="text-xs text-slate-500 font-bold mt-3">Registrasi ini menggunakan data Admin Anda dan bebas kuota.</p>
-                            </form>
+                            <div className="bg-emerald-50 border-b-4 border-slate-900 border-dashed p-6 animate-in fade-in slide-in-from-top-4">
+                                {inviteSuccess ? (
+                                    /* Success Panel with Login Link */
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-emerald-400 rounded-full flex items-center justify-center border-2 border-slate-900">
+                                                <Plus size={20} className="text-slate-900" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-slate-900 text-sm">✅ Berhasil Mendaftarkan {inviteSuccess.fullName}!</h4>
+                                                <p className="text-xs text-slate-600 font-medium">Kirimkan informasi login berikut ke anggota baru:</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white border-2 border-slate-900 rounded-xl p-4 space-y-2 shadow-[2px_2px_0px_#0f172a]">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Link Login</span>
+                                            </div>
+                                            <p className="text-sm font-mono font-bold text-blue-600 break-all">{getLoginLink()}</p>
+                                            <div className="border-t border-slate-100 pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Username</span>
+                                                    <p className="font-black text-slate-900">{inviteSuccess.username}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</span>
+                                                    <p className="font-black text-slate-900">{inviteSuccess.password}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={handleCopyLoginInfo}
+                                                className="flex-1 px-4 py-2.5 bg-white text-slate-900 font-bold text-xs rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                📋 Salin Info Login
+                                            </button>
+                                            <button
+                                                onClick={handleShareViaWhatsApp}
+                                                className="flex-1 px-4 py-2.5 bg-emerald-500 text-white font-bold text-xs rounded-xl border-2 border-emerald-700 hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                📱 Kirim via WhatsApp
+                                            </button>
+                                            <button
+                                                onClick={() => { setInviteSuccess(null); setIsInviteOpen(false); }}
+                                                className="px-4 py-2.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-300 transition-colors"
+                                            >
+                                                Tutup
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Invite Form */
+                                    <form onSubmit={handleInviteUser}>
+                                        <h4 className="font-black text-slate-900 mb-4 tracking-wide text-sm flex items-center gap-2">
+                                            <UserMinus size={16} />
+                                            Daftarkan & Undang Member Baru
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
+                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
+                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
+                                        </div>
+                                        <div className="mt-4 flex gap-3">
+                                            <Button type="submit" disabled={inviting}>
+                                                {inviting ? <Loader2 className="animate-spin" size={16} /> : 'Daftarkan & Tambahkan'}
+                                            </Button>
+                                            <Button type="button" variant="secondary" onClick={() => setIsInviteOpen(false)}>Batal</Button>
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-bold mt-3">User yang didaftarkan oleh Admin otomatis terverifikasi dan bisa langsung login. Link login akan ditampilkan setelah berhasil.</p>
+                                    </form>
+                                )}
+                            </div>
                         )}
 
                         {/* List Area */}
