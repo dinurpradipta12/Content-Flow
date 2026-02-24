@@ -219,7 +219,7 @@ begin
 end
 $$;
 
--- 8. Notifications Table
+-- 8. Notifications Table (Success feedback for users)
 create table if not exists public.notifications (
   id uuid not null default gen_random_uuid (),
   created_at timestamp with time zone not null default now(),
@@ -235,9 +235,54 @@ create table if not exists public.notifications (
   constraint notifications_recipient_id_fkey foreign key (recipient_id) references public.app_users(id) on delete cascade
 );
 
+-- 9. Developer Inbox (Registration & Renewal)
+create table if not exists public.developer_inbox (
+  id uuid not null default gen_random_uuid (),
+  created_at timestamp with time zone not null default now(),
+  user_id uuid null,
+  sender_name text,
+  sender_email text,
+  sender_username text,
+  subscription_code text,
+  message text,
+  is_read boolean default false,
+  is_resolved boolean default false,
+  -- Additional columns for Renewal Workflow
+  type text default 'registration', -- 'registration' or 'renewal'
+  package_name text,
+  amount numeric,
+  proof_url text,
+  duration_days int,
+  constraint developer_inbox_pkey primary key (id)
+);
+
+-- MIGRATION: Tambahkan kolom baru jika tabel sudah ada (Anti Error)
+alter table public.developer_inbox add column if not exists type text default 'registration';
+alter table public.developer_inbox add column if not exists package_name text;
+alter table public.developer_inbox add column if not exists amount numeric;
+alter table public.developer_inbox add column if not exists proof_url text;
+alter table public.developer_inbox add column if not exists duration_days int;
+
 alter table public.notifications enable row level security;
+alter table public.developer_inbox enable row level security;
+
 drop policy if exists "Enable all access" on public.notifications;
+drop policy if exists "Enable all access" on public.developer_inbox;
+
 create policy "Enable all access" on public.notifications for all using (true) with check (true);
+create policy "Enable all access" on public.developer_inbox for all using (true) with check (true);
+
+-- Enable Realtime
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'developer_inbox'
+  ) then
+    alter publication supabase_realtime add table public.developer_inbox;
+  end if;
+end
+$$;
 `;
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -278,6 +323,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Payment Extension State
     const [daysToSubExp, setDaysToSubExp] = useState<number | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showRenewalSuccessModal, setShowRenewalSuccessModal] = useState(false);
 
     // Network State
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
@@ -309,6 +355,41 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // --- ROLE CHECKERS ---
     const isDeveloper = userProfile.role === 'Developer';
     const isAdmin = userProfile.role === 'Admin' || userProfile.role === 'Owner' || isDeveloper;
+
+    // 3. Fetch Latest User Profile from Supabase
+    const fetchUserProfile = async () => {
+        const userId = localStorage.getItem('user_id');
+        if (!userId) return;
+
+        try {
+            const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title, subscription_end').eq('id', userId).single();
+            if (data && !error) {
+                const profileData = {
+                    name: data.full_name || 'User',
+                    role: data.role || 'Member',
+                    avatar: data.avatar_url || 'https://picsum.photos/40/40',
+                    jobTitle: data.job_title || ''
+                };
+                setUserProfile(profileData);
+
+                if (data.subscription_end) {
+                    localStorage.setItem('subscription_end', data.subscription_end);
+                } else {
+                    localStorage.removeItem('subscription_end');
+                }
+
+                window.dispatchEvent(new Event('sub_updated'));
+
+                // Keep localStorage in sync
+                localStorage.setItem('user_name', profileData.name);
+                localStorage.setItem('user_role', profileData.role);
+                localStorage.setItem('user_avatar', profileData.avatar);
+                localStorage.setItem('user_job_title', profileData.jobTitle);
+            }
+        } catch (err) {
+            console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
+        }
+    };
 
     // --- INIT EFFECT ---
     useEffect(() => {
@@ -355,41 +436,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
         };
         fetchGlobalConfig();
-
-        // 3. Fetch Latest User Profile from Supabase
-        const fetchUserProfile = async () => {
-            const userId = localStorage.getItem('user_id');
-            if (!userId) return;
-
-            try {
-                const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title, subscription_end').eq('id', userId).single();
-                if (data && !error) {
-                    const profileData = {
-                        name: data.full_name || 'User',
-                        role: data.role || 'Member',
-                        avatar: data.avatar_url || 'https://picsum.photos/40/40',
-                        jobTitle: data.job_title || ''
-                    };
-                    setUserProfile(profileData);
-
-                    if (data.subscription_end) {
-                        localStorage.setItem('subscription_end', data.subscription_end);
-                    } else {
-                        localStorage.removeItem('subscription_end');
-                    }
-
-                    window.dispatchEvent(new Event('sub_updated'));
-
-                    // Keep localStorage in sync
-                    localStorage.setItem('user_name', profileData.name);
-                    localStorage.setItem('user_role', profileData.role);
-                    localStorage.setItem('user_avatar', profileData.avatar);
-                    localStorage.setItem('user_job_title', profileData.jobTitle);
-                }
-            } catch (err) {
-                console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
-            }
-        };
         fetchUserProfile();
 
         // 4. Listen for User Updates (Sync between Profile page and Layout)
@@ -474,6 +520,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             )
             .subscribe();
 
+        // 1c. Realtime Listener for Renewal Success Notifications
+        const notifChannel = supabase
+            .channel('renewal_success_checker')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${currentUserId}` },
+                (payload: any) => {
+                    if (payload.new.type === 'renewal_success') {
+                        setShowRenewalSuccessModal(true);
+                        // Refresh profile to get new date
+                        fetchUserProfile();
+                    }
+                }
+            )
+            .subscribe();
+
         // 1b. Realtime Listener for Admin/Tenant (Auto Logout if Admin Deactivated)
         let tenantChannel: any = null;
         if (tenantId && tenantId !== currentUserId) {
@@ -512,8 +574,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     if (diffDays <= 5) {
                         setDaysToSubExp(diffDays < 0 ? 0 : diffDays);
+                        console.log(`[Subscription] Banner showing! Days left: ${diffDays}`);
                     } else {
                         setDaysToSubExp(null);
+                        console.log(`[Subscription] Banner hidden. Days left: ${diffDays} (Target <= 5)`);
                     }
                 }
             } else {
@@ -688,23 +752,45 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
 
         try {
-            // Find developers
-            const { data: devs } = await supabase.from('app_users').select('id').eq('role', 'Developer');
-            if (devs && devs.length > 0) {
-                const notificationsPayload = devs.map(dev => ({
-                    recipient_id: dev.id,
-                    type: 'payment_req',
-                    title: 'Konfirmasi Pembayaran Masuk',
-                    content: `User ${userProfile.name} mengajukan perpanjangan langganan: ${selectedPackage}.`,
-                    metadata: { package: selectedPackage, proof: paymentProof, user: userProfile.name, user_id: localStorage.getItem('user_id') }
-                }));
+            const userId = localStorage.getItem('user_id');
+            const userEmail = localStorage.getItem('user_email') || ''; // Assuming email is stored, or we can use empty
+            const username = localStorage.getItem('user_username') || '';
 
-                await supabase.from('notifications').insert(notificationsPayload);
+            // Extract numeric price and duration if available from selectedPackage string
+            // selectedPackage format: "Package Name (Rp 150.000)"
+            let amount = 0;
+            let packageName = selectedPackage;
+            let durationDays = 30; // Default
+
+            if (config?.payment_config?.packages) {
+                const pkg = config.payment_config.packages.find(p => `${p.name} (Rp ${p.price.toLocaleString('id-ID')})` === selectedPackage);
+                if (pkg) {
+                    amount = pkg.price;
+                    packageName = pkg.name;
+                    durationDays = pkg.durationDays || 30;
+                }
             }
+
+            const { error } = await supabase.from('developer_inbox').insert([{
+                user_id: userId,
+                sender_name: userProfile.name,
+                sender_email: userEmail,
+                sender_username: username,
+                type: 'renewal',
+                package_name: packageName,
+                amount: amount,
+                proof_url: paymentProof,
+                duration_days: durationDays,
+                message: `User ${userProfile.name} mengajukan perpanjangan langganan: ${packageName}.`
+            }]);
+
+            if (error) throw error;
+
             alert('Bukti pembayaran berhasil dikirim! Developer akan segera memproses akun Anda.');
             setShowPaymentModal(false);
             setPaymentProof('');
         } catch (err) {
+            console.error(err);
             alert('Gagal mengirim konfirmasi. Coba sebentar lagi.');
         }
     };
@@ -1100,6 +1186,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         disabled={!paymentProof}
                     >
                         Konfirmasi Pembayaran
+                    </Button>
+                </div>
+            </Modal>
+
+            <Modal isOpen={showRenewalSuccessModal} onClose={() => setShowRenewalSuccessModal(false)} title="Pembayaran Berhasil">
+                <div className="p-8 text-center space-y-4">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-emerald-200">
+                        <CheckCircle size={40} />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900">Selamat!</h2>
+                    <p className="text-slate-500 font-bold leading-relaxed">
+                        Subscription Anda sudah diperpanjang. Terima kasih telah melakukan pembayaran dan tetap berlangganan layanan kami.
+                    </p>
+                    <Button onClick={() => setShowRenewalSuccessModal(false)} className="w-full bg-slate-900 mt-4">
+                        Tutup
                     </Button>
                 </div>
             </Modal>

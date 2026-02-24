@@ -33,6 +33,7 @@ interface PaymentPackage {
     id: string;
     name: string;
     price: number;
+    durationDays?: number;
 }
 
 interface PaymentConfig {
@@ -217,9 +218,9 @@ export const WorkspaceSettings: React.FC = () => {
     // SQL Templates
     const SQL_TEMPLATES = [
         { name: 'Core Tables', code: '-- Create all base tables\nCREATE TABLE workspaces ...' },
-        { name: 'App Config Extension', code: '-- Add missing columns\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS page_titles JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS hidden_pages JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS payment_config JSONB;' },
-        { name: 'Chat System', code: '-- Chat & Messages\nCREATE TABLE workspace_chat_messages ...' },
-        { name: 'Enable Realtime App Config', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;' }
+        { name: 'App Config Extension', code: '-- Tambahkan kolom config pembayaran jika belum ada\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS payment_config JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS page_titles JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS hidden_pages JSONB;' },
+        { name: 'App Users Extension', code: '-- Tambahkan kolom status & periode user jika belum ada\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_start TIMESTAMPTZ;\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMPTZ;\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;' },
+        { name: 'Enable Realtime All', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;\nALTER PUBLICATION supabase_realtime ADD TABLE app_users;' }
     ];
 
     if (loading && !config) {
@@ -420,7 +421,7 @@ export const WorkspaceSettings: React.FC = () => {
                                         <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Paket Langganan (Subscription)</h4>
                                         <button
                                             onClick={() => {
-                                                const newPkg = { id: Date.now().toString(), name: 'Paket Baru', price: 0 };
+                                                const newPkg = { id: Date.now().toString(), name: 'Paket Baru', price: 0, durationDays: 30 };
                                                 setConfig(prev => {
                                                     if (!prev) return null;
                                                     const pkgs = prev.payment_config?.packages || [];

@@ -13,7 +13,7 @@ interface PaymentConfig {
     bankName: string;
     accountNumber: string;
     accountName: string;
-    packages: { id: string; name: string; price: number }[];
+    packages: { id: string; name: string; price: number; durationDays?: number }[];
 }
 
 interface AppConfig {
