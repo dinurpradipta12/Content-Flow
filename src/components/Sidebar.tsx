@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCarouselStore, CANVAS_SIZES } from '../store/useCarouselStore';
-import { Type, Image as ImageIcon, Palette, Layout, ChevronDown, Layers, Eye, EyeOff, Lock, Unlock, GripVertical, Save, FolderOpen, Loader2, Plus, Square, Circle, Upload, Download, Trash2, X } from 'lucide-react';
+import { Type, Image as ImageIcon, Palette, Layout, ChevronDown, Layers, Eye, EyeOff, Lock, Unlock, GripVertical, Save, FolderOpen, Loader2, Plus, Square, Circle, Upload, Download, Trash2, X, Triangle, Paintbrush, Star, Keyboard } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -80,7 +80,41 @@ export const Sidebar: React.FC = () => {
     const [presets, setPresets] = useState<any[]>([]);
     const [isLoadingPresets, setIsLoadingPresets] = useState(false);
     const [applyBgToAll, setApplyBgToAll] = useState(false);
+    const [showShortcutsModal, setShowShortcutsModal] = useState(false);
     const importInputRef = React.useRef<HTMLInputElement>(null);
+
+    const defaultShortcuts = {
+        undo: 'z',
+        redo: 'Z',
+        duplicate: 'd',
+        copy: 'c',
+        paste: 'v',
+        delete: 'Backspace',
+        addText: 't',
+        addRect: 'r',
+        addCircle: 'o'
+    };
+
+    const [shortcuts, setShortcuts] = useState<Record<string, string>>(() => {
+        const saved = localStorage.getItem('carousel_shortcuts');
+        return saved ? JSON.parse(saved) : defaultShortcuts;
+    });
+
+    const handleShortcutKeyDown = (action: string, e: React.KeyboardEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Meta' || e.key === 'Alt') return;
+
+        let newKey = e.key;
+        if (e.shiftKey && newKey.length === 1) {
+            newKey = newKey.toUpperCase();
+        }
+
+        const newShortcuts = { ...shortcuts, [action]: newKey };
+        setShortcuts(newShortcuts);
+        localStorage.setItem('carousel_shortcuts', JSON.stringify(newShortcuts));
+        window.dispatchEvent(new CustomEvent('canvas:shortcuts-updated'));
+    };
 
     const currentPage = pages[currentPageIndex];
 
@@ -377,14 +411,19 @@ export const Sidebar: React.FC = () => {
                                 <Palette size={14} /> Background
                             </label>
                             <div className="flex gap-2 flex-wrap">
-                                {['#ffffff', '#f8fafc', '#f27d26', '#0f172a', '#10b981', '#ef4444', '#3b82f6'].map(color => (
-                                    <button
-                                        key={color}
-                                        onClick={() => handleBackgroundChange(color)}
-                                        className={`w-10 h-10 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] transition-transform hover:-translate-y-1 ${currentPage.background === color ? 'ring-4 ring-accent ring-offset-2' : ''}`}
-                                        style={{ backgroundColor: color }}
-                                    />
-                                ))}
+                                {['#ffffff', '#f8fafc', '#f27d26', '#0f172a', '#10b981', '#ef4444', '#3b82f6', 'grad-1', 'grad-2', 'grad-3'].map(color => {
+                                    const bgStyle = color === 'grad-1' ? 'linear-gradient(45deg, #ff9a9e, #fecfef)' :
+                                        color === 'grad-2' ? 'radial-gradient(circle, #d4fc79, #96e6a1)' :
+                                            color === 'grad-3' ? 'linear-gradient(to top right, #accbee, #e7f0fd)' : color;
+                                    return (
+                                        <button
+                                            key={color}
+                                            onClick={() => handleBackgroundChange(color)}
+                                            className={`w-10 h-10 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] transition-transform hover:-translate-y-1 ${currentPage.background === color ? 'ring-4 ring-accent ring-offset-2' : ''}`}
+                                            style={{ background: bgStyle }}
+                                        />
+                                    );
+                                })}
                                 <label className="w-10 h-10 rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center cursor-pointer hover:bg-slate-50 relative">
                                     <Plus size={18} className="text-slate-400" />
                                     <input
@@ -457,6 +496,27 @@ export const Sidebar: React.FC = () => {
                                     <Circle size={24} className="group-hover:scale-110 transition-transform" />
                                     <span className="text-[10px] font-bold">Add Circle</span>
                                 </button>
+                                <button
+                                    onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'triangle' } }))}
+                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                >
+                                    <Triangle size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-bold">Add Triangle</span>
+                                </button>
+                                <button
+                                    onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'brush' } }))}
+                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                >
+                                    <Paintbrush size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-bold">Brush Tool</span>
+                                </button>
+                                <button
+                                    onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'sticker-star' } }))}
+                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                >
+                                    <Star size={24} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-bold">Sticker</span>
+                                </button>
                                 <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
                                     <Upload size={24} className="group-hover:scale-110 transition-transform" />
                                     <span className="text-[10px] font-bold text-center">Upload Font</span>
@@ -487,6 +547,19 @@ export const Sidebar: React.FC = () => {
                                     />
                                 </label>
                             </div>
+                        </section>
+
+                        <section className="border-t-4 border-slate-900 pt-6 mt-6 pb-6">
+                            <label className="flex items-center gap-2 text-xs font-black tracking-widest text-slate-400 mb-4 px-2 uppercase">
+                                <Keyboard size={14} /> Tools & Settings
+                            </label>
+                            <button
+                                onClick={() => setShowShortcutsModal(true)}
+                                className="w-full flex items-center justify-between p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-slate-100 transition-colors group"
+                            >
+                                <span className="text-xs font-bold text-slate-900">Custom Shortcuts</span>
+                                <Keyboard size={18} className="text-slate-500 group-hover:text-slate-900 transition-colors" />
+                            </button>
                         </section>
                     </div>
                 ) : (
@@ -519,6 +592,60 @@ export const Sidebar: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Custom Shortcuts Modal */}
+            {showShortcutsModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white border-4 border-slate-900 rounded-3xl p-6 w-[400px] shadow-[8px_8px_0px_0px_#0f172a] relative max-h-[80vh] overflow-y-auto">
+                        <button onClick={() => setShowShortcutsModal(false)} className="absolute top-4 right-4 hover:bg-slate-100 p-2 rounded-xl">
+                            <X size={20} />
+                        </button>
+                        <h2 className="font-black text-2xl mb-2 flex items-center gap-3"><Keyboard /> Custom Shortcuts</h2>
+                        <p className="text-xs font-bold text-slate-500 mb-6">Click input and press any key to reassign shortcut. (Ctrl/Cmd is default for actions like Copy, Undo, etc.)</p>
+
+                        <div className="space-y-4">
+                            {[
+                                { action: 'undo', label: 'Undo', prefix: 'Ctrl/Cmd +' },
+                                { action: 'redo', label: 'Redo', prefix: 'Ctrl/Cmd + Shift +' },
+                                { action: 'duplicate', label: 'Duplicate', prefix: 'Ctrl/Cmd +' },
+                                { action: 'copy', label: 'Copy', prefix: 'Ctrl/Cmd +' },
+                                { action: 'paste', label: 'Paste', prefix: 'Ctrl/Cmd +' },
+                                { action: 'delete', label: 'Delete Object', prefix: '' },
+                                { action: 'addText', label: 'Add Text', prefix: 'Alt +' },
+                                { action: 'addRect', label: 'Add Square', prefix: 'Alt +' },
+                                { action: 'addCircle', label: 'Add Circle', prefix: 'Alt +' },
+                            ].map(({ action, label, prefix }) => (
+                                <div key={action} className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-slate-700">{label}</span>
+                                    <div className="flex items-center gap-2">
+                                        {prefix && <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">{prefix}</span>}
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={shortcuts[action]}
+                                            onKeyDown={(e) => handleShortcutKeyDown(action, e)}
+                                            className="w-20 p-2 border-2 border-slate-200 rounded-lg text-center font-bold text-xs uppercase focus:border-slate-900 focus:outline-none cursor-pointer hover:bg-slate-50"
+                                            title="Click and press a key"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 pt-4 border-t-2 border-slate-100 text-center">
+                            <button
+                                onClick={() => {
+                                    setShortcuts(defaultShortcuts);
+                                    localStorage.setItem('carousel_shortcuts', JSON.stringify(defaultShortcuts));
+                                    window.dispatchEvent(new CustomEvent('canvas:shortcuts-updated'));
+                                }}
+                                className="text-xs font-bold text-red-500 hover:text-red-600 underline"
+                            >
+                                Reset to Defaults
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

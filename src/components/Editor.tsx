@@ -27,7 +27,7 @@ import {
     Maximize,
     Palette,
     List,
-    Type as KerningIcon,
+    AlignVerticalSpaceAround as KerningIcon,
     Bold,
     Italic,
     Copy,
@@ -44,8 +44,39 @@ import {
     Group,
     Ungroup,
     ChevronsUp,
-    ChevronsDown
+    ChevronsDown,
+    Wand2,
+    Crop
 } from 'lucide-react';
+
+// Monkey patch Fabric.js to add padding and rounded corners to text background color
+if (!(fabric.Text.prototype as any)._patchedTextBg) {
+    const origRenderBg = (fabric.Text.prototype as any)._renderTextLinesBackground;
+    if (origRenderBg) {
+        (fabric.Text.prototype as any)._renderTextLinesBackground = function (this: any, ctx: CanvasRenderingContext2D) {
+            if (!this.textBackgroundColor && !this.styleHas('textBackgroundColor')) {
+                return origRenderBg.call(this, ctx);
+            }
+            // Calculate proportional padding based on font size
+            const padX = this.fontSize * 0.25;
+            const padY = this.fontSize * 0.05;
+
+            const originalFillRect = ctx.fillRect;
+            ctx.fillRect = function (x, y, w, h) {
+                if (typeof ctx.roundRect === 'function') {
+                    ctx.beginPath();
+                    ctx.roundRect(x - padX, y - padY, w + padX * 2, h + padY * 2, 4);
+                    ctx.fill();
+                } else {
+                    originalFillRect.call(ctx, x - padX, y - padY, w + padX * 2, h + padY * 2);
+                }
+            };
+            origRenderBg.call(this, ctx);
+            ctx.fillRect = originalFillRect; // Restore normal behavior afterwards
+        };
+        (fabric.Text.prototype as any)._patchedTextBg = true;
+    }
+}
 
 export const Editor: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,6 +92,8 @@ export const Editor: React.FC = () => {
     const [isPanning, setIsPanning] = useState(false);
     const isPanningRef = useRef(false);
     const [activeTool, setActiveTool] = useState<string | null>(null);
+    const [isDrawingMode, setIsDrawingMode] = useState(false);
+    const [brushSettings, setBrushSettings] = useState({ width: 10, color: '#f27d26' });
 
     // Sync isPanning state to ref for event handlers
     useEffect(() => {
@@ -68,10 +101,11 @@ export const Editor: React.FC = () => {
     }, [isPanning]);
 
     const isRestoringHistory = useRef(false);
+    const [cropRect, setCropRect] = useState<fabric.Rect | null>(null);
 
     const saveCanvas = () => {
         if (!fabricCanvas.current) return;
-        const json = fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst']);
+        const json = fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst', 'textBackgroundColor', 'fill', 'opacity', 'filters', 'clipPath']);
         const previewUrl = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.2 });
         updatePageElements(currentPageIndex, json.objects, previewUrl);
     };
@@ -95,7 +129,14 @@ export const Editor: React.FC = () => {
         charSpacing: 0,
         lineHeight: 1.16,
         textCase: 'normal' as 'normal' | 'uppercase' | 'lowercase',
-        cornerRadius: 0
+        cornerRadius: 0,
+        textBgColor: 'transparent',
+        brightness: 0,
+        contrast: 0,
+        blur: 0,
+        grayscale: false,
+        sepia: false,
+        mask: 'none' as 'none' | 'circle' | 'square'
     });
 
     const fonts = ['Inter', 'Space Grotesk', 'Playfair Display', 'JetBrains Mono', 'Anton', 'Montserrat', ...customFonts];
@@ -133,7 +174,7 @@ export const Editor: React.FC = () => {
 
     const addToHistory = () => {
         if (!fabricCanvas.current || isRestoringHistory.current) return;
-        const json = JSON.stringify(fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst']));
+        const json = JSON.stringify(fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst', 'textBackgroundColor', 'fill', 'opacity', 'filters', 'clipPath']));
         setHistory(prev => {
             const newHistory = prev.slice(0, historyIndexRef.current + 1);
             newHistory.push(json);
@@ -340,43 +381,65 @@ export const Editor: React.FC = () => {
         };
         initCanvas();
 
+        const syncObjectProps = (obj: any) => {
+            if (!obj) return;
+            const filters = obj.filters || [];
+
+            let maskType: 'none' | 'circle' | 'square' = 'none';
+            if (obj.clipPath) {
+                if (obj.clipPath.type === 'circle') maskType = 'circle';
+                else if (obj.clipPath.type === 'rect') maskType = 'square';
+            }
+
+            setObjectProps({
+                opacity: obj.opacity || 1,
+                angle: obj.angle || 0,
+                flipX: obj.flipX || false,
+                flipY: obj.flipY || false,
+                textAlign: obj.textAlign || 'left',
+                fontFamily: obj.fontFamily || 'Inter',
+                fontSize: obj.fontSize || 40,
+                shadowBlur: obj.shadow?.blur || 0,
+                shadowColor: obj.shadow?.color || '#000000',
+                shadowOpacity: 1,
+                shadowAngle: 45,
+                shadowDistance: 5,
+                strokeWidth: obj.strokeWidth || 0,
+                strokeColor: obj.stroke as string || '#000000',
+                strokeType: obj.paintFirst === 'stroke' ? 'outer' : 'middle',
+                fill: obj.fill as string || '#000000',
+                charSpacing: obj.charSpacing || 0,
+                lineHeight: obj.lineHeight || 1.16,
+                textCase: obj.textCase || 'normal',
+                cornerRadius: obj.rx || 0,
+                textBgColor: obj.textBackgroundColor || 'transparent',
+                brightness: filters.find((f: any) => f.type === 'Brightness')?.brightness || 0,
+                contrast: filters.find((f: any) => f.type === 'Contrast')?.contrast || 0,
+                blur: filters.find((f: any) => f.type === 'Blur')?.blur || 0,
+                grayscale: !!filters.find((f: any) => f.type === 'Grayscale'),
+                sepia: !!filters.find((f: any) => f.type === 'Sepia'),
+                mask: maskType
+            });
+        };
+
         canvas.on('selection:created', () => {
             const activeObj = canvas.getActiveObject();
             setSelectedObject(activeObj || null);
             updateFloatingMenuPos(activeObj || undefined);
+            if (activeObj) syncObjectProps(activeObj);
         });
         canvas.on('selection:updated', () => {
             const activeObj = canvas.getActiveObject();
             setSelectedObject(activeObj || null);
             updateFloatingMenuPos(activeObj || undefined);
+            if (activeObj) syncObjectProps(activeObj);
         });
         canvas.on('selection:cleared', () => setSelectedObject(null));
 
         canvas.on('object:modified', () => {
             if (canvas.getActiveObject()) {
                 const obj = canvas.getActiveObject()!;
-                setObjectProps({
-                    opacity: obj.opacity || 1,
-                    angle: obj.angle || 0,
-                    flipX: obj.flipX || false,
-                    flipY: obj.flipY || false,
-                    textAlign: (obj as any).textAlign || 'left',
-                    fontFamily: (obj as any).fontFamily || 'Inter',
-                    fontSize: (obj as any).fontSize || 40,
-                    shadowBlur: (obj.shadow as any)?.blur || 0,
-                    shadowColor: (obj.shadow as any)?.color || '#000000',
-                    shadowOpacity: 1,
-                    shadowAngle: 45,
-                    shadowDistance: 5,
-                    strokeWidth: obj.strokeWidth || 0,
-                    strokeColor: obj.stroke as string || '#000000',
-                    strokeType: (obj as any).paintFirst === 'stroke' ? 'outer' : 'middle',
-                    fill: obj.fill as string || '#000000',
-                    charSpacing: (obj as any).charSpacing || 0,
-                    lineHeight: (obj as any).lineHeight || 1.16,
-                    textCase: (obj as any).textCase || 'normal',
-                    cornerRadius: (obj as any).rx || 0
-                });
+                syncObjectProps(obj);
                 updateFloatingMenuPos(obj);
             }
             updateLayers();
@@ -388,8 +451,77 @@ export const Editor: React.FC = () => {
         canvas.on('object:scaling', (e) => updateFloatingMenuPos(e.target));
         canvas.on('object:rotating', (e) => updateFloatingMenuPos(e.target));
 
-        canvas.on('object:added', () => { updateLayers(); saveCanvas(); addToHistory(); });
-        canvas.on('object:removed', () => { updateLayers(); saveCanvas(); addToHistory(); });
+        // Snapping Lines (Smart Guides)
+        let vLine: fabric.Line | null = null;
+        let hLine: fabric.Line | null = null;
+
+        canvas.on('object:moving', (e) => {
+            const obj = e.target;
+            if (!obj) return;
+
+            const cw = canvasSize.width;
+            const ch = canvasSize.height;
+            const centerX = cw / 2;
+            const centerY = ch / 2;
+
+            const objCenter = obj.getCenterPoint();
+            const threshold = 15;
+
+            let finalX = objCenter.x;
+            let finalY = objCenter.y;
+
+            // Snap X
+            if (Math.abs(objCenter.x - centerX) < threshold) {
+                finalX = centerX;
+                if (!vLine) {
+                    vLine = new fabric.Line([centerX, -ch, centerX, ch * 2], {
+                        stroke: '#10b981', strokeWidth: 2, selectable: false,
+                        evented: false, opacity: 0.8, excludeFromExport: true
+                    });
+                    (vLine as any).isGuideLine = true;
+                    canvas.add(vLine);
+                }
+            } else if (vLine) {
+                canvas.remove(vLine);
+                vLine = null;
+            }
+
+            // Snap Y
+            if (Math.abs(objCenter.y - centerY) < threshold) {
+                finalY = centerY;
+                if (!hLine) {
+                    hLine = new fabric.Line([-cw, centerY, cw * 2, centerY], {
+                        stroke: '#10b981', strokeWidth: 2, selectable: false,
+                        evented: false, opacity: 0.8, excludeFromExport: true
+                    });
+                    (hLine as any).isGuideLine = true;
+                    canvas.add(hLine);
+                }
+            } else if (hLine) {
+                canvas.remove(hLine);
+                hLine = null;
+            }
+
+            if (finalX !== objCenter.x || finalY !== objCenter.y) {
+                obj.setPositionByOrigin(new fabric.Point(finalX, finalY), 'center', 'center');
+            }
+
+            updateFloatingMenuPos(obj);
+        });
+
+        canvas.on('mouse:up', () => {
+            if (vLine) { canvas.remove(vLine); vLine = null; }
+            if (hLine) { canvas.remove(hLine); hLine = null; }
+        });
+
+        canvas.on('object:added', (e) => {
+            if (e.target && (e.target as any).isGuideLine) return;
+            updateLayers(); saveCanvas(); addToHistory();
+        });
+        canvas.on('object:removed', (e) => {
+            if (e.target && (e.target as any).isGuideLine) return;
+            updateLayers(); saveCanvas(); addToHistory();
+        });
 
         // Mouse Wheel Zoom (Alt + Scroll)
         canvas.on('mouse:wheel', (opt) => {
@@ -550,6 +682,47 @@ export const Editor: React.FC = () => {
                 (circle as any).id = `circle-${Date.now()}`;
                 canvas.add(circle);
                 canvas.setActiveObject(circle);
+            } else if (type === 'triangle') {
+                const triangle = new fabric.Triangle({
+                    left: centerX,
+                    top: centerY,
+                    originX: 'center',
+                    originY: 'center',
+                    width: 100,
+                    height: 100,
+                    fill: '#f27d26'
+                });
+                (triangle as any).id = `triangle-${Date.now()}`;
+                canvas.add(triangle);
+                canvas.setActiveObject(triangle);
+            } else if (type === 'brush') {
+                const newDrawingMode = !canvas.isDrawingMode;
+                canvas.isDrawingMode = newDrawingMode;
+                setIsDrawingMode(newDrawingMode);
+                if (newDrawingMode) {
+                    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+                    canvas.freeDrawingBrush.color = brushSettings.color;
+                    canvas.freeDrawingBrush.width = brushSettings.width;
+                    canvas.discardActiveObject();
+                }
+                canvas.renderAll();
+                return; // let 'object:added' handle history for brush strokes
+            } else if (type === 'sticker-star') {
+                const svgStar = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                fabric.loadSVGFromString(svgStar).then(({ objects, options }) => {
+                    const validObjects = objects.filter(o => o !== null) as fabric.FabricObject[];
+                    const obj = fabric.util.groupSVGElements(validObjects, options);
+                    obj.set({
+                        left: centerX, top: centerY, originX: 'center', originY: 'center',
+                        fill: '#f27d26'
+                    });
+                    obj.scaleToWidth(150);
+                    (obj as any).id = `sticker-${Date.now()}`;
+                    canvas.add(obj);
+                    canvas.setActiveObject(obj);
+                    canvas.renderAll();
+                    addToHistory();
+                }).catch(console.error);
             } else if (type === 'image' && data) {
                 fabric.Image.fromURL(data).then((img) => {
                     (img as any).id = `img-${Date.now()}`;
@@ -670,32 +843,78 @@ export const Editor: React.FC = () => {
                 canvas.renderAll();
             }
 
+            // Read shortcuts
+            const defaultShortcuts = {
+                undo: 'z',
+                redo: 'Z',
+                duplicate: 'd',
+                copy: 'c',
+                paste: 'v',
+                delete: 'Backspace',
+                addText: 't',
+                addRect: 'r',
+                addCircle: 'o'
+            };
+            let sc = defaultShortcuts;
+            try {
+                const saved = localStorage.getItem('carousel_shortcuts');
+                if (saved) sc = JSON.parse(saved);
+            } catch (e) { }
+
+            const isCtrl = e.ctrlKey || e.metaKey;
+            const isAlt = e.altKey;
+
             // Shortcuts
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-                if (e.shiftKey) {
-                    handleRedo();
-                } else {
-                    handleUndo();
-                }
+            if (isCtrl && (e.key === sc.undo || e.key.toLowerCase() === sc.undo.toLowerCase() && !e.shiftKey)) {
+                handleUndo();
                 e.preventDefault();
             }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            if (isCtrl && (e.key === sc.redo || (e.key.toLowerCase() === sc.undo.toLowerCase() && e.shiftKey))) {
+                handleRedo();
+                e.preventDefault();
+            }
+            if (isCtrl && e.key.toLowerCase() === sc.duplicate.toLowerCase()) {
                 handleDuplicate();
                 e.preventDefault();
             }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            if (isCtrl && e.key.toLowerCase() === sc.copy.toLowerCase()) {
                 handleCopy();
                 // Don't prevent default copy to allow system clipboard if needed, but here we use internal
             }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+            if (isCtrl && e.key.toLowerCase() === sc.paste.toLowerCase()) {
                 handlePaste();
             }
+            if (isAlt && e.key.toLowerCase() === sc.addText.toLowerCase()) {
+                window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'text' } }));
+                e.preventDefault();
+            }
+            if (isAlt && e.key.toLowerCase() === sc.addRect.toLowerCase()) {
+                window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'rect' } }));
+                e.preventDefault();
+            }
+            if (isAlt && e.key.toLowerCase() === sc.addCircle.toLowerCase()) {
+                window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'circle' } }));
+                e.preventDefault();
+            }
+
             if (e.key === 'Escape') {
                 if (activeTool) {
                     setActiveTool(null);
                 } else {
                     canvas.discardActiveObject();
                     canvas.requestRenderAll();
+                }
+            }
+            if (e.key === sc.delete || e.key === 'Delete' || e.key === 'Backspace') {
+                const activeObjects = canvas.getActiveObjects();
+                if (activeObjects.length > 0) {
+                    // Check if a text object is currently being edited so we don't delete the whole object
+                    const isEditingText = activeObjects.some(obj => (obj as fabric.IText).isEditing);
+                    if (!isEditingText) {
+                        activeObjects.forEach(obj => canvas.remove(obj));
+                        canvas.discardActiveObject();
+                        canvas.requestRenderAll();
+                    }
                 }
             }
         };
@@ -714,8 +933,39 @@ export const Editor: React.FC = () => {
             }
         };
 
+        const handleSystemPaste = (e: ClipboardEvent) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    if (!blob) continue;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const data = event.target?.result as string;
+                        fabric.Image.fromURL(data).then((img) => {
+                            (img as any).id = `img-${Date.now()}`;
+                            img.scaleToWidth(300);
+                            img.set({
+                                left: canvasSize.width / 2,
+                                top: canvasSize.height / 2,
+                                originX: 'center',
+                                originY: 'center'
+                            });
+                            canvas.add(img);
+                            canvas.setActiveObject(img);
+                            canvas.renderAll();
+                            addToHistory();
+                        });
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        };
+
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('paste', handleSystemPaste);
 
         return () => {
             window.removeEventListener('canvas:export', handleExport);
@@ -723,6 +973,7 @@ export const Editor: React.FC = () => {
             window.removeEventListener('canvas:add', handleCanvasAdd);
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('paste', handleSystemPaste);
             canvas.dispose();
         };
     }, [currentPageIndex, referenceData]);
@@ -815,10 +1066,19 @@ export const Editor: React.FC = () => {
     // Immediate Background Update
     useEffect(() => {
         if (fabricCanvas.current) {
-            fabricCanvas.current.set('backgroundColor', currentPage.background);
+            const bg = currentPage.background;
+            if (bg.startsWith('grad-')) {
+                let grad;
+                if (bg === 'grad-1') grad = new fabric.Gradient({ type: 'linear', coords: { x1: 0, y1: 0, x2: canvasSize.width, y2: canvasSize.height }, colorStops: [{ offset: 0, color: '#ff9a9e' }, { offset: 1, color: '#fecfef' }] });
+                else if (bg === 'grad-2') grad = new fabric.Gradient({ type: 'radial', coords: { x1: canvasSize.width / 2, y1: canvasSize.height / 2, r1: 0, x2: canvasSize.width / 2, y2: canvasSize.height / 2, r2: canvasSize.width }, colorStops: [{ offset: 0, color: '#d4fc79' }, { offset: 1, color: '#96e6a1' }] });
+                else if (bg === 'grad-3') grad = new fabric.Gradient({ type: 'linear', coords: { x1: 0, y1: canvasSize.height, x2: canvasSize.width, y2: 0 }, colorStops: [{ offset: 0, color: '#accbee' }, { offset: 1, color: '#e7f0fd' }] });
+                fabricCanvas.current.set('backgroundColor', grad);
+            } else {
+                fabricCanvas.current.set('backgroundColor', bg);
+            }
             fabricCanvas.current.renderAll();
         }
-    }, [currentPage.background]);
+    }, [currentPage.background, canvasSize.width, canvasSize.height]);
 
     const handleFontSize = (size: number) => {
         if (!selectedObject || !fabricCanvas.current || !(selectedObject instanceof fabric.IText)) return;
@@ -1038,6 +1298,129 @@ export const Editor: React.FC = () => {
         fabricCanvas.current.renderAll();
     };
 
+    const handleTextBgColor = (color: string) => {
+        if (!selectedObject || !fabricCanvas.current) return;
+        setObjectProps(prev => ({ ...prev, textBgColor: color }));
+        if (selectedObject instanceof fabric.IText || selectedObject instanceof fabric.Text) {
+            selectedObject.set('textBackgroundColor', color === 'transparent' ? '' : color);
+            fabricCanvas.current.renderAll();
+            saveCanvas();
+            addToHistory();
+        }
+    };
+
+    const handleFilter = (type: string, prop: string, value: any) => {
+        if (!selectedObject || !fabricCanvas.current || !(selectedObject instanceof fabric.Image)) return;
+
+        const img = selectedObject as fabric.Image;
+        let filters = img.filters || [];
+        filters = filters.filter((f: any) => f.type !== type);
+
+        if (value !== 0 && value !== false) {
+            let newFilter;
+            switch (type) {
+                case 'Brightness': newFilter = new fabric.filters.Brightness({ brightness: value }); break;
+                case 'Contrast': newFilter = new fabric.filters.Contrast({ contrast: value }); break;
+                case 'Blur': newFilter = new fabric.filters.Blur({ blur: value }); break;
+                case 'Grayscale': newFilter = new fabric.filters.Grayscale(); break;
+                case 'Sepia': newFilter = new fabric.filters.Sepia(); break;
+            }
+            if (newFilter) filters.push(newFilter);
+        }
+
+        img.filters = filters;
+        img.applyFilters();
+        fabricCanvas.current.renderAll();
+
+        setObjectProps(prev => ({ ...prev, [prop]: value }));
+        saveCanvas();
+        addToHistory();
+    };
+
+    const handleMask = (shape: 'none' | 'circle' | 'square') => {
+        if (!selectedObject || !fabricCanvas.current || !(selectedObject instanceof fabric.Image)) return;
+
+        const img = selectedObject as fabric.Image;
+        const width = img.width || 0;
+        const height = img.height || 0;
+
+        if (shape === 'none') {
+            img.set('clipPath', undefined);
+        } else if (shape === 'circle') {
+            const minDim = Math.min(width, height);
+            const clipPath = new fabric.Circle({
+                radius: minDim / 2,
+                originX: 'center',
+                originY: 'center',
+            });
+            img.set('clipPath', clipPath);
+        } else if (shape === 'square') {
+            const minDim = Math.min(width, height);
+            const clipPath = new fabric.Rect({
+                width: minDim,
+                height: minDim,
+                rx: minDim * 0.1,
+                ry: minDim * 0.1,
+                originX: 'center',
+                originY: 'center',
+            });
+            img.set('clipPath', clipPath);
+        }
+
+        setObjectProps(prev => ({ ...prev, mask: shape }));
+        fabricCanvas.current.renderAll();
+        saveCanvas();
+        addToHistory();
+    };
+
+    const handleStartFreeCrop = () => {
+        if (!selectedObject || !fabricCanvas.current || !(selectedObject instanceof fabric.Image)) return;
+        const img = selectedObject as fabric.Image;
+        const width = img.getScaledWidth();
+        const height = img.getScaledHeight();
+
+        const rect = new fabric.Rect({
+            left: img.left, top: img.top, width: width, height: height,
+            originX: img.originX, originY: img.originY,
+            fill: 'rgba(0,0,0,0.3)', stroke: '#ef4444', strokeWidth: 4, strokeDashArray: [5, 5],
+            transparentCorners: false, cornerColor: '#ef4444'
+        });
+        (rect as any).isCropRect = true;
+        (rect as any).targetImgId = (img as any).id;
+
+        fabricCanvas.current.add(rect);
+        fabricCanvas.current.setActiveObject(rect);
+        setCropRect(rect);
+    };
+
+    const handleApplyFreeCrop = () => {
+        if (!cropRect || !fabricCanvas.current) return;
+        const canvas = fabricCanvas.current;
+        const targetId = (cropRect as any).targetImgId;
+        const img = canvas.getObjects().find((o: any) => o.id === targetId) as fabric.Image;
+
+        if (img) {
+            const cropW = cropRect.getScaledWidth();
+            const cropH = cropRect.getScaledHeight();
+
+            const clipPath = new fabric.Rect({
+                width: cropW / img.scaleX!,
+                height: cropH / img.scaleY!,
+                left: (cropRect.left! - img.left!) / img.scaleX!,
+                top: (cropRect.top! - img.top!) / img.scaleY!,
+                originX: 'center', originY: 'center',
+            });
+            img.set('clipPath', clipPath);
+            setObjectProps(prev => ({ ...prev, mask: 'custom' }));
+        }
+
+        canvas.remove(cropRect);
+        setCropRect(null);
+        canvas.renderAll();
+        saveCanvas();
+        addToHistory();
+    };
+
     const handleDelete = () => {
         if (!selectedObject || !fabricCanvas.current) return;
         fabricCanvas.current.remove(selectedObject);
@@ -1047,10 +1430,18 @@ export const Editor: React.FC = () => {
 
     return (
         <div ref={containerRef} className="flex-1 bg-slate-200 flex flex-col overflow-hidden relative">
+            {cropRect && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] z-50 flex gap-4 items-center animate-in slide-in-from-top-4">
+                    <span className="text-xs font-bold text-slate-500">Sesuaikan area pemotongan</span>
+                    <button onClick={handleApplyFreeCrop} className="text-xs font-black bg-accent text-slate-900 border-2 border-slate-900 px-4 py-2 rounded-xl hover:bg-yellow-400 transition-colors shadow-[2px_2px_0px_#0f172a] active:translate-y-[2px] active:shadow-none">Apply Crop</button>
+                    <button onClick={() => { setActiveTool(null); fabricCanvas.current?.remove(cropRect); setCropRect(null); }} className="text-xs font-bold text-slate-400 hover:text-red-500">Cancel</button>
+                </div>
+            )}
+
             {/* Canvas Wrapper for Zoom */}
             <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-200">
                 <div
-                    className="transition-transform duration-200 ease-out shadow-[20px_20px_0px_0px_#0f172a] border-4 border-slate-900"
+                    className="transition-transform duration-200 ease-out shadow-[8px_8px_0px_0px_#0f172a] border-4 border-slate-900"
                     style={{
                         transform: `scale(${zoom})`,
                         width: canvasSize.width,
@@ -1131,6 +1522,9 @@ export const Editor: React.FC = () => {
                     {(isActiveSelection || isGroup) && (
                         <div className="w-px h-4 bg-slate-200" />
                     )}
+                    <button onClick={() => { if (selectedObject && fabricCanvas.current) { fabricCanvas.current.bringForward(selectedObject); updateLayers(); saveCanvas(); } }} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Bring Forward"><ArrowUpToLine size={16} /></button>
+                    <button onClick={() => { if (selectedObject && fabricCanvas.current) { fabricCanvas.current.sendBackwards(selectedObject); updateLayers(); saveCanvas(); } }} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Send Backward"><ArrowDownToLine size={16} /></button>
+                    <div className="w-px h-4 bg-slate-200" />
                     <button onClick={handleDuplicate} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Duplicate (Ctrl+D)"><Copy size={16} /></button>
                     <button onClick={handleCopy} className="p-1.5 hover:bg-slate-100 rounded-lg" title="Copy (Ctrl+C)"><Clipboard size={16} /></button>
                     <button onClick={handleDelete} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg" title="Delete"><Trash2 size={16} /></button>
@@ -1362,6 +1756,117 @@ export const Editor: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Image Filters Tool */}
+                        {selectedObject instanceof fabric.Image && (
+                            <div className="relative group">
+                                <button
+                                    onClick={() => setActiveTool(activeTool === 'filters' ? null : 'filters')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'filters' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Image Filters"
+                                >
+                                    <Wand2 size={20} />
+                                </button>
+                                {activeTool === 'filters' && (
+                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                        <h4 className="font-black text-xs mb-3">Image Filters</h4>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Brightness</span>
+                                                    <span>{Math.round(objectProps.brightness * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="-1" max="1" step="0.05"
+                                                    value={objectProps.brightness}
+                                                    onChange={(e) => handleFilter('Brightness', 'brightness', parseFloat(e.target.value))}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Contrast</span>
+                                                    <span>{Math.round(objectProps.contrast * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="-1" max="1" step="0.05"
+                                                    value={objectProps.contrast}
+                                                    onChange={(e) => handleFilter('Contrast', 'contrast', parseFloat(e.target.value))}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Blur</span>
+                                                    <span>{Math.round(objectProps.blur * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="1" step="0.05"
+                                                    value={objectProps.blur}
+                                                    onChange={(e) => handleFilter('Blur', 'blur', parseFloat(e.target.value))}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 mt-4">
+                                                <button
+                                                    onClick={() => handleFilter('Grayscale', 'grayscale', !objectProps.grayscale)}
+                                                    className={`py-2 px-3 rounded-lg text-[10px] font-bold border-2 transition-colors ${objectProps.grayscale ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 hover:border-slate-900 hover:bg-slate-50'}`}
+                                                >
+                                                    Grayscale
+                                                </button>
+                                                <button
+                                                    onClick={() => handleFilter('Sepia', 'sepia', !objectProps.sepia)}
+                                                    className={`py-2 px-3 rounded-lg text-[10px] font-bold border-2 transition-colors ${objectProps.sepia ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 hover:border-slate-900 hover:bg-slate-50'}`}
+                                                >
+                                                    Sepia
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Mask/Crop Tool */}
+                        {selectedObject instanceof fabric.Image && (
+                            <div className="relative group">
+                                <button
+                                    onClick={() => setActiveTool(activeTool === 'mask' ? null : 'mask')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'mask' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Crop to Shape"
+                                >
+                                    <Crop size={20} />
+                                </button>
+                                {activeTool === 'mask' && (
+                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                        <h4 className="font-black text-xs mb-3">Crop Shape</h4>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <button
+                                                onClick={() => handleMask('none')}
+                                                className={`p-2 rounded-lg border-2 ${objectProps.mask === 'none' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
+                                                title="None"
+                                            >
+                                                <Square size={20} className="mx-auto" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleMask('circle')}
+                                                className={`p-2 rounded-lg border-2 ${objectProps.mask === 'circle' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
+                                                title="Circle"
+                                            >
+                                                <Circle size={20} className="mx-auto" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleMask('square')}
+                                                className={`p-2 rounded-lg border-2 ${objectProps.mask === 'square' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
+                                                title="Rounded Square"
+                                            >
+                                                <Square size={20} className="mx-auto rounded-md" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Stroke Tool */}
                         <div className="relative group">
                             <button
@@ -1521,6 +2026,52 @@ export const Editor: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Text Background Tool (Text Only) */}
+                        {(selectedObject instanceof fabric.IText || selectedObject instanceof fabric.Text) && (
+                            <div className="relative group">
+                                <button
+                                    onClick={() => setActiveTool(activeTool === 'textbg' ? null : 'textbg')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'textbg' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Text Block Background"
+                                >
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center text-[12px] font-black leading-none ${activeTool === 'textbg' ? 'bg-white text-slate-900' : 'bg-slate-200 text-slate-800'}`}>T</div>
+                                </button>
+
+                                {activeTool === 'textbg' && (
+                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                        <h4 className="font-black text-xs mb-3">Text Background</h4>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-bold text-slate-500">Color</span>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    <button
+                                                        onClick={() => handleTextBgColor('transparent')}
+                                                        className={`w-6 h-6 rounded border-2 border-slate-200 relative overflow-hidden ${objectProps.textBgColor === 'transparent' ? 'ring-2 ring-slate-900' : ''}`}
+                                                    >
+                                                        <div className="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAoSURBVChTY/gPBmAMZkBUg9QyMDD8x4YZ8CoYxUCwQ4kwfFQAIMAA6Hsc7rEusGMAAAAASUVORK5CYII=')] opacity-50" />
+                                                    </button>
+                                                    {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
+                                                        <button
+                                                            key={c}
+                                                            onClick={() => handleTextBgColor(c)}
+                                                            className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.textBgColor === c ? 'ring-2 ring-slate-900' : ''}`}
+                                                            style={{ backgroundColor: c }}
+                                                        />
+                                                    ))}
+                                                    <input
+                                                        type="color"
+                                                        value={objectProps.textBgColor === 'transparent' ? '#ffffff' : objectProps.textBgColor}
+                                                        onChange={(e) => handleTextBgColor(e.target.value)}
+                                                        className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Radius Tool (Rect Only) */}
                         {selectedObject instanceof fabric.Rect && (
                             <div className="relative group">
@@ -1557,6 +2108,60 @@ export const Editor: React.FC = () => {
                         <button onClick={handleDelete} className="p-3 bg-red-50 hover:bg-red-500 hover:text-white text-red-500 rounded-xl transition-colors" title="Delete">
                             <Trash2 size={20} />
                         </button>
+                    </div>
+                )}
+
+                {/* Drawing Mode Tools */}
+                {isDrawingMode && (
+                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-4 flex flex-col gap-4 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-left-2 w-48">
+                        <h4 className="font-black text-xs">Brush Settings</h4>
+
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-bold text-slate-500">Size ({brushSettings.width}px)</span>
+                            <input
+                                type="range" min="1" max="50"
+                                value={brushSettings.width}
+                                onChange={(e) => {
+                                    const width = parseInt(e.target.value);
+                                    setBrushSettings(prev => ({ ...prev, width }));
+                                    if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
+                                        fabricCanvas.current.freeDrawingBrush.width = width;
+                                    }
+                                }}
+                                className="w-full accent-slate-900"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-bold text-slate-500">Color</span>
+                            <div className="flex gap-2 flex-wrap">
+                                {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
+                                    <button
+                                        key={c}
+                                        onClick={() => {
+                                            setBrushSettings(prev => ({ ...prev, color: c }));
+                                            if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
+                                                fabricCanvas.current.freeDrawingBrush.color = c;
+                                            }
+                                        }}
+                                        className={`w-6 h-6 rounded border-2 border-slate-200 ${brushSettings.color === c ? 'ring-2 ring-slate-900' : ''}`}
+                                        style={{ backgroundColor: c }}
+                                    />
+                                ))}
+                                <input
+                                    type="color"
+                                    value={brushSettings.color}
+                                    onChange={(e) => {
+                                        const color = e.target.value;
+                                        setBrushSettings(prev => ({ ...prev, color }));
+                                        if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
+                                            fabricCanvas.current.freeDrawingBrush.color = color;
+                                        }
+                                    }}
+                                    className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                />
+                            </div>
+                        </div>
                     </div>
                 )}
 
