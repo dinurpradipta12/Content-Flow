@@ -29,7 +29,8 @@ import {
     Presentation,
     Power,
     MessageSquare,
-    Inbox
+    Inbox,
+    AlertTriangle
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -776,20 +777,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
                         )}
                     </div>
-                    {daysToSubExp !== null && daysToSubExp <= 5 && (
-                        <div
-                            onClick={() => setShowPaymentModal(true)}
-                            className="w-full bg-red-50 border-2 border-red-200 rounded-xl p-3 cursor-pointer hover:bg-red-100 transition-colors shadow-sm"
-                        >
-                            <p className="text-xs font-bold text-red-600 leading-tight">
-                                {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} hari lagi`} masa berlangganan anda akan habis. Segera perpanjang akun Anda.
-                            </p>
-                            <button className="mt-2 w-full text-[10px] bg-red-600 text-white font-black py-1.5 rounded-lg uppercase tracking-wider">Perpanjang Sekarang</button>
-                        </div>
-                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
+                    {daysToSubExp !== null && daysToSubExp <= 5 && (
+                        <div
+                            onClick={() => setShowPaymentModal(true)}
+                            className="w-full bg-red-50 border-4 border-slate-900 rounded-2xl p-4 cursor-pointer hover:bg-red-100 transition-all shadow-hard mb-6 relative overflow-hidden group"
+                        >
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-red-200 rounded-full -mr-8 -mt-8 opacity-50 group-hover:scale-150 transition-transform"></div>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
+                                        <AlertTriangle size={14} className="text-white" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Peringatan Langganan</span>
+                                </div>
+                                <p className="text-sm font-black text-slate-900 leading-tight">
+                                    {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} hari lagi`} masa berlangganan anda akan habis. Segera perpanjang akun Anda agar akses tidak terhenti.
+                                </p>
+                                <button className="mt-4 w-full text-xs bg-slate-900 text-white font-black py-2.5 rounded-xl uppercase tracking-widest hover:bg-red-600 transition-colors border-2 border-slate-900 shadow-[4px_4px_0px_#fca5a5]">
+                                    Perpanjang Sekarang
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {Object.entries(NAV_ITEMS).map(([section, items]) => {
                         const filteredItems = items.filter(item => {
                             if (item.adminOnly && !isAdmin) return false;
