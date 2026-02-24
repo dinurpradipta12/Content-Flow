@@ -50,6 +50,11 @@ export const Login: React.FC = () => {
             }
 
             if (data) {
+                // Check verification status (Developer implicitly verified)
+                if (data.is_verified === false && data.role !== 'Developer') {
+                    throw new Error("Akun Anda belum diverifikasi oleh Administrator. Mohon tunggu proses validasi kode langganan Anda.");
+                }
+
                 // Check account active status
                 if (data.is_active === false) {
                     throw new Error("Akun Anda telah dinonaktifkan. Hubungi Developer/Admin untuk mengaktifkan kembali.");

@@ -110,6 +110,8 @@ alter table public.app_users add column if not exists email text;
 alter table public.app_users add column if not exists is_active boolean default true;
 alter table public.app_users add column if not exists subscription_start timestamptz default current_timestamp;
 alter table public.app_users add column if not exists subscription_end timestamptz;
+alter table public.app_users add column if not exists subscription_code text;
+alter table public.app_users add column if not exists is_verified boolean default false;
 
 -- Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
 alter table public.app_users alter column subscription_start type timestamptz using subscription_start::timestamptz;
@@ -122,9 +124,12 @@ create table if not exists public.app_config (
   app_logo text,
   app_favicon text,
   updated_at timestamp with time zone default now(),
+  app_version text default 'v1.0.0',
   constraint app_config_pkey primary key (id),
   constraint single_row check (id = 1)
 );
+
+alter table public.app_config add column if not exists app_version text default 'v1.0.0';
 
 -- 5. Insert Default Data
 -- Superuser (Update jika sudah ada)
