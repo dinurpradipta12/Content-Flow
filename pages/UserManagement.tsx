@@ -5,7 +5,8 @@ import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
 import {
     Users, Trash2, RefreshCw, Loader2, Shield, UserPlus, Hash, Mail, Key, Globe,
-    Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search
+    Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search,
+    ShieldCheck, ShieldX, AlertTriangle
 } from 'lucide-react';
 
 interface AppUser {
@@ -17,8 +18,10 @@ interface AppUser {
     avatar_url: string;
     email: string;
     is_active: boolean;
+    is_verified: boolean;
     subscription_start: string | null;
     subscription_end: string | null;
+    subscription_code: string | null;
     created_at: string;
 }
 
@@ -44,6 +47,7 @@ export const UserManagement: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [showDetailPassword, setShowDetailPassword] = useState(false);
+    const [verifyCodeInput, setVerifyCodeInput] = useState('');
 
     // Registration form
     const [form, setForm] = useState({
@@ -169,6 +173,47 @@ export const UserManagement: React.FC = () => {
             fetchUsers();
             if (selectedUser?.id === user.id) {
                 setSelectedUser({ ...user, ...updateData });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleVerifyUser = async (user: AppUser) => {
+        if (!isDeveloper) { alert('Hanya Developer yang dapat memverifikasi user.'); return; }
+
+        // Check if verify code matches subscription_code
+        if (!verifyCodeInput.trim()) {
+            alert('Masukkan kode verifikasi terlebih dahulu.');
+            return;
+        }
+
+        if (verifyCodeInput.trim().toUpperCase() !== (user.subscription_code || '').trim().toUpperCase()) {
+            alert(`Kode verifikasi tidak cocok!\n\nKode yang dimasukkan: ${verifyCodeInput}\nKode user "${user.full_name}": ${user.subscription_code || '(kosong)'}\n\nPastikan kode yang dimasukkan sama dengan kode unik langganan user.`);
+            return;
+        }
+
+        try {
+            await supabase.from('app_users').update({ is_verified: true }).eq('id', user.id);
+            fetchUsers();
+            if (selectedUser?.id === user.id) {
+                setSelectedUser({ ...user, is_verified: true });
+            }
+            setVerifyCodeInput('');
+            alert(`User "${user.full_name}" berhasil diverifikasi! Kode cocok.`);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal memverifikasi user.');
+        }
+    };
+
+    const handleUnverifyUser = async (user: AppUser) => {
+        if (!isDeveloper) return;
+        try {
+            await supabase.from('app_users').update({ is_verified: false }).eq('id', user.id);
+            fetchUsers();
+            if (selectedUser?.id === user.id) {
+                setSelectedUser({ ...user, is_verified: false });
             }
         } catch (err) {
             console.error(err);
@@ -418,6 +463,7 @@ export const UserManagement: React.FC = () => {
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">User</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Username</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
+                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Verifikasi</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Status</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
                                                 <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest text-right">Action</th>
@@ -425,9 +471,9 @@ export const UserManagement: React.FC = () => {
                                         </thead>
                                         <tbody className="divide-y-2 divide-slate-100">
                                             {loading ? (
-                                                <tr><td colSpan={6} className="p-8 text-center text-slate-400"><div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" size={20} /> Memuat data...</div></td></tr>
+                                                <tr><td colSpan={7} className="p-8 text-center text-slate-400"><div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" size={20} /> Memuat data...</div></td></tr>
                                             ) : users.length === 0 ? (
-                                                <tr><td colSpan={6} className="p-8 text-center text-slate-400 font-bold">Tidak ada user.</td></tr>
+                                                <tr><td colSpan={7} className="p-8 text-center text-slate-400 font-bold">Tidak ada user.</td></tr>
                                             ) : (
                                                 users
                                                     .filter(u =>
@@ -457,6 +503,21 @@ export const UserManagement: React.FC = () => {
                                                                         user.role === 'Admin' || user.role === 'Owner' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                                                                             'bg-slate-100 text-slate-600 border-slate-200'
                                                                         }`}>{user.role}</span>
+                                                                </td>
+                                                                <td className="p-4">
+                                                                    {user.role === 'Developer' ? (
+                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border bg-slate-800 text-white border-slate-900">
+                                                                            <ShieldCheck size={11} /> Dev
+                                                                        </span>
+                                                                    ) : user.is_verified ? (
+                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border bg-emerald-100 text-emerald-800 border-emerald-300">
+                                                                            <ShieldCheck size={11} /> Verified
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border bg-amber-100 text-amber-800 border-amber-300">
+                                                                            <ShieldX size={11} /> Pending
+                                                                        </span>
+                                                                    )}
                                                                 </td>
                                                                 <td className="p-4">
                                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${subStatus.color}`}>
@@ -534,6 +595,78 @@ export const UserManagement: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Verification Section - Developer Only */}
+                                    {isDeveloper && selectedUser.role !== 'Developer' && (
+                                        <div>
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                                <ShieldCheck size={16} /> Verifikasi Akun
+                                            </h4>
+                                            <div className={`bg-white rounded-2xl border-2 shadow-[4px_4px_0px_#0f172a] p-4 space-y-4 ${selectedUser.is_verified ? 'border-emerald-500' : 'border-amber-500'}`}>
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`w-12 h-12 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center ${selectedUser.is_verified ? 'bg-emerald-300' : 'bg-amber-300'}`}>
+                                                        {selectedUser.is_verified ? <ShieldCheck className="text-slate-900" size={24} /> : <AlertTriangle className="text-slate-900" size={24} />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-900">
+                                                            {selectedUser.is_verified ? 'Akun Terverifikasi ✓' : 'Belum Diverifikasi'}
+                                                        </p>
+                                                        <p className="text-xs font-bold text-slate-500">
+                                                            Kode Langganan: <code className="bg-slate-100 px-2 py-0.5 rounded font-mono text-xs">{selectedUser.subscription_code || '(tidak ada)'}</code>
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {!selectedUser.is_verified && (
+                                                    <div className="space-y-3 pt-2 border-t-2 border-dashed border-slate-200">
+                                                        <p className="text-[10px] font-bold text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                                                            ⚠️ Masukkan kode verifikasi yang cocok dengan kode langganan user untuk memverifikasi akun ini. Kode harus sama persis.
+                                                        </p>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={verifyCodeInput}
+                                                                onChange={(e) => setVerifyCodeInput(e.target.value.toUpperCase())}
+                                                                className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-4 py-2.5 text-sm font-black text-slate-900 tracking-widest text-center uppercase placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-[2px_2px_0px_#0f172a]"
+                                                                placeholder="MASUKKAN KODE"
+                                                            />
+                                                            <button
+                                                                onClick={() => handleVerifyUser(selectedUser)}
+                                                                disabled={!verifyCodeInput.trim() || verifyCodeInput.trim().toUpperCase() !== (selectedUser.subscription_code || '').trim().toUpperCase()}
+                                                                className={`px-5 py-2.5 rounded-xl font-black text-sm border-2 border-slate-900 transition-all flex items-center gap-2 ${verifyCodeInput.trim() && verifyCodeInput.trim().toUpperCase() === (selectedUser.subscription_code || '').trim().toUpperCase()
+                                                                        ? 'bg-emerald-400 text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-0.5'
+                                                                        : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70'
+                                                                    }`}
+                                                            >
+                                                                <ShieldCheck size={16} /> Verifikasi
+                                                            </button>
+                                                        </div>
+                                                        {verifyCodeInput.trim() && verifyCodeInput.trim().toUpperCase() !== (selectedUser.subscription_code || '').trim().toUpperCase() && (
+                                                            <p className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                                                                <XCircle size={12} /> Kode tidak cocok dengan kode langganan user
+                                                            </p>
+                                                        )}
+                                                        {verifyCodeInput.trim() && verifyCodeInput.trim().toUpperCase() === (selectedUser.subscription_code || '').trim().toUpperCase() && (
+                                                            <p className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                                                                <CheckCircle size={12} /> Kode cocok! Klik tombol Verifikasi untuk mengonfirmasi.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {selectedUser.is_verified && (
+                                                    <div className="pt-2 border-t-2 border-dashed border-slate-200">
+                                                        <button
+                                                            onClick={() => handleUnverifyUser(selectedUser)}
+                                                            className="text-xs font-bold text-red-500 hover:text-red-600 underline"
+                                                        >
+                                                            Cabut Verifikasi
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Keanggotaan Workspace */}
                                     <div>

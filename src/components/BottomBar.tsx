@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCarouselStore } from '../store/useCarouselStore';
-import { Plus, Copy, Trash2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Copy, Trash2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Keyboard } from 'lucide-react';
 import { ExportModal } from './ExportModal';
 
 export const BottomBar: React.FC = () => {
@@ -115,6 +115,14 @@ export const BottomBar: React.FC = () => {
                         className="bg-accent text-white px-6 py-2 rounded-xl border-4 border-slate-900 font-bold tracking-widest shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_#0f172a] transition-all"
                     >
                         Export Desain
+                    </button>
+
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('canvas:open-shortcuts'))}
+                        className="bg-slate-100 text-slate-900 p-2 rounded-xl border-2 border-slate-300 hover:bg-slate-200 transition-colors"
+                        title="Custom Shortcuts"
+                    >
+                        <Keyboard size={20} />
                     </button>
                 </div>
             </div>

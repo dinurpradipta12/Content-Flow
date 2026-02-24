@@ -9,6 +9,9 @@ import { ContentDataInsight } from './pages/ContentDataInsight';
 import { CarouselMaker } from './pages/CarouselMaker';
 import { TeamKPIBoard } from './pages/TeamKPIBoard';
 import { Login } from './pages/Login';
+import { Welcome } from './pages/Welcome';
+import { Terms } from './pages/Terms';
+import { Register } from './pages/Register';
 import { UserManagement } from './pages/UserManagement';
 import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
@@ -21,7 +24,7 @@ import { AppConfigProvider } from './components/AppConfigProvider';
 const RequireAuth = () => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/welcome" replace />;
   }
   return (
     <Layout>
@@ -61,7 +64,10 @@ const App: React.FC = () => {
       <AppConfigProvider>
         <NotificationProvider>
           <Routes>
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Protected Routes */}
             <Route element={<RequireAuth />}>

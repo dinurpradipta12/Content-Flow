@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -22,13 +21,20 @@ export const Register: React.FC = () => {
         setErrorStatus('');
 
         // Basic Validation
-        if (!form.fullName || !form.email || !form.username || !form.password || !form.subscriptionCode) {
-            setErrorStatus('Semua kolom wajib diisi.');
+        if (!form.fullName || !form.email || !form.username || !form.password) {
+            setErrorStatus('Nama lengkap, email, username, dan password wajib diisi.');
             return;
         }
 
         if (form.password.length < 6) {
             setErrorStatus('Password minimal 6 karakter.');
+            return;
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(form.email)) {
+            setErrorStatus('Format email tidak valid.');
             return;
         }
 
@@ -52,7 +58,7 @@ export const Register: React.FC = () => {
             const now = new Date().toISOString();
 
             const insertData = {
-                id: uuidv4(),
+                id: crypto.randomUUID(),
                 full_name: form.fullName,
                 email: form.email,
                 username: form.username,
@@ -61,8 +67,8 @@ export const Register: React.FC = () => {
                 avatar_url: avatarUrl,
                 is_active: true, // They can't login yet anyway due to is_verified = false
                 subscription_start: now,
-                subscription_code: form.subscriptionCode,
-                is_verified: false // Must be verified by Admin
+                subscription_code: form.subscriptionCode || null,
+                is_verified: false // Must be verified by Admin/Developer
             };
 
             const { error } = await supabase.from('app_users').insert([insertData]);
@@ -72,7 +78,7 @@ export const Register: React.FC = () => {
             setSuccess(true);
             setTimeout(() => {
                 navigate('/login');
-            }, 5000);
+            }, 8000);
 
         } catch (err: any) {
             console.error(err);
@@ -93,7 +99,11 @@ export const Register: React.FC = () => {
                     <p className="text-emerald-700 font-medium mb-6 leading-relaxed">
                         Terima kasih, <strong>{form.fullName}</strong>. Akun Anda telah tersimpan di sistem kami.
                         <br /><br />
-                        Saat ini akun Anda sedang menunggu <strong>verifikasi dari Administrator</strong>. Kami akan mencocokkan kode unik <code>{form.subscriptionCode}</code> Anda. Jika berhasil divalidasi, Anda dapat langsung login.
+                        Saat ini akun Anda sedang menunggu <strong>verifikasi dari Administrator</strong>.
+                        {form.subscriptionCode && (
+                            <> Kami akan mencocokkan kode unik <code className="bg-emerald-200 px-2 py-0.5 rounded font-mono text-sm">{form.subscriptionCode}</code> Anda.</>
+                        )}
+                        {' '}Jika berhasil divalidasi, Anda dapat langsung login.
                     </p>
                     <button
                         onClick={() => navigate('/login')}
@@ -136,6 +146,7 @@ export const Register: React.FC = () => {
                         </div>
                     )}
 
+                    {/* 1. Nama Lengkap */}
                     <div>
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Nama Lengkap</label>
                         <div className="relative">
@@ -153,6 +164,7 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* 2. Email Aktif */}
                     <div>
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Email Aktif</label>
                         <div className="relative">
@@ -170,6 +182,7 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* 3. Username Login & 4. Password */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Username Login</label>
@@ -206,19 +219,19 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* 5. Kode Unik Langganan */}
                     <div className="pt-2 border-t-2 border-dashed border-slate-200">
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Key size={14} /> Kode Unik Langganan</label>
                         <div className="relative">
                             <input
                                 type="text"
                                 value={form.subscriptionCode}
-                                onChange={e => setForm({ ...form, subscriptionCode: e.target.value })}
+                                onChange={e => setForm({ ...form, subscriptionCode: e.target.value.toUpperCase() })}
                                 className="w-full bg-amber-50 border-2 border-amber-300 text-slate-900 text-lg text-center tracking-widest font-black rounded-xl focus:outline-none focus:border-amber-600 focus:bg-amber-100 block p-4 transition-all uppercase placeholder-amber-200"
                                 placeholder="KODE-XXX-YYY"
-                                required
                             />
                         </div>
-                        <p className="text-[10px] text-slate-500 font-bold text-center mt-2 leading-tight">Masukkan kode unik yang Anda terima saat pembelian / konfirmasi. Admin akan mencocokkan kode ini untuk mengaktifkan akun Anda.</p>
+                        <p className="text-[10px] text-slate-500 font-bold text-center mt-2 leading-tight">Jika Anda berlangganan, masukkan kode unik yang diberikan saat konfirmasi pembelian. Admin akan mencocokkan kode ini untuk mengaktifkan akun Anda. Kosongkan jika belum memiliki kode.</p>
                     </div>
 
                     <button
@@ -232,6 +245,10 @@ export const Register: React.FC = () => {
                             'Daftar Sekarang'
                         )}
                     </button>
+
+                    <p className="text-xs text-slate-400 font-bold text-center">
+                        Sudah punya akun? <button type="button" onClick={() => navigate('/login')} className="text-accent hover:underline font-black">Login di sini</button>
+                    </p>
                 </form>
             </div>
         </div>

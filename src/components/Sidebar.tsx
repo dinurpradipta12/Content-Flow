@@ -132,6 +132,13 @@ export const Sidebar: React.FC = () => {
         }
     }, [activeTab]);
 
+    // Listen for open-shortcuts event from BottomBar
+    useEffect(() => {
+        const handleOpenShortcuts = () => setShowShortcutsModal(true);
+        window.addEventListener('canvas:open-shortcuts', handleOpenShortcuts);
+        return () => window.removeEventListener('canvas:open-shortcuts', handleOpenShortcuts);
+    }, []);
+
     const fetchPresets = async () => {
         try {
             setIsLoadingPresets(true);
@@ -450,29 +457,29 @@ export const Sidebar: React.FC = () => {
                         </section>
 
                         {/* Add Elements */}
-                        <section className="space-y-4">
+                        <section className="space-y-2">
                             <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400">
                                 <Plus size={14} /> Add Elements
                             </label>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-4 gap-1.5">
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'text' } }))}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                    className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group"
                                 >
-                                    <Type size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Add Text</span>
+                                    <Type size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Text</span>
                                 </button>
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'rect' } }))}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                    className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group"
                                 >
-                                    <Square size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Add Shape</span>
+                                    <Square size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Shape</span>
                                 </button>
-                                <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
-                                    <ImageIcon size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Add Image</span>
+                                <label className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group cursor-pointer">
+                                    <ImageIcon size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Image</span>
                                     <input
                                         type="file"
                                         className="hidden"
@@ -491,35 +498,35 @@ export const Sidebar: React.FC = () => {
                                 </label>
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'circle' } }))}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                    className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group"
                                 >
-                                    <Circle size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Add Circle</span>
+                                    <Circle size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Circle</span>
                                 </button>
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'triangle' } }))}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                    className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group"
                                 >
-                                    <Triangle size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Add Triangle</span>
+                                    <Triangle size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Triangle</span>
                                 </button>
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'brush' } }))}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                    className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group"
                                 >
-                                    <Paintbrush size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Brush Tool</span>
+                                    <Paintbrush size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Brush</span>
                                 </button>
                                 <button
                                     onClick={() => window.dispatchEvent(new CustomEvent('canvas:add', { detail: { type: 'sticker-star' } }))}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group"
+                                    className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group"
                                 >
-                                    <Star size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold">Sticker</span>
+                                    <Star size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Sticker</span>
                                 </button>
-                                <label className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-yellow-50 transition-colors group cursor-pointer">
-                                    <Upload size={24} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[10px] font-bold text-center">Upload Font</span>
+                                <label className="flex flex-col items-center justify-center gap-1 p-2 bg-slate-50 border-2 border-slate-900 rounded-xl hover:bg-yellow-50 transition-colors group cursor-pointer">
+                                    <Upload size={16} className="group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-bold">Font</span>
                                     <input
                                         type="file"
                                         className="hidden"
@@ -547,19 +554,6 @@ export const Sidebar: React.FC = () => {
                                     />
                                 </label>
                             </div>
-                        </section>
-
-                        <section className="border-t-4 border-slate-900 pt-6 mt-6 pb-6">
-                            <label className="flex items-center gap-2 text-xs font-black tracking-widest text-slate-400 mb-4 px-2 uppercase">
-                                <Keyboard size={14} /> Tools & Settings
-                            </label>
-                            <button
-                                onClick={() => setShowShortcutsModal(true)}
-                                className="w-full flex items-center justify-between p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl hover:bg-slate-100 transition-colors group"
-                            >
-                                <span className="text-xs font-bold text-slate-900">Custom Shortcuts</span>
-                                <Keyboard size={18} className="text-slate-500 group-hover:text-slate-900 transition-colors" />
-                            </button>
                         </section>
                     </div>
                 ) : (

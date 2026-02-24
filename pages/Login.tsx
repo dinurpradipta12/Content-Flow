@@ -173,6 +173,15 @@ export const Login: React.FC = () => {
                             ⚠️ Database belum terhubung. Konfigurasi di dalam aplikasi (Settings) atau cek file .env.
                         </div>
                     )}
+
+                    <div className="mt-4 text-center space-y-2">
+                        <p className="text-xs text-slate-400 font-bold">
+                            Belum punya akun? <button type="button" onClick={() => navigate('/terms')} className="text-accent hover:underline font-black">Daftar di sini</button>
+                        </p>
+                        <button type="button" onClick={() => navigate('/welcome')} className="text-xs text-slate-400 hover:text-slate-700 font-bold underline transition-colors">
+                            ← Kembali ke Welcome
+                        </button>
+                    </div>
                 </Card>
             </div>
         </div>

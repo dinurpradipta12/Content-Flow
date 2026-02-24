@@ -715,7 +715,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 border-2 border-transparent transition-all">
                         <LogOut size={20} /> Sign Out
                     </button>
-                    <p className="text-xs text-slate-400 font-bold text-center mt-4">v1.1.0 {branding.appName}</p>
+                    <p className="text-xs text-slate-400 font-bold text-center mt-4">v{config?.app_version || '1.0.0'} {config?.app_name || branding.appName}</p>
                 </div>
             </aside>
 
