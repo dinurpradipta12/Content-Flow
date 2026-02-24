@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { notifyDevelopers } from '../services/notificationService';
 import { supabase } from '../services/supabaseClient';
 import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info } from 'lucide-react';
 
@@ -106,6 +107,14 @@ export const Register: React.FC = () => {
             }]);
 
             if (error) throw error;
+
+            // Notify Developers about new registration
+            await notifyDevelopers({
+                title: 'User Baru Mendaftar!',
+                content: `${form.fullName} (@${form.username}) telah mendaftar dan menunggu verifikasi.`,
+                metadata: { type: 'registration', user_id: registeredUserId }
+            });
+
             setInboxSent(true);
         } catch (err) {
             console.error(err);

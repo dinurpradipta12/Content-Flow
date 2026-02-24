@@ -34,17 +34,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [currentUserId, setCurrentUserId] = useState<string | null>(localStorage.getItem('user_id'));
     const navigate = useNavigate();
 
-    // Notification Sound
+    // Notification Sounds
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const specialAudioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
         audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        // Special sound for Developer alerts (e.g., a "cash register" or "success chime")
+        specialAudioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3');
     }, []);
 
-    const playNotificationSound = () => {
-        if (audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(err => console.log('Audio play failed:', err));
+    const playNotificationSound = (type: 'default' | 'special' = 'default') => {
+        const audio = type === 'special' ? specialAudioRef.current : audioRef.current;
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(err => console.log('Audio play failed:', err));
         }
     };
 
@@ -102,8 +106,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     console.log('New notification received via real-time:', payload);
 
                     try {
-                        // Play sound
-                        playNotificationSound();
+                        // Play sound - checking if it's a special developer notification
+                        if (payload.new.metadata?.sound === 'special') {
+                            playNotificationSound('special');
+                        } else {
+                            playNotificationSound('default');
+                        }
 
                         // Fetch actor details for the new notification
                         const { data: actorData } = await supabase
@@ -216,10 +224,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     <div
                         key={toast.id}
                         onClick={() => handleNotificationClick(toast)}
-                        className="pointer-events-auto bg-white border-2 border-slate-800 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer hover:bg-slate-50 transition-colors"
+                        className={`pointer-events-auto border-2 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer transition-all ${toast.metadata?.sound === 'special'
+                                ? 'bg-amber-50 border-amber-500 hover:bg-amber-100'
+                                : 'bg-white border-slate-800 hover:bg-slate-50'
+                            }`}
                     >
                         {/* Progress Bar for 10s timer */}
-                        <div className="absolute bottom-0 left-0 h-1.5 bg-accent/20 animate-toast-progress w-full origin-left"></div>
+                        <div className={`absolute bottom-0 left-0 h-1.5 w-full origin-left animate-toast-progress ${toast.metadata?.sound === 'special' ? 'bg-amber-500/20' : 'bg-accent/20'
+                            }`}></div>
 
                         <div className="shrink-0 relative">
                             {toast.actor?.avatar_url ? (

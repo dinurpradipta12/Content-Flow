@@ -41,6 +41,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotifications } from './NotificationProvider';
 import { useAppConfig } from './AppConfigProvider';
 import { CheckCircle2 } from 'lucide-react';
+import { notifyDevelopers } from '../services/notificationService';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -859,6 +860,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             }]);
 
             if (error) throw error;
+
+            // Notify Developers about new renewal submission
+            await notifyDevelopers({
+                title: 'Konfirmasi Pembayaran Baru!',
+                content: `${userProfile.name} telah mengirimkan bukti perpanjangan untuk paket ${packageName}.`,
+                metadata: { type: 'renewal', user_id: userId, package: packageName }
+            });
 
             alert('Bukti pembayaran berhasil dikirim! Developer akan segera memproses akun Anda.');
             setShowPaymentModal(false);
