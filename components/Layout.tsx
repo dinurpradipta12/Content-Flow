@@ -497,9 +497,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     localStorage.removeItem('subscription_end'); // prevent looping updates
                     setDaysToSubExp(null);
                 } else {
-                    const diffTime = endDate.getTime() - now.getTime();
+                    const endMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+                    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const diffTime = endMidnight.getTime() - nowMidnight.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 5) {
+
+                    if (diffDays <= 5 && diffDays >= 0) {
                         setDaysToSubExp(diffDays);
                     } else {
                         setDaysToSubExp(null);
