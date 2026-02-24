@@ -348,6 +348,8 @@ export const Dashboard: React.FC = () => {
 
     useEffect(() => {
         const fetchAnalytics = async () => {
+            if (workspaces.length === 0) return;
+
             const startCurrent = new Date(filterYear, filterMonth, 1);
             const endCurrent = new Date(filterYear, filterMonth + 1, 0, 23, 59, 59);
 
@@ -356,7 +358,13 @@ export const Dashboard: React.FC = () => {
 
             let query = supabase.from('content_items').select('date, metrics, platform, workspace_id, status, pillar');
 
-            if (filterWs !== 'all') query = query.eq('workspace_id', filterWs);
+            if (filterWs !== 'all') {
+                query = query.eq('workspace_id', filterWs);
+            } else {
+                const wsIds = workspaces.map(w => w.id);
+                query = query.in('workspace_id', wsIds);
+            }
+
             if (filterPlatform !== 'all') query = query.eq('platform', filterPlatform);
 
             const { data, error } = await query;
@@ -457,7 +465,7 @@ export const Dashboard: React.FC = () => {
             setMetricsPrev({ views: prevViews, er: prevER, published: prevPublished });
         };
         fetchAnalytics();
-    }, [filterWs, filterPlatform, filterMonth, filterYear]);
+    }, [filterWs, filterPlatform, filterMonth, filterYear, workspaces]);
 
     const calculateGrowth = (current: number, previous: number) => {
         if (previous === 0) return current > 0 ? 100 : 0;

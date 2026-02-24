@@ -274,6 +274,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [showRoleChangeModal, setShowRoleChangeModal] = useState(false);
     const [showSubExpiredModal, setShowSubExpiredModal] = useState(false);
 
+    // Payment Extension State
+    const [daysToSubExp, setDaysToSubExp] = useState<number | null>(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+
     // Network State
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
     const [latency, setLatency] = useState(0);
@@ -357,7 +361,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             if (!userId) return;
 
             try {
-                const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title').eq('id', userId).single();
+                const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title, subscription_end').eq('id', userId).single();
                 if (data && !error) {
                     const profileData = {
                         name: data.full_name || 'User',
@@ -366,6 +370,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         jobTitle: data.job_title || ''
                     };
                     setUserProfile(profileData);
+
+                    if (data.subscription_end) {
+                        localStorage.setItem('subscription_end', data.subscription_end);
+                    }
 
                     // Keep localStorage in sync
                     localStorage.setItem('user_name', profileData.name);
@@ -478,14 +486,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
 
         // 2. Local Polling for Time-based Expiration & Tenant Check
-        const subInterval = setInterval(async () => {
+        const checkExpiration = async () => {
             const subEnd = localStorage.getItem('subscription_end');
             if (subEnd) {
-                if (new Date() > new Date(subEnd)) {
+                const endDate = new Date(subEnd);
+                const now = new Date();
+                if (now > endDate) {
                     setShowSubExpiredModal(true);
                     await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
                     localStorage.removeItem('subscription_end'); // prevent looping updates
+                    setDaysToSubExp(null);
+                } else {
+                    const diffTime = endDate.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 5) {
+                        setDaysToSubExp(diffDays);
+                    } else {
+                        setDaysToSubExp(null);
+                    }
                 }
+            } else {
+                setDaysToSubExp(null);
             }
 
             // Check Admin Status periodically just in case realtime drops
@@ -497,8 +518,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     navigate('/login');
                 }
             }
+        };
 
-        }, 15000); // Check every 15 seconds
+        checkExpiration();
+        const subInterval = setInterval(checkExpiration, 15000); // Check every 15 seconds
 
         return () => {
             supabase.removeChannel(userChannel);
@@ -570,9 +593,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handleSaveBranding = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Only Admin/Developer can save branding
-        if (!isAdmin) {
-            alert("Akses ditolak. Hubungi Administrator.");
+        // Only Developer can save branding
+        if (!isDeveloper) {
+            alert("Akses ditolak. Halaman ini khusus untuk Developer.");
             return;
         }
 
@@ -599,7 +622,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     const handleSaveIntegration = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isAdmin) return;
+        if (!isDeveloper) return;
         if (confirm("Menyimpan konfigurasi baru akan me-refresh aplikasi. Lanjutkan?")) {
             updateSupabaseConfig(sbConfig.url, sbConfig.key);
         }
@@ -621,6 +644,58 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     // UI Helpers
+    const [selectedPackage, setSelectedPackage] = useState('');
+    const [paymentProof, setPaymentProof] = useState('');
+
+    useEffect(() => {
+        if (!selectedPackage) {
+            if (config?.payment_config?.packages?.length) {
+                const first = config.payment_config.packages[0];
+                setSelectedPackage(`${first.name} (Rp ${first.price.toLocaleString('id-ID')})`);
+            } else {
+                setSelectedPackage('1 Bulan (Rp 150.000)');
+            }
+        }
+    }, [config, selectedPackage]);
+
+    const handlePaymentProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) { alert("File terlalu besar (Max 2MB)"); return; }
+            const reader = new FileReader();
+            reader.onloadend = () => setPaymentProof(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const submitPaymentConfirmation = async () => {
+        if (!paymentProof) {
+            alert('Harap lampirkan bukti pembayaran.');
+            return;
+        }
+
+        try {
+            // Find developers
+            const { data: devs } = await supabase.from('app_users').select('id').eq('role', 'Developer');
+            if (devs && devs.length > 0) {
+                const notificationsPayload = devs.map(dev => ({
+                    recipient_id: dev.id,
+                    type: 'payment_req',
+                    title: 'Konfirmasi Pembayaran Masuk',
+                    content: `User ${userProfile.name} mengajukan perpanjangan langganan: ${selectedPackage}.`,
+                    metadata: { package: selectedPackage, proof: paymentProof, user: userProfile.name, user_id: localStorage.getItem('user_id') }
+                }));
+
+                await supabase.from('notifications').insert(notificationsPayload);
+            }
+            alert('Bukti pembayaran berhasil dikirim! Developer akan segera memproses akun Anda.');
+            setShowPaymentModal(false);
+            setPaymentProof('');
+        } catch (err) {
+            alert('Gagal mengirim konfirmasi. Coba sebentar lagi.');
+        }
+    };
+
     const getNetworkColor = () => {
         switch (networkStatus) {
             case 'good': return 'text-green-500 bg-green-50 border-green-200';
@@ -679,7 +754,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <aside
                 className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r-2 border-slate-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <div className="h-auto flex items-center justify-center px-6 shrink-0 py-8">
+                <div className="h-auto flex flex-col items-center justify-center px-6 shrink-0 py-8 gap-4">
                     <div className="flex items-center justify-center w-full">
                         {config?.app_logo || branding.appLogo ? (
                             <img src={config?.app_logo || branding.appLogo} className="w-full max-h-24 object-contain" alt="Logo" />
@@ -689,6 +764,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
                         )}
                     </div>
+                    {daysToSubExp !== null && daysToSubExp <= 5 && (
+                        <div
+                            onClick={() => setShowPaymentModal(true)}
+                            className="w-full bg-red-50 border-2 border-red-200 rounded-xl p-3 cursor-pointer hover:bg-red-100 transition-colors shadow-sm"
+                        >
+                            <p className="text-xs font-bold text-red-600 leading-tight">
+                                {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} hari lagi`} masa berlangganan anda akan habis. Segera perpanjang akun Anda.
+                            </p>
+                            <button className="mt-2 w-full text-[10px] bg-red-600 text-white font-black py-1.5 rounded-lg uppercase tracking-wider">Perpanjang Sekarang</button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
@@ -696,6 +782,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         const filteredItems = items.filter(item => {
                             if (item.adminOnly && !isAdmin) return false;
                             if (item.developerOnly && !isDeveloper) return false;
+
+                            // Developer bypasses all visual hiding logic to see everything
+                            if (isDeveloper) return true;
+
+                            // Known core pages that are visible by default unless explicitly hidden
+                            const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+
+                            const isHidden = config?.hidden_pages?.includes(item.id);
+
+                            if (CORE_PAGES.includes(item.id)) {
+                                if (isHidden) return false;
+                            } else {
+                                // For completely new pages added to NAV_ITEMS later: 
+                                // they are HIDDEN by default from non-developers.
+                                // The developer must explicitly 'unhide' them in Workspace Settings.
+                                // If a new page is NOT in hidden_pages, what does it mean?
+                                // Let's consider a new page visible ONLY if it is explicitly NOT hidden
+                                // Wait, if it's hidden by default, and `hidden_pages` means hidden, 
+                                // then we can't unhide it using `hidden_pages`. 
+                                // As a workaround, we treat `hidden_pages` for non-core pages as a WHITELIST if we invert logic,
+                                // but the UI uses `includes(id)` as hidden. 
+                                // If it's fully new (not in CORE_PAGES) and not explicitly set up in config.page_titles, hide it.
+                                if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false;
+                            }
+
                             return true;
                         });
                         if (filteredItems.length === 0) return null;
@@ -839,7 +950,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         )}
                     </div>
 
-                    {isAdmin && (
+                    {isDeveloper && (
                         <>
                             <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
                                 <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-slate-800'}`}>
@@ -900,6 +1011,72 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <h3 className="text-xl font-bold text-slate-800">Akses Terhenti</h3>
                     <p className="text-slate-500 text-sm">Masa aktif subscription habis.</p>
                     <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
+                </div>
+            </Modal>
+
+            <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Perpanjang Masa Langganan">
+                <div className="p-4 space-y-5">
+                    <p className="text-sm text-slate-600 font-bold">Harap lengkapi detail perpanjangan di bawah ini.</p>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Pilih Paket Langganan</label>
+                        <select
+                            className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:border-accent transition-colors"
+                            value={selectedPackage}
+                            onChange={(e) => setSelectedPackage(e.target.value)}
+                        >
+                            {config?.payment_config?.packages?.length ? (
+                                config.payment_config.packages.map(pkg => (
+                                    <option key={pkg.id} value={`${pkg.name} (Rp ${pkg.price.toLocaleString('id-ID')})`}>
+                                        {pkg.name} (Rp {pkg.price.toLocaleString('id-ID')})
+                                    </option>
+                                ))
+                            ) : (
+                                <>
+                                    <option value="1 Bulan (Rp 150.000)">1 Bulan (Rp 150.000)</option>
+                                    <option value="3 Bulan (Rp 400.000)">3 Bulan (Rp 400.000)</option>
+                                    <option value="Lifetime (Rp 1.500.000)">Lifetime (Rp 1.500.000)</option>
+                                </>
+                            )}
+                        </select>
+                    </div>
+
+                    <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-5 space-y-3">
+                        <div>
+                            <h4 className="font-black text-sm text-slate-800">Instruksi Pembayaran</h4>
+                            <p className="text-xs font-bold text-slate-500">Kirim pembayaran sesuai paket The Content Flow Anda.</p>
+                        </div>
+                        <div className="bg-white border-2 border-slate-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{config?.payment_config?.bankName || 'Bank BCA'}</p>
+                            <p className="text-2xl font-black text-slate-800 font-mono tracking-wider mt-1 mb-1">{config?.payment_config?.accountNumber || '291 102 3456'}</p>
+                            <p className="text-xs font-bold text-slate-500">A.N. {config?.payment_config?.accountName || 'PT Arunika Media Integra'}</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Bukti Transfer (Screenshot/Foto)</label>
+                        <div className="relative group cursor-pointer border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white transition-colors overflow-hidden">
+                            {paymentProof ? (
+                                <img src={paymentProof} alt="Bukti" className="w-full h-40 object-cover" />
+                            ) : (
+                                <div className="p-6 text-center">
+                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-200 mb-3"><Upload className="text-slate-400" size={20} /></div>
+                                    <p className="text-xs font-bold text-slate-500">Pilih file gambar atau foto.</p>
+                                </div>
+                            )}
+                            <input type="file" accept="image/*" onChange={handlePaymentProofUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                        </div>
+                    </div>
+
+                    <Button
+                        onClick={submitPaymentConfirmation}
+                        className="w-full h-14 bg-accent mt-6 shadow-hard-mini"
+                        icon={<CheckCircle size={18} />}
+                        disabled={!paymentProof}
+                    >
+                        Konfirmasi Pembayaran
+                    </Button>
                 </div>
             </Modal>
         </div>

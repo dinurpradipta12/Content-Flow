@@ -18,13 +18,28 @@ import {
     Terminal,
     Code,
     Smartphone,
-    Rocket
+    Rocket,
+    CreditCard
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 
 interface PageConfig {
     title: string;
     subtitle: string;
+    isGlobalVisible?: boolean;
+}
+
+interface PaymentPackage {
+    id: string;
+    name: string;
+    price: number;
+}
+
+interface PaymentConfig {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    packages: PaymentPackage[];
 }
 
 interface AppConfig {
@@ -35,6 +50,7 @@ interface AppConfig {
     hidden_pages: string[];
     app_version: string;
     changelog: string;
+    payment_config?: PaymentConfig;
 }
 const DEFAULT_PAGE_TITLES: Record<string, PageConfig> = {
     'dashboard': { title: 'Halo, Aditya!', subtitle: 'Berikut laporan performa kontenmu bulan ini.' },
@@ -48,7 +64,7 @@ const DEFAULT_PAGE_TITLES: Record<string, PageConfig> = {
 };
 
 export const WorkspaceSettings: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'interface' | 'database'>('interface');
+    const [activeTab, setActiveTab] = useState<'interface' | 'payment' | 'database'>('interface');
     const [config, setConfig] = useState<AppConfig | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -107,6 +123,24 @@ export const WorkspaceSettings: React.FC = () => {
         }
     };
 
+    const handleSavePayment = async () => {
+        if (!config) return;
+        setSaving(true);
+        try {
+            const { error } = await supabase.from('app_config').update({
+                payment_config: config.payment_config || {}
+            }).eq('id', 1);
+
+            if (error) throw error;
+            alert('Konfigurasi Pembayaran berhasil disimpan!');
+        } catch (err: any) {
+            console.error('Save Payment Error:', err);
+            alert(`Gagal menyimpan konfigurasi pembayaran: ${err.message || JSON.stringify(err)}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSendUpdate = async () => {
         if (!config) return;
         if (!changelogInput.trim()) return alert('Harap isi changelog sebelum update.');
@@ -154,13 +188,22 @@ export const WorkspaceSettings: React.FC = () => {
 
     const togglePageVisibility = (path: string) => {
         if (!config) return;
-        const currentList = config.hidden_pages || [];
-        const isHidden = currentList.includes(path);
-        const newList = isHidden
-            ? currentList.filter(p => p !== path)
-            : [...currentList, path];
 
-        setConfig({ ...config, hidden_pages: newList });
+        const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+
+        if (CORE_PAGES.includes(path)) {
+            const currentList = config.hidden_pages || [];
+            const isHidden = currentList.includes(path);
+            const newList = isHidden
+                ? currentList.filter(p => p !== path)
+                : [...currentList, path];
+            setConfig({ ...config, hidden_pages: newList });
+        } else {
+            const newTitles = { ...(config.page_titles || {}) };
+            if (!newTitles[path]) newTitles[path] = { title: '', subtitle: '', isGlobalVisible: false };
+            newTitles[path].isGlobalVisible = !newTitles[path].isGlobalVisible;
+            setConfig({ ...config, page_titles: newTitles });
+        }
     };
 
     const updatePageTitle = (id: string, field: 'title' | 'subtitle', val: string) => {
@@ -174,7 +217,7 @@ export const WorkspaceSettings: React.FC = () => {
     // SQL Templates
     const SQL_TEMPLATES = [
         { name: 'Core Tables', code: '-- Create all base tables\nCREATE TABLE workspaces ...' },
-        { name: 'App Config Extension', code: '-- Add missing columns\nALTER TABLE app_config ADD COLUMN page_titles JSONB ...' },
+        { name: 'App Config Extension', code: '-- Add missing columns\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS page_titles JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS hidden_pages JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS payment_config JSONB;' },
         { name: 'Chat System', code: '-- Chat & Messages\nCREATE TABLE workspace_chat_messages ...' },
         { name: 'Enable Realtime App Config', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;' }
     ];
@@ -212,6 +255,12 @@ export const WorkspaceSettings: React.FC = () => {
                     >
                         <Database size={16} /> Database
                     </button>
+                    <button
+                        onClick={() => setActiveTab('payment')}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'payment' ? 'bg-white text-slate-900 border-2 border-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                        <CreditCard size={16} /> Payment
+                    </button>
                 </div>
             </div>
 
@@ -233,13 +282,20 @@ export const WorkspaceSettings: React.FC = () => {
                                         <div key={id} className="p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 hover:border-accent group transition-all">
                                             <div className="flex items-center justify-between mb-4">
                                                 <span className="px-2 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded">{id}</span>
-                                                <button
-                                                    onClick={() => togglePageVisibility(id)}
-                                                    className={`p-2 rounded-lg border-2 transition-all ${(config.hidden_pages || []).includes(id) ? 'bg-red-50 text-red-500 border-red-200' : 'bg-white text-slate-400 border-slate-100 hover:border-accent'}`}
-                                                    title={(config.hidden_pages || []).includes(id) ? 'Status: Tersembunyi' : 'Status: Terlihat'}
-                                                >
-                                                    {(config.hidden_pages || []).includes(id) ? <EyeOff size={16} /> : <Eye size={16} />}
-                                                </button>
+                                                {(() => {
+                                                    const isCore = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'].includes(id);
+                                                    const isHidden = isCore ? (config.hidden_pages || []).includes(id) : !p.isGlobalVisible;
+
+                                                    return (
+                                                        <button
+                                                            onClick={() => togglePageVisibility(id)}
+                                                            className={`p-2 rounded-lg border-2 transition-all ${isHidden ? 'bg-red-50 text-red-500 border-red-200' : 'bg-white text-slate-400 border-slate-100 hover:border-accent'}`}
+                                                            title={isHidden ? 'Status: Tersembunyi dari User' : 'Status: Terlihat Secara Global'}
+                                                        >
+                                                            {isHidden ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                        </button>
+                                                    );
+                                                })()}
                                             </div>
                                             <div className="space-y-3">
                                                 <input
@@ -313,6 +369,125 @@ export const WorkspaceSettings: React.FC = () => {
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            ) : activeTab === 'payment' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-8 space-y-6">
+                        <Card title="Payment Configuration" icon={<CreditCard size={20} />} headerColor="emerald">
+                            <div className="p-6 space-y-8">
+                                <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
+                                    <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Informasi Bank & Rekening</h4>
+                                    <Button onClick={handleSavePayment} disabled={saving} icon={<Save size={16} />}>
+                                        {saving ? 'Simpan...' : 'Simpan Konfigurasi'}
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nama Bank</label>
+                                            <input
+                                                value={config?.payment_config?.bankName || ''}
+                                                onChange={e => setConfig(prev => prev ? ({ ...prev, payment_config: { ...(prev.payment_config || { accountName: '', accountNumber: '', packages: [] }), bankName: e.target.value } }) : null)}
+                                                className="w-full bg-white border-4 border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-900 focus:border-accent transition-all outline-none"
+                                                placeholder="Contoh: Bank BCA"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">No. Rekening</label>
+                                            <input
+                                                value={config?.payment_config?.accountNumber || ''}
+                                                onChange={e => setConfig(prev => prev ? ({ ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', packages: [] }), accountNumber: e.target.value } }) : null)}
+                                                className="w-full bg-white border-4 border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-900 focus:border-accent transition-all outline-none"
+                                                placeholder="Contoh: 1234567890"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Atas Nama (A/N)</label>
+                                        <input
+                                            value={config?.payment_config?.accountName || ''}
+                                            onChange={e => setConfig(prev => prev ? ({ ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountNumber: '', packages: [] }), accountName: e.target.value } }) : null)}
+                                            className="w-full bg-white border-4 border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-900 focus:border-accent transition-all outline-none"
+                                            placeholder="Contoh: PT Arunika Media Integra"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="border-t-2 border-slate-100 pt-6 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Paket Langganan (Subscription)</h4>
+                                        <button
+                                            onClick={() => {
+                                                const newPkg = { id: Date.now().toString(), name: 'Paket Baru', price: 0 };
+                                                setConfig(prev => {
+                                                    if (!prev) return null;
+                                                    const pkgs = prev.payment_config?.packages || [];
+                                                    return { ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', accountNumber: '', packages: [] }), packages: [...pkgs, newPkg] } };
+                                                });
+                                            }}
+                                            className="text-[10px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-slate-700"
+                                        >
+                                            + Tambah Paket
+                                        </button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {(config?.payment_config?.packages || []).map((pkg, idx) => (
+                                            <div key={pkg.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
+                                                <input
+                                                    value={pkg.name}
+                                                    onChange={e => {
+                                                        const name = e.target.value;
+                                                        setConfig(prev => {
+                                                            if (!prev) return null;
+                                                            const newPkgs = [...(prev.payment_config?.packages || [])];
+                                                            newPkgs[idx].name = name;
+                                                            return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
+                                                        });
+                                                    }}
+                                                    className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                    placeholder="Nama Paket (cth: 1 Bulan)"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={pkg.price}
+                                                    onChange={e => {
+                                                        const price = Number(e.target.value);
+                                                        setConfig(prev => {
+                                                            if (!prev) return null;
+                                                            const newPkgs = [...(prev.payment_config?.packages || [])];
+                                                            newPkgs[idx].price = price;
+                                                            return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
+                                                        });
+                                                    }}
+                                                    className="w-1/3 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                    placeholder="Harga (Rp)"
+                                                />
+                                                <button
+                                                    onClick={() => {
+                                                        setConfig(prev => {
+                                                            if (!prev) return null;
+                                                            const newPkgs = [...(prev.payment_config?.packages || [])];
+                                                            newPkgs.splice(idx, 1);
+                                                            return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
+                                                        });
+                                                    }}
+                                                    className="w-10 h-10 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-lg border-2 border-red-200 hover:bg-red-500 hover:text-white transition-colors"
+                                                >
+                                                    <AlertCircle size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {(!config?.payment_config?.packages || config.payment_config.packages.length === 0) && (
+                                            <div className="text-center p-6 text-slate-400 font-bold text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                                                Belum ada paket langganan. Tambahkan minimal satu.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
                     </div>
                 </div>
             ) : (

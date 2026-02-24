@@ -121,7 +121,7 @@ export const Login: React.FC = () => {
                 <Card className="shadow-2xl relative">
                     <div className="text-center mb-8 flex flex-col items-center justify-center">
                         {appLogo ? (
-                            <img src={appLogo} className="w-full max-w-[280px] max-h-32 object-contain mx-auto mb-4" alt="Logo" />
+                            <img src={appLogo} className="w-full max-w-[360px] max-h-40 object-contain mx-auto mb-4" alt="Logo" />
                         ) : (
                             <div className="text-4xl font-black text-slate-900 mb-4">{config?.app_name || 'Aruneeka'}</div>
                         )}

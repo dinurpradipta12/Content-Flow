@@ -47,13 +47,13 @@ export const Terms: React.FC = () => {
                         <li><strong>Email Aktif</strong> — Email yang valid dan dapat dihubungi.</li>
                         <li><strong>Username Login</strong> — Nama unik untuk masuk ke sistem.</li>
                         <li><strong>Password</strong> — Minimal 6 karakter, menjadi tanggung jawab Pengguna.</li>
-                        <li><strong>Kode Unik Langganan</strong> — Kode khusus yang diberikan saat konfirmasi pembelian paket berlangganan.</li>
+                        <li><strong>Kode Unik Langganan (Order ID)</strong> — Kode khusus yang diambil dari Order ID invoice saat pembelian pertama paket berlangganan.</li>
                     </ul>
 
                     <h3 className="text-lg font-black text-slate-900">4. Verifikasi & Aktivasi Akun</h3>
                     <p>Setelah pendaftaran, akun Pengguna akan masuk dalam status <strong>"Menunggu Verifikasi"</strong>. Proses verifikasi dilakukan oleh Administrator/Developer melalui mekanisme berikut:</p>
                     <ul className="list-disc pl-6 space-y-1">
-                        <li>Administrator akan mencocokkan <strong>Kode Unik Langganan</strong> yang dimasukkan Pengguna saat registrasi dengan data pembayaran/pembelian yang tercatat.</li>
+                        <li>Administrator akan mencocokkan <strong>Order ID Invoice</strong> yang dimasukkan Pengguna saat registrasi dengan data pembayaran/pembelian yang tercatat.</li>
                         <li>Jika kode cocok dan valid, akun akan diverifikasi dan Pengguna dapat langsung login ke Aplikasi.</li>
                         <li>Jika kode <strong>tidak cocok</strong> atau <strong>tidak valid</strong>, akun tidak akan diverifikasi dan Pengguna tidak akan dapat mengakses Aplikasi.</li>
                         <li>Administrator berhak menolak atau mencabut verifikasi kapan saja tanpa pemberitahuan terlebih dahulu.</li>
@@ -63,7 +63,7 @@ export const Terms: React.FC = () => {
                     <p>Akses ke Aplikasi tersedia melalui paket langganan berbayar. Dengan berlangganan, Pengguna menyetujui:</p>
                     <ul className="list-disc pl-6 space-y-1">
                         <li>Pembayaran dilakukan sesuai metode dan nominal yang ditentukan oleh penyedia layanan.</li>
-                        <li>Kode Unik Langganan yang diberikan bersifat satu kali pakai dan terikat pada satu akun.</li>
+                        <li>Order ID Invoice (Kode Unik) yang diberikan bersifat satu kali pakai dan terikat pada satu akun.</li>
                         <li>Masa aktif langganan dapat diatur oleh Administrator. Akun yang masa aktifnya habis akan dinonaktifkan secara otomatis.</li>
                         <li>Perpanjangan langganan harus dilakukan sebelum masa aktif berakhir untuk memastikan akses tanpa gangguan.</li>
                     </ul>

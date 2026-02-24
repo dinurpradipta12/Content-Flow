@@ -29,19 +29,11 @@ export const Welcome: React.FC = () => {
                 {/* Logo - centered, full logo without box */}
                 <div className="mx-auto mb-10 flex items-center justify-center">
                     {appLogo ? (
-                        <img src={appLogo} alt={appName} className="w-full max-w-[320px] max-h-36 object-contain" />
+                        <img src={appLogo} alt={appName} className="w-full max-w-[480px] max-h-48 object-contain" />
                     ) : (
                         <div className="text-6xl font-black text-slate-900">{appName}</div>
                     )}
                 </div>
-
-                {/* Welcome Text - exact text as requested */}
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight leading-tight">
-                    Selamat datang di{' '}
-                    <span className="text-violet-600 inline-block px-3 py-1 bg-violet-100 rounded-xl border-2 border-violet-900 leading-[1.3]">
-                        {appName}
-                    </span>
-                </h1>
                 <p className="text-lg text-slate-600 font-medium mb-12 leading-relaxed max-w-md mx-auto">
                     Semoga tools ini bisa membantu kerja kamu agar lebih efektif
                 </p>

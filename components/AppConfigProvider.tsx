@@ -9,6 +9,13 @@ interface PageConfig {
     subtitle: string;
 }
 
+interface PaymentConfig {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    packages: { id: string; name: string; price: number }[];
+}
+
 interface AppConfig {
     app_name: string;
     app_logo: string;
@@ -17,6 +24,7 @@ interface AppConfig {
     hidden_pages: string[];
     app_version: string;
     changelog: string;
+    payment_config?: PaymentConfig;
 }
 
 interface AppConfigContextType {

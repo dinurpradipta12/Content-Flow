@@ -293,17 +293,17 @@ export const Register: React.FC = () => {
 
                     {/* 5. Kode Unik Langganan */}
                     <div className="pt-2 border-t-2 border-dashed border-slate-200">
-                        <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Key size={14} /> Kode Unik Langganan</label>
+                        <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Key size={14} /> Order ID Invoice (Kode Unik)</label>
                         <div className="relative">
                             <input
                                 type="text"
                                 value={form.subscriptionCode}
                                 onChange={e => setForm({ ...form, subscriptionCode: e.target.value.toUpperCase() })}
                                 className="w-full bg-amber-50 border-2 border-amber-300 text-slate-900 text-lg text-center tracking-widest font-black rounded-xl focus:outline-none focus:border-amber-600 focus:bg-amber-100 block p-4 transition-all uppercase placeholder-amber-200"
-                                placeholder="KODE-XXX-YYY"
+                                placeholder="ORDER-XXX-YYY"
                             />
                         </div>
-                        <p className="text-[10px] text-slate-500 font-bold text-center mt-2 leading-tight">Jika Anda berlangganan, masukkan kode unik yang diberikan saat konfirmasi pembelian. Admin akan mencocokkan kode ini untuk mengaktifkan akun Anda. Kosongkan jika belum memiliki kode.</p>
+                        <p className="text-[10px] text-slate-500 font-bold text-center mt-2 leading-tight">Jika Anda berlangganan, masukkan Order ID dari invoice saat pembelian pertama. Admin akan mencocokkan Order ID ini untuk mengaktifkan akun Anda. Kosongkan jika belum memiliki Order ID.</p>
                     </div>
 
                     <button
