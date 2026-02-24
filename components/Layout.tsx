@@ -728,11 +728,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [paymentProof, setPaymentProof] = useState('');
 
     useEffect(() => {
-        if (!selectedPackageId) {
+        // Sync selectedPackageId with first package from config if currently empty or using fallback
+        if (!selectedPackageId || selectedPackageId === '1-month') {
             if (config?.payment_config?.packages?.length) {
-                const first = config.payment_config.packages[0];
-                setSelectedPackageId(first.id);
-            } else {
+                setSelectedPackageId(config.payment_config.packages[0].id);
+            } else if (!selectedPackageId) {
                 setSelectedPackageId('1-month');
             }
         }
@@ -763,8 +763,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // selectedPackage format: "Package Name (Rp 150.000)"
             // Extract data from selectedPackageId
             let amount = 0;
-            let packageName = selectedPackageId; // Fallback
-            let durationDays = 30; // Default
+            let packageName = '';
+            let durationDays = 30;
 
             if (config?.payment_config?.packages) {
                 const pkg = config.payment_config.packages.find(p => p.id === selectedPackageId);
@@ -773,6 +773,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     packageName = pkg.name;
                     durationDays = pkg.durationDays || 30;
                 }
+            }
+
+            // Hardcoded Fallbacks if config missing or match failed
+            if (!packageName) {
+                if (selectedPackageId === '1-month') { amount = 150000; packageName = "1 Bulan"; durationDays = 30; }
+                else if (selectedPackageId === '3-month') { amount = 400000; packageName = "3 Bulan"; durationDays = 90; }
+                else if (selectedPackageId === 'lifetime') { amount = 1500000; packageName = "Lifetime"; durationDays = 36500; }
+                else { packageName = selectedPackageId; } // Last resort
             }
 
             const { error } = await supabase.from('developer_inbox').insert([{
