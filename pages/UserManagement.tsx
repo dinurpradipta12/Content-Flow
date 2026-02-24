@@ -241,6 +241,7 @@ export const UserManagement: React.FC = () => {
         if (!isDeveloper) { alert('Hanya Developer yang dapat mengubah subscription.'); return; }
         try {
             await supabase.from('app_users').update({ subscription_end: newEnd || null }).eq('id', userId);
+            window.dispatchEvent(new Event('sub_updated'));
             fetchUsers();
             if (selectedUser?.id === userId) {
                 setSelectedUser(prev => prev ? { ...prev, subscription_end: newEnd || null } : null);

@@ -373,7 +373,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     if (data.subscription_end) {
                         localStorage.setItem('subscription_end', data.subscription_end);
+                    } else {
+                        localStorage.removeItem('subscription_end');
                     }
+
+                    window.dispatchEvent(new Event('sub_updated'));
 
                     // Keep localStorage in sync
                     localStorage.setItem('user_name', profileData.name);
@@ -458,9 +462,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             // Auto deactivate
                             await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
                             setShowSubExpiredModal(true);
+                        } else {
+                            window.dispatchEvent(new Event('sub_updated'));
                         }
                     } else {
                         localStorage.removeItem('subscription_end'); // unlimited
+                        window.dispatchEvent(new Event('sub_updated'));
                     }
                 }
             )
@@ -491,19 +498,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             if (subEnd) {
                 const endDate = new Date(subEnd);
                 const now = new Date();
-                if (now > endDate) {
+
+                // If past endDate and it's not the exact same calendar day
+                if (now > endDate && now.getDate() !== endDate.getDate()) {
                     setShowSubExpiredModal(true);
                     await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
                     localStorage.removeItem('subscription_end'); // prevent looping updates
                     setDaysToSubExp(null);
                 } else {
-                    const endMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-                    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const diffTime = endMidnight.getTime() - nowMidnight.getTime();
+                    const diffTime = endDate.getTime() - now.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                    if (diffDays <= 5 && diffDays >= 0) {
-                        setDaysToSubExp(diffDays);
+                    if (diffDays <= 5) {
+                        setDaysToSubExp(diffDays < 0 ? 0 : diffDays);
                     } else {
                         setDaysToSubExp(null);
                     }
@@ -525,11 +532,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         checkExpiration();
         const subInterval = setInterval(checkExpiration, 15000); // Check every 15 seconds
+        window.addEventListener('sub_updated', checkExpiration);
 
         return () => {
             supabase.removeChannel(userChannel);
             if (tenantChannel) supabase.removeChannel(tenantChannel);
             clearInterval(subInterval);
+            window.removeEventListener('sub_updated', checkExpiration);
         };
     }, []);
 
