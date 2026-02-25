@@ -721,7 +721,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         window.addEventListener('user_updated', handleUserUpdate);
         window.addEventListener('sub_updated', handleUserUpdate);
 
-
         // 5. Global Event Listeners
         const handleOpenPayment = () => setShowPaymentModal(true);
         const handleAppAlert = (e: any) => {
@@ -798,6 +797,34 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             supabase.removeChannel(broadcastChannel);
         };
     }, []);
+
+    // Dedicated Theme Sync Effect
+    useEffect(() => {
+        const syncTheme = () => {
+            const root = document.documentElement;
+            // Remove all theme classes
+            const classesToRemove: string[] = [];
+            root.classList.forEach(cls => {
+                if (cls.startsWith('theme-')) classesToRemove.push(cls);
+            });
+            classesToRemove.forEach(cls => root.classList.remove(cls));
+
+            // Add current theme
+            if (currentTheme !== 'light') {
+                root.classList.add(`theme-${currentTheme}`);
+            }
+        };
+        syncTheme();
+    }, [currentTheme]);
+
+    // Helper to clear session but preserve theme
+    const clearSessionPreserveTheme = () => {
+        const theme = localStorage.getItem('app_ui_theme');
+        const customColor = localStorage.getItem('app_custom_color');
+        localStorage.clear();
+        if (theme) localStorage.setItem('app_ui_theme', theme);
+        if (customColor) localStorage.setItem('app_custom_color', customColor);
+    };
 
     // --- BRANDING EFFECT (Title & Favicon) ---
     useEffect(() => {
@@ -918,7 +945,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 message: 'Sesi berakhir karena Administrator tim Anda telah dinonaktifkan.'
                             });
                             setTimeout(() => {
-                                localStorage.clear();
+                                clearSessionPreserveTheme();
                                 navigate('/login');
                             }, 3000);
                         }
@@ -966,7 +993,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         message: 'Akses dihentikan: Administrator tim Anda sudah tidak aktif.'
                     });
                     setTimeout(() => {
-                        localStorage.clear();
+                        clearSessionPreserveTheme();
                         navigate('/login');
                     }, 3000);
                 }
@@ -989,7 +1016,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Handlers
     const handleLogout = () => {
         if (confirm('Apakah Anda yakin ingin keluar?')) {
-            localStorage.clear();
+            clearSessionPreserveTheme();
             navigate('/login');
         }
     };
@@ -1574,7 +1601,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2"><Shield className="w-8 h-8" /></div>
                     <h3 className="text-xl font-bold text-slate-800">Perubahan Akses</h3>
                     <p className="text-slate-500 text-sm">Role Anda telah berubah. Silakan login ulang.</p>
-                    <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard">Login Ulang</button>
+                    <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard">Login Ulang</button>
                 </div>
             </Modal>
 
@@ -1583,7 +1610,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><Power className="w-8 h-8" /></div>
                     <h3 className="text-xl font-bold text-slate-800">Akses Terhenti</h3>
                     <p className="text-slate-500 text-sm">Masa aktif subscription habis.</p>
-                    <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
+                    <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
                 </div>
             </Modal>
 

@@ -47,9 +47,11 @@ const getPlatformBadgeStyle = (platform: Platform) => {
 const getCardStatusStyle = (status: ContentStatus) => {
     // If we're not using the default theme (dark, midnight, pastel, etc), 
     // keep cards uniform by skipping status-specific background colors.
-    const currentTheme = localStorage.getItem('app_ui_theme') || 'default';
-    if (currentTheme !== 'default') {
-        return 'bg-white border-slate-800 shadow-hard hover:shadow-hard-hover';
+    const currentTheme = localStorage.getItem('app_ui_theme') || 'light';
+    const isDark = currentTheme === 'dark' || currentTheme === 'midnight';
+
+    if (currentTheme !== 'light') {
+        return 'bg-card border-border shadow-hard hover:shadow-hard-hover';
     }
 
     switch (status) {
@@ -211,7 +213,7 @@ const KanbanCard: React.FC<{
                 <div className="relative">
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                        className="p-1 hover:bg-black/5 rounded-md text-slate-400 hover:text-slate-800 transition-colors"
+                        className="p-1 hover:bg-muted rounded-md text-mutedForeground hover:text-foreground transition-colors"
                     >
                         <MoreHorizontal size={16} />
                     </button>
@@ -239,7 +241,7 @@ const KanbanCard: React.FC<{
 
             <div className="px-4 pb-4 space-y-3">
                 {/* Title */}
-                <h4 className="font-heading font-bold text-slate-800 text-sm leading-snug line-clamp-3">
+                <h4 className="font-heading font-bold text-foreground text-sm leading-snug line-clamp-3">
                     {item.title}
                 </h4>
 
@@ -326,12 +328,12 @@ const KanbanColumn: React.FC<{
             onDrop={handleDrop}
         >
             {/* Column Header */}
-            <div className="flex-shrink-0 mb-10 pt-2">
-                <div className="flex items-center justify-between pb-4 border-b-2 border-slate-900">
+            <div className="flex-shrink-0 mb-6 pt-6">
+                <div className="flex items-center justify-between pb-4 border-b-2 border-border">
                     <h3 className={`font-heading font-black text-sm tracking-widest uppercase ${textColor}`}>
                         {status}
                     </h3>
-                    <span className="bg-slate-900 text-white w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm">
+                    <span className="bg-accent text-white w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm">
                         {items.length}
                     </span>
                 </div>
@@ -366,7 +368,7 @@ const KanbanColumn: React.FC<{
 export const ContentPlanDetail: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { sendNotification } = useNotifications();
+    const { sendNotification, notifyWorkspaceMembers } = useNotifications();
     const [tasks, setTasks] = useState<ContentItem[]>([]);
     const [workspaceData, setWorkspaceData] = useState<{
         name: string,
@@ -467,25 +469,36 @@ export const ContentPlanDetail: React.FC = () => {
         setLoading(true);
         setErrorState(null);
         try {
-            // 0. Sync Latest User Avatar
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
             const tenantId = localStorage.getItem('tenant_id') || userId;
-            const { data: userData } = await supabase.from('app_users').select('avatar_url').eq('id', userId).single();
+
+            // 1. Parallel Fetch: User Info, Workspace Info, and Company-wide Users
+            const [userRes, wsRes, allUsersRes, itemsRes] = await Promise.all([
+                supabase.from('app_users').select('avatar_url').eq('id', userId).single(),
+                supabase.from('workspaces').select('*').eq('id', id).single(),
+                supabase.from('app_users')
+                    .select('id, full_name, email, avatar_url')
+                    .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`),
+                supabase.from('content_items')
+                    .select('*')
+                    .eq('workspace_id', id)
+                    .order('created_at', { ascending: false })
+            ]);
+
+            if (wsRes.error) throw new Error("Akses Ditolak atau Workspace tidak ditemukan.");
+            if (itemsRes.error) throw itemsRes.error;
+
+            const ws = wsRes.error ? null : wsRes.data;
+            const userData = userRes.data;
+            const allUsers = allUsersRes.data || [];
+            const items = itemsRes.data || [];
+
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
-
-            const { data: ws, error: wsError } = await supabase
-                .from('workspaces')
-                .select('*')
-                .eq('id', id)
-                .eq('admin_id', tenantId)
-                .single();
-
-            if (wsError) throw new Error("Akses Ditolak atau Workspace tidak ditemukan.");
 
             // Member Access Control: if user is NOT admin/owner, verify they are in members[]
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
-            if (!isAdminOrOwner && freshAvatar) {
+            if (ws && !isAdminOrOwner && freshAvatar) {
                 const wsMembers: string[] = ws.members || [];
                 const isMember = wsMembers.some(m => {
                     try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar; }
@@ -496,9 +509,9 @@ export const ContentPlanDetail: React.FC = () => {
                 }
             }
 
-            // ... (existing invite code logic) ...
-            let currentCode = ws.invite_code;
-            if (!currentCode) {
+            // Invite Code Logic
+            let currentCode = ws?.invite_code;
+            if (ws && !currentCode) {
                 const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                 try {
                     await supabase.from('workspaces').update({ invite_code: newCode }).eq('id', id);
@@ -509,23 +522,13 @@ export const ContentPlanDetail: React.FC = () => {
                 }
             }
 
-            // FETCH MEMBERS (Strictly from the same company / tenant)
-            const { data: allUsers } = await supabase
-                .from('app_users')
-                .select('*')
-                .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`);
-
             // Map to Member type and filter by workspace membership (using avatar list comparison)
-            const wsMembersList: string[] = ws.members || [];
-            const mappedMembers: Member[] = (allUsers || [])
+            const wsMembersList: string[] = ws?.members || [];
+            const mappedMembers: Member[] = allUsers
                 .filter((u: any) => {
-                    // Check if user's avatar is in workspace's members list
                     return wsMembersList.some(avatar => {
-                        try {
-                            return decodeURIComponent(avatar) === decodeURIComponent(u.avatar_url) || avatar === u.avatar_url;
-                        } catch {
-                            return avatar === u.avatar_url;
-                        }
+                        try { return decodeURIComponent(avatar) === decodeURIComponent(u.avatar_url) || avatar === u.avatar_url; }
+                        catch { return avatar === u.avatar_url; }
                     });
                 })
                 .map((u: any) => ({
@@ -536,31 +539,18 @@ export const ContentPlanDetail: React.FC = () => {
 
             setTeamMembers(mappedMembers);
 
-            // Update workspace members avatar list for header
-            // We can use mappedMembers to get avatars.
-            // But ws.members might be just a list of IDs or something.
-            // Let's assume ws.members is NOT reliable for names, so we use mappedMembers.
-
             // For the header avatars, we'll use the first 5 members
             const headerMembers = mappedMembers.map(m => m.avatar).filter(Boolean).slice(0, 5);
 
             setWorkspaceData({
-                name: ws.name,
-                platforms: ws.platforms || [],
+                name: ws?.name || 'Unknown',
+                platforms: ws?.platforms || [],
                 invite_code: currentCode || 'ERROR',
-                logo_url: ws.logo_url || '',
-                period: ws.period || '',
-                account_name: ws.account_name || '',
-                members: headerMembers.length > 0 ? headerMembers : (ws.members || [])
+                logo_url: ws?.logo_url || '',
+                period: ws?.period || '',
+                account_name: ws?.account_name || '',
+                members: headerMembers.length > 0 ? headerMembers : (ws?.members || [])
             });
-
-            const { data: items, error: itemsError } = await supabase
-                .from('content_items')
-                .select('*')
-                .eq('workspace_id', id)
-                .order('created_at', { ascending: false });
-
-            if (itemsError) throw itemsError;
 
             // MAP Supabase data (snake_case) to Frontend Type (camelCase)
             const mappedItems = items.map((item: any) => ({
@@ -736,38 +726,31 @@ export const ContentPlanDetail: React.FC = () => {
                 if (error) throw error;
                 currentContentId = data.id;
 
-                // Notify Approver if assigned
-                if (payload.approval) {
-                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`, { content_id: currentContentId });
-                }
-                // Notify PIC if assigned
-                if (payload.pic) {
-                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} telah menugaskan Anda sebagai PIC untuk konten: ${payload.title} di workspace ${wsName}`, { content_id: currentContentId });
-                }
+                // Notify All Workspace Members
+                await notifyWorkspaceMembers({
+                    workspaceId: id!,
+                    title: 'Konten Baru Dibuat',
+                    content: `telah membuat konten baru "${payload.title}" di workspace ${wsName}`,
+                    type: 'INFO',
+                    metadata: { content_id: currentContentId }
+                });
             } else if (modalMode === 'edit' && editingId) {
                 const { error } = await supabase.from('content_items').update(payload).eq('id', editingId);
                 if (error) throw error;
 
                 // NOTIFICATION LOGIC for status changes
                 if (oldTask && oldTask.status !== payload.status) {
-                    const meta = { content_id: editingId };
-                    if (payload.status === ContentStatus.REVIEW) {
-                        await notifyMemberByName(payload.approval, 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${payload.title}" untuk di-review.`, meta);
-                    } else if (payload.status === ContentStatus.SCHEDULED) {
-                        await notifyMemberByName(payload.pic, 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${payload.title}" untuk dijadwalkan.`, meta);
-                    } else if (payload.status === ContentStatus.IN_PROGRESS && oldTask.status === ContentStatus.REVIEW) {
-                        await notifyMemberByName(payload.pic, 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${payload.title}".`, meta);
-                    }
-                }
-
-                // Notify if PIC changed
-                if (oldTask && oldTask.pic !== payload.pic && payload.pic) {
-                    await notifyMemberByName(payload.pic, 'MENTION', 'Penugasan Konten', `${currentUserName} menugaskan Anda sebagai PIC baru untuk konten: ${payload.title} di workspace ${wsName}`, { content_id: editingId });
-                }
-
-                if (oldTask && oldTask.approval !== payload.approval && payload.approval) {
-                    // Notify if Approver changed
-                    await notifyMemberByName(payload.approval, 'CONTENT_APPROVAL', 'Approval Diperlukan', `${currentUserName} telah menambahkan konten baru yang harus kamu cek untuk di approval di workspace ${wsName}`, { content_id: editingId });
+                    const isUrgent = payload.status === ContentStatus.PUBLISHED || payload.status === ContentStatus.REVIEW;
+                    await notifyWorkspaceMembers({
+                        workspaceId: id!,
+                        title: 'Update Status Konten',
+                        content: `telah mengganti status konten "${payload.title}" pada ${wsName} menjadi ${payload.status}.`,
+                        type: 'STATUS_CHANGE',
+                        metadata: {
+                            content_id: editingId,
+                            show_popup: isUrgent
+                        }
+                    });
                 }
             }
 
@@ -822,13 +805,18 @@ export const ContentPlanDetail: React.FC = () => {
 
             // Notification logic
             if (item && item.status !== newStatus) {
-                if (newStatus === ContentStatus.REVIEW) {
-                    await notifyMemberByName(item.approval || '', 'CONTENT_REVISION', 'Review Konten', `mengirim konten "${item.title}" untuk di-review.`);
-                } else if (newStatus === ContentStatus.SCHEDULED) {
-                    await notifyMemberByName(item.pic || '', 'CONTENT_APPROVED', 'Konten Disetujui', `telah menyetujui konten "${item.title}" untuk dijadwalkan.`);
-                } else if (newStatus === ContentStatus.IN_PROGRESS && item.status === ContentStatus.REVIEW) {
-                    await notifyMemberByName(item.pic || '', 'CONTENT_REVISION', 'Konten Direvisi', `meminta revisi untuk konten "${item.title}".`);
-                }
+                const wsName = workspaceData.name;
+                const isUrgent = newStatus === ContentStatus.PUBLISHED || newStatus === ContentStatus.REVIEW;
+                await notifyWorkspaceMembers({
+                    workspaceId: id!,
+                    title: 'Update Status Konten (Drag & Drop)',
+                    content: `telah mengganti status konten "${item.title}" pada ${wsName} menjadi ${newStatus}.`,
+                    type: 'STATUS_CHANGE',
+                    metadata: {
+                        content_id: taskId,
+                        show_popup: isUrgent
+                    }
+                });
             }
         } catch (err) {
             console.error("DnD Error:", err);
@@ -965,15 +953,17 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="flex items-center gap-2 bg-muted p-1 rounded-lg border border-border">
                                 <button
                                     onClick={() => setViewMode('kanban')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'kanban' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                                 >
-                                    <LayoutGrid size={20} />
+                                    <LayoutGrid size={16} />
+                                    <span>Board</span>
                                 </button>
                                 <button
                                     onClick={() => setViewMode('table')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'table' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                                 >
-                                    <Table size={20} />
+                                    <Table size={16} />
+                                    <span>Table</span>
                                 </button>
                             </div>
 
@@ -1029,7 +1019,7 @@ export const ContentPlanDetail: React.FC = () => {
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
                     <div className="flex-1 w-full overflow-x-auto pb-4 no-scrollbar">
-                        <div className="flex gap-6 items-start pl-1 pr-8">
+                        <div className="flex gap-6 items-start pl-2 pr-8">
                             {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                                 <KanbanColumn
                                     key={status}
@@ -1111,15 +1101,15 @@ export const ContentPlanDetail: React.FC = () => {
                                 {/* Header */}
                                 <thead className="sticky top-0 z-20">
                                     <tr>
-                                        <th className="px-4 py-3 bg-slate-100 rounded-l-xl text-slate-500 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Status</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Platform</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Tanggal</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider min-w-[200px]">Judul</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider whitespace-nowrap">Pillar</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Script</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider whitespace-nowrap">PIC</th>
-                                        <th className="px-4 py-3 bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider min-w-[150px]">Link Postingan</th>
-                                        <th className="px-4 py-3 bg-slate-100 rounded-r-xl text-slate-500 text-xs font-bold uppercase tracking-wider text-right">Action</th>
+                                        <th className="px-4 py-3 bg-muted rounded-l-xl text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Status</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Platform</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider min-w-[200px]">Judul</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Pillar</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Script</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">PIC</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider min-w-[150px]">Link Postingan</th>
+                                        <th className="px-4 py-3 bg-muted rounded-r-xl text-mutedForeground text-xs font-bold uppercase tracking-wider text-right">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-transparent">
@@ -1130,7 +1120,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 className="bg-card group transition-all duration-200 hover:-translate-y-1 hover:shadow-hard shadow-sm rounded-xl relative"
                                             >
                                                 {/* 1. Status (Interactive Dropdown) */}
-                                                <td className="p-3 border-y border-l border-slate-200 rounded-l-xl first:border-l-2">
+                                                <td className="p-3 border-y border-l border-border rounded-l-xl first:border-l-2">
                                                     <div className="relative">
                                                         <select
                                                             value={task.status}
@@ -1154,7 +1144,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 2. Platform */}
-                                                <td className="p-3 border-y border-slate-200" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
                                                     <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border ${getPlatformBadgeStyle(task.platform)}`}>
                                                         {getPlatformIcon(task.platform)}
                                                         <span className="hidden xl:inline">{task.platform}</span>
@@ -1162,41 +1152,41 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 3. Tanggal */}
-                                                <td className="p-3 border-y border-slate-200" onClick={() => handleCardClick(task)}>
-                                                    <div className="flex items-center gap-1.5 text-slate-600 font-bold text-xs whitespace-nowrap">
-                                                        <Calendar size={12} className="text-slate-400" />
+                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
+                                                    <div className="flex items-center gap-1.5 text-mutedForeground font-bold text-xs whitespace-nowrap">
+                                                        <Calendar size={12} className="text-mutedForeground/60" />
                                                         {task.date ? new Date(task.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
                                                     </div>
                                                 </td>
 
                                                 {/* 4. Judul */}
-                                                <td className="p-3 border-y border-slate-200 cursor-pointer" onClick={() => handleCardClick(task)}>
-                                                    <div className="font-bold text-slate-800 text-sm line-clamp-2 min-w-[150px]" title={task.title}>
+                                                <td className="p-3 border-y border-border cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                    <div className="font-bold text-foreground text-sm line-clamp-2 min-w-[150px]" title={task.title}>
                                                         {task.title}
                                                     </div>
                                                     <div className="flex items-center gap-1 mt-1">
-                                                        <span className="text-[10px] font-bold text-slate-400 border border-slate-200 px-1 rounded flex items-center gap-1">
+                                                        <span className="text-[10px] font-bold text-mutedForeground border border-border px-1 rounded flex items-center gap-1">
                                                             {getTypeIcon(task.type)} {task.type}
                                                         </span>
                                                     </div>
                                                 </td>
 
                                                 {/* 5. Pillar */}
-                                                <td className="p-3 border-y border-slate-200" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
                                                     {task.pillar ? (
                                                         <span className={`px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap ${getPillarStyle(task.pillar)}`}>
                                                             {task.pillar}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-slate-300 text-xs">-</span>
+                                                        <span className="text-mutedForeground text-xs">-</span>
                                                     )}
                                                 </td>
 
                                                 {/* 6. Script Preview Button */}
-                                                <td className="p-3 border-y border-slate-200 text-center">
+                                                <td className="p-3 border-y border-border text-center">
                                                     <button
                                                         onClick={() => handleCardClick(task)}
-                                                        className={`p-1.5 rounded-lg border-2 transition-colors ${task.script ? 'bg-yellow-50 border-yellow-200 text-yellow-600 hover:bg-yellow-100' : 'bg-slate-50 border-slate-200 text-slate-300'}`}
+                                                        className={`p-1.5 rounded-lg border-2 transition-colors ${task.script ? 'bg-yellow-50 border-yellow-200 text-yellow-600 hover:bg-yellow-100' : 'bg-muted border-border text-mutedForeground'}`}
                                                         title={task.script ? 'Lihat Script' : 'Belum ada script'}
                                                     >
                                                         <FileText size={16} />
@@ -1204,16 +1194,16 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 7. PIC */}
-                                                <td className="p-3 border-y border-slate-200" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
                                                     {task.pic ? (
                                                         <div className="flex items-center gap-1.5" title={task.pic}>
                                                             <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm shrink-0">
                                                                 {task.pic.charAt(0).toUpperCase()}
                                                             </div>
-                                                            <span className="text-xs font-bold text-slate-600 truncate max-w-[80px]">{task.pic}</span>
+                                                            <span className="text-xs font-bold text-mutedForeground truncate max-w-[80px]">{task.pic}</span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-slate-300 text-xs">-</span>
+                                                        <span className="text-mutedForeground opacity-50 text-xs">-</span>
                                                     )}
                                                 </td>
 
@@ -1256,29 +1246,29 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 9. Action (Menu) */}
-                                                <td className="p-3 border-y border-r border-slate-200 rounded-r-xl first:border-r-2 text-right relative">
+                                                <td className="p-3 border-y border-r border-border rounded-r-xl first:border-r-2 text-right relative">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setActiveRowMenu(activeRowMenu === task.id ? null : task.id);
                                                         }}
-                                                        className={`p-1.5 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors ${activeRowMenu === task.id ? 'bg-slate-100 text-slate-800' : ''}`}
+                                                        className={`p-1.5 rounded-md text-mutedForeground hover:text-foreground hover:bg-muted transition-colors ${activeRowMenu === task.id ? 'bg-muted text-foreground' : ''}`}
                                                     >
                                                         <MoreHorizontal size={18} />
                                                     </button>
 
                                                     {/* Dropdown Menu */}
                                                     {activeRowMenu === task.id && (
-                                                        <div className="absolute right-8 top-8 w-32 bg-white border-2 border-slate-800 rounded-lg shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                                                        <div className="absolute right-8 top-8 w-32 bg-card border-2 border-border rounded-lg shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-100 origin-top-right">
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setActiveRowMenu(null); handleOpenEditModal(task); }}
-                                                                className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 font-bold text-slate-700 transition-colors"
+                                                                className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 font-bold text-foreground transition-colors"
                                                             >
                                                                 <Edit size={14} className="text-accent" /> Edit
                                                             </button>
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setActiveRowMenu(null); handleDeleteContent(task.id); }}
-                                                                className="w-full text-left px-3 py-2 hover:bg-red-50 flex items-center gap-2 font-bold text-red-500 transition-colors"
+                                                                className="w-full text-left px-3 py-2 hover:bg-red-500/10 flex items-center gap-2 font-bold text-red-500 transition-colors"
                                                             >
                                                                 <Trash2 size={14} /> Delete
                                                             </button>

@@ -42,6 +42,25 @@ import { ContentItem, Platform } from '../types';
 import { analyzeContentLink } from '../services/scraperService';
 import { useAppConfig } from '../components/AppConfigProvider';
 
+const ChartTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] rounded-xl pointer-events-none">
+                {label && <p className="text-slate-400 font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
+                {payload.map((entry: any, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></div>
+                        <p className="text-slate-900 font-black text-xs">
+                            <span className="opacity-50 font-bold">{entry.name}:</span> {entry.value.toLocaleString()}{entry.name === 'value' && entry.dataKey === 'er' ? '%' : ''}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
 export const ContentDataInsight: React.FC = () => {
     const { config } = useAppConfig();
     const [data, setData] = useState<ContentItem[]>([]);
@@ -564,15 +583,7 @@ export const ContentDataInsight: React.FC = () => {
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                     <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickMargin={10} />
                                     <YAxis stroke="#64748b" fontSize={12} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#fff',
-                                            border: '2px solid #1e293b',
-                                            borderRadius: '8px',
-                                            boxShadow: '4px 4px 0px 0px #1e293b'
-                                        }}
-                                        itemStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                                    />
+                                    <Tooltip content={<ChartTooltip />} />
                                     <Area
                                         type="monotone"
                                         dataKey="value"

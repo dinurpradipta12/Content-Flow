@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notifyDevelopers } from '../services/notificationService';
 import { supabase } from '../services/supabaseClient';
-import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info } from 'lucide-react';
+import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info, Rocket } from 'lucide-react';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -12,21 +12,49 @@ export const Register: React.FC = () => {
         email: '',
         username: '',
         password: '',
-        subscriptionCode: ''
+        subscriptionCode: '',
+        selectedPackageId: ''
     });
+    const [paymentConfig, setPaymentConfig] = useState<any>(null);
     const [errorStatus, setErrorStatus] = useState('');
     const [success, setSuccess] = useState(false);
     const [registeredUserId, setRegisteredUserId] = useState('');
     const [sendingInbox, setSendingInbox] = useState(false);
     const [inboxSent, setInboxSent] = useState(false);
 
+    // Fetch config on mount
+    React.useEffect(() => {
+        const fetchConfig = async () => {
+            const { data } = await supabase.from('app_config').select('payment_config').single();
+            if (data?.payment_config) {
+                setPaymentConfig(data.payment_config);
+            }
+        };
+        fetchConfig();
+    }, []);
+
+    const selectedPackage = React.useMemo(() => {
+        if (!paymentConfig) return null;
+        const allPackages = [
+            ...(paymentConfig.personalPackages || []),
+            ...(paymentConfig.teamPackages || [])
+        ];
+        return allPackages.find((p: any) => p.id === form.selectedPackageId);
+    }, [paymentConfig, form.selectedPackageId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorStatus('');
 
         // Basic Validation
-        if (!form.fullName || !form.email || !form.username || !form.password) {
-            setErrorStatus('Nama lengkap, email, username, dan password wajib diisi.');
+        if (!form.fullName || !form.email || !form.username || !form.password || !form.selectedPackageId) {
+            setErrorStatus('Nama lengkap, email, username, password, dan paket wajib diisi.');
+            return;
+        }
+
+        // Validate subscription code if premium
+        if (selectedPackage && selectedPackage.price > 0 && !form.subscriptionCode) {
+            setErrorStatus('Order ID Pembelian wajib diisi untuk paket ini.');
             return;
         }
 
@@ -59,10 +87,25 @@ export const Register: React.FC = () => {
 
             // Insert new user into db mapping
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.fullName)}`;
-            const now = new Date().toISOString();
+            const now = new Date();
             const newUserId = crypto.randomUUID();
 
-            const insertData = {
+            // Calculate subscription end
+            let subscriptionEnd = null;
+            let isVerified = false;
+
+            if (selectedPackage) {
+                const duration = selectedPackage.durationDays || 30;
+                if (selectedPackage.price === 0) {
+                    // Free trial often auto-activates with fixed duration (requested 3 days but using durationDays from config)
+                    const end = new Date();
+                    end.setDate(end.getDate() + duration);
+                    subscriptionEnd = end.toISOString();
+                    isVerified = true; // Auto verify for free tier
+                }
+            }
+
+            const insertData: any = {
                 id: newUserId,
                 full_name: form.fullName,
                 email: form.email,
@@ -71,10 +114,15 @@ export const Register: React.FC = () => {
                 role: 'Admin', // New admin registration with subscription
                 avatar_url: avatarUrl,
                 is_active: true,
-                subscription_start: now,
+                subscription_start: now.toISOString(),
                 subscription_code: form.subscriptionCode || null,
-                is_verified: false // Must be verified by Developer
+                subscription_package: selectedPackage?.name || 'Free',
+                is_verified: isVerified
             };
+
+            if (subscriptionEnd) {
+                insertData.subscription_end = subscriptionEnd;
+            }
 
             const { error } = await supabase.from('app_users').insert([insertData]);
 
@@ -147,18 +195,21 @@ export const Register: React.FC = () => {
                     </p>
 
                     {/* Subscription Code Display */}
-                    {form.subscriptionCode && (
+                    {(form.subscriptionCode || (selectedPackage && selectedPackage.price > 0)) && (
                         <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-5 mb-6">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Kode Unik Langganan Anda</p>
-                            <p className="text-3xl font-black text-slate-900 tracking-[0.3em] font-mono">{form.subscriptionCode}</p>
+                            <p className="text-3xl font-black text-slate-900 tracking-[0.3em] font-mono">{form.subscriptionCode || 'PENDING'}</p>
                             <p className="text-xs text-slate-500 font-medium mt-3 leading-relaxed">
-                                Kirimkan kode ini ke Developer untuk proses verifikasi melalui salah satu metode berikut:
+                                {form.subscriptionCode
+                                    ? "Kirimkan kode ini ke Developer untuk proses verifikasi melalui salah satu metode berikut:"
+                                    : "Paket Anda sedang menunggu verifikasi manual oleh Developer."
+                                }
                             </p>
                         </div>
                     )}
 
                     {/* Action Buttons: WhatsApp & Inbox */}
-                    {form.subscriptionCode && (
+                    {(form.subscriptionCode || (selectedPackage && selectedPackage.price > 0)) && (
                         <div className="flex flex-col gap-3 mb-6">
                             <button
                                 onClick={handleSendWhatsApp}
@@ -300,20 +351,52 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* 5. Kode Unik Langganan */}
+                    {/* Pilih Paket */}
                     <div className="pt-2 border-t-2 border-dashed border-slate-200">
-                        <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Key size={14} /> Order ID Invoice (Kode Unik)</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={form.subscriptionCode}
-                                onChange={e => setForm({ ...form, subscriptionCode: e.target.value.toUpperCase() })}
-                                className="w-full bg-amber-50 border-2 border-amber-300 text-slate-900 text-lg text-center tracking-widest font-black rounded-xl focus:outline-none focus:border-amber-600 focus:bg-amber-100 block p-4 transition-all uppercase placeholder-amber-200"
-                                placeholder="ORDER-XXX-YYY"
-                            />
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-bold text-center mt-2 leading-tight">Jika Anda berlangganan, masukkan Order ID dari invoice saat pembelian pertama. Admin akan mencocokkan Order ID ini untuk mengaktifkan akun Anda. Kosongkan jika belum memiliki Order ID.</p>
+                        <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Rocket size={14} /> Pilih Paket Langganan</label>
+                        <select
+                            value={form.selectedPackageId}
+                            onChange={e => setForm({ ...form, selectedPackageId: e.target.value })}
+                            className="w-full bg-slate-50 border-2 border-slate-300 text-slate-900 text-sm font-bold rounded-xl focus:outline-none focus:border-slate-800 block p-3 transition-all"
+                            required
+                        >
+                            <option value="">-- Pilih Paket --</option>
+                            {paymentConfig && [
+                                ...(paymentConfig.personalPackages || []),
+                                ...(paymentConfig.teamPackages || [])
+                            ].map((pkg: any) => (
+                                <option key={pkg.id} value={pkg.id}>
+                                    {pkg.name} - {pkg.price === 0 ? 'FREE' : `Rp ${pkg.price.toLocaleString('id-ID')}`}
+                                </option>
+                            ))}
+                        </select>
                     </div>
+
+                    {/* 5. Kode Unik Langganan */}
+                    {selectedPackage && selectedPackage.price > 0 && (
+                        <div className="pt-2 border-t-2 border-dashed border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Key size={14} /> Order ID Invoice (Kode Unik)</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={form.subscriptionCode}
+                                    onChange={e => setForm({ ...form, subscriptionCode: e.target.value.toUpperCase() })}
+                                    className="w-full bg-amber-50 border-2 border-amber-300 text-slate-900 text-lg text-center tracking-widest font-black rounded-xl focus:outline-none focus:border-amber-600 focus:bg-amber-100 block p-4 transition-all uppercase placeholder-amber-200"
+                                    placeholder="ORDER-XXX-YYY"
+                                    required
+                                />
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold text-center mt-2 leading-tight">Masukkan Order ID dari invoice saat pembelian. Admin akan mencocokkan Order ID ini untuk mengaktifkan akun Anda.</p>
+                        </div>
+                    )}
+
+                    {selectedPackage && selectedPackage.price === 0 && (
+                        <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
+                            <p className="text-xs font-bold text-emerald-800 flex items-center gap-2">
+                                <Info size={16} /> Paket Free Trial diaktifkan otomatis selama {selectedPackage.durationDays || 3} hari.
+                            </p>
+                        </div>
+                    )}
 
                     <button
                         type="submit"

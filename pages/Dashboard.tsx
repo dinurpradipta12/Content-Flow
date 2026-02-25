@@ -29,6 +29,25 @@ const getGreetingInfo = () => {
 
 
 
+const ChartTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] rounded-xl pointer-events-none">
+                {label && <p className="text-slate-400 font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
+                {payload.map((entry: any, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></div>
+                        <p className="text-slate-900 font-black text-xs">
+                            <span className="opacity-50 font-bold">{entry.name}:</span> {entry.value.toLocaleString()}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
 export const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const userName = localStorage.getItem('user_name') || 'Aditya';
@@ -393,7 +412,11 @@ export const Dashboard: React.FC = () => {
             const startPrev = new Date(filterYear, filterMonth - 1, 1);
             const endPrev = new Date(filterYear, filterMonth, 0, 23, 59, 59);
 
-            let query = supabase.from('content_items').select('date, metrics, platform, workspace_id, status, pillar');
+            let query = supabase
+                .from('content_items')
+                .select('date, metrics, platform, workspace_id, status, pillar')
+                .gte('date', startPrev.toISOString())
+                .lte('date', endCurrent.toISOString());
 
             if (filterWs !== 'all') {
                 query = query.eq('workspace_id', filterWs);
@@ -690,16 +713,7 @@ export const Dashboard: React.FC = () => {
                                         tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
                                         tickFormatter={formatShortNumber}
                                     />
-                                    <Tooltip
-                                        contentStyle={{
-                                            borderRadius: '16px',
-                                            border: '3px solid #0f172a',
-                                            boxShadow: '4px 4px 0px #0f172a',
-                                            fontWeight: 'bold',
-                                            fontSize: '12px'
-                                        }}
-                                        cursor={{ stroke: '#0f172a', strokeWidth: 2 }}
-                                    />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 2 }} />
                                     <Area
                                         type="monotone"
                                         dataKey={selectedMetric}
@@ -739,9 +753,7 @@ export const Dashboard: React.FC = () => {
                                                 <Cell key={`cell-${index}`} fill={['#A855F7', '#34D399', '#FBBF24', '#F43F5E', '#3B82F6'][index % 5]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: '16px', border: '3px solid #0f172a', boxShadow: '4px 4px 0px #0f172a', fontWeight: 'bold' }}
-                                        />
+                                        <Tooltip content={<ChartTooltip />} />
                                         <Legend verticalAlign="bottom" height={36} iconType="circle" />
                                     </PieChart>
                                 </ResponsiveContainer>
@@ -771,9 +783,7 @@ export const Dashboard: React.FC = () => {
                                                 <Cell key={`cell-${index}`} fill={['#FBBF24', '#34D399', '#A855F7', '#3B82F6', '#F43F5E'][index % 5]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: '16px', border: '3px solid #0f172a', boxShadow: '4px 4px 0px #0f172a', fontWeight: 'bold' }}
-                                        />
+                                        <Tooltip content={<ChartTooltip />} />
                                         <Legend verticalAlign="bottom" height={36} iconType="circle" />
                                     </PieChart>
                                 </ResponsiveContainer>

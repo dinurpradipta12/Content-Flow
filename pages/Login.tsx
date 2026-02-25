@@ -10,7 +10,13 @@ import { useAppConfig } from '../components/AppConfigProvider';
 export const Login: React.FC = () => {
     const navigate = useNavigate();
     const { config } = useAppConfig();
-    const appLogo = config?.app_logo || localStorage.getItem('app_logo');
+
+    // Theme-aware logo selection
+    const currentTheme = localStorage.getItem('app_ui_theme') || 'light';
+    const isDark = currentTheme === 'dark' || currentTheme === 'midnight';
+    const appLogo = (isDark && config?.app_logo_light)
+        ? config.app_logo_light
+        : (config?.app_logo || localStorage.getItem('app_logo'));
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');

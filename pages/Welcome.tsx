@@ -7,7 +7,11 @@ export const Welcome: React.FC = () => {
     const navigate = useNavigate();
     const { config } = useAppConfig();
     const appName = config?.app_name || 'Aruneeka';
-    const appLogo = config?.app_logo || '';
+
+    // Theme-aware logo selection
+    const currentTheme = localStorage.getItem('app_ui_theme') || 'light';
+    const isDark = currentTheme === 'dark' || currentTheme === 'midnight';
+    const appLogo = (isDark && config?.app_logo_light) ? config.app_logo_light : (config?.app_logo || '');
 
     useEffect(() => {
         const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';

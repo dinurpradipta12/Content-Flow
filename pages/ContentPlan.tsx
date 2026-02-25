@@ -92,42 +92,62 @@ export const ContentPlan: React.FC = () => {
     const fetchWorkspaces = async () => {
         setLoading(true);
         try {
-            // 0. Get Current User Info for Syncing
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
-            const { data: userData } = await supabase.from('app_users').select('avatar_url, full_name').eq('id', userId).single();
+            const tenantId = localStorage.getItem('tenant_id') || userId;
+
+            // 1. Parallel Fetch: User Data & Workspaces
+            const [userRes, wsRes] = await Promise.all([
+                supabase.from('app_users').select('avatar_url, full_name').eq('id', userId).single(),
+                supabase.from('workspaces').select('*').eq('admin_id', tenantId).order('created_at', { ascending: false })
+            ]);
+
+            if (wsRes.error) throw wsRes.error;
+
+            const userData = userRes.data;
+            const wsData = wsRes.data || [];
+
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
             const freshName = userData?.full_name || localStorage.getItem('user_name') || 'Anda';
             setCurrentUserName(freshName);
 
-            // 1. Fetch Workspaces — all workspaces under this admin tenant
-            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
-            const { data: wsData, error: wsError } = await supabase
-                .from('workspaces')
-                .select('*')
-                .eq('admin_id', tenantId)
-                .order('created_at', { ascending: false });
+            if (wsData.length === 0) {
+                setWorkspaces([]);
+                return;
+            }
 
-            if (wsError) throw wsError;
-
-            // 2. Fetch Content Stats for each workspace
+            // 2. Fetch Content Stats — ONLY for these specific workspaces
+            const wsIds = wsData.map(ws => ws.id);
             const { data: contentData, error: contentError } = await supabase
                 .from('content_items')
-                .select('workspace_id, status');
+                .select('workspace_id, status')
+                .in('workspace_id', wsIds);
 
             if (contentError) throw contentError;
 
-            // 3. Merge Data & Sync Avatar
-            let mergedData: WorkspaceData[] = wsData.map((ws: any) => {
-                const workspaceContent = contentData.filter((c: any) => c.workspace_id === ws.id);
-                const total = workspaceContent.length;
-                const published = workspaceContent.filter((c: any) => c.status === 'Published').length;
+            // 3. Optimize Merging: Pre-calculate counts in O(N) using a map
+            const statsMap: Record<string, { total: number, published: number }> = {};
+            (contentData || []).forEach(item => {
+                if (!statsMap[item.workspace_id]) statsMap[item.workspace_id] = { total: 0, published: 0 };
+                statsMap[item.workspace_id].total++;
+                if (item.status === 'Published') statsMap[item.workspace_id].published++;
+            });
 
-                // Use empty array as default — never use a placeholder avatar as default
-                // because it would bypass the membership check below
-                const currentMembers: string[] = ws.members || [];
+            // 4. Merge & Access Control
+            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
 
-                return {
+            const mergedData: WorkspaceData[] = wsData
+                .filter(ws => {
+                    // Member Access Control
+                    if (isAdminOrOwner) return true;
+                    if (!freshAvatar) return false;
+                    const members: string[] = ws.members || [];
+                    return members.some(m => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar; }
+                        catch { return m === freshAvatar; }
+                    });
+                })
+                .map(ws => ({
                     id: ws.id,
                     name: ws.name,
                     role: ws.role || 'Owner',
@@ -137,33 +157,10 @@ export const ContentPlan: React.FC = () => {
                     period: ws.period,
                     accountName: ws.account_name,
                     logoUrl: ws.logo_url,
-                    members: currentMembers,
-                    totalContent: total,
-                    publishedCount: published
-                };
-            });
-
-            // 4. Member Access Control:
-            //    - Admin/Owner/Developer: see ALL workspaces they own
-            //    - Member: ONLY see workspaces where their avatar_url is in members[]
-            //    - If freshAvatar is not available, member sees NOTHING (safest default)
-            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
-            if (!isAdminOrOwner) {
-                if (!freshAvatar) {
-                    // No avatar = can't verify identity → show nothing
-                    mergedData = [];
-                } else {
-                    mergedData = mergedData.filter(ws =>
-                        ws.members.some((m: string) => {
-                            try {
-                                return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar;
-                            } catch {
-                                return m === freshAvatar;
-                            }
-                        })
-                    );
-                }
-            }
+                    members: ws.members || [],
+                    totalContent: statsMap[ws.id]?.total || 0,
+                    publishedCount: statsMap[ws.id]?.published || 0
+                }));
 
             setWorkspaces(mergedData);
         } catch (error) {

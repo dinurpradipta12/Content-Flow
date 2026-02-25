@@ -22,7 +22,8 @@ import {
     CreditCard,
     Send,
     User,
-    Users
+    Users,
+    Palette
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 
@@ -52,6 +53,7 @@ interface PaymentConfig {
 interface AppConfig {
     app_name: string;
     app_logo: string;
+    app_logo_light: string;
     app_favicon: string;
     page_titles: Record<string, PageConfig>;
     hidden_pages: string[];
@@ -123,7 +125,11 @@ export const WorkspaceSettings: React.FC = () => {
         try {
             const { error } = await supabase.from('app_config').update({
                 page_titles: config.page_titles || {},
-                hidden_pages: config.hidden_pages || []
+                hidden_pages: config.hidden_pages || [],
+                app_name: config.app_name,
+                app_logo: config.app_logo,
+                app_logo_light: config.app_logo_light,
+                app_favicon: config.app_favicon
             }).eq('id', 1);
 
             if (error) throw error;
@@ -307,8 +313,72 @@ export const WorkspaceSettings: React.FC = () => {
 
             {activeTab === 'interface' ? (
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                    {/* LEFT: PAGE TITLES & VISIBILITY */}
+                    {/* LEFT: BRANDING & PAGE TITLES */}
                     <div className="xl:col-span-8 space-y-8">
+                        {/* Branding Section */}
+                        <Card title="Global Branding" icon={<Palette size={20} />} headerColor="blue">
+                            <div className="p-6 space-y-6">
+                                <div className="flex items-center justify-between border-b-2 border-border pb-4">
+                                    <h4 className="font-black text-foreground uppercase tracking-widest text-sm">App Identity & Logos</h4>
+                                    <Button onClick={handleSaveInterface} disabled={saving} icon={<Save size={16} />}>
+                                        {saving ? 'Simpan...' : 'Simpan Branding'}
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Application Name</label>
+                                        <input
+                                            value={config?.app_name || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_name: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="Arunika"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Favicon URL</label>
+                                        <input
+                                            value={config?.app_favicon || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_favicon: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Main Logo URL (Default/Dark Logo)</label>
+                                        <input
+                                            value={config?.app_logo || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_logo: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="Untuk background terang"
+                                        />
+                                        {config?.app_logo && (
+                                            <div className="mt-2 p-4 bg-white rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                                <img src={config.app_logo} className="max-h-12 object-contain" alt="Preview Light" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-accent uppercase tracking-widest px-1">White Logo URL (For Dark Themes)</label>
+                                        <input
+                                            value={config?.app_logo_light || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_logo_light: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-accent/30 rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="Untuk background gelap"
+                                        />
+                                        {config?.app_logo_light && (
+                                            <div className="mt-2 p-4 bg-slate-900 rounded-xl border-2 border-slate-800 flex items-center justify-center">
+                                                <img src={config.app_logo_light} className="max-h-12 object-contain" alt="Preview Dark" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+
                         <Card title="Workspace Interface" icon={<Layout size={20} />} headerColor="purple">
                             <div className="p-6 space-y-8">
                                 <div className="flex items-center justify-between border-b-2 border-border pb-4">

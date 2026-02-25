@@ -3,6 +3,10 @@ import { supabase } from '../services/supabaseClient';
 import { AppNotification, NotificationType } from '../types';
 import { Bell, Info, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Modal } from './ui/Modal';
+import { Button } from './ui/Button';
+import { checkUpcomingContent } from '../services/notificationService';
+import { AlertTriangle, CheckCircle2, MessageSquare, Clock } from 'lucide-react';
 
 interface NotificationContextType {
     notifications: AppNotification[];
@@ -18,6 +22,13 @@ interface NotificationContextType {
         workspaceId?: string;
         metadata?: any;
     }) => Promise<void>;
+    notifyWorkspaceMembers: (params: {
+        workspaceId: string;
+        title: string;
+        content: string;
+        type?: string;
+        metadata?: any;
+    }) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -31,6 +42,8 @@ export const useNotifications = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [toasts, setToasts] = useState<AppNotification[]>([]);
+    const [popupQueue, setPopupQueue] = useState<AppNotification[]>([]);
+    const [currentPopup, setCurrentPopup] = useState<AppNotification | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(localStorage.getItem('user_id'));
     const navigate = useNavigate();
 
@@ -114,9 +127,35 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             .order('created_at', { ascending: false })
             .limit(50);
 
-        if (error) console.error('Error fetching notifications:', error);
-        else setNotifications(data || []);
+        if (error) {
+            console.error('Error fetching notifications:', error);
+            return;
+        }
+
+        const notifs = data || [];
+        setNotifications(notifs);
+
+        // Populate popup queue with unread popup-type notifications
+        const unreadPopups = notifs.filter(n => !n.is_read && n.metadata?.show_popup);
+        if (unreadPopups.length > 0) {
+            setPopupQueue(unreadPopups);
+        }
     }, [currentUserId]);
+
+    // Manage standard popup sequence
+    useEffect(() => {
+        if (!currentPopup && popupQueue.length > 0) {
+            setCurrentPopup(popupQueue[0]);
+            setPopupQueue(prev => prev.slice(1));
+        }
+    }, [currentPopup, popupQueue]);
+
+    // Initial check for upcoming content on mount or login
+    useEffect(() => {
+        if (currentUserId) {
+            checkUpcomingContent().then(() => fetchNotifications());
+        }
+    }, [currentUserId, fetchNotifications]);
 
     useEffect(() => {
         if (!currentUserId) return;
@@ -257,10 +296,59 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }]);
     };
 
+    const notifyWorkspaceMembers = async ({ workspaceId, title, content, type = 'INFO', metadata = {} }: any) => {
+        try {
+            const actorId = localStorage.getItem('user_id');
+
+            // 1. Get workspace members
+            const { data: workspace, error: wsError } = await supabase
+                .from('workspaces')
+                .select('members')
+                .eq('id', workspaceId)
+                .single();
+
+            if (wsError || !workspace) return;
+
+            // 2. Get members by username to get their IDs
+            const { data: users, error: userError } = await supabase
+                .from('app_users')
+                .select('id')
+                .in('username', workspace.members || []);
+
+            if (userError || !users) return;
+
+            const notificationsToInsert = users
+                .filter(u => u.id !== actorId)
+                .map(u => ({
+                    recipient_id: u.id,
+                    actor_id: actorId,
+                    workspace_id: workspaceId,
+                    type,
+                    title,
+                    content,
+                    metadata
+                }));
+
+            if (notificationsToInsert.length > 0) {
+                await supabase.from('notifications').insert(notificationsToInsert);
+            }
+        } catch (err) {
+            console.error('Failed to notify workspace members:', err);
+        }
+    };
+
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick, sendNotification }}>
+        <NotificationContext.Provider value={{
+            notifications,
+            unreadCount,
+            markAsRead,
+            markAllAsRead,
+            handleNotificationClick,
+            sendNotification,
+            notifyWorkspaceMembers
+        }}>
             {children}
 
             {/* TOAST POPUP UI */}
@@ -308,6 +396,79 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     </div>
                 ))}
             </div>
+
+            {/* PERSISTENT POPUP OVERLAY (Bottom Right) */}
+            {currentPopup && (
+                <div className="fixed bottom-6 right-6 z-[10000] w-[400px] animate-in slide-in-from-right-10 fade-in duration-500">
+                    <div className="bg-card border-2 border-slate-900 shadow-hard rounded-2xl overflow-hidden flex flex-col">
+                        {/* Header with Icon/Photo */}
+                        <div className={`p-4 flex items-center gap-4 border-b-2 border-slate-900 ${currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
+                            currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
+                            }`}>
+                            <div className="relative">
+                                {currentPopup.actor?.avatar_url ? (
+                                    <img
+                                        src={currentPopup.actor.avatar_url}
+                                        className="w-12 h-12 rounded-full border-2 border-white object-cover shadow-sm"
+                                        alt=""
+                                    />
+                                ) : (
+                                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white border-2 border-white/50">
+                                        {currentPopup.type === 'CONTENT_H1' ? <AlertTriangle size={24} /> : <Bell size={24} />}
+                                    </div>
+                                )}
+                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full border-2 border-slate-900 flex items-center justify-center text-slate-900 scale-90">
+                                    {currentPopup.type === 'CONTENT_H1' ? <Clock size={12} className="text-amber-600" /> : <Info size={12} className="text-secondary" />}
+                                </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-white font-black text-sm uppercase tracking-wider mb-0.5">{currentPopup.title}</h3>
+                                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest leading-none">Notifikasi Penting</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    markAsRead(currentPopup.id);
+                                    setCurrentPopup(null);
+                                }}
+                                className="text-white/60 hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Content Body */}
+                        <div className="p-5 bg-card">
+                            <p className="text-slate-600 font-bold leading-relaxed text-sm">
+                                {currentPopup.actor?.full_name && (
+                                    <span className="text-slate-900 font-black">{currentPopup.actor.full_name} </span>
+                                )}
+                                {currentPopup.content}
+                            </p>
+
+                            <div className="mt-5 flex gap-3">
+                                <button
+                                    className="flex-1 h-10 rounded-xl text-xs font-black border-2 border-slate-200 hover:bg-slate-50 transition-colors"
+                                    onClick={() => {
+                                        markAsRead(currentPopup.id);
+                                        setCurrentPopup(null);
+                                    }}
+                                >
+                                    Nanti Saja
+                                </button>
+                                <button
+                                    className="flex-1 h-10 rounded-xl shadow-hard bg-slate-900 text-white text-xs font-black hover:bg-slate-800 transition-colors"
+                                    onClick={() => {
+                                        handleNotificationClick(currentPopup);
+                                        setCurrentPopup(null);
+                                    }}
+                                >
+                                    Buka Detail
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 @keyframes notification-slide-in {
