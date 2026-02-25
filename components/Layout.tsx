@@ -742,15 +742,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         window.addEventListener('app-alert', handleAppAlert);
         window.addEventListener('app-confirm', handleAppConfirm);
 
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('user_updated', handleUserUpdate);
-            window.removeEventListener('sub_updated', handleUserUpdate);
-            window.removeEventListener('open-payment-modal', handleOpenPayment);
-            window.removeEventListener('app-alert', handleAppAlert);
-            window.removeEventListener('app-confirm', handleAppConfirm);
-        };
-
         // 6. Fetch Global Broadcast
         const fetchLatestBroadcast = async () => {
             const { data } = await supabase
@@ -790,7 +781,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return () => {
             clearInterval(interval);
             window.removeEventListener('user_updated', handleUserUpdate);
+            window.removeEventListener('sub_updated', handleUserUpdate);
             window.removeEventListener('open-payment-modal', handleOpenPayment);
+            window.removeEventListener('app-alert', handleAppAlert);
+            window.removeEventListener('app-confirm', handleAppConfirm);
             supabase.removeChannel(broadcastChannel);
         };
     }, []);

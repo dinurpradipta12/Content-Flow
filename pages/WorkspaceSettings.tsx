@@ -266,7 +266,7 @@ export const WorkspaceSettings: React.FC = () => {
         { name: 'Core Tables', code: '-- Create all base tables\nCREATE TABLE workspaces ...' },
         { name: 'App Config Extension', code: '-- Tambahkan kolom config pembayaran & logo light jika belum ada\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS payment_config JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS page_titles JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS hidden_pages JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS app_logo_light TEXT;' },
         { name: 'App Users Extension', code: '-- Tambahkan kolom status & periode user jika belum ada\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_start TIMESTAMPTZ;\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMPTZ;\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;' },
-        { name: 'Enable Realtime All', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;\nALTER PUBLICATION supabase_realtime ADD TABLE app_users;' }
+        { name: 'Enable Realtime All', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;\nALTER PUBLICATION supabase_realtime ADD TABLE app_users;\nALTER PUBLICATION supabase_realtime ADD TABLE global_broadcasts;' }
     ];
 
     if (loading && !config) {
