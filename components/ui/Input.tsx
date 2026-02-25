@@ -10,7 +10,7 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = '', ...pr
   return (
     <div className="flex flex-col gap-1 w-full">
       {label && (
-        <label className="font-bold text-xs text-slate-600 ml-1">
+        <label className="font-bold text-xs text-mutedForeground ml-1">
           {label}
         </label>
       )}
@@ -21,7 +21,7 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = '', ...pr
           </div>
         )}
         <input
-          className={`bg-white border-2 border-slate-300 text-slate-800 rounded-lg ${icon ? 'pl-10' : 'px-4'} pr-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-slate-400 w-full ${className}`}
+          className={`bg-transparent border-2 border-slate-300 text-foreground rounded-lg ${icon ? 'pl-10' : 'px-4'} pr-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground w-full ${className}`}
           {...props}
         />
       </div>
@@ -30,53 +30,53 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = '', ...pr
 };
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-    label?: string;
-    options: { label: string; value: string }[];
+  label?: string;
+  options: { label: string; value: string }[];
 }
 
 export const Select: React.FC<SelectProps> = ({ label, options, className = '', ...props }) => {
-    return (
-      <div className="flex flex-col gap-1 w-full">
-        {label && (
-          <label className="font-bold text-xs text-slate-600 ml-1">
-            {label}
-          </label>
-        )}
-        <div className="relative">
-            <select
-            className={`w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none ${className}`}
-            {...props}
-            >
-                {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-            </div>
+  return (
+    <div className="flex flex-col gap-1 w-full">
+      {label && (
+        <label className="font-bold text-xs text-mutedForeground ml-1">
+          {label}
+        </label>
+      )}
+      <div className="relative">
+        <select
+          className={`w-full bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none ${className}`}
+          {...props}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    label?: string;
+  label?: string;
 }
 
 export const Textarea: React.FC<TextareaProps> = ({ label, className = '', ...props }) => {
-    return (
-        <div className="flex flex-col gap-1 w-full">
-        {label && (
-            <label className="font-bold text-xs text-slate-600 ml-1">
-            {label}
-            </label>
-        )}
-        <textarea
-            className={`bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-slate-400 min-h-[120px] ${className}`}
-            {...props}
-        />
-        </div>
-    );
+  return (
+    <div className="flex flex-col gap-1 w-full">
+      {label && (
+        <label className="font-bold text-xs text-mutedForeground ml-1">
+          {label}
+        </label>
+      )}
+      <textarea
+        className={`bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground min-h-[120px] ${className}`}
+        {...props}
+      />
+    </div>
+  );
 };
 
 // --- NEW COMPONENT: Creatable Select ---
@@ -90,12 +90,12 @@ interface CreatableSelectProps {
   colorTheme?: 'violet' | 'pink' | 'yellow' | 'green';
 }
 
-export const CreatableSelect: React.FC<CreatableSelectProps> = ({ 
-  label, 
-  value, 
-  onChange, 
-  options, 
-  placeholder = "Pilih atau ketik baru...", 
+export const CreatableSelect: React.FC<CreatableSelectProps> = ({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = "Pilih atau ketik baru...",
   className = "",
   colorTheme = 'violet'
 }) => {
@@ -140,7 +140,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
     setIsOpen(false);
   };
 
-  const filteredOptions = options.filter(opt => 
+  const filteredOptions = options.filter(opt =>
     opt.label.toLowerCase().includes(inputValue.toLowerCase())
   );
 
@@ -149,56 +149,56 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
   return (
     <div className={`flex flex-col gap-1 w-full ${className}`} ref={containerRef}>
       {label && (
-        <label className="font-bold text-xs text-slate-600 ml-1">
+        <label className="font-bold text-xs text-mutedForeground ml-1">
           {label}
         </label>
       )}
       <div className="relative">
         <input
           type="text"
-          className={`w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 pr-10 outline-none transition-all duration-200 ${themeStyles[colorTheme]} placeholder:text-slate-400`}
+          className={`w-full bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 pr-10 outline-none transition-all duration-200 ${themeStyles[colorTheme]} placeholder:text-mutedForeground`}
           value={inputValue}
           onChange={handleInputChange}
           onClick={() => setIsOpen(true)}
           placeholder={placeholder}
         />
-        <div 
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600"
-            onClick={() => setIsOpen(!isOpen)}
+        <div
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600"
+          onClick={() => setIsOpen(!isOpen)}
         >
-            <ChevronDown size={18} />
+          <ChevronDown size={18} />
         </div>
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white border-2 border-slate-800 rounded-xl shadow-hard max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100">
-             {filteredOptions.length > 0 ? (
-                filteredOptions.map((opt) => (
-                    <div 
-                        key={opt.value}
-                        className="px-4 py-2 hover:bg-slate-100 cursor-pointer font-medium text-slate-700 transition-colors flex items-center justify-between group"
-                        onClick={() => handleSelectOption(opt.value)}
-                    >
-                        {opt.label}
-                        {opt.value === value && <div className="w-2 h-2 rounded-full bg-slate-800"></div>}
-                    </div>
-                ))
-             ) : (
-                <div className="px-4 py-3 text-slate-400 text-sm italic text-center">
-                    Tidak ada opsi yang cocok.
-                </div>
-             )}
-
-             {/* Create Option */}
-             {!isExactMatch && inputValue.trim() !== '' && (
-                 <div 
-                    className="px-4 py-3 bg-slate-50 border-t border-slate-100 cursor-pointer text-accent font-bold hover:bg-accent hover:text-white transition-colors flex items-center gap-2"
-                    onClick={() => handleSelectOption(inputValue)}
+          <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-card border-2 border-slate-800 rounded-xl shadow-hard max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => (
+                <div
+                  key={opt.value}
+                  className="px-4 py-2 hover:bg-slate-500/10 cursor-pointer font-medium text-foreground transition-colors flex items-center justify-between group"
+                  onClick={() => handleSelectOption(opt.value)}
                 >
-                    <Plus size={16} />
-                    Buat baru: "{inputValue}"
+                  {opt.label}
+                  {opt.value === value && <div className="w-2 h-2 rounded-full bg-slate-800"></div>}
                 </div>
-             )}
+              ))
+            ) : (
+              <div className="px-4 py-3 text-slate-400 text-sm italic text-center">
+                Tidak ada opsi yang cocok.
+              </div>
+            )}
+
+            {/* Create Option */}
+            {!isExactMatch && inputValue.trim() !== '' && (
+              <div
+                className="px-4 py-3 bg-slate-50 border-t border-slate-100 cursor-pointer text-accent font-bold hover:bg-accent hover:text-white transition-colors flex items-center gap-2"
+                onClick={() => handleSelectOption(inputValue)}
+              >
+                <Plus size={16} />
+                Buat baru: "{inputValue}"
+              </div>
+            )}
           </div>
         )}
       </div>

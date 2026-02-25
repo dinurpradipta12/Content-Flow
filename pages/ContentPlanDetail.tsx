@@ -45,6 +45,13 @@ const getPlatformBadgeStyle = (platform: Platform) => {
 
 // Helper: Get Card Base Style based on Status
 const getCardStatusStyle = (status: ContentStatus) => {
+    // If we're not using the default theme (dark, midnight, pastel, etc), 
+    // keep cards uniform by skipping status-specific background colors.
+    const currentTheme = localStorage.getItem('app_ui_theme') || 'default';
+    if (currentTheme !== 'default') {
+        return 'bg-white border-slate-800 shadow-hard hover:shadow-hard-hover';
+    }
+
     switch (status) {
         case ContentStatus.PUBLISHED:
             // Green Theme for Done
@@ -99,7 +106,7 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                     const isImage = fileUrl.startsWith('data:image');
                     return (
                         <div
-                            className={`my-3 group relative bg-white border-2 border-slate-200 rounded-xl p-3 flex items-center gap-4 hover:border-accent hover:shadow-md transition-all ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer hover:bg-slate-50' : ''
+                            className={`my-3 group relative bg-card border-2 border-border rounded-xl p-3 flex items-center gap-4 hover:border-accent hover:shadow-md transition-all ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer hover:bg-muted' : ''
                                 }`}
                             onClick={() => {
                                 if ((fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) && onPdfClick) {
@@ -130,7 +137,7 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                                 download={fileName}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-accent hover:text-white transition-colors"
+                                className="p-2 bg-muted text-mutedForeground rounded-lg hover:bg-accent hover:text-white transition-colors"
                                 title="Download"
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -211,16 +218,16 @@ const KanbanCard: React.FC<{
                     {showMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}></div>
-                            <div className="absolute right-0 top-full mt-1 w-32 bg-white border-2 border-slate-800 rounded-lg shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-100">
+                            <div className="absolute right-0 top-full mt-1 w-32 bg-card border-2 border-border rounded-lg shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-100">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(item); }}
-                                    className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 font-bold text-slate-700"
+                                    className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 font-bold text-foreground"
                                 >
                                     <Edit size={14} className="text-accent" /> Edit
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(item.id); }}
-                                    className="w-full text-left px-3 py-2 hover:bg-red-50 flex items-center gap-2 font-bold text-red-500"
+                                    className="w-full text-left px-3 py-2 hover:bg-red-500/10 flex items-center gap-2 font-bold text-red-500"
                                 >
                                     <Trash2 size={14} /> Delete
                                 </button>
@@ -243,7 +250,7 @@ const KanbanCard: React.FC<{
                             {item.pillar}
                         </span>
                     )}
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/50 text-slate-600 border border-slate-200 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted/50 text-mutedForeground border border-border flex items-center gap-1">
                         {getTypeIcon(item.type)} {item.type}
                     </span>
                 </div>
@@ -253,8 +260,8 @@ const KanbanCard: React.FC<{
 
                 {/* Footer: Date & PIC */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-bold bg-white/60 px-2 py-1 rounded border border-slate-200">
-                        <Calendar size={12} className="text-slate-400" />
+                    <div className="flex items-center gap-1.5 text-mutedForeground text-[11px] font-bold bg-muted/60 px-2 py-1 rounded border border-border">
+                        <Calendar size={12} className="text-mutedForeground/70" />
                         <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
                     </div>
 
@@ -876,13 +883,13 @@ export const ContentPlanDetail: React.FC = () => {
         <>
             <div className="flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
                 {/* Header Section Updated */}
-                <div className={`flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-slate-100 pb-0 flex-shrink-0 w-full max-w-full pl-2 md:pl-4 pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-3 bg-white/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
+                <div className={`flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-border pb-0 flex-shrink-0 w-full max-w-full pl-2 md:pl-4 pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
                     {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
                     <div className="flex flex-col items-start gap-4 transition-all duration-300">
                         <div className={`flex items-center gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                             <button
                                 onClick={() => navigate('/plan')}
-                                className="p-2 rounded-lg border-2 border-slate-200 hover:border-slate-800 hover:bg-white transition-all group bg-white shadow-sm text-slate-400 hover:text-slate-800"
+                                className="p-2 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground"
                             >
                                 <ArrowLeft size={18} />
                             </button>
@@ -915,7 +922,7 @@ export const ContentPlanDetail: React.FC = () => {
                             {isScrolled && (
                                 <button
                                     onClick={() => navigate('/plan')}
-                                    className="p-1.5 rounded-lg border-2 border-slate-200 hover:border-slate-800 hover:bg-white transition-all group bg-white shadow-sm text-slate-400 hover:text-slate-800 mr-2"
+                                    className="p-1.5 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground mr-2"
                                 >
                                     <ArrowLeft size={16} />
                                 </button>
@@ -955,16 +962,16 @@ export const ContentPlanDetail: React.FC = () => {
                     {/* RIGHT SIDE: Actions & Account Info */}
                     <div className="flex flex-col items-end gap-3 w-full lg:w-auto mt-4 lg:mt-0">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-2 bg-muted p-1 rounded-lg border border-border">
                                 <button
                                     onClick={() => setViewMode('kanban')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                                    className={`p-2 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                                 >
                                     <LayoutGrid size={20} />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('table')}
-                                    className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                                    className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                                 >
                                     <Table size={20} />
                                 </button>
@@ -995,17 +1002,17 @@ export const ContentPlanDetail: React.FC = () => {
                                                 href={link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="bg-white border-2 border-slate-800 rounded-lg px-3 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-sm transition-all flex items-center gap-2 text-slate-800 font-bold text-sm group"
+                                                className="bg-card border-2 border-border rounded-lg px-3 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-sm transition-all flex items-center gap-2 text-foreground font-bold text-sm group"
                                                 title={`Visit ${p} Profile`}
                                             >
                                                 {getPlatformIcon(p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : p === 'YT' ? Platform.YOUTUBE : p === 'LI' ? Platform.LINKEDIN : p === 'FB' ? Platform.FACEBOOK : Platform.THREADS)}
                                                 <span>{workspaceData.account_name || 'Profile'}</span>
-                                                <ExternalLink size={12} className="text-slate-400 group-hover:text-accent" />
+                                                <ExternalLink size={12} className="text-mutedForeground group-hover:text-accent" />
                                             </a>
                                         );
                                     })
                                 ) : (
-                                    <div className="bg-white border-2 border-slate-800 rounded-lg px-4 py-2 shadow-hard inline-block">
+                                    <div className="bg-card border-2 border-border rounded-lg px-4 py-2 shadow-hard inline-block">
                                         <h3 className="font-heading font-black text-lg text-accent flex items-center gap-2 justify-end">
                                             {workspaceData.account_name || '@username'}
                                             <CheckCircle size={16} className="fill-blue-500 text-white" />
@@ -1120,7 +1127,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         filteredTableTasks.map((task) => (
                                             <tr
                                                 key={task.id}
-                                                className="bg-white group transition-all duration-200 hover:-translate-y-1 hover:shadow-hard shadow-sm rounded-xl relative"
+                                                className="bg-card group transition-all duration-200 hover:-translate-y-1 hover:shadow-hard shadow-sm rounded-xl relative"
                                             >
                                                 {/* 1. Status (Interactive Dropdown) */}
                                                 <td className="p-3 border-y border-l border-slate-200 rounded-l-xl first:border-l-2">
@@ -1211,9 +1218,9 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 8. Link Input (Interactive - Controlled) */}
-                                                <td className="p-3 border-y border-slate-200">
+                                                <td className="p-3 border-y border-border">
                                                     <div className="relative flex items-center group/input">
-                                                        <LinkIcon size={14} className={`absolute left-2 z-10 ${task.contentLink ? 'text-blue-500' : 'text-slate-300'}`} />
+                                                        <LinkIcon size={14} className={`absolute left-2 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
                                                         <input
                                                             type="text"
                                                             value={task.contentLink || ''} // CONTROLLED INPUT
@@ -1231,7 +1238,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                 }
                                                             }}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className={`w-full bg-slate-50 border-2 border-slate-200 text-xs text-slate-700 rounded-lg pl-7 pr-2 py-1.5 outline-none focus:border-blue-400 focus:bg-white focus:shadow-sm transition-all placeholder:text-slate-300 ${task.contentLink ? 'font-medium' : ''}`}
+                                                            className={`w-full bg-muted border-2 border-border text-xs text-foreground rounded-lg pl-7 pr-2 py-1.5 outline-none focus:border-blue-400 focus:bg-card focus:shadow-sm transition-all placeholder:text-mutedForeground ${task.contentLink ? 'font-medium' : ''}`}
                                                         />
                                                         {task.contentLink && (
                                                             <a
@@ -1239,7 +1246,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 onClick={(e) => e.stopPropagation()}
-                                                                className="absolute right-2 text-slate-400 hover:text-blue-600 p-0.5"
+                                                                className="absolute right-2 text-mutedForeground hover:text-blue-600 p-0.5"
                                                                 title="Buka Link"
                                                             >
                                                                 <ExternalLink size={12} />
@@ -1442,12 +1449,12 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
 
                         {/* Script / Notes Area */}
-                        <div className="bg-[#FFFDF5] p-5 rounded-2xl border-2 border-slate-800 relative shadow-hard">
-                            <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 w-40 h-8 bg-yellow-300 -rotate-1 rounded-sm border-2 border-slate-800 flex items-center justify-center shadow-sm z-10">
-                                <span className="font-bold text-xs font-heading text-slate-800">Brief / Script</span>
+                        <div className="bg-muted p-5 rounded-2xl border-2 border-border relative shadow-hard">
+                            <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 w-40 h-8 bg-tertiary -rotate-1 rounded-sm border-2 border-border flex items-center justify-center shadow-sm z-10">
+                                <span className="font-bold text-xs font-heading text-slate-900">Brief / Script</span>
                             </div>
 
-                            <div className="text-slate-700 font-medium font-sans text-base min-h-[100px] overflow-hidden">
+                            <div className="text-foreground font-medium font-sans text-base min-h-[100px] overflow-hidden">
                                 <RichTextRenderer
                                     text={(selectedTask as any).script}
                                     onPdfClick={(url) => {
@@ -1477,7 +1484,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         setIsPdfPreviewOpen(false);
                                         setPdfUrl(null);
                                     }}
-                                    className="px-6 py-2.5 rounded-full border-2 border-slate-800 font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="px-6 py-2.5 rounded-full border-2 border-border font-bold text-foreground hover:bg-muted transition-colors"
                                 >
                                     Tutup
                                 </button>
@@ -1537,9 +1544,9 @@ export const ContentPlanDetail: React.FC = () => {
                 <form onSubmit={handleSaveContent} className="space-y-6 pb-4">
 
                     {/* 1. INFORMASI UTAMA */}
-                    <div className="bg-purple-50 p-5 rounded-2xl border-2 border-purple-800 shadow-[4px_4px_0px_0px_#8B5CF6] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-purple-200 rounded-bl-full opacity-50"></div>
-                        <h4 className="font-heading font-black text-purple-900 flex items-center gap-2 mb-4 text-lg">
+                    <div className="bg-purple-500/10 p-5 rounded-2xl border-2 border-purple-500/30 shadow-[4px_4px_0px_0px_rgba(139,92,246,0.3)] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/20 rounded-bl-full opacity-50"></div>
+                        <h4 className="font-heading font-black text-purple-600 flex items-center gap-2 mb-4 text-lg">
                             <FileText className="text-purple-600" /> Informasi Utama
                         </h4>
                         <div className="space-y-4 relative z-10">
@@ -1579,9 +1586,9 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
 
                     {/* 2. DETAIL & JENIS */}
-                    <div className="bg-pink-50 p-5 rounded-2xl border-2 border-pink-700 shadow-[4px_4px_0px_0px_#BE185D] relative">
-                        <div className="absolute bottom-0 left-0 w-12 h-12 bg-pink-200 rounded-tr-full rounded-bl-2xl opacity-50"></div>
-                        <h4 className="font-heading font-black text-pink-900 flex items-center gap-2 mb-4 text-lg relative z-10">
+                    <div className="bg-pink-500/10 p-5 rounded-2xl border-2 border-pink-500/30 shadow-[4px_4px_0px_0px_rgba(236,72,153,0.3)] relative">
+                        <div className="absolute bottom-0 left-0 w-12 h-12 bg-pink-500/20 rounded-tr-full rounded-bl-2xl opacity-50"></div>
+                        <h4 className="font-heading font-black text-pink-600 flex items-center gap-2 mb-4 text-lg relative z-10">
                             <Film className="text-pink-600" /> Detail & Jenis
                         </h4>
                         <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -1610,9 +1617,9 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
 
                     {/* 3. STATUS & PIC */}
-                    <div className="bg-yellow-50 p-5 rounded-2xl border-2 border-yellow-600 shadow-[4px_4px_0px_0px_#CA8A04] relative">
-                        <h4 className="font-heading font-black text-yellow-900 flex items-center gap-2 mb-4 text-lg">
-                            <CheckCircle className="text-yellow-600" /> Status & Tim
+                    <div className="bg-amber-500/10 p-5 rounded-2xl border-2 border-amber-500/30 shadow-[4px_4px_0px_0px_rgba(245,158,11,0.3)] relative">
+                        <h4 className="font-heading font-black text-amber-500 flex items-center gap-2 mb-4 text-lg">
+                            <CheckCircle className="text-amber-500" /> Status & Tim
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
                             <CreatableSelect
@@ -1657,9 +1664,9 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
 
                     {/* 4. SCRIPT & FILES */}
-                    <div className="bg-emerald-50 p-5 rounded-2xl border-2 border-emerald-700 shadow-[4px_4px_0px_0px_#059669]">
-                        <label className="font-heading font-black text-emerald-900 text-sm mb-2 flex items-center gap-2">
-                            <File className="text-emerald-600" /> Script / Resources
+                    <div className="bg-emerald-500/10 p-5 rounded-2xl border-2 border-emerald-500/30 shadow-[4px_4px_0px_0px_rgba(16,185,129,0.3)]">
+                        <label className="font-heading font-black text-emerald-500 text-sm mb-2 flex items-center gap-2">
+                            <File className="text-emerald-500" /> Script / Resources
                         </label>
 
                         {/* NEW INPUT: Link Postingan */}
@@ -1678,7 +1685,7 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="flex-1 relative">
                                 <LinkIcon className="absolute left-3 top-3.5 text-emerald-400" size={16} />
                                 <input
-                                    className="w-full pl-10 pr-4 py-3 bg-white border-2 border-emerald-200 rounded-lg outline-none focus:border-emerald-500 transition-all placeholder:text-slate-400 font-medium text-emerald-900"
+                                    className="w-full pl-10 pr-4 py-3 bg-card border-2 border-emerald-500/30 rounded-lg outline-none focus:border-emerald-500 transition-all placeholder:text-mutedForeground font-medium text-foreground"
                                     placeholder="Paste Link Dokumen / Brief disini..."
                                     value={formData.script}
                                     onChange={(e) => setFormData({ ...formData, script: e.target.value })}
@@ -1692,13 +1699,13 @@ export const ContentPlanDetail: React.FC = () => {
                             />
                             <div
                                 onClick={() => fileInputRef.current?.click()}
-                                className="w-12 h-[50px] flex items-center justify-center bg-white border-2 border-dashed border-emerald-300 rounded-lg cursor-pointer hover:bg-emerald-100 hover:border-emerald-500 transition-colors group"
+                                className="w-12 h-[50px] flex items-center justify-center bg-card border-2 border-dashed border-emerald-500/50 rounded-lg cursor-pointer hover:bg-emerald-500/10 hover:border-emerald-500 transition-colors group"
                                 title="Upload File"
                             >
-                                <Upload size={20} className="text-emerald-400 group-hover:text-emerald-700" />
+                                <Upload size={20} className="text-emerald-500 group-hover:text-emerald-600" />
                             </div>
                         </div>
-                        <p className="text-[10px] text-emerald-600 mt-2 italic">* Upload file akan disimpan sebagai lampiran di dalam script (max 2MB).</p>
+                        <p className="text-[10px] text-emerald-500 mt-2 italic">* Upload file akan disimpan sebagai lampiran di dalam script (max 2MB).</p>
                     </div>
 
                     <div className="pt-4 border-t-2 border-slate-100 flex justify-end gap-3">
@@ -1718,22 +1725,22 @@ export const ContentPlanDetail: React.FC = () => {
             >
                 {/* Same as before... */}
                 <div className="space-y-6 text-center py-4">
-                    <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto">
+                    <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
                         <UserPlus size={32} className="text-accent" />
                     </div>
                     <div>
-                        <h4 className="font-bold text-xl text-slate-800">Kode Undangan Workspace</h4>
-                        <p className="text-slate-500 text-sm mt-1">Bagikan kode ini kepada tim Anda untuk bergabung.</p>
+                        <h4 className="font-bold text-xl text-foreground">Kode Undangan Workspace</h4>
+                        <p className="text-mutedForeground text-sm mt-1">Bagikan kode ini kepada tim Anda untuk bergabung.</p>
                     </div>
 
                     {workspaceData.invite_code === 'SETUP-REQ' ? (
-                        <div className="p-6 bg-red-50 border-2 border-dashed border-red-300 rounded-xl relative">
-                            <p className="font-bold text-red-600 mb-2">Setup Database Diperlukan</p>
-                            <p className="text-xs text-red-500">Kolom 'invite_code' belum ada di database.</p>
+                        <div className="p-6 bg-red-500/10 border-2 border-dashed border-red-500/50 rounded-xl relative">
+                            <p className="font-bold text-red-500 mb-2">Setup Database Diperlukan</p>
+                            <p className="text-xs text-red-400">Kolom 'invite_code' belum ada di database.</p>
                         </div>
                     ) : (
-                        <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl relative group transition-colors hover:border-accent">
-                            <p className="font-mono text-4xl font-bold tracking-widest text-slate-800 select-all">
+                        <div className="p-6 bg-muted border-2 border-dashed border-border rounded-xl relative group transition-colors hover:border-accent">
+                            <p className="font-mono text-4xl font-bold tracking-widest text-foreground select-all">
                                 {workspaceData.invite_code}
                             </p>
                         </div>
@@ -1746,7 +1753,7 @@ export const ContentPlanDetail: React.FC = () => {
                         <button
                             onClick={handleRegenerateCode}
                             disabled={isRegenerating || workspaceData.invite_code === 'SETUP-REQ'}
-                            className="text-slate-400 hover:text-red-500 text-xs font-bold flex items-center justify-center gap-1 mx-auto transition-colors disabled:opacity-50"
+                            className="text-mutedForeground hover:text-red-500 text-xs font-bold flex items-center justify-center gap-1 mx-auto transition-colors disabled:opacity-50"
                         >
                             <RefreshCw size={12} className={isRegenerating ? "animate-spin" : ""} />
                             {isRegenerating ? 'Memperbarui...' : 'Generate Kode Baru'}

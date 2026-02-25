@@ -22,6 +22,7 @@ interface PaymentConfig {
 interface AppConfig {
     app_name: string;
     app_logo: string;
+    app_logo_light: string;
     app_favicon: string;
     page_titles: Record<string, PageConfig>;
     hidden_pages: string[];

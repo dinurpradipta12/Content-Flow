@@ -353,48 +353,40 @@ export const TeamKPIBoard: React.FC = () => {
                     <select
                         value={periodFilter}
                         onChange={e => setPeriodFilter(e.target.value)}
-                        className="bg-white border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                        className="bg-transparent border-2 border-slate-200 text-foreground rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
                     >
                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
-                    {/* Only admins can add new members */}
-                    {isAdmin && (
-                        <button
-                            onClick={() => setIsAddMemberOpen(true)}
-                            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-lg shadow-violet-200"
-                        >
-                            <Plus size={16} /> Add Member
-                        </button>
-                    )}
+
                 </div>
             </div>
 
             {/* Summary Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-                        <Users className="text-violet-600" size={22} />
+                <div className="bg-card rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-violet-100/10 rounded-xl flex items-center justify-center">
+                        <Users className="text-violet-500" size={22} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-900">{totalMembers}</p>
+                        <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
                         <p className="text-xs text-slate-500 font-medium">Team Members</p>
                     </div>
                 </div>
-                <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <Target className="text-blue-600" size={22} />
+                <div className="bg-card rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100/10 rounded-xl flex items-center justify-center">
+                        <Target className="text-blue-500" size={22} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-900">{avgCompletion}%</p>
+                        <p className="text-2xl font-bold text-foreground">{avgCompletion}%</p>
                         <p className="text-xs text-slate-500 font-medium">Avg. Completion</p>
                     </div>
                 </div>
-                <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                        <TrendingUp className="text-emerald-600" size={22} />
+                <div className="bg-card rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-100/10 rounded-xl flex items-center justify-center">
+                        <TrendingUp className="text-emerald-500" size={22} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-900">{onTrackCount}/{totalMembers}</p>
+                        <p className="text-2xl font-bold text-foreground">{onTrackCount}/{totalMembers}</p>
                         <p className="text-xs text-slate-500 font-medium">On Track</p>
                     </div>
                 </div>
@@ -405,7 +397,7 @@ export const TeamKPIBoard: React.FC = () => {
                 {/* Left: Workspace Folders — only show workspaces accessible to current user */}
                 {myWorkspaces.length > 1 && (
                     <div className="w-52 shrink-0">
-                        <div className="bg-white border-2 border-slate-900 rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
+                        <div className="bg-card border-2 border-slate-900 rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
                             <div className="p-3 border-b-2 border-slate-900 bg-violet-600">
                                 <p className="text-white font-black text-xs uppercase tracking-widest">Workspace</p>
                             </div>
@@ -439,21 +431,21 @@ export const TeamKPIBoard: React.FC = () => {
                 {/* Right: Member Cards */}
                 <div className="flex-1">
                     {filteredMembers.length === 0 ? (
-                        <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-300">
-                            <Users className="mx-auto text-slate-300 mb-4" size={48} />
+                        <div className="text-center py-20 bg-card rounded-2xl border-2 border-dashed border-border">
+                            <Users className="mx-auto text-mutedForeground mb-4" size={48} />
                             {!isAdmin && myWorkspaces.length === 0 ? (
                                 // Member with no workspace access
                                 <>
-                                    <h3 className="text-lg font-bold text-slate-500">Belum Bergabung ke Workspace</h3>
-                                    <p className="text-sm text-slate-400 mt-1 max-w-xs mx-auto">
+                                    <h3 className="text-lg font-bold text-mutedForeground">Belum Bergabung ke Workspace</h3>
+                                    <p className="text-sm text-mutedForeground/80 mt-1 max-w-xs mx-auto">
                                         Anda belum tergabung dalam workspace apapun. Hubungi admin untuk mendapatkan undangan.
                                     </p>
                                 </>
                             ) : (
                                 // Admin or member in workspace but no members yet
                                 <>
-                                    <h3 className="text-lg font-bold text-slate-400">Belum ada anggota tim</h3>
-                                    <p className="text-sm text-slate-400 mt-1">Tidak ada anggota di workspace ini.</p>
+                                    <h3 className="text-lg font-bold text-mutedForeground">Belum ada anggota tim</h3>
+                                    <p className="text-sm text-mutedForeground/80 mt-1">Tidak ada anggota di workspace ini.</p>
                                 </>
                             )}
                         </div>
@@ -469,28 +461,28 @@ export const TeamKPIBoard: React.FC = () => {
                                     <div
                                         key={member.id}
                                         onClick={() => openDetail(member)}
-                                        className="bg-white rounded-2xl border-2 border-slate-200 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 p-5 cursor-pointer transition-all duration-200 group"
+                                        className="bg-card rounded-2xl border-2 border-border hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 p-5 cursor-pointer transition-all duration-200 group"
                                     >
                                         {/* Avatar + Info */}
                                         <div className="flex items-center gap-3 mb-4">
                                             <img
                                                 src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
                                                 alt={member.full_name}
-                                                className="w-12 h-12 rounded-full border-2 border-slate-200 object-cover group-hover:border-violet-300 transition-colors"
+                                                className="w-12 h-12 rounded-full border-2 border-border object-cover group-hover:border-violet-300 transition-colors"
                                             />
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-slate-900 truncate">{member.full_name}</h3>
-                                                <p className="text-xs text-slate-500 truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
+                                                <h3 className="font-bold text-foreground truncate">{member.full_name}</h3>
+                                                <p className="text-xs text-mutedForeground truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
                                             </div>
                                         </div>
 
                                         {/* Progress Bar */}
                                         <div className="mb-3">
                                             <div className="flex justify-between items-center mb-1.5">
-                                                <span className="text-xs font-medium text-slate-500">KPI Completion</span>
+                                                <span className="text-xs font-medium text-mutedForeground">KPI Completion</span>
                                                 <span className={`text-sm font-bold ${color.text}`}>{rate}%</span>
                                             </div>
-                                            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full ${color.bg} rounded-full transition-all duration-700 ease-out`}
                                                     style={{ width: `${rate}%` }}
@@ -503,7 +495,7 @@ export const TeamKPIBoard: React.FC = () => {
                                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border ${badge.cls}`}>
                                                 {badge.icon} {badge.label}
                                             </span>
-                                            <span className="text-[11px] text-slate-400">{memberKPIs.length} metrics</span>
+                                            <span className="text-[11px] text-mutedForeground/80">{memberKPIs.length} metrics</span>
                                         </div>
                                     </div>
                                 );
@@ -526,15 +518,15 @@ export const TeamKPIBoard: React.FC = () => {
                             {/* ====== LEFT CARD: Member Profile + KPI List ====== */}
                             <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto ${showMemberInput ? 'w-1/2 pr-4' : 'w-full'}`}>
                                 {/* Member Header */}
-                                <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-violet-50 to-slate-50 rounded-2xl border-2 border-slate-200 mb-4 shrink-0">
+                                <div className="flex items-center gap-3 p-4 bg-muted border-2 border-border mb-4 shrink-0 rounded-2xl">
                                     <img
                                         src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
                                         alt={selectedMember.full_name}
-                                        className="w-14 h-14 rounded-2xl border-2 border-slate-200 object-cover shadow"
+                                        className="w-14 h-14 rounded-2xl border-2 border-border object-cover shadow"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <h2 className="text-base font-black text-slate-900 truncate">{selectedMember.full_name}</h2>
-                                        <p className="text-xs text-slate-500 truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
+                                        <h2 className="text-base font-black text-foreground truncate">{selectedMember.full_name}</h2>
+                                        <p className="text-xs text-mutedForeground truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
                                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${badge.cls}`}>
                                                 {badge.icon} {badge.label}
@@ -543,7 +535,7 @@ export const TeamKPIBoard: React.FC = () => {
                                         </div>
                                     </div>
                                     {isAdmin && (
-                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-colors shrink-0" title="Hapus anggota">
+                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 hover:bg-red-500/10 text-red-500 hover:text-red-400 rounded-xl transition-colors shrink-0" title="Hapus anggota">
                                             <Trash2 size={16} />
                                         </button>
                                     )}
@@ -554,7 +546,7 @@ export const TeamKPIBoard: React.FC = () => {
                                     <select
                                         value={periodFilter}
                                         onChange={e => setPeriodFilter(e.target.value)}
-                                        className="bg-white border-2 border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-violet-400 transition-colors"
+                                        className="bg-card border-2 border-border text-foreground rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-violet-400 transition-colors"
                                     >
                                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
@@ -578,9 +570,9 @@ export const TeamKPIBoard: React.FC = () => {
 
                                 {/* KPI List */}
                                 {memberKPIs.length === 0 ? (
-                                    <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                                        <Target className="mx-auto text-slate-300 mb-2" size={28} />
-                                        <p className="text-sm text-slate-400 font-medium">Belum ada KPI untuk periode ini</p>
+                                    <div className="text-center py-10 bg-muted rounded-xl border border-dashed border-border">
+                                        <Target className="mx-auto text-mutedForeground mb-2" size={28} />
+                                        <p className="text-sm text-mutedForeground/80 font-medium">Belum ada KPI untuk periode ini</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-2 overflow-y-auto flex-1 pr-0.5" style={{ maxHeight: 300 }}>
@@ -590,23 +582,23 @@ export const TeamKPIBoard: React.FC = () => {
                                             const isEditing = editingKPI === kpi.id;
 
                                             return (
-                                                <div key={kpi.id} className="bg-white border-2 border-slate-200 rounded-xl p-3 hover:border-violet-200 transition-colors">
+                                                <div key={kpi.id} className="bg-card border-2 border-border rounded-xl p-3 hover:border-violet-200 transition-colors">
                                                     <div className="flex items-start justify-between mb-1.5">
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-slate-800 text-xs truncate">{kpi.metric_name}</h4>
-                                                            <p className="text-[10px] text-slate-400">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
+                                                            <h4 className="font-bold text-foreground text-xs truncate">{kpi.metric_name}</h4>
+                                                            <p className="text-[10px] text-mutedForeground">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
                                                         </div>
                                                         {isAdmin && (
                                                             <div className="flex items-center gap-1 ml-2 shrink-0">
                                                                 {!isEditing ? (
                                                                     <>
-                                                                        <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition-colors" title="Edit KPI"><Edit3 size={12} /></button>
-                                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Hapus"><Trash2 size={12} /></button>
+                                                                        <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1 hover:bg-blue-500/10 text-mutedForeground hover:text-blue-500 rounded-lg transition-colors" title="Edit KPI"><Edit3 size={12} /></button>
+                                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1 hover:bg-red-500/10 text-mutedForeground hover:text-red-500 rounded-lg transition-colors" title="Hapus"><Trash2 size={12} /></button>
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1 hover:bg-emerald-50 text-emerald-500 rounded-lg transition-colors"><Save size={12} /></button>
-                                                                        <button onClick={() => setEditingKPI(null)} className="p-1 hover:bg-slate-100 text-slate-400 rounded-lg transition-colors"><X size={12} /></button>
+                                                                        <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1 hover:bg-emerald-500/10 text-emerald-500 rounded-lg transition-colors"><Save size={12} /></button>
+                                                                        <button onClick={() => setEditingKPI(null)} className="p-1 hover:bg-slate-500/10 text-mutedForeground rounded-lg transition-colors"><X size={12} /></button>
                                                                     </>
                                                                 )}
                                                             </div>
@@ -614,24 +606,24 @@ export const TeamKPIBoard: React.FC = () => {
                                                     </div>
                                                     {/* Progress bar */}
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                                             <div className={`h-full ${kpiColor.bg} rounded-full`} style={{ width: `${kpiRate}%` }} />
                                                         </div>
                                                         <span className={`text-[10px] font-bold ${kpiColor.text}`}>{kpiRate}%</span>
                                                     </div>
                                                     {/* Values */}
-                                                    <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                                                        <span>Target: <strong className="text-slate-700">{kpi.target_value}{kpi.unit}</strong></span>
+                                                    <div className="flex items-center gap-3 text-[10px] text-mutedForeground">
+                                                        <span>Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></span>
                                                         {isEditing ? (
                                                             <span className="flex items-center gap-1">
-                                                                Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-14 border border-violet-300 rounded px-1 py-0.5 text-xs font-bold text-violet-700 focus:outline-none" onClick={e => e.stopPropagation()} />{kpi.unit}
+                                                                Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-14 border border-violet-300 rounded px-1 py-0.5 text-xs font-bold text-violet-700 focus:outline-none bg-card" onClick={e => e.stopPropagation()} />{kpi.unit}
                                                             </span>
                                                         ) : (
-                                                            <span>Actual: <strong className="text-slate-700">{kpi.actual_value}{kpi.unit}</strong></span>
+                                                            <span>Actual: <strong className="text-foreground">{kpi.actual_value}{kpi.unit}</strong></span>
                                                         )}
                                                     </div>
                                                     {isEditing && (
-                                                        <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-2 w-full border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-violet-300" onClick={e => e.stopPropagation()} />
+                                                        <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-2 w-full border border-border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-violet-300 bg-card text-foreground placeholder:text-mutedForeground" onClick={e => e.stopPropagation()} />
                                                     )}
                                                 </div>
                                             );
@@ -647,10 +639,10 @@ export const TeamKPIBoard: React.FC = () => {
                                         {/* Panel header */}
                                         <div className="flex items-center justify-between mb-4">
                                             <div>
-                                                <h3 className="font-black text-slate-900 text-sm">✏️ Input Pencapaian</h3>
-                                                <p className="text-[10px] text-slate-400">Isi nilai aktual yang telah dicapai bulan ini</p>
+                                                <h3 className="font-black text-foreground text-sm">✏️ Input Pencapaian</h3>
+                                                <p className="text-[10px] text-mutedForeground">Isi nilai aktual yang telah dicapai bulan ini</p>
                                             </div>
-                                            <button onClick={() => setShowMemberInput(false)} className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors">
+                                            <button onClick={() => setShowMemberInput(false)} className="p-1.5 hover:bg-slate-500/10 text-mutedForeground hover:text-foreground rounded-lg transition-colors">
                                                 <X size={14} />
                                             </button>
                                         </div>
@@ -658,26 +650,26 @@ export const TeamKPIBoard: React.FC = () => {
                                         {/* Per-KPI inputs */}
                                         <div className="flex-1 overflow-y-auto space-y-3 pr-0.5" style={{ maxHeight: 320 }}>
                                             {memberKPIs.map(kpi => (
-                                                <div key={kpi.id} className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-3">
-                                                    <p className="text-xs font-black text-slate-700 truncate mb-0.5">{kpi.metric_name}</p>
-                                                    <p className="text-[10px] text-slate-400 mb-2">{kpi.period} · Target: <strong>{kpi.target_value}{kpi.unit}</strong></p>
+                                                <div key={kpi.id} className="bg-emerald-500/10 border-2 border-emerald-500/20 rounded-xl p-3">
+                                                    <p className="text-xs font-black text-foreground truncate mb-0.5">{kpi.metric_name}</p>
+                                                    <p className="text-[10px] text-mutedForeground mb-2">{kpi.period} · Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></p>
                                                     <div className="space-y-2">
                                                         <div>
-                                                            <label className="text-[9px] font-black text-emerald-700 uppercase tracking-wide block mb-0.5">Nilai Aktual ({kpi.unit})</label>
+                                                            <label className="text-[9px] font-black text-emerald-600 uppercase tracking-wide block mb-0.5">Nilai Aktual ({kpi.unit})</label>
                                                             <input
                                                                 type="number" min={0}
                                                                 value={memberActuals[kpi.id]?.actual_value ?? kpi.actual_value}
                                                                 onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], actual_value: Number(e.target.value) } }))}
-                                                                className="w-full border-2 border-emerald-300 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-800 focus:outline-none focus:border-emerald-500 bg-white"
+                                                                className="w-full border-2 border-emerald-500/30 rounded-lg px-3 py-1.5 text-sm font-bold text-foreground focus:outline-none focus:border-emerald-500 bg-card"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Catatan</label>
+                                                            <label className="text-[9px] font-black text-mutedForeground uppercase tracking-wide block mb-0.5">Catatan</label>
                                                             <input
                                                                 type="text" placeholder="Keterangan pencapaian..."
                                                                 value={memberActuals[kpi.id]?.notes ?? kpi.notes ?? ''}
                                                                 onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], notes: e.target.value } }))}
-                                                                className="w-full border-2 border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-300 bg-white"
+                                                                className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:border-emerald-400 bg-card placeholder:text-mutedForeground"
                                                             />
                                                         </div>
                                                     </div>
@@ -706,49 +698,49 @@ export const TeamKPIBoard: React.FC = () => {
             <Modal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} title="Add Team Member">
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">Full Name *</label>
                         <input
                             type="text"
                             value={newMember.full_name}
                             onChange={e => setNewMember(m => ({ ...m, full_name: e.target.value }))}
-                            className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                            className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
                             placeholder="Nama lengkap"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                            <label className="block text-sm font-medium text-foreground mb-1">Role</label>
                             <input
                                 type="text"
                                 value={newMember.role}
                                 onChange={e => setNewMember(m => ({ ...m, role: e.target.value }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                                className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
                                 placeholder="Content Creator"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                            <label className="block text-sm font-medium text-foreground mb-1">Department</label>
                             <input
                                 type="text"
                                 value={newMember.department}
                                 onChange={e => setNewMember(m => ({ ...m, department: e.target.value }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                                className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
                                 placeholder="Marketing"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Avatar URL (optional)</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">Avatar URL (optional)</label>
                         <input
                             type="text"
                             value={newMember.avatar_url}
                             onChange={e => setNewMember(m => ({ ...m, avatar_url: e.target.value }))}
-                            className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                            className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
                             placeholder="https://..."
                         />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
-                        <button onClick={() => setIsAddMemberOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        <button onClick={() => setIsAddMemberOpen(false)} className="px-4 py-2 text-sm font-medium text-mutedForeground hover:bg-slate-500/10 rounded-lg transition-colors">
                             Cancel
                         </button>
                         <button onClick={handleAddMember} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-lg shadow-violet-200">

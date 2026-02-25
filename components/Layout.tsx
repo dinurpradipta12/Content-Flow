@@ -31,13 +31,250 @@ import {
     Power,
     MessageSquare,
     Inbox,
-    AlertTriangle
+    AlertTriangle,
+    BarChart3
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Workspace } from '../types';
 import { updateSupabaseConfig, checkConnectionLatency, supabase } from '../services/supabaseClient';
+import { X } from 'lucide-react';
+
+const THEME_STYLES: Record<string, (color?: string) => string> = {
+    dark: () => `
+        body.theme-dark, .theme-dark, .theme-dark main, .theme-dark .bg-background, .theme-dark.bg-background { background-color: #0f172a !important; }
+        .theme-dark .bg-dot-grid { background-image: radial-gradient(#334155 1px, transparent 1px) !important; }
+        .theme-dark header, .theme-dark aside, .theme-dark .bg-white, .theme-dark .bg-card, .theme-dark [class*="bg-[#F"] { background-color: #1e293b !important; border-color: #475569 !important; color: #f8fafc !important; }
+        .theme-dark .bg-slate-50, .theme-dark .bg-slate-100, .theme-dark .bg-slate-200 { background-color: #0f172a !important; border-color: #334155 !important; }
+        .theme-dark .text-slate-900, .theme-dark .text-slate-800, .theme-dark .text-slate-700 { color: #f1f5f9 !important; }
+        .theme-dark .text-slate-500, .theme-dark .text-slate-400 { color: #94a3b8 !important; }
+        .theme-dark .border-slate-900, .theme-dark .border-slate-800, .theme-dark .border-slate-200 { border-color: #475569 !important; }
+        .theme-dark .shadow-hard { box-shadow: 4px 4px 0px 0px #020617 !important; }
+        .theme-dark .bg-slate-900 { background-color: #3b82f6 !important; color: #fff !important; }
+        .theme-dark input, .theme-dark select, .theme-dark textarea { background-color: #0f172a !important; color: #fff !important; border-color: #475569 !important; }
+        .theme-dark .bg-red-50 { background-color: #1e3a8a !important; border-color: #1e40af !important; color: #bfdbfe !important; }
+        .theme-dark .text-red-500, .theme-dark .text-red-600 { color: #93c5fd !important; }
+        .theme-dark .hover\\:bg-red-500:hover { background-color: #3b82f6 !important; color: #fff !important; }
+        .theme-dark .hover\\:text-red-500:hover { color: #60a5fa !important; }
+        .theme-dark .bg-yellow-400 { background-color: #2563eb !important; color: #fff !important; }
+        .theme-dark .bg-yellow-400 * { color: #fff !important; }
+        .theme-dark [class*="bg-"][class*="-600"] *, .theme-dark [class*="bg-"][class*="-700"] *, .theme-dark [class*="bg-"][class*="-800"] *, .theme-dark [class*="bg-"][class*="-900"] * { color: #fff !important; }
+        .theme-dark .bg-slate-900 .text-red-500, .theme-dark aside .text-red-500 { color: #bfdbfe !important; }
+        .theme-dark .bg-white\\/30 { background-color: rgba(255,255,255,0.1) !important; }
+
+        /* Platform Badges - Solid Brand Colors (Keep for visibility) */
+        .theme-dark .bg-pink-100 { background-color: #db2777 !important; color: #fff !important; }
+        .theme-dark .bg-red-100 { background-color: #dc2626 !important; color: #fff !important; }
+        .theme-dark .bg-blue-100, .theme-dark .bg-blue-50 { background-color: #2563eb !important; color: #fff !important; }
+        .theme-dark .bg-slate-100 { background-color: #1e293b !important; color: #fff !important; }
+        .theme-dark .bg-black { background-color: #000 !important; color: #fff !important; }
+        
+        /* Force icons to be white inside solid platform boxes */
+        .theme-dark [class*="bg-pink-"] svg, .theme-dark [class*="bg-red-"] svg, .theme-dark [class*="bg-blue-"] svg, .theme-dark .bg-black svg { color: #fff !important; stroke: #fff !important; }
+        
+        /* Protection for specific branding elements (logos) */
+        .theme-dark .bg-white.rounded-lg, .theme-dark .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+        .theme-dark .bg-white.rounded-lg svg, .theme-dark .ws-logo-box svg { color: #1e293b !important; stroke: #1e293b !important; }
+        
+        /* Network Status Badge Fixes - Forced Visibility & Clean Backgrounds */
+        .theme-dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.4) !important; color: #4ade80 !important; }
+        .theme-dark .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #facc15 !important; }
+        .theme-dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
+        .theme-dark .bg-green-50 span, .theme-dark .bg-green-50 svg,
+        .theme-dark .bg-yellow-50 span, .theme-dark .bg-yellow-50 svg,
+        .theme-dark .bg-red-50 span, .theme-dark .bg-red-50 svg { background-color: transparent !important; color: inherit !important; stroke: currentColor !important; }
+        .theme-dark [class*="bg-"][class*="-50"] svg { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
+
+        /* Card Badges Fixes - Premium Translucent Look for Pillars & Types */
+        .theme-dark .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #fde047 !important; }
+        .theme-dark .text-yellow-700, .theme-dark .bg-yellow-100 *, .theme-dark .text-yellow-700 * { color: #fde047 !important; }
+        
+        .theme-dark .bg-green-100 { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.4) !important; color: #86efac !important; }
+        .theme-dark .text-green-700, .theme-dark .bg-green-100 *, .theme-dark .text-green-700 * { color: #86efac !important; }
+        
+        .theme-dark .bg-purple-100 { background-color: rgba(168, 85, 247, 0.15) !important; border-color: rgba(168, 85, 247, 0.4) !important; color: #d8b4fe !important; }
+        .theme-dark .text-purple-700, .theme-dark .bg-purple-100 *, .theme-dark .text-purple-700 * { color: #d8b4fe !important; }
+        
+        .theme-dark .bg-blue-100:not([class*="platform"]) { background-color: rgba(59, 130, 246, 0.15) !important; border-color: rgba(59, 130, 246, 0.4) !important; color: #93c5fd !important; }
+        .theme-dark .text-blue-700:not([class*="platform"]), .theme-dark .bg-blue-100:not([class*="platform"]) * { color: #93c5fd !important; }
+        
+        .theme-dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.15) !important; border-color: rgba(249, 115, 22, 0.4) !important; color: #fdba74 !important; }
+        .theme-dark .text-orange-700, .theme-dark .bg-orange-100 *, .theme-dark .text-orange-700 * { color: #fdba74 !important; }
+        
+        .theme-dark .bg-amber-100 { background-color: rgba(245, 158, 11, 0.15) !important; border-color: rgba(245, 158, 11, 0.4) !important; color: #fbbf24 !important; }
+        .theme-dark .text-amber-600, .theme-dark .text-amber-700, .theme-dark .bg-amber-100 *, .theme-dark .text-amber-600 * { color: #fbbf24 !important; }
+
+        .theme-dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #34d399 !important; }
+        .theme-dark .text-emerald-700, .theme-dark .bg-emerald-100 *, .theme-dark .text-emerald-700 * { color: #34d399 !important; }
+
+        .theme-dark .bg-red-100 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
+        .theme-dark .text-red-500, .theme-dark .text-red-600, .theme-dark .text-red-700, .theme-dark .bg-red-100 *, .theme-dark .text-red-600 * { color: #f87171 !important; }
+
+        .theme-dark .bg-pink-100 { background-color: rgba(236, 72, 153, 0.15) !important; border-color: rgba(236, 72, 153, 0.4) !important; color: #f472b6 !important; }
+        .theme-dark .text-pink-600, .theme-dark .text-pink-700, .theme-dark .bg-pink-100 *, .theme-dark .text-pink-600 * { color: #f472b6 !important; }
+        
+        .theme-dark .bg-yellow-300 { background-color: #facc15 !important; border-color: #eab308 !important; color: #020617 !important; }
+        .theme-dark .bg-yellow-300 * { color: #020617 !important; }
+
+        .theme-dark .bg-white\\/50, .theme-dark .bg-white\\/60 { background-color: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.15) !important; color: #e2e8f0 !important; }
+        .theme-dark .bg-white\\/50 *, .theme-dark .bg-white\\/60 * { color: #e2e8f0 !important; stroke: #e2e8f0 !important; }
+    `,
+    midnight: () => `
+        body.theme-midnight, .theme-midnight, .theme-midnight main, .theme-midnight .bg-background, .theme-midnight.bg-background { background-color: #0c1130 !important; }
+        .theme-midnight .bg-dot-grid { background-image: radial-gradient(#312e81 1px, transparent 1px) !important; }
+        .theme-midnight header, .theme-midnight aside, .theme-midnight .bg-white, .theme-midnight .bg-card, .theme-midnight [class*="bg-[#F"] { background-color: #1e1b4b !important; border-color: #3730a3 !important; color: #e0e7ff !important; }
+        .theme-midnight .bg-slate-50, .theme-midnight .bg-slate-100, .theme-midnight .bg-slate-200 { background-color: #0c1130 !important; border-color: #312e81 !important; }
+        .theme-midnight .text-slate-900, .theme-midnight .text-slate-800, .theme-midnight .text-slate-700 { color: #c7d2fe !important; }
+        .theme-midnight .text-slate-500, .theme-midnight .text-slate-400 { color: #818cf8 !important; }
+        .theme-midnight .border-slate-900, .theme-midnight .border-slate-800, .theme-midnight .border-slate-200 { border-color: #4338ca !important; }
+        .theme-midnight .shadow-hard { box-shadow: 4px 4px 0px 0px #0b0f29 !important; }
+        .theme-midnight .bg-slate-900 { background-color: #6366f1 !important; color: #fff !important; }
+        .theme-midnight input, .theme-midnight select, .theme-midnight textarea { background-color: #0c1130 !important; color: #fff !important; border-color: #4338ca !important; }
+        .theme-midnight .bg-red-50 { background-color: #312e81 !important; border-color: #3730a3 !important; color: #a5b4fc !important; }
+        .theme-midnight .text-red-500, .theme-midnight .text-red-600 { color: #a5b4fc !important; }
+        .theme-midnight .hover\\:bg-red-500:hover { background-color: #4f46e5 !important; color: #fff !important; }
+        .theme-midnight .hover\\:text-red-500:hover { color: #818cf8 !important; }
+        .theme-midnight .bg-yellow-400 { background-color: #4f46e5 !important; color: #fff !important; }
+        .theme-midnight .bg-yellow-400 * { color: #fff !important; }
+        .theme-midnight [class*="bg-"][class*="-600"] *, .theme-midnight [class*="bg-"][class*="-700"] *, .theme-midnight [class*="bg-"][class*="-800"] *, .theme-midnight [class*="bg-"][class*="-900"] * { color: #fff !important; }
+        .theme-midnight .bg-slate-900 .text-red-500, .theme-midnight aside .text-red-500 { color: #c7d2fe !important; }
+
+        /* Platform Badges - Solid Brand Colors (Keep for visibility) */
+        .theme-midnight .bg-pink-100 { background-color: #db2777 !important; color: #fff !important; }
+        .theme-midnight .bg-red-100 { background-color: #dc2626 !important; color: #fff !important; }
+        .theme-midnight .bg-blue-100, .theme-midnight .bg-blue-50 { background-color: #2563eb !important; color: #fff !important; }
+        .theme-midnight .bg-slate-100 { background-color: #1e1b4b !important; color: #fff !important; }
+        .theme-midnight .bg-black { background-color: #000 !important; color: #fff !important; }
+        
+        /* Force icons to be white inside solid platform boxes */
+        .theme-midnight [class*="bg-pink-"] svg, .theme-midnight [class*="bg-red-"] svg, .theme-midnight [class*="bg-blue-"] svg, .theme-midnight .bg-black svg { color: #fff !important; stroke: #fff !important; }
+        
+        /* Protection for specific branding elements (logos) */
+        .theme-midnight .bg-white.rounded-lg, .theme-midnight .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+        .theme-midnight .bg-white.rounded-lg svg, .theme-midnight .ws-logo-box svg { color: #1e293b !important; stroke: #1e293b !important; }
+
+        /* Network Status Badge Fixes - Forced Visibility & Clean Backgrounds */
+        .theme-midnight .bg-green-50 { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.4) !important; color: #4ade80 !important; }
+        .theme-midnight .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #facc15 !important; }
+        .theme-midnight .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
+        .theme-midnight .bg-green-50 span, .theme-midnight .bg-green-50 svg,
+        .theme-midnight .bg-yellow-50 span, .theme-midnight .bg-yellow-50 svg,
+        .theme-midnight .bg-red-50 span, .theme-midnight .bg-red-50 svg { background-color: transparent !important; color: inherit !important; stroke: currentColor !important; }
+        .theme-midnight [class*="bg-"][class*="-50"] svg { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
+
+        /* Card Badges Fixes - Premium Translucent Look for Pillars & Types */
+        .theme-midnight .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #fde047 !important; }
+        .theme-midnight .text-yellow-700, .theme-midnight .bg-yellow-100 *, .theme-midnight .text-yellow-700 * { color: #fde047 !important; }
+        
+        .theme-midnight .bg-green-100 { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.4) !important; color: #86efac !important; }
+        .theme-midnight .text-green-700, .theme-midnight .bg-green-100 *, .theme-midnight .text-green-700 * { color: #86efac !important; }
+        
+        .theme-midnight .bg-purple-100 { background-color: rgba(168, 85, 247, 0.15) !important; border-color: rgba(168, 85, 247, 0.4) !important; color: #d8b4fe !important; }
+        .theme-midnight .text-purple-700, .theme-midnight .bg-purple-100 *, .theme-midnight .text-purple-700 * { color: #d8b4fe !important; }
+        
+        .theme-midnight .bg-blue-100:not([class*="platform"]) { background-color: rgba(59, 130, 246, 0.15) !important; border-color: rgba(59, 130, 246, 0.4) !important; color: #93c5fd !important; }
+        .theme-midnight .text-blue-700:not([class*="platform"]), .theme-midnight .bg-blue-100:not([class*="platform"]) * { color: #93c5fd !important; }
+        
+        .theme-midnight .bg-orange-100 { background-color: rgba(249, 115, 22, 0.15) !important; border-color: rgba(249, 115, 22, 0.4) !important; color: #fdba74 !important; }
+        .theme-midnight .text-orange-700, .theme-midnight .bg-orange-100 *, .theme-midnight .text-orange-700 * { color: #fdba74 !important; }
+        
+        .theme-midnight .bg-amber-100 { background-color: rgba(245, 158, 11, 0.15) !important; border-color: rgba(245, 158, 11, 0.4) !important; color: #fbbf24 !important; }
+        .theme-midnight .text-amber-600, .theme-midnight .text-amber-700, .theme-midnight .bg-amber-100 *, .theme-midnight .text-amber-600 * { color: #fbbf24 !important; }
+
+        .theme-midnight .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #34d399 !important; }
+        .theme-midnight .text-emerald-700, .theme-midnight .bg-emerald-100 *, .theme-midnight .text-emerald-700 * { color: #34d399 !important; }
+
+        .theme-midnight .bg-red-100 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
+        .theme-midnight .text-red-500, .theme-midnight .text-red-600, .theme-midnight .text-red-700, .theme-midnight .bg-red-100 *, .theme-midnight .text-red-600 * { color: #f87171 !important; }
+
+        .theme-midnight .bg-pink-100 { background-color: rgba(236, 72, 153, 0.15) !important; border-color: rgba(236, 72, 153, 0.4) !important; color: #f472b6 !important; }
+        .theme-midnight .text-pink-600, .theme-midnight .text-pink-700, .theme-midnight .bg-pink-100 *, .theme-midnight .text-pink-600 * { color: #f472b6 !important; }
+        
+        .theme-midnight .bg-yellow-300 { background-color: #facc15 !important; border-color: #eab308 !important; color: #0b0f29 !important; }
+        .theme-midnight .bg-yellow-300 * { color: #0b0f29 !important; }
+
+        .theme-midnight .bg-white\\/50, .theme-midnight .bg-white\\/60 { background-color: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.15) !important; color: #e2e8f0 !important; }
+        .theme-midnight .bg-white\\/50 *, .theme-midnight .bg-white\\/60 * { color: #e2e8f0 !important; stroke: #e2e8f0 !important; }
+    `,
+    pastel: () => `
+        body.theme-pastel, .theme-pastel, .theme-pastel main, .theme-pastel .bg-background, .theme-pastel.bg-background { background-color: #fff1f2 !important; }
+        .theme-pastel .bg-dot-grid { background-image: radial-gradient(#fda4af 1px, transparent 1px) !important; }
+        .theme-pastel header, .theme-pastel aside, .theme-pastel .bg-white, .theme-pastel .bg-card, .theme-pastel [class*="bg-[#F"] { background-color: #ffe4e6 !important; border-color: #fda4af !important; color: #881337 !important; }
+        .theme-pastel .bg-slate-50, .theme-pastel .bg-slate-100, .theme-pastel .bg-slate-200 { background-color: #fff1f2 !important; border-color: #fecdd3 !important; }
+        .theme-pastel .text-slate-900, .theme-pastel .text-slate-800, .theme-pastel .text-slate-700 { color: #9f1239 !important; }
+        .theme-pastel .text-slate-500, .theme-pastel .text-slate-400 { color: #e11d48 !important; }
+        .theme-pastel .border-slate-900, .theme-pastel .border-slate-800, .theme-pastel .border-slate-200 { border-color: #fb7185 !important; }
+        .theme-pastel .shadow-hard { box-shadow: 4px 4px 0px 0px #fb7185 !important; }
+        .theme-pastel .bg-slate-900 { background-color: #fb7185 !important; color: #fff !important; }
+        .theme-pastel input, .theme-pastel select, .theme-pastel textarea { background-color: #fff1f2 !important; color: #881337 !important; border-color: #fb7185 !important; }
+        .theme-pastel .bg-red-50 { background-color: #fce7f3 !important; border-color: #fbcfe8 !important; color: #be185d !important; }
+        .theme-pastel .bg-yellow-400 { background-color: #fb7185 !important; color: #fff !important; }
+        .theme-pastel .bg-slate-900 .text-red-500 { color: #ffe4e6 !important; }
+        .theme-pastel .bg-slate-900 .hover\\:bg-red-50:hover { background-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+   `,
+    'pastel-green': () => `
+        body.theme-pastel-green, .theme-pastel-green, .theme-pastel-green main, .theme-pastel-green .bg-background, .theme-pastel-green.bg-background { background-color: #f0fdf4 !important; }
+        .theme-pastel-green .bg-dot-grid { background-image: radial-gradient(#86efac 1px, transparent 1px) !important; }
+        .theme-pastel-green header, .theme-pastel-green aside, .theme-pastel-green .bg-white, .theme-pastel-green .bg-card, .theme-pastel-green [class*="bg-[#F"] { background-color: #dcfce7 !important; border-color: #86efac !important; color: #14532d !important; }
+        .theme-pastel-green .bg-slate-50, .theme-pastel-green .bg-slate-100, .theme-pastel-green .bg-slate-200 { background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; }
+        .theme-pastel-green .text-slate-900, .theme-pastel-green .text-slate-800, .theme-pastel-green .text-slate-700 { color: #166534 !important; }
+        .theme-pastel-green .text-slate-500, .theme-pastel-green .text-slate-400 { color: #22c55e !important; }
+        .theme-pastel-green .border-slate-900, .theme-pastel-green .border-slate-800, .theme-pastel-green .border-slate-200 { border-color: #4ade80 !important; }
+        .theme-pastel-green .shadow-hard { box-shadow: 4px 4px 0px 0px #4ade80 !important; }
+        .theme-pastel-green .bg-slate-900 { background-color: #4ade80 !important; color: #14532d !important; }
+        .theme-pastel-green input, .theme-pastel-green select, .theme-pastel-green textarea { background-color: #f0fdf4 !important; color: #14532d !important; border-color: #4ade80 !important; }
+        .theme-pastel-green .bg-red-50 { background-color: #dcfce7 !important; border-color: #bbf7d0 !important; color: #166534 !important; }
+        .theme-pastel-green .bg-yellow-400 { background-color: #4ade80 !important; color: #14532d !important; }
+        .theme-pastel-green .bg-slate-900 .text-red-500 { color: #dcfce7 !important; }
+        .theme-pastel-green .bg-slate-900 .hover\\:bg-red-50:hover { background-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+   `,
+    'pastel-yellow': () => `
+        body.theme-pastel-yellow, .theme-pastel-yellow, .theme-pastel-yellow main, .theme-pastel-yellow .bg-background, .theme-pastel-yellow.bg-background { background-color: #fefce8 !important; }
+        .theme-pastel-yellow .bg-dot-grid { background-image: radial-gradient(#fde047 1px, transparent 1px) !important; }
+        .theme-pastel-yellow header, .theme-pastel-yellow aside, .theme-pastel-yellow .bg-white, .theme-pastel-yellow .bg-card, .theme-pastel-yellow [class*="bg-[#F"] { background-color: #fef9c3 !important; border-color: #fde047 !important; color: #713f12 !important; }
+        .theme-pastel-yellow .bg-slate-50, .theme-pastel-yellow .bg-slate-100, .theme-pastel-yellow .bg-slate-200 { background-color: #fefce8 !important; border-color: #fef08a !important; }
+        .theme-pastel-yellow .text-slate-900, .theme-pastel-yellow .text-slate-800, .theme-pastel-yellow .text-slate-700 { color: #854d0e !important; }
+        .theme-pastel-yellow .text-slate-500, .theme-pastel-yellow .text-slate-400 { color: #eab308 !important; }
+        .theme-pastel-yellow .border-slate-900, .theme-pastel-yellow .border-slate-800, .theme-pastel-yellow .border-slate-200 { border-color: #facc15 !important; }
+        .theme-pastel-yellow .shadow-hard { box-shadow: 4px 4px 0px 0px #facc15 !important; }
+        .theme-pastel-yellow .bg-slate-900 { background-color: #facc15 !important; color: #713f12 !important; }
+        .theme-pastel-yellow input, .theme-pastel-yellow select, .theme-pastel-yellow textarea { background-color: #fefce8 !important; color: #713f12 !important; border-color: #facc15 !important; }
+        .theme-pastel-yellow .bg-red-50 { background-color: #fef9c3 !important; border-color: #fef08a !important; color: #854d0e !important; }
+        .theme-pastel-yellow .bg-yellow-400 { background-color: #facc15 !important; color: #713f12 !important; }
+        .theme-pastel-yellow .bg-slate-900 .text-red-500 { color: #fef9c3 !important; }
+        .theme-pastel-yellow .bg-slate-900 .hover\\:bg-red-50:hover { background-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+   `,
+    custom: (color) => `
+        body.theme-custom, .theme-custom, .theme-custom main { background-color: ${color}15 !important; }
+        .theme-custom .bg-background { background-color: ${color}10 !important; }
+        .theme-custom .bg-dot-grid { background-image: radial-gradient(${color}33 1px, transparent 1px) !important; }
+        .theme-custom header, .theme-custom aside, .theme-custom .bg-card:not([class*="bg-"]):not([class*="from-"]), .theme-custom .bg-white:not([class*="bg-"]):not([class*="from-"]) { background-color: #ffffff !important; border-color: ${color} !important; }
+        .theme-custom .bg-slate-50, .theme-custom .bg-slate-100 { background-color: ${color}05 !important; border-color: ${color}22 !important; }
+        .theme-custom .text-slate-900, .theme-custom .text-slate-800, .theme-custom .text-slate-700 { color: #1e293b !important; }
+        .theme-custom .text-slate-500, .theme-custom .text-slate-400 { color: #64748b !important; }
+        .theme-custom h1, .theme-custom h2, .theme-custom h3 { color: ${color} !important; }
+        .theme-custom .border-slate-900, .theme-custom .border-slate-200 { border-color: ${color}66 !important; }
+        .theme-custom .shadow-hard { box-shadow: 4px 4px 0px 0px ${color} !important; }
+        /* Interactive Elements */
+        .theme-custom .bg-slate-900, .theme-custom .bg-slate-800, .theme-custom .bg-slate-700 { background-color: ${color} !important; color: #fff !important; }
+        .theme-custom .bg-slate-900 *, .theme-custom .bg-slate-800 *, .theme-custom .bg-slate-700 * { color: #fff !important; }
+        .theme-custom input, .theme-custom select, .theme-custom textarea { border-color: ${color} !important; color: #1e293b !important; }
+        .theme-custom .bg-accent { background-color: ${color} !important; color: #fff !important; }
+        .theme-custom .bg-accent * { color: #fff !important; }
+        /* Chart & Metric Fixes */
+        .theme-custom .recharts-text, .theme-custom .recharts-legend-item-text { fill: #1e293b !important; color: #1e293b !important; font-weight: 700 !important; }
+        .theme-custom .recharts-cartesian-grid-horizontal line, .theme-custom .recharts-cartesian-grid-vertical line { stroke: ${color}22 !important; }
+        /* Maintain accessibility on colored sections */
+        .theme-custom [class*="bg-"][class*="-500"] *, 
+        .theme-custom [class*="bg-"][class*="-600"] *, 
+        .theme-custom [class*="bg-"][class*="-700"] *, 
+        .theme-custom [class*="bg-"][class*="-800"] *,
+        .theme-custom [class*="bg-"][class*="-900"] *,
+        .theme-custom [class*="bg-accent"] * { color: #fff !important; }
+        .theme-custom .bg-yellow-400, .theme-custom .bg-yellow-400 * { color: #1e293b !important; }
+   `
+};
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from './NotificationProvider';
 import { useAppConfig } from './AppConfigProvider';
@@ -49,66 +286,66 @@ interface LayoutProps {
 }
 
 // --- SQL TEMPLATE FOR USER CONVENIENCE ---
-const INITIAL_SQL_SCRIPT = `-- Script Update Database (Jalankan di Supabase SQL Editor)
+const INITIAL_SQL_SCRIPT = `-- Script Update Database(Jalankan di Supabase SQL Editor)
 
--- 1. Table: Workspaces
-create table if not exists public.workspaces (
-  id uuid not null default gen_random_uuid (),
-  created_at timestamp with time zone not null default now(),
-  name text not null,
-  role text null,
-  platforms text[] null,
-  color text null,
-  description text null,
-  period text null,
-  account_name text null,
-  logo_url text null,
-  members text[] null,
-  invite_code text null,
-  constraint workspaces_pkey primary key (id)
+--1. Table: Workspaces
+create table if not exists public.workspaces(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        name text not null,
+            role text null,
+                platforms text[] null,
+                    color text null,
+                        description text null,
+                            period text null,
+                                account_name text null,
+                                    logo_url text null,
+                                        members text[] null,
+                                            invite_code text null,
+                                                constraint workspaces_pkey primary key(id)
 );
 
--- 2. Table: Content Items
-create table if not exists public.content_items (
-  id uuid not null default gen_random_uuid (),
-  created_at timestamp with time zone not null default now(),
-  workspace_id uuid null,
-  title text not null,
-  pillar text null,
-  type text null,
-  platform text null,
-  status text null,
-  priority text null,
-  date date null,
-  script text null,
-  pic text null,
-  approval text null,
-  content_link text null,
-  metrics jsonb null,
-  constraint content_items_pkey primary key (id),
-  constraint content_items_workspace_id_fkey foreign key (workspace_id) references workspaces (id) on delete cascade
+--2. Table: Content Items
+create table if not exists public.content_items(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        workspace_id uuid null,
+            title text not null,
+                pillar text null,
+                    type text null,
+                        platform text null,
+                            status text null,
+                                priority text null,
+                                    date date null,
+                                        script text null,
+                                            pic text null,
+                                                approval text null,
+                                                    content_link text null,
+                                                        metrics jsonb null,
+                                                            constraint content_items_pkey primary key(id),
+                                                                constraint content_items_workspace_id_fkey foreign key(workspace_id) references workspaces(id) on delete cascade
 );
 
--- MIGRATION: Tambahkan kolom metrics jika tabel sudah ada
+--MIGRATION: Tambahkan kolom metrics jika tabel sudah ada
 alter table public.content_items add column if not exists metrics jsonb null;
 
--- 3. Table: App Users
-create table if not exists public.app_users (
-  id uuid not null default gen_random_uuid (),
-  created_at timestamp with time zone not null default now(),
-  username text not null unique,
-  password text not null,
-  role text default 'Member',
-  full_name text,
-  avatar_url text,
-  bio text,
-  custom_status text,
-  job_title text,
-  email text,
-  constraint app_users_pkey primary key (id)
+--3. Table: App Users
+create table if not exists public.app_users(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        username text not null unique,
+            password text not null,
+                role text default 'Member',
+                    full_name text,
+                        avatar_url text,
+                            bio text,
+                                custom_status text,
+                                    job_title text,
+                                        email text,
+                                            constraint app_users_pkey primary key(id)
 );
 
--- MIGRATION: Tambahkan kolom jika tabel sudah ada (Anti Error)
+--MIGRATION: Tambahkan kolom jika tabel sudah ada(Anti Error)
 alter table public.app_users add column if not exists job_title text;
 alter table public.app_users add column if not exists email text;
 alter table public.app_users add column if not exists is_active boolean default true;
@@ -121,59 +358,59 @@ alter table public.app_users add column if not exists city text;
 alter table public.app_users add column if not exists timezone text;
 alter table public.app_users add column if not exists subscription_package text;
 
--- Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
-alter table public.app_users alter column subscription_start type timestamptz using subscription_start::timestamptz;
-alter table public.app_users alter column subscription_end type timestamptz using subscription_end::timestamptz;
+--Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
+alter table public.app_users alter column subscription_start type timestamptz using subscription_start:: timestamptz;
+alter table public.app_users alter column subscription_end type timestamptz using subscription_end:: timestamptz;
 
--- 4. Table: App Config (Global Branding)
-create table if not exists public.app_config (
-  id int not null default 1,
-  app_name text,
-  app_logo text,
-  app_favicon text,
-  updated_at timestamp with time zone default now(),
-  app_version text default 'v1.0.0',
-  constraint app_config_pkey primary key (id),
-  constraint single_row check (id = 1)
+--4. Table: App Config(Global Branding)
+create table if not exists public.app_config(
+    id int not null default 1,
+    app_name text,
+    app_logo text,
+    app_favicon text,
+    updated_at timestamp with time zone default now(),
+        app_version text default 'v1.0.0',
+            constraint app_config_pkey primary key(id),
+                constraint single_row check(id = 1)
 );
 
 alter table public.app_config add column if not exists app_version text default 'v1.0.0';
 
--- 5. Insert Default Data
--- Superuser (Update jika sudah ada)
-insert into public.app_users (username, password, role, full_name, avatar_url, job_title, email)
-values ('arunika', 'ar4925', 'Developer', 'Super Admin', 'https://picsum.photos/seed/arunika/200', 'Lead Developer', 'admin@arunika.app')
-on conflict (username) do update 
+--5. Insert Default Data
+--Superuser(Update jika sudah ada)
+insert into public.app_users(username, password, role, full_name, avatar_url, job_title, email)
+values('arunika', 'ar4925', 'Developer', 'Super Admin', 'https://picsum.photos/seed/arunika/200', 'Lead Developer', 'admin@arunika.app')
+on conflict(username) do update 
 set job_title = excluded.job_title, email = excluded.email;
 
--- Default Config
-insert into public.app_config (id, app_name, app_logo, app_favicon)
-values (1, 'Arunika', '', '')
-on conflict (id) do nothing;
+--Default Config
+insert into public.app_config(id, app_name, app_logo, app_favicon)
+values(1, 'Arunika', '', '')
+on conflict(id) do nothing;
 
--- 6. Policies (RLS)
+--6. Policies(RLS)
 alter table public.workspaces enable row level security;
 alter table public.content_items enable row level security;
 alter table public.app_users enable row level security;
 
--- 8. Table: Global Broadcasts
-create table if not exists public.global_broadcasts (
-  id uuid not null default gen_random_uuid (),
-  created_at timestamp with time zone not null default now(),
-  sender_id uuid references app_users(id),
-  title text not null,
-  message text not null,
-  type text default 'Announcement',
-  is_active boolean default true,
-  constraint global_broadcasts_pkey primary key (id)
+--8. Table: Global Broadcasts
+create table if not exists public.global_broadcasts(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        sender_id uuid references app_users(id),
+            title text not null,
+                message text not null,
+                    type text default 'Announcement',
+                        is_active boolean default true,
+                            constraint global_broadcasts_pkey primary key(id)
 );
 
--- Enable RLS & Realtime
+--Enable RLS & Realtime
 alter table public.global_broadcasts enable row level security;
 do $$ begin
-  if not exists (select 1 from pg_policies where policyname = 'Public view for global_broadcasts') then
-    create policy "Public view for global_broadcasts" on public.global_broadcasts for select using (true);
-  end if;
+  if not exists(select 1 from pg_policies where policyname = 'Public view for global_broadcasts') then
+    create policy "Public view for global_broadcasts" on public.global_broadcasts for select using(true);
+    end if;
 end $$;
 alter publication supabase_realtime add table global_broadcasts;
 
@@ -184,39 +421,39 @@ drop policy if exists "Enable all access" on public.content_items;
 drop policy if exists "Enable all access" on public.app_users;
 drop policy if exists "Enable all access" on public.app_config;
 
-create policy "Enable all access" on public.workspaces for all using (true) with check (true);
-create policy "Enable all access" on public.content_items for all using (true) with check (true);
-create policy "Enable all access" on public.app_users for all using (true) with check (true);
-create policy "Enable all access" on public.app_config for all using (true) with check (true);
+create policy "Enable all access" on public.workspaces for all using(true) with check(true);
+create policy "Enable all access" on public.content_items for all using(true) with check(true);
+create policy "Enable all access" on public.app_users for all using(true) with check(true);
+create policy "Enable all access" on public.app_config for all using(true) with check(true);
 
--- 7. Team KPI Board Tables
-create table if not exists public.team_members (
-  id uuid not null default gen_random_uuid(),
-  created_at timestamp with time zone not null default now(),
-  user_id uuid null,
-  full_name text not null,
-  role text default 'Member',
-  department text default '',
-  avatar_url text default '',
-  status text default 'active',
-  constraint team_members_pkey primary key (id),
-  constraint team_members_user_id_fkey foreign key (user_id) references public.app_users(id) on delete set null
+--7. Team KPI Board Tables
+create table if not exists public.team_members(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        user_id uuid null,
+            full_name text not null,
+                role text default 'Member',
+                    department text default '',
+                        avatar_url text default '',
+                            status text default 'active',
+                                constraint team_members_pkey primary key(id),
+                                    constraint team_members_user_id_fkey foreign key(user_id) references public.app_users(id) on delete set null
 );
 
-create table if not exists public.team_kpis (
-  id uuid not null default gen_random_uuid(),
-  created_at timestamp with time zone not null default now(),
-  member_id uuid not null,
-  metric_name text not null,
-  category text default 'General',
-  target_value numeric not null default 0,
-  actual_value numeric not null default 0,
-  unit text default '%',
-  period text not null default 'monthly',
-  period_date date not null default current_date,
-  notes text default '',
-  constraint team_kpis_pkey primary key (id),
-  constraint team_kpis_member_id_fkey foreign key (member_id) references public.team_members(id) on delete cascade
+create table if not exists public.team_kpis(
+                                        id uuid not null default gen_random_uuid(),
+                                        created_at timestamp with time zone not null default now(),
+                                            member_id uuid not null,
+                                                metric_name text not null,
+                                                    category text default 'General',
+                                                        target_value numeric not null default 0,
+                                                            actual_value numeric not null default 0,
+                                                                unit text default '%',
+                                                                    period text not null default 'monthly',
+                                                                        period_date date not null default current_date,
+                                                                            notes text default '',
+                                                                                constraint team_kpis_pkey primary key(id),
+                                                                                    constraint team_kpis_member_id_fkey foreign key(member_id) references public.team_members(id) on delete cascade
 );
 
 alter table public.team_members enable row level security;
@@ -225,73 +462,73 @@ alter table public.team_kpis enable row level security;
 drop policy if exists "Enable all access" on public.team_members;
 drop policy if exists "Enable all access" on public.team_kpis;
 
-create policy "Enable all access" on public.team_members for all using (true) with check (true);
-create policy "Enable all access" on public.team_kpis for all using (true) with check (true);
+create policy "Enable all access" on public.team_members for all using(true) with check(true);
+create policy "Enable all access" on public.team_kpis for all using(true) with check(true);
 
--- Enable Realtime for live profile sync
+--Enable Realtime for live profile sync
 do $$
 begin
-  if not exists (
+  if not exists(
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime' and tablename = 'app_users'
-  ) then
+) then
     alter publication supabase_realtime add table public.app_users;
   end if;
 
-  if not exists (
+if not exists(
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime' and tablename = 'notifications'
-  ) then
+) then
     alter publication supabase_realtime add table public.notifications;
   end if;
 end
 $$;
 
--- 8. Notifications Table (Success feedback for users)
-create table if not exists public.notifications (
-  id uuid not null default gen_random_uuid (),
-  created_at timestamp with time zone not null default now(),
-  recipient_id uuid not null,
-  actor_id uuid null,
-  workspace_id uuid null,
-  type text not null,
-  title text not null,
-  content text not null,
-  is_read boolean default false,
-  metadata jsonb null,
-  constraint notifications_pkey primary key (id),
-  constraint notifications_recipient_id_fkey foreign key (recipient_id) references public.app_users(id) on delete cascade
+--8. Notifications Table(Success feedback for users)
+create table if not exists public.notifications(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        recipient_id uuid not null,
+            actor_id uuid null,
+                workspace_id uuid null,
+                    type text not null,
+                        title text not null,
+                            content text not null,
+                                is_read boolean default false,
+                                    metadata jsonb null,
+                                        constraint notifications_pkey primary key(id),
+                                            constraint notifications_recipient_id_fkey foreign key(recipient_id) references public.app_users(id) on delete cascade
 );
 
--- 9. Developer Inbox (Registration & Renewal)
-create table if not exists public.developer_inbox (
-  id uuid not null default gen_random_uuid (),
-  created_at timestamp with time zone not null default now(),
-  user_id uuid null,
-  sender_name text,
-  sender_email text,
-  sender_username text,
-  subscription_code text,
-  message text,
-  is_read boolean default false,
-  is_resolved boolean default false,
-  -- Additional columns for Renewal Workflow
+--9. Developer Inbox(Registration & Renewal)
+create table if not exists public.developer_inbox(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+        user_id uuid null,
+            sender_name text,
+                sender_email text,
+                    sender_username text,
+                        subscription_code text,
+                            message text,
+                                is_read boolean default false,
+                                    is_resolved boolean default false,
+                                        --Additional columns for Renewal Workflow
   type text default 'registration', -- 'registration' or 'renewal'
   package_name text,
-  amount numeric,
-  proof_url text,
-  duration_days int,
-  constraint developer_inbox_pkey primary key (id)
+    amount numeric,
+        proof_url text,
+            duration_days int,
+                constraint developer_inbox_pkey primary key(id)
 );
 
--- MIGRATION: Tambahkan kolom baru jika tabel sudah ada (Anti Error)
+--MIGRATION: Tambahkan kolom baru jika tabel sudah ada(Anti Error)
 alter table public.developer_inbox add column if not exists type text default 'registration';
 alter table public.developer_inbox add column if not exists package_name text;
 alter table public.developer_inbox add column if not exists amount numeric;
 alter table public.developer_inbox add column if not exists proof_url text;
 alter table public.developer_inbox add column if not exists duration_days int;
 
--- Fix Not-Null Constraint on subscription_code for renewals
+--Fix Not-Null Constraint on subscription_code for renewals
 alter table public.developer_inbox alter column subscription_code drop not null;
 
 alter table public.notifications enable row level security;
@@ -300,16 +537,16 @@ alter table public.developer_inbox enable row level security;
 drop policy if exists "Enable all access" on public.notifications;
 drop policy if exists "Enable all access" on public.developer_inbox;
 
-create policy "Enable all access" on public.notifications for all using (true) with check (true);
-create policy "Enable all access" on public.developer_inbox for all using (true) with check (true);
+create policy "Enable all access" on public.notifications for all using(true) with check(true);
+create policy "Enable all access" on public.developer_inbox for all using(true) with check(true);
 
--- Enable Realtime
+--Enable Realtime
 do $$
 begin
-  if not exists (
+  if not exists(
     select 1 from pg_publication_tables
     where pubname = 'supabase_realtime' and tablename = 'developer_inbox'
-  ) then
+) then
     alter publication supabase_realtime add table public.developer_inbox;
   end if;
 end
@@ -373,6 +610,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
     const [latency, setLatency] = useState(0);
 
+    // Context Theme State
+    const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('app_ui_theme') || 'light');
+    const [customColor, setCustomColor] = useState(() => localStorage.getItem('app_custom_color') || '#8b5cf6');
+    const [showThemeModal, setShowThemeModal] = useState(false);
+
     // User Profile State
     const [userProfile, setUserProfile] = useState({
         name: localStorage.getItem('user_name') || 'User',
@@ -386,6 +628,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [branding, setBranding] = useState({
         appName: localStorage.getItem('app_name') || 'Arunika',
         appLogo: localStorage.getItem('app_logo') || '',
+        appLogoLight: localStorage.getItem('app_logo_light') || '',
         appFavicon: localStorage.getItem('app_favicon') || '',
     });
 
@@ -455,6 +698,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
         checkNetwork();
         const interval = setInterval(checkNetwork, 10000);
+
+        // Theme Load
+        const savedTheme = localStorage.getItem('app_ui_theme');
+        if (savedTheme) setCurrentTheme(savedTheme);
+        const savedColor = localStorage.getItem('app_custom_color');
+        if (savedColor) setCustomColor(savedColor);
 
         // Global Config is now managed by AppConfigProvider
         fetchUserProfile();
@@ -569,11 +818,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             setBranding({
                 appName: config.app_name || 'Arunika',
                 appLogo: config.app_logo || '',
+                appLogoLight: config.app_logo_light || '',
                 appFavicon: config.app_favicon || ''
             });
             // Update cache for next refresh
             localStorage.setItem('app_name', config.app_name);
             localStorage.setItem('app_logo', config.app_logo);
+            localStorage.setItem('app_logo_light', config.app_logo_light);
             localStorage.setItem('app_favicon', config.app_favicon);
         }
     }, [config]);
@@ -588,6 +839,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { id: 'kpi', path: '/script', defaultLabel: 'Team KPI Board', icon: <BarChart2 size={20} /> },
     ];
 
+    // --- THEME SYNC WITH BODY & HTML ---
+    useEffect(() => {
+        // Remove all possible theme classes from body and html (root)
+        const themeClasses = ['theme-light', 'theme-dark', 'theme-midnight', 'theme-pastel', 'theme-pastel-green', 'theme-pastel-yellow', 'theme-custom'];
+        document.body.classList.remove(...themeClasses);
+        document.documentElement.classList.remove(...themeClasses);
+
+        // Add current theme class
+        document.body.classList.add(`theme-${currentTheme}`);
+        document.documentElement.classList.add(`theme-${currentTheme}`);
+    }, [currentTheme]);
+
     // Listen for Role & Subscription Changes via Realtime + Local Poll
     useEffect(() => {
         const currentUserId = localStorage.getItem('user_id');
@@ -599,7 +862,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             .channel('app_users_status_checker')
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${currentUserId}` },
+                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${currentUserId}` },
                 async (payload: any) => {
                     const newRole = payload.new.role;
                     const oldRole = localStorage.getItem('user_role');
@@ -646,7 +909,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 .channel('app_users_admin_checker')
                 .on(
                     'postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${tenantId}` },
+                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${tenantId}` },
                     (payload: any) => {
                         if (payload.new.is_active === false) {
                             setStatusModal({
@@ -686,7 +949,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         console.log(`[Subscription] Banner showing! Days left: ${diffDays}`);
                     } else {
                         setDaysToSubExp(null);
-                        console.log(`[Subscription] Banner hidden. Days left: ${diffDays} (Target <= 5)`);
+                        console.log(`[Subscription] Banner hidden.Days left: ${diffDays} (Target <= 5)`);
                     }
                 }
             } else {
@@ -795,6 +1058,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         // 1. Update State & LocalStorage (Optimistic)
         localStorage.setItem('app_name', branding.appName);
         localStorage.setItem('app_logo', branding.appLogo);
+        localStorage.setItem('app_logo_light', branding.appLogoLight);
         localStorage.setItem('app_favicon', branding.appFavicon);
 
         // 2. Persist to Global Config Table
@@ -803,6 +1067,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 id: 1,
                 app_name: branding.appName,
                 app_logo: branding.appLogo,
+                app_logo_light: branding.appLogoLight,
                 app_favicon: branding.appFavicon
             });
             if (error) throw error;
@@ -821,7 +1086,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'user' | 'app' | 'favicon') => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'user' | 'app' | 'favicon' | 'app_light') => {
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > 1024 * 1024) { alert("File terlalu besar (Max 1MB)"); return; }
@@ -830,6 +1095,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 const res = reader.result as string;
                 if (type === 'user') setUserProfile(p => ({ ...p, avatar: res }));
                 else if (type === 'app') setBranding(b => ({ ...b, appLogo: res }));
+                else if (type === 'app_light') setBranding(b => ({ ...b, appLogoLight: res }));
                 else if (type === 'favicon') setBranding(b => ({ ...b, appFavicon: res }));
             };
             reader.readAsDataURL(file);
@@ -1003,30 +1269,40 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
         ],
         'Admin Zone': [
-            { id: 'team', path: '/admin/team', label: 'Team Mgmt', icon: Briefcase, adminOnly: true },
+            { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
         ],
         'Superuser': [
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
             { id: 'inbox', path: '/admin/inbox', label: 'Developer Inbox', icon: Inbox, developerOnly: true },
+            { id: 'analytics', path: '/admin/analytics', label: 'Analytics', icon: BarChart3, developerOnly: true },
             { id: 'workspace', path: '/admin/workspace', label: 'Workspace Settings', icon: Settings, developerOnly: true },
         ]
     };
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-background relative">
+        <div className={`flex h-screen w-full overflow-hidden bg-background relative theme-${currentTheme}`}>
+            {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
             {/* Sidebar (Fixed position always) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r-2 border-slate-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`fixed inset-y-0 left-0 z-40 w-72 bg-card border-r-2 border-slate-200 transition-transform duration-300 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
                 <div className="h-auto flex flex-col items-start justify-center px-8 shrink-0 py-10 gap-4">
                     <div className="flex items-center justify-start w-full">
-                        {config?.app_logo || branding.appLogo ? (
-                            <img src={config?.app_logo || branding.appLogo} className="max-w-[180px] max-h-20 object-contain" alt="Logo" />
-                        ) : (
-                            <div className="w-14 h-14 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard">
-                                <Layers className="text-white" size={28} />
-                            </div>
-                        )}
+                        {(() => {
+                            const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
+                            const activeLogo = isDarkTheme
+                                ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
+                                : (config?.app_logo || branding.appLogo);
+
+                            if (activeLogo) {
+                                return <img src={activeLogo} className="max-w-[300px] max-h-20 object-contain" alt="Logo" />;
+                            }
+                            return (
+                                <div className="w-14 h-14 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard">
+                                    <Layers className="text-white" size={28} />
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
 
@@ -1086,10 +1362,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 // The developer must explicitly 'unhide' them in Workspace Settings.
                                 // If a new page is NOT in hidden_pages, what does it mean?
                                 // Let's consider a new page visible ONLY if it is explicitly NOT hidden
-                                // Wait, if it's hidden by default, and `hidden_pages` means hidden, 
-                                // then we can't unhide it using `hidden_pages`. 
-                                // As a workaround, we treat `hidden_pages` for non-core pages as a WHITELIST if we invert logic,
-                                // but the UI uses `includes(id)` as hidden. 
+                                // Wait, if it's hidden by default, and`hidden_pages` means hidden, 
+                                // then we can't unhide it using`hidden_pages`. 
+                                // As a workaround, we treat`hidden_pages` for non-core pages as a WHITELIST if we invert logic,
+                                // but the UI uses`includes(id)` as hidden. 
                                 // If it's fully new (not in CORE_PAGES) and not explicitly set up in config.page_titles, hide it.
                                 if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false;
                             }
@@ -1105,7 +1381,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         <button
                                             key={item.path}
                                             onClick={() => navigate(item.path)}
-                                            className={`w-full flex items-center justify-start px-4 py-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-accent text-white shadow-hard-mini translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                                            className={`w-full flex items-center justify-start px-4 py-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-accent text-white shadow-hard-mini translate-x-1' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'}`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'group-hover:text-accent transition-colors'} />
@@ -1123,16 +1399,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
 
                 <div className="p-4 mt-auto border-t-2 border-slate-50 shrink-0">
-                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold text-sm">
+                    <button onClick={() => setShowThemeModal(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1">
+                        <Palette size={20} /> UI Theme
+                    </button>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm">
                         <LogOut size={20} /> Sign Out
                     </button>
                     <p className="text-[10px] text-slate-400 font-bold text-left px-4 mt-4 opacity-70 italic">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
                 </div>
             </aside>
 
-            {/* Main Wrapper - Uses padding left instead of flex width sharing */}
-            <div className={`flex flex-col h-screen overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0'}`}>
-                <header className="mt-4 shrink-0 z-30 mx-4 md:mx-6 mb-2 h-16 bg-white rounded-2xl border-2 border-slate-800 shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
+            {/* Main Wrapper-Uses padding left instead of flex width sharing */}
+            <div className={`flex flex-col h-screen overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0'}`}>
+                <header className="mt-4 shrink-0 z-30 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-slate-800 shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
                         {!isSidebarOpen && <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight shrink-0 truncate">{branding.appName}</h1>}
@@ -1145,12 +1424,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span className="hidden sm:inline">{getNetworkLabel()}</span>
                             </div>
                             <div className="flex items-center gap-1 relative" ref={notificationRef}>
-                                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-50'}`}>
+                                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'}`}>
                                     <Bell size={18} />
                                     {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                                 </button>
                                 {isNotificationOpen && (
-                                    <div className="absolute top-full right-0 mt-3 w-[400px] bg-white border-2 border-slate-800 shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="absolute top-full right-0 mt-3 w-[400px] bg-card border-2 border-slate-800 shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                                         <div className="px-6 py-4 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
                                             <div className="flex items-center gap-2"><Bell size={16} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-lg">Notifikasi</span></div>
                                             {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg">Tandai Semua Dibaca</button>}
@@ -1161,7 +1440,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             ) : (
                                                 <div className="divide-y divide-slate-50">
                                                     {notifications.map((notif) => (
-                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover: bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
                                                             {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
                                                             <div className="shrink-0">
                                                                 {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-slate-200 object-cover" /> : <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200"><User size={18} /></div>}
@@ -1178,7 +1457,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </div>
                                 )}
                             </div>
-                            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-full transition-all"><Settings size={18} /></button>
+                            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-accent hover:bg-slate-500/10 rounded-full transition-all"><Settings size={18} /></button>
                         </div>
 
                         <div className="h-6 w-[2px] bg-slate-100"></div>
@@ -1205,29 +1484,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* --- MODALS --- */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Pengaturan Aplikasi">
                 <div className="space-y-4">
-                    <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
-                        <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-slate-800'}`}>
+                    <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'}`}>
+                        <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-foreground'}`}>
                             <div className="flex items-center gap-3"><User size={20} className={activeTab === 'profile' ? 'text-white' : 'text-accent'} /> Informasi Pengguna</div>
                             {activeTab === 'profile' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                         {activeTab === 'profile' && (
-                            <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300">
+                            <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
                                 <form onSubmit={handleSaveProfile} className="space-y-5">
                                     <div className="flex items-center gap-6">
-                                        <div className="relative group cursor-pointer w-20 h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-slate-50 shadow-sm">
+                                        <div className="relative group cursor-pointer w-20 h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-muted shadow-sm">
                                             <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={20} /></div>
                                             <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'user')} />
                                         </div>
-                                        <div className="flex-1"><h4 className="font-bold text-lg text-slate-800">Foto Profil</h4><p className="text-sm text-slate-500">Klik avatar untuk mengganti.</p></div>
+                                        <div className="flex-1"><h4 className="font-bold text-lg text-foreground">Foto Profil</h4><p className="text-sm text-mutedForeground">Klik avatar untuk mengganti.</p></div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Input label="Nama Lengkap" value={userProfile.name} onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })} />
                                         <Input label="Jabatan" value={userProfile.jobTitle} onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })} />
                                     </div>
                                     <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-slate-600 ml-1">Role Aplikasi</label>
-                                        <select className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
+                                        <label className="font-bold text-xs text-mutedForeground ml-1">Role Aplikasi</label>
+                                        <select className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
                                             <option value="Member">Member</option><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Developer">Developer</option>
                                         </select>
                                     </div>
@@ -1239,21 +1518,28 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     {isDeveloper && (
                         <>
-                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
-                                <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-slate-800'}`}>
+                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'}`}>
+                                <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-foreground'}`}>
                                     <div className="flex items-center gap-3"><Palette size={20} className={activeTab === 'branding' ? 'text-white' : 'text-secondary'} /> Tampilan Aplikasi (Admin)</div>
                                     {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </button>
                                 {activeTab === 'branding' && (
-                                    <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300">
+                                    <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
                                         <form onSubmit={handleSaveBranding} className="space-y-6">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="flex flex-col gap-2">
-                                                    <label className="font-bold text-sm text-slate-600">Logo Sidebar</label>
-                                                    <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white transition-colors relative cursor-pointer group">
-                                                        <div className="w-14 h-14 bg-white border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}</div>
-                                                        <div><p className="font-bold text-slate-700 text-sm">Upload PNG</p></div>
+                                                    <label className="font-bold text-sm text-mutedForeground">Logo Sidebar (Standard)</label>
+                                                    <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/5 hover:bg-card transition-colors relative cursor-pointer group">
+                                                        <div className="w-14 h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}</div>
+                                                        <div><p className="font-bold text-foreground text-sm">Upload PNG</p></div>
                                                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-colors relative cursor-pointer group">
+                                                        <div className="w-14 h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers className="text-slate-600" size={24} />}</div>
+                                                        <div><p className="font-bold text-foreground text-sm">Upload PNG Putih</p></div>
+                                                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app_light')} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1263,13 +1549,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </div>
                                 )}
                             </div>
-                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'integration' ? 'bg-white' : 'bg-white hover:bg-slate-50'}`}>
-                                <button onClick={() => toggleTab('integration')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'integration' ? 'bg-tertiary text-slate-800' : 'text-slate-800'}`}>
+                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'integration' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'}`}>
+                                <button onClick={() => toggleTab('integration')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'integration' ? 'bg-tertiary text-slate-800' : 'text-foreground'}`}>
                                     <div className="flex items-center gap-3"><Database size={20} className={activeTab === 'integration' ? 'text-slate-800' : 'text-tertiary'} /> Database & API (Admin)</div>
                                     {activeTab === 'integration' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </button>
                                 {activeTab === 'integration' && (
-                                    <div className="p-6 bg-white animate-in slide-in-from-top-2 duration-300">
+                                    <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
                                         <form onSubmit={handleSaveIntegration} className="space-y-4">
                                             <Input label="Supabase Project URL" value={sbConfig.url} onChange={(e) => setSbConfig({ ...sbConfig, url: e.target.value })} />
                                             <Input label="Supabase Anon Key" value={sbConfig.key} onChange={(e) => setSbConfig({ ...sbConfig, key: e.target.value })} type="password" />
@@ -1503,6 +1789,77 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                 </div>
             </Modal>
-        </div>
+
+            {/* Theme Modal */}
+            {showThemeModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-card border-4 border-slate-900 rounded-3xl p-6 w-[700px] shadow-[8px_8px_0px_0px_#0f172a] relative animate-in zoom-in-95 duration-200">
+                        <button onClick={() => setShowThemeModal(false)} className="absolute top-4 right-4 hover:bg-slate-500/10 p-2 rounded-xl transition-colors">
+                            <X size={20} />
+                        </button>
+                        <h2 className="font-black text-2xl mb-6 flex items-center gap-2 text-foreground">
+                            <Palette className="text-accent" /> UI Theme Configuration
+                        </h2>
+                        <div className="grid grid-cols-3 gap-4">
+                            {[
+                                { id: 'light', name: 'Light (Default)', colors: ['#f8fafc', '#ffffff', '#0f172a'] },
+                                { id: 'dark', name: 'Dark Mode', colors: ['#0f172a', '#1e293b', '#f8fafc'] },
+                                { id: 'midnight', name: 'Midnight', colors: ['#0c1130', '#1e1b4b', '#e0e7ff'] },
+                                { id: 'pastel', name: 'Pastel Pink', colors: ['#fff1f2', '#ffe4e6', '#881337'] },
+                                { id: 'pastel-green', name: 'Pastel Green', colors: ['#f0fdf4', '#dcfce7', '#14532d'] },
+                                { id: 'pastel-yellow', name: 'Pastel Yellow', colors: ['#fefce8', '#fef9c3', '#713f12'] }
+                            ].map(theme => (
+                                <button
+                                    key={theme.id}
+                                    onClick={() => {
+                                        setCurrentTheme(theme.id);
+                                        localStorage.setItem('app_ui_theme', theme.id);
+                                    }}
+                                    className={`p-4 rounded-xl border-4 text-left transition-all hover: -translate-y-1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'}`}
+                                >
+                                    <div className="flex gap-2 mb-3">
+                                        {theme.colors.map((c, i) => (
+                                            <div key={i} className="w-5 h-5 rounded-full border-2 border-slate-800" style={{ backgroundColor: c }} />
+                                        ))}
+                                    </div>
+                                    <span className="font-bold text-xs block text-slate-800">{theme.name}</span>
+                                </button>
+                            ))}
+
+                            <div className={`p-4 rounded-xl border-4 text-left transition-all ${currentTheme === 'custom' ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 bg-slate-50'}`}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-8 h-8 rounded-full border-2 border-slate-800 flex items-center justify-center overflow-hidden cursor-pointer relative" style={{ backgroundColor: customColor }}>
+                                        <input
+                                            type="color"
+                                            value={customColor}
+                                            onChange={(e) => {
+                                                setCustomColor(e.target.value);
+                                                localStorage.setItem('app_custom_color', e.target.value);
+                                                setCurrentTheme('custom');
+                                                localStorage.setItem('app_ui_theme', 'custom');
+                                            }}
+                                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0"
+                                        />
+                                    </div>
+                                    {currentTheme !== 'custom' && (
+                                        <button
+                                            onClick={() => {
+                                                setCurrentTheme('custom');
+                                                localStorage.setItem('app_ui_theme', 'custom');
+                                            }}
+                                            className="text-[10px] font-black underline text-slate-500 hover:text-slate-900"
+                                        >
+                                            Pilih
+                                        </button>
+                                    )}
+                                </div>
+                                <span className="font-bold text-xs block text-slate-800">Warna Kustom</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
+        </div >
     );
 };

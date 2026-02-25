@@ -612,11 +612,11 @@ export const ContentDataInsight: React.FC = () => {
                 </Modal>
             )}
 
-            <div className="bg-white rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="bg-card rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
                 {/* Toolbar */}
-                <div className="bg-slate-50 border-b-2 border-slate-200 p-3 flex flex-col xl:flex-row gap-3 items-center justify-between">
+                <div className="border-b-2 border-slate-200 p-3 flex flex-col xl:flex-row gap-3 items-center justify-between">
                     <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-500 font-bold text-xs">
+                        <div className="flex items-center gap-2 px-3 py-2 border rounded-lg font-bold text-xs">
                             <Filter size={14} />
                             <span className="hidden sm:inline">Filter:</span>
                         </div>
@@ -632,7 +632,7 @@ export const ContentDataInsight: React.FC = () => {
                                     { label: 'YouTube', value: Platform.YOUTUBE },
                                     { label: 'Facebook', value: Platform.FACEBOOK },
                                 ]}
-                                className="!py-2 !text-xs !bg-white !border-slate-300 h-9"
+                                className="!py-2 !text-xs h-9"
                             />
                         </div>
                         <div className="w-36 md:w-40">
@@ -640,14 +640,14 @@ export const ContentDataInsight: React.FC = () => {
                                 value={filterAccount}
                                 onChange={(e) => setFilterAccount(e.target.value)}
                                 options={[{ label: 'Semua Akun', value: 'all' }, ...accounts.map(acc => ({ label: acc, value: acc }))]}
-                                className="!py-2 !text-xs !bg-white !border-slate-300 h-9"
+                                className="!py-2 !text-xs h-9"
                             />
                         </div>
-                        <div className="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-2 h-9">
+                        <div className="flex items-center gap-2 border rounded-lg px-2 h-9">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Periode</span>
-                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-bold text-slate-700 outline-none bg-transparent w-24" />
+                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-24" />
                             <span className="text-slate-300">-</span>
-                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-bold text-slate-700 outline-none bg-transparent w-24" />
+                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-24" />
                         </div>
                         {(filterPlatform !== 'all' || filterAccount !== 'all' || startDate || endDate) && (
                             <button onClick={resetFilters} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
@@ -663,14 +663,14 @@ export const ContentDataInsight: React.FC = () => {
                 {/* Data Table */}
                 <div className="flex-1 overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-white border-b-2 border-slate-100 sticky top-0 z-10 shadow-sm">
+                        <thead className="border-b-2 border-slate-100 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="p-4 w-10"></th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Tanggal Posting</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px] bg-white">Judul Konten</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-white">Link Postingan</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center bg-white min-w-[280px]">Result Metrics</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right bg-white">Action</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tanggal Posting</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Judul Konten</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Link Postingan</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center min-w-[280px]">Result Metrics</th>
+                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -693,7 +693,7 @@ export const ContentDataInsight: React.FC = () => {
                                 filteredData.map((item) => (
                                     <React.Fragment key={item.id}>
                                         <tr
-                                            className={`transition-colors cursor-pointer ${expandedRowId === item.id ? 'bg-purple-50' : 'hover:bg-slate-50'}`}
+                                            className={`transition-colors cursor-pointer ${expandedRowId === item.id ? 'bg-purple-500/10' : 'hover:bg-slate-500/5'}`}
                                             onClick={() => toggleRow(item.id)}
                                         >
                                             <td className="p-4 text-center">
@@ -728,12 +728,12 @@ export const ContentDataInsight: React.FC = () => {
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         onClick={e => e.stopPropagation()}
-                                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100"
+                                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 hover:bg-blue-500/20"
                                                     >
                                                         <LinkIcon size={12} /> Link Tersedia
                                                     </a>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-500/10 px-2 py-1 rounded border border-slate-500/20">
                                                         <LinkIcon size={12} /> Kosong
                                                     </span>
                                                 )}
@@ -760,7 +760,7 @@ export const ContentDataInsight: React.FC = () => {
                                                     {/* TOMBOL INPUT MANUAL */}
                                                     <Button
                                                         size="sm"
-                                                        className="h-8 px-3 text-xs font-bold rounded-lg border-2 border-pink-200 bg-pink-50 text-pink-600 hover:bg-pink-100 hover:border-pink-300 shadow-sm"
+                                                        className="h-8 px-3 text-xs font-bold rounded-lg border-2 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:border-pink-500/50 shadow-sm"
                                                         onClick={(e) => openManualInput(e, item)}
                                                         title="Input Metrics Manual"
                                                     >
@@ -870,7 +870,7 @@ export const ContentDataInsight: React.FC = () => {
             {/* MODAL INPUT MANUAL */}
             {isManualModalOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-white border-2 border-slate-800 overflow-hidden">
+                    <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-card border-2 border-slate-800 overflow-hidden">
 
                         {/* Header Pop Art */}
                         <div className="px-6 py-4 border-b-2 border-slate-800 bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
@@ -886,8 +886,8 @@ export const ContentDataInsight: React.FC = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={saveManualMetrics} className="p-6 space-y-5 bg-[#FFFDF5]">
-                            <div className="p-3 bg-yellow-50 border-2 border-yellow-200 rounded-lg text-xs text-yellow-800 font-bold mb-2 flex gap-2 items-center">
+                        <form onSubmit={saveManualMetrics} className="p-6 space-y-5 bg-card">
+                            <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 rounded-lg text-xs text-yellow-600 font-bold mb-2 flex gap-2 items-center">
                                 <Zap size={14} /> Update data secara manual untuk hasil yang presisi.
                             </div>
 
@@ -896,10 +896,10 @@ export const ContentDataInsight: React.FC = () => {
                                 {selectedItemForInput?.platform === Platform.INSTAGRAM && (
                                     <div className="col-span-2">
                                         <div className="flex flex-col gap-1 w-full">
-                                            <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><BarChart2 size={12} /> Reach / Jangkauan</label>
+                                            <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><BarChart2 size={12} /> Reach / Jangkauan</label>
                                             <input
                                                 type="number"
-                                                className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                                 value={manualMetrics.reach}
                                                 onChange={(e) => setManualMetrics({ ...manualMetrics, reach: parseInt(e.target.value) || 0 })}
                                             />
@@ -908,46 +908,46 @@ export const ContentDataInsight: React.FC = () => {
                                 )}
 
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Eye size={12} /> Total Views</label>
+                                    <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Eye size={12} /> Total Views</label>
                                     <input
                                         type="number"
-                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.views}
                                         onChange={(e) => setManualMetrics({ ...manualMetrics, views: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Heart size={12} /> Likes</label>
+                                    <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Heart size={12} /> Likes</label>
                                     <input
                                         type="number"
-                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.likes}
                                         onChange={(e) => setManualMetrics({ ...manualMetrics, likes: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><MessageSquare size={12} /> Comments</label>
+                                    <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><MessageSquare size={12} /> Comments</label>
                                     <input
                                         type="number"
-                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.comments}
                                         onChange={(e) => setManualMetrics({ ...manualMetrics, comments: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Share2 size={12} /> Shares</label>
+                                    <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Share2 size={12} /> Shares</label>
                                     <input
                                         type="number"
-                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.shares}
                                         onChange={(e) => setManualMetrics({ ...manualMetrics, shares: parseInt(e.target.value) || 0 })}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1 w-full">
-                                    <label className="font-bold text-xs text-slate-600 ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
+                                    <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
                                     <input
                                         type="number"
-                                        className="bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                        className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                         value={manualMetrics.saves}
                                         onChange={(e) => setManualMetrics({ ...manualMetrics, saves: parseInt(e.target.value) || 0 })}
                                     />

@@ -66,7 +66,7 @@ export const Modal: React.FC<ModalProps> = ({
       style={{ zIndex, transitionDuration: isOpen ? '200ms' : `${duration}ms` }}
     >
       <div
-        className={`relative w-full ${maxWidth} max-h-[90vh] flex flex-col shadow-hard rounded-xl bg-white border-2 border-slate-800 overflow-hidden transition-all ease-[cubic-bezier(0.34,1.56,0.64,1)] ${className}`}
+        className={`relative w-full ${maxWidth} max-h-[90vh] flex flex-col shadow-hard rounded-xl bg-card border-2 border-slate-800 overflow-hidden transition-all ease-[cubic-bezier(0.34,1.56,0.64,1)] ${className}`}
         style={{ transitionDuration: `${duration}ms` }}
       >
         {/* Header */}
@@ -81,7 +81,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar bg-white">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar bg-card">
           {children}
         </div>
       </div>

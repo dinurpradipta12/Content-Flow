@@ -18,6 +18,7 @@ import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
+import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
 import { NotificationProvider } from './components/NotificationProvider';
 import { AppConfigProvider } from './components/AppConfigProvider';
 
@@ -89,6 +90,7 @@ const App: React.FC = () => {
               <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
               <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
               <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />
+              <Route path="admin/analytics" element={<RequireDeveloper><DeveloperAnalytics /></RequireDeveloper>} />
             </Route>
           </Routes>
         </NotificationProvider>

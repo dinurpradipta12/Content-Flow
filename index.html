@@ -37,13 +37,58 @@
       overflow: hidden;
     }
 
+    :root,
+    .theme-light,
+    html.theme-light {
+      --background: #FFFDF5;
+      --foreground: #1E293B;
+      --muted: #F1F5F9;
+      --muted-foreground: #64748B;
+      --accent: #8B5CF6;
+      --accent-foreground: #FFFFFF;
+      --secondary: #F472B6;
+      --border: #E2E8F0;
+      --card: #FFFFFF;
+      --dot-color: #CBD5E1;
+    }
+
+    .theme-dark,
+    html.theme-dark {
+      --background: #0f172a;
+      --foreground: #f1f5f9;
+      --card: #1e293b;
+      --border: #475569;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --dot-color: #334155;
+    }
+
+    .theme-midnight,
+    html.theme-midnight {
+      --background: #0c1130;
+      --foreground: #c7d2fe;
+      --card: #1e1b4b;
+      --border: #3730a3;
+      --muted: #1e1b4b;
+      --muted-foreground: #818cf8;
+      --dot-color: #312e81;
+    }
+
+    .theme-pastel,
+    html.theme-pastel {
+      --background: #fdf2f8;
+      --foreground: #1E293B;
+      --card: #FFFFFF;
+      --border: #f9a8d4;
+      --dot-color: #fce7f3;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-      background-color: #FFFDF5;
-      /* Warm Cream */
-      color: #1E293B;
-      /* Slate 800 */
+      background-color: var(--background);
+      color: var(--foreground);
       zoom: 0.9;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     /* Override min-h-screen and h-screen to use percentages for zoom compatibility */
@@ -66,7 +111,7 @@
 
     /* Dot Grid Background Pattern */
     .bg-dot-grid {
-      background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+      background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
       background-size: 24px 24px;
     }
 
@@ -107,17 +152,17 @@
       theme: {
         extend: {
           colors: {
-            background: '#FFFDF5',
-            foreground: '#1E293B',
-            muted: '#F1F5F9',
-            mutedForeground: '#64748B',
-            accent: '#8B5CF6', // Vivid Violet
-            accentForeground: '#FFFFFF',
-            secondary: '#F472B6', // Hot Pink
-            tertiary: '#FBBF24', // Amber/Yellow
-            quaternary: '#34D399', // Emerald/Mint
-            border: '#E2E8F0',
-            card: '#FFFFFF',
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            muted: 'var(--muted)',
+            mutedForeground: 'var(--muted-foreground)',
+            accent: 'var(--accent)',
+            accentForeground: 'var(--accent-foreground)',
+            secondary: 'var(--secondary)',
+            tertiary: '#FBBF24',
+            quaternary: '#34D399',
+            border: 'var(--border)',
+            card: 'var(--card)',
           },
           boxShadow: {
             'hard': '4px 4px 0px 0px #1E293B',
@@ -135,7 +180,19 @@
           }
         }
       }
-    }
+    };
+  </script>
+
+  <!-- Theme Glitch Fix: Apply theme before body renders -->
+  <script>
+    (function () {
+      try {
+        const theme = localStorage.getItem('app_ui_theme');
+        if (theme && theme !== 'light') {
+          document.documentElement.classList.add('theme-' + theme);
+        }
+      } catch (e) { }
+    })();
   </script>
 </head>
 

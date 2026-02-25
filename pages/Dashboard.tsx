@@ -552,48 +552,48 @@ export const Dashboard: React.FC = () => {
                     {/* Analytics Filtering & Cards */}
                     <div>
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                            <h2 className="text-2xl font-bold font-heading text-slate-800">Overview Analytic</h2>
+                            <h2 className="text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Total Views Card */}
-                            <div className="bg-white rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-14 bg-[#A855F7] px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
-                                    <div className="w-8 h-8 bg-white rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <Eye size={18} className="text-slate-800" strokeWidth={2.5} />
+                            <div className="bg-card rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-14 bg-accent px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
+                                    <div className="w-8 h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <Eye size={18} className="text-foreground" strokeWidth={2.5} />
                                     </div>
                                     <span className="font-black text-white text-sm uppercase tracking-wider mt-1">Total Views</span>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-center bg-[#FFFAFA]">
-                                    <h3 className="text-3xl font-black text-slate-900 mb-2 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
+                                <div className="p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-3xl font-black text-foreground mb-2 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
                                     {renderMetricCompare(metricsCurrent.views, metricsPrev.views)}
                                 </div>
                             </div>
 
                             {/* Engagement Card */}
-                            <div className="bg-white rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-14 bg-[#FBBF24] px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
-                                    <div className="w-8 h-8 bg-white rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <MousePointerClick size={18} className="text-slate-800" strokeWidth={2.5} />
+                            <div className="bg-card rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-14 bg-tertiary px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
+                                    <div className="w-8 h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <MousePointerClick size={18} className="text-slate-900" strokeWidth={2.5} />
                                     </div>
                                     <span className="font-black text-slate-900 text-sm uppercase tracking-wider mt-1">Engagement</span>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-center bg-[#FFFAFA]">
-                                    <h3 className="text-3xl font-black text-slate-900 mb-2 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
+                                <div className="p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-3xl font-black text-foreground mb-2 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
                                     {renderMetricCompare(metricsCurrent.er, metricsPrev.er)}
                                 </div>
                             </div>
 
                             {/* Published Card */}
-                            <div className="bg-white rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-14 bg-[#34D399] px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
-                                    <div className="w-8 h-8 bg-white rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <CalendarCheck size={18} className="text-slate-800" strokeWidth={2.5} />
+                            <div className="bg-card rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-14 bg-quaternary px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
+                                    <div className="w-8 h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <CalendarCheck size={18} className="text-slate-900" strokeWidth={2.5} />
                                     </div>
                                     <span className="font-black text-slate-900 text-sm uppercase tracking-wider mt-1">Published</span>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-center bg-[#FFFAFA]">
-                                    <h3 className="text-3xl font-black text-slate-900 mb-2 leading-none">{metricsCurrent.published}</h3>
+                                <div className="p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-3xl font-black text-foreground mb-2 leading-none">{metricsCurrent.published}</h3>
                                     {renderMetricCompare(metricsCurrent.published, metricsPrev.published)}
                                 </div>
                             </div>

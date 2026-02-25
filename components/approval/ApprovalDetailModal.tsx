@@ -495,15 +495,15 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             </div>
 
                             {/* User Assignment for Approval Notification */}
-                            <div className="bg-amber-50 border-4 border-amber-900/20 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#f59e0b20] mb-8">
-                                <h3 className="font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-3 text-amber-900">
-                                    <Bell size={24} /> Teruskan ke Approver
+                            <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] mb-8">
+                                <h3 className="font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-3">
+                                    <Bell size={24} className="text-accent" /> Teruskan ke Approver
                                 </h3>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <select
                                         value={targetApproverId}
                                         onChange={(e) => setTargetApproverId(e.target.value)}
-                                        className="flex-1 bg-white border-4 border-slate-900 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:ring-4 focus:ring-amber-400/50 appearance-none"
+                                        className="flex-1 bg-white border-4 border-slate-900 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:ring-4 focus:ring-slate-400/50 appearance-none"
                                     >
                                         <option value="">Pilih Member...</option>
                                         {allAppUsers.map(user => (
@@ -513,12 +513,12 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                     <Button
                                         onClick={handleSendReminder}
                                         disabled={!targetApproverId || sendingReminder}
-                                        className="bg-slate-900 text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#f59e0b] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#f59e0b] transition-all"
+                                        className="bg-accent text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#0f172a] transition-all"
                                     >
                                         {sendingReminder ? 'Mengirim...' : 'Kirim Notifikasi'}
                                     </Button>
                                 </div>
-                                <p className="text-[10px] font-bold text-amber-800/60 mt-3 uppercase tracking-widest">
+                                <p className="text-[10px] font-bold text-slate-500 mt-3 uppercase tracking-widest">
                                     User yang dipilih akan menerima notifikasi untuk mengecek pengajuan ini
                                 </p>
                             </div>

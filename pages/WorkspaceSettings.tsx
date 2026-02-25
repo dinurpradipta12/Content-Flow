@@ -258,7 +258,7 @@ export const WorkspaceSettings: React.FC = () => {
     // SQL Templates
     const SQL_TEMPLATES = [
         { name: 'Core Tables', code: '-- Create all base tables\nCREATE TABLE workspaces ...' },
-        { name: 'App Config Extension', code: '-- Tambahkan kolom config pembayaran jika belum ada\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS payment_config JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS page_titles JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS hidden_pages JSONB;' },
+        { name: 'App Config Extension', code: '-- Tambahkan kolom config pembayaran & logo light jika belum ada\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS payment_config JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS page_titles JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS hidden_pages JSONB;\nALTER TABLE app_config ADD COLUMN IF NOT EXISTS app_logo_light TEXT;' },
         { name: 'App Users Extension', code: '-- Tambahkan kolom status & periode user jika belum ada\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_start TIMESTAMPTZ;\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMPTZ;\nALTER TABLE app_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;' },
         { name: 'Enable Realtime All', code: '-- Wajib Dijalankan Untuk Fitur Update Notifikasi!\nALTER PUBLICATION supabase_realtime ADD TABLE app_config;\nALTER PUBLICATION supabase_realtime ADD TABLE app_users;' }
     ];
@@ -277,28 +277,28 @@ export const WorkspaceSettings: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                 <div>
-                    <h2 className="text-4xl md:text-6xl font-heading font-black text-slate-900 tracking-tighter uppercase italic">
+                    <h2 className="text-4xl md:text-6xl font-heading font-black text-foreground tracking-tighter uppercase italic">
                         Workspace Settings
                     </h2>
-                    <p className="text-slate-500 font-bold mt-2 pl-1 border-l-4 border-accent">Configurasi Global & Pusat Kendali Developer.</p>
+                    <p className="text-mutedForeground font-bold mt-2 pl-1 border-l-4 border-accent">Configurasi Global & Pusat Kendali Developer.</p>
                 </div>
 
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a]">
+                <div className="flex bg-muted p-1.5 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a]">
                     <button
                         onClick={() => setActiveTab('interface')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'interface' ? 'bg-white text-slate-900 border-2 border-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'interface' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                     >
                         <Monitor size={16} /> Interface
                     </button>
                     <button
                         onClick={() => setActiveTab('database')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'database' ? 'bg-white text-slate-900 border-2 border-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'database' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                     >
                         <Database size={16} /> Database
                     </button>
                     <button
                         onClick={() => setActiveTab('payment')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'payment' ? 'bg-white text-slate-900 border-2 border-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'payment' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                     >
                         <CreditCard size={16} /> Payment
                     </button>
@@ -311,8 +311,8 @@ export const WorkspaceSettings: React.FC = () => {
                     <div className="xl:col-span-8 space-y-8">
                         <Card title="Workspace Interface" icon={<Layout size={20} />} headerColor="purple">
                             <div className="p-6 space-y-8">
-                                <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
-                                    <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Custom Page Headings</h4>
+                                <div className="flex items-center justify-between border-b-2 border-border pb-4">
+                                    <h4 className="font-black text-foreground uppercase tracking-widest text-sm">Custom Page Headings</h4>
                                     <Button onClick={handleSaveInterface} disabled={saving} icon={<Save size={16} />}>
                                         {saving ? 'Simpan...' : 'Simpan Semua'}
                                     </Button>
@@ -320,7 +320,7 @@ export const WorkspaceSettings: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {config && (Object.entries(config.page_titles || {}) as [string, PageConfig][]).map(([id, p]) => (
-                                        <div key={id} className="p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 hover:border-accent group transition-all">
+                                        <div key={id} className="p-4 rounded-2xl border-2 border-border bg-muted/30 hover:border-accent group transition-all">
                                             <div className="flex items-center justify-between mb-4">
                                                 <span className="px-2 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded">{id}</span>
                                                 {(() => {
@@ -330,7 +330,7 @@ export const WorkspaceSettings: React.FC = () => {
                                                     return (
                                                         <button
                                                             onClick={() => togglePageVisibility(id)}
-                                                            className={`p-2 rounded-lg border-2 transition-all ${isHidden ? 'bg-red-50 text-red-500 border-red-200' : 'bg-white text-slate-400 border-slate-100 hover:border-accent'}`}
+                                                            className={`p-2 rounded-lg border-2 transition-all ${isHidden ? 'bg-red-50 text-red-500 border-red-200' : 'bg-card text-mutedForeground border-border hover:border-accent'}`}
                                                             title={isHidden ? 'Status: Tersembunyi dari User' : 'Status: Terlihat Secara Global'}
                                                         >
                                                             {isHidden ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -340,13 +340,13 @@ export const WorkspaceSettings: React.FC = () => {
                                             </div>
                                             <div className="space-y-3">
                                                 <input
-                                                    className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-black text-slate-900 focus:border-accent outline-none"
+                                                    className="w-full bg-card border-2 border-border rounded-xl px-3 py-2 text-sm font-black text-foreground focus:border-accent outline-none"
                                                     value={p.title}
                                                     onChange={e => updatePageTitle(id, 'title', e.target.value)}
                                                     placeholder="Judul Halaman"
                                                 />
                                                 <input
-                                                    className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-500 focus:border-accent outline-none"
+                                                    className="w-full bg-card border-2 border-border rounded-xl px-3 py-2 text-xs font-bold text-mutedForeground focus:border-accent outline-none"
                                                     value={p.subtitle}
                                                     onChange={e => updatePageTitle(id, 'subtitle', e.target.value)}
                                                     placeholder="Sub Judul / Deskripsi"
@@ -363,8 +363,8 @@ export const WorkspaceSettings: React.FC = () => {
                     <div className="xl:col-span-4 space-y-8">
                         <div className="bg-slate-900 rounded-3xl border-4 border-slate-900 shadow-hard overflow-hidden">
                             <div className="p-6 bg-accent border-b-4 border-slate-900">
-                                <div className="w-12 h-12 bg-white rounded-2xl border-4 border-slate-900 flex items-center justify-center mb-4 shadow-[3px_3px_0px_#000]">
-                                    <Smartphone className="text-slate-900" size={24} />
+                                <div className="w-12 h-12 bg-card rounded-2xl border-4 border-slate-900 flex items-center justify-center mb-4 shadow-[3px_3px_0px_#000]">
+                                    <Smartphone className="text-foreground" size={24} />
                                 </div>
                                 <h3 className="text-2xl font-heading font-black text-white uppercase italic">Version Update</h3>
                                 <p className="text-white/80 font-bold text-xs mt-1">Deploy pembaharuan ke seluruh user.</p>
@@ -399,22 +399,22 @@ export const WorkspaceSettings: React.FC = () => {
                                 <button
                                     onClick={handleSendUpdate}
                                     disabled={saving}
-                                    className="w-full bg-white hover:bg-emerald-400 text-slate-900 font-black py-4 rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#2DD4BF] transition-all flex items-center justify-center gap-3 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                                    className="w-full bg-card hover:bg-emerald-400 text-foreground font-black py-4 rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#2DD4BF] transition-all flex items-center justify-center gap-3 active:translate-x-1 active:translate-y-1 active:shadow-none"
                                 >
                                     <Rocket size={20} />
                                     SEND UPDATE NOTIFICATION
                                 </button>
 
-                                <p className="text-[10px] font-bold text-slate-500 text-center leading-relaxed">
+                                <p className="text-[10px] font-bold text-mutedForeground text-center leading-relaxed">
                                     Tombol ini akan memperbarui versi di seluruh database user secara realtime. User akan diminta untuk meraload halaman.
                                 </p>
                             </div>
                         </div>
 
                         {/* Global Broadcast Card */}
-                        <div className="bg-white border-4 border-slate-900 rounded-3xl overflow-hidden shadow-hard h-fit">
+                        <div className="bg-card border-4 border-slate-900 rounded-3xl overflow-hidden shadow-hard h-fit">
                             <div className="bg-accent p-6 border-b-4 border-slate-900 flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
+                                <div className="w-10 h-10 bg-card rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
                                     <Bell size={20} className="text-accent" />
                                 </div>
                                 <h3 className="font-black text-white text-xl uppercase tracking-tighter">Global Broadcast</h3>
@@ -425,7 +425,7 @@ export const WorkspaceSettings: React.FC = () => {
                                     <input
                                         value={broadcastTitle}
                                         onChange={e => setBroadcastTitle(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:border-accent outline-none transition-all"
+                                        className="w-full bg-muted border-2 border-border rounded-2xl px-4 py-3 text-sm font-bold text-foreground focus:border-accent outline-none transition-all"
                                         placeholder="Contoh: Promo Ramadhan 50%!"
                                     />
                                 </div>
@@ -435,7 +435,7 @@ export const WorkspaceSettings: React.FC = () => {
                                     <select
                                         value={broadcastType}
                                         onChange={e => setBroadcastType(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:border-accent outline-none transition-all"
+                                        className="w-full bg-muted border-2 border-border rounded-2xl px-4 py-3 text-sm font-bold text-foreground focus:border-accent outline-none transition-all"
                                     >
                                         <option value="Announcement">Announcement</option>
                                         <option value="Promo">Promo / Diskon</option>
@@ -449,7 +449,7 @@ export const WorkspaceSettings: React.FC = () => {
                                         rows={4}
                                         value={broadcastMessage}
                                         onChange={e => setBroadcastMessage(e.target.value)}
-                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900 focus:border-accent outline-none transition-all"
+                                        className="w-full bg-muted border-2 border-border rounded-2xl p-4 text-sm font-bold text-foreground focus:border-accent outline-none transition-all"
                                         placeholder="Tuliskan pesan broadcast di sini..."
                                     />
                                 </div>
@@ -462,7 +462,7 @@ export const WorkspaceSettings: React.FC = () => {
                                     <Send size={20} />
                                     {sendingBroadcast ? 'MENGIRIM...' : 'KIRIM BROADCAST GLOBAL'}
                                 </button>
-                                <p className="text-[10px] font-bold text-slate-400 text-center leading-relaxed italic">
+                                <p className="text-[10px] font-bold text-mutedForeground text-center leading-relaxed italic">
                                     Pesan ini akan muncul sebagai popup modal secara realtime di layar seluruh user yang sedang aktif.
                                 </p>
                             </div>
@@ -474,8 +474,8 @@ export const WorkspaceSettings: React.FC = () => {
                     <div className="lg:col-span-8 space-y-6">
                         <Card title="Payment Configuration" icon={<CreditCard size={20} />} headerColor="emerald">
                             <div className="p-6 space-y-8">
-                                <div className="flex items-center justify-between border-b-2 border-slate-100 pb-4">
-                                    <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Informasi Bank & Rekening</h4>
+                                <div className="flex items-center justify-between border-b-2 border-border pb-4">
+                                    <h4 className="font-black text-foreground uppercase tracking-widest text-sm">Informasi Bank & Rekening</h4>
                                     <Button onClick={handleSavePayment} disabled={saving} icon={<Save size={16} />}>
                                         {saving ? 'Simpan...' : 'Simpan Konfigurasi'}
                                     </Button>
@@ -484,42 +484,42 @@ export const WorkspaceSettings: React.FC = () => {
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nama Bank</label>
+                                            <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Nama Bank</label>
                                             <input
                                                 value={config?.payment_config?.bankName || ''}
                                                 onChange={e => setConfig(prev => prev ? ({ ...prev, payment_config: { ...(prev.payment_config || { accountName: '', accountNumber: '', packages: [] }), bankName: e.target.value } }) : null)}
-                                                className="w-full bg-white border-4 border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-900 focus:border-accent transition-all outline-none"
+                                                className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
                                                 placeholder="Contoh: Bank BCA"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">No. Rekening</label>
+                                            <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">No. Rekening</label>
                                             <input
                                                 value={config?.payment_config?.accountNumber || ''}
                                                 onChange={e => setConfig(prev => prev ? ({ ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', packages: [] }), accountNumber: e.target.value } }) : null)}
-                                                className="w-full bg-white border-4 border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-900 focus:border-accent transition-all outline-none"
+                                                className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
                                                 placeholder="Contoh: 1234567890"
                                             />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Atas Nama (A/N)</label>
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Atas Nama (A/N)</label>
                                         <input
                                             value={config?.payment_config?.accountName || ''}
                                             onChange={e => setConfig(prev => prev ? ({ ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountNumber: '', packages: [] }), accountName: e.target.value } }) : null)}
-                                            className="w-full bg-white border-4 border-slate-200 rounded-xl px-4 py-3 text-sm font-black text-slate-900 focus:border-accent transition-all outline-none"
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
                                             placeholder="Contoh: PT Arunika Media Integra"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="border-t-2 border-slate-100 pt-6 space-y-6">
+                                <div className="border-t-2 border-border pt-6 space-y-6">
                                     {/* PERSONAL PACKAGES */}
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <User size={18} className="text-accent" />
-                                                <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Paket Personal</h4>
+                                                <h4 className="font-black text-foreground uppercase tracking-widest text-sm">Paket Personal</h4>
                                             </div>
                                             <button
                                                 onClick={() => {
@@ -535,9 +535,9 @@ export const WorkspaceSettings: React.FC = () => {
                                                 + Tambah Personal
                                             </button>
                                         </div>
-                                        <div className="space-y-3">
+                                        <div className="space-y-4">
                                             {(config?.payment_config?.personalPackages || []).map((pkg, idx) => (
-                                                <div key={pkg.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
+                                                <div key={pkg.id} className="flex flex-col md:flex-row gap-4 bg-muted p-4 rounded-2xl border-4 border-border">
                                                     <input
                                                         value={pkg.name}
                                                         onChange={e => {
@@ -549,65 +549,67 @@ export const WorkspaceSettings: React.FC = () => {
                                                                 return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
                                                             });
                                                         }}
-                                                        className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                        className="flex-1 bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
                                                         placeholder="Nama Paket"
                                                     />
-                                                    <input
-                                                        type="number"
-                                                        value={pkg.price}
-                                                        onChange={e => {
-                                                            const price = Number(e.target.value);
-                                                            setConfig(prev => {
-                                                                if (!prev) return null;
-                                                                const newPkgs = [...(prev.payment_config?.personalPackages || [])];
-                                                                newPkgs[idx].price = price;
-                                                                return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
-                                                            });
-                                                        }}
-                                                        className="w-28 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
-                                                        placeholder="Harga"
-                                                    />
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex gap-4">
                                                         <input
                                                             type="number"
-                                                            value={pkg.durationDays || 30}
+                                                            value={pkg.price}
                                                             onChange={e => {
-                                                                const days = Number(e.target.value);
+                                                                const price = Number(e.target.value);
                                                                 setConfig(prev => {
                                                                     if (!prev) return null;
                                                                     const newPkgs = [...(prev.payment_config?.personalPackages || [])];
-                                                                    newPkgs[idx].durationDays = days;
+                                                                    newPkgs[idx].price = price;
                                                                     return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
                                                                 });
                                                             }}
-                                                            className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-accent outline-none"
+                                                            className="w-32 md:w-40 bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
+                                                            placeholder="Harga"
                                                         />
-                                                        <span className="text-[10px] font-black text-slate-400">HARI</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="number"
+                                                                value={pkg.durationDays || 30}
+                                                                onChange={e => {
+                                                                    const days = Number(e.target.value);
+                                                                    setConfig(prev => {
+                                                                        if (!prev) return null;
+                                                                        const newPkgs = [...(prev.payment_config?.personalPackages || [])];
+                                                                        newPkgs[idx].durationDays = days;
+                                                                        return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
+                                                                    });
+                                                                }}
+                                                                className="w-20 bg-card border-4 border-border rounded-xl px-2 py-3 text-sm font-black text-center focus:border-accent transition-all outline-none"
+                                                            />
+                                                            <span className="text-[10px] font-black text-mutedForeground">HARI</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                setConfig(prev => {
+                                                                    if (!prev) return null;
+                                                                    const newPkgs = [...(prev.payment_config?.personalPackages || [])];
+                                                                    newPkgs.splice(idx, 1);
+                                                                    return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
+                                                                });
+                                                            }}
+                                                            className="w-12 h-12 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-xl border-4 border-red-200 hover:bg-red-500 hover:text-white hover:border-red-600 transition-colors"
+                                                        >
+                                                            <AlertCircle size={20} />
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            setConfig(prev => {
-                                                                if (!prev) return null;
-                                                                const newPkgs = [...(prev.payment_config?.personalPackages || [])];
-                                                                newPkgs.splice(idx, 1);
-                                                                return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
-                                                            });
-                                                        }}
-                                                        className="w-10 h-10 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-lg border-2 border-red-200 hover:bg-red-500 hover:text-white transition-colors"
-                                                    >
-                                                        <AlertCircle size={16} />
-                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
 
                                     {/* TEAM PACKAGES */}
-                                    <div className="space-y-4 pt-4 border-t-2 border-dashed border-slate-100">
+                                    <div className="space-y-4 pt-4 border-t-2 border-dashed border-border">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Users size={18} className="text-secondary" />
-                                                <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Konfigurasi Team</h4>
+                                                <h4 className="font-black text-foreground uppercase tracking-widest text-sm">Konfigurasi Team</h4>
                                             </div>
                                         </div>
 
@@ -615,10 +617,10 @@ export const WorkspaceSettings: React.FC = () => {
                                             <div className="flex items-center justify-between gap-4">
                                                 <div className="flex-1">
                                                     <h5 className="text-xs font-black text-secondary uppercase tracking-widest mb-1">Harga Per Orang (Team)</h5>
-                                                    <p className="text-[10px] font-bold text-slate-500">Harga ini akan dikalikan dengan jumlah anggota yang dipilih user.</p>
+                                                    <p className="text-[10px] font-bold text-mutedForeground">Harga ini akan dikalikan dengan jumlah anggota yang dipilih user.</p>
                                                 </div>
                                                 <div className="relative w-48">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">Rp</span>
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-mutedForeground">Rp</span>
                                                     <input
                                                         type="number"
                                                         value={config?.payment_config?.teamPricePerPerson || 0}
@@ -629,7 +631,7 @@ export const WorkspaceSettings: React.FC = () => {
                                                                 return { ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', accountNumber: '', packages: [] }), teamPricePerPerson: price } };
                                                             });
                                                         }}
-                                                        className="w-full bg-white border-2 border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-black text-slate-900 focus:border-secondary outline-none transition-all"
+                                                        className="w-full bg-card border-4 border-border rounded-xl pl-10 pr-4 py-3 text-sm font-black text-foreground focus:border-secondary outline-none transition-all"
                                                         placeholder="30000"
                                                     />
                                                 </div>
@@ -638,7 +640,7 @@ export const WorkspaceSettings: React.FC = () => {
 
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2 px-1">
-                                                <h4 className="font-black text-slate-400 uppercase tracking-widest text-[10px]">Daftar Paket Team</h4>
+                                                <h4 className="font-black text-mutedForeground uppercase tracking-widest text-[10px]">Daftar Paket Team</h4>
                                             </div>
                                             <button
                                                 onClick={() => {
@@ -654,9 +656,9 @@ export const WorkspaceSettings: React.FC = () => {
                                                 + Tambah Paket
                                             </button>
                                         </div>
-                                        <div className="space-y-3">
+                                        <div className="space-y-4">
                                             {(config?.payment_config?.teamPackages || []).map((pkg, idx) => (
-                                                <div key={pkg.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
+                                                <div key={pkg.id} className="flex flex-col md:flex-row gap-4 bg-muted p-4 rounded-2xl border-4 border-border">
                                                     <input
                                                         value={pkg.name}
                                                         onChange={e => {
@@ -668,61 +670,63 @@ export const WorkspaceSettings: React.FC = () => {
                                                                 return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
                                                             });
                                                         }}
-                                                        className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                        className="flex-1 bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
                                                         placeholder="Nama Paket Team"
                                                     />
-                                                    <div className="relative w-32">
-                                                        <input
-                                                            type="number"
-                                                            value={pkg.price}
-                                                            onChange={e => {
-                                                                const price = Number(e.target.value);
+                                                    <div className="flex gap-4">
+                                                        <div className="relative w-36 md:w-44">
+                                                            <input
+                                                                type="number"
+                                                                value={pkg.price}
+                                                                onChange={e => {
+                                                                    const price = Number(e.target.value);
+                                                                    setConfig(prev => {
+                                                                        if (!prev) return null;
+                                                                        const newPkgs = [...(prev.payment_config?.teamPackages || [])];
+                                                                        newPkgs[idx].price = price;
+                                                                        return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
+                                                                    });
+                                                                }}
+                                                                className="w-full bg-card border-4 border-border rounded-xl pl-4 pr-10 py-3 text-sm font-black text-foreground focus:border-accent transition-all outline-none"
+                                                                placeholder="Harga"
+                                                            />
+                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-mutedForeground">ORG</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="number"
+                                                                value={pkg.durationDays || 30}
+                                                                onChange={e => {
+                                                                    const days = Number(e.target.value);
+                                                                    setConfig(prev => {
+                                                                        if (!prev) return null;
+                                                                        const newPkgs = [...(prev.payment_config?.teamPackages || [])];
+                                                                        newPkgs[idx].durationDays = days;
+                                                                        return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
+                                                                    });
+                                                                }}
+                                                                className="w-20 bg-card border-4 border-border rounded-xl px-2 py-3 text-sm font-black text-center focus:border-accent transition-all outline-none"
+                                                            />
+                                                            <span className="text-[10px] font-black text-mutedForeground">HARI</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
                                                                 setConfig(prev => {
                                                                     if (!prev) return null;
                                                                     const newPkgs = [...(prev.payment_config?.teamPackages || [])];
-                                                                    newPkgs[idx].price = price;
+                                                                    newPkgs.splice(idx, 1);
                                                                     return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
                                                                 });
                                                             }}
-                                                            className="w-full bg-white border-2 border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm font-bold focus:border-accent outline-none"
-                                                            placeholder="Harga"
-                                                        />
-                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">ORG</span>
+                                                            className="w-12 h-12 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-xl border-4 border-red-200 hover:bg-red-500 hover:text-white hover:border-red-600 transition-colors"
+                                                        >
+                                                            <AlertCircle size={20} />
+                                                        </button>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            value={pkg.durationDays || 30}
-                                                            onChange={e => {
-                                                                const days = Number(e.target.value);
-                                                                setConfig(prev => {
-                                                                    if (!prev) return null;
-                                                                    const newPkgs = [...(prev.payment_config?.teamPackages || [])];
-                                                                    newPkgs[idx].durationDays = days;
-                                                                    return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
-                                                                });
-                                                            }}
-                                                            className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-accent outline-none"
-                                                        />
-                                                        <span className="text-[10px] font-black text-slate-400">HARI</span>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => {
-                                                            setConfig(prev => {
-                                                                if (!prev) return null;
-                                                                const newPkgs = [...(prev.payment_config?.teamPackages || [])];
-                                                                newPkgs.splice(idx, 1);
-                                                                return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
-                                                            });
-                                                        }}
-                                                        className="w-10 h-10 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-lg border-2 border-red-200 hover:bg-red-500 hover:text-white transition-colors"
-                                                    >
-                                                        <AlertCircle size={16} />
-                                                    </button>
                                                 </div>
                                             ))}
                                             {(!config?.payment_config?.personalPackages?.length && !config?.payment_config?.teamPackages?.length) && (
-                                                <div className="text-center p-6 text-slate-400 font-bold text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                                                <div className="text-center p-6 text-mutedForeground font-bold text-sm border-2 border-dashed border-border rounded-xl">
                                                     Belum ada paket yang dikonfigurasi.
                                                 </div>
                                             )}
@@ -739,42 +743,42 @@ export const WorkspaceSettings: React.FC = () => {
                     <div className="lg:col-span-5 space-y-6">
                         <Card title="Supabase Connection" icon={<Database size={20} />} headerColor="primary">
                             <div className="p-6 space-y-6">
-                                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
+                                <div className="flex items-center gap-4 bg-muted p-4 rounded-2xl border-2 border-border">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-4 border-slate-900 shadow-[2px_2px_0px_#000] ${dbStatus === 'connected' ? 'bg-emerald-400' : 'bg-red-400'}`}>
                                         <Wifi size={24} className="text-slate-900" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Hubungan</p>
+                                        <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">Status Hubungan</p>
                                         <p className={`text-lg font-black ${dbStatus === 'connected' ? 'text-emerald-600 uppercase' : 'text-red-600 uppercase italic'}`}>
                                             {dbStatus === 'connected' ? 'Connected' : 'Disconnected'}
                                         </p>
                                     </div>
                                     {dbStatus === 'connected' && (
                                         <div className="ml-auto text-right">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Latency</p>
-                                            <p className="font-black text-slate-900">{latency.toFixed(0)}ms</p>
+                                            <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">Latency</p>
+                                            <p className="font-black text-foreground">{latency.toFixed(0)}ms</p>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="space-y-4 pt-4 border-t-2 border-slate-100">
+                                <div className="space-y-4 pt-4 border-t-2 border-border">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Supabase Project URL</label>
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Supabase Project URL</label>
                                         <input
                                             value={sbUrl}
                                             onChange={e => setSbUrl(e.target.value)}
-                                            className="w-full bg-white border-4 border-slate-900 rounded-2xl px-4 py-3 text-sm font-black text-slate-900 shadow-[4px_4px_0px_transparent] focus:shadow-hard transition-all outline-none"
+                                            className="w-full bg-card border-4 border-slate-900 rounded-2xl px-4 py-3 text-sm font-black text-foreground shadow-[4px_4px_0px_transparent] focus:shadow-hard transition-all outline-none"
                                             placeholder="https://xxxxx.supabase.co"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Supabase Anon Key</label>
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Supabase Anon Key</label>
                                         <div className="relative">
                                             <input
                                                 type="password"
                                                 value={sbKey}
                                                 onChange={e => setSbKey(e.target.value)}
-                                                className="w-full bg-white border-4 border-slate-900 rounded-2xl px-4 py-3 text-sm font-black text-slate-900 shadow-[4px_4px_0px_transparent] focus:shadow-hard transition-all outline-none"
+                                                className="w-full bg-card border-4 border-slate-900 rounded-2xl px-4 py-3 text-sm font-black text-foreground shadow-[4px_4px_0px_transparent] focus:shadow-hard transition-all outline-none"
                                                 placeholder="..."
                                             />
                                         </div>
@@ -800,7 +804,7 @@ export const WorkspaceSettings: React.FC = () => {
                     <div className="lg:col-span-7 space-y-6">
                         <Card title="Supabase SQL Templates" icon={<Terminal size={20} />} headerColor="slate">
                             <div className="p-6 space-y-6">
-                                <p className="text-sm font-bold text-slate-500">Salin skrip berikut ke dalam **SQL Editor** Supabase Anda untuk memastikan struktur database terbaru.</p>
+                                <p className="text-sm font-bold text-mutedForeground">Salin skrip berikut ke dalam **SQL Editor** Supabase Anda untuk memastikan struktur database terbaru.</p>
 
                                 <div className="space-y-6">
                                     {SQL_TEMPLATES.map((tmpl, idx) => (
@@ -808,7 +812,7 @@ export const WorkspaceSettings: React.FC = () => {
                                             <div className="flex items-center justify-between px-1">
                                                 <div className="flex items-center gap-2">
                                                     <Code size={14} className="text-accent" />
-                                                    <span className="text-xs font-black text-slate-800 uppercase tracking-widest">{tmpl.name}</span>
+                                                    <span className="text-xs font-black text-foreground uppercase tracking-widest">{tmpl.name}</span>
                                                 </div>
                                                 <button
                                                     onClick={() => {
@@ -838,7 +842,7 @@ export const WorkspaceSettings: React.FC = () => {
 };
 
 const Loader = ({ icon }: { icon: React.ReactNode }) => (
-    <div className="border-4 border-slate-900 p-4 rounded-2xl bg-white shadow-hard animate-bounce">
+    <div className="border-4 border-slate-900 p-4 rounded-2xl bg-card shadow-hard animate-bounce">
         <div className="animate-spin text-accent">
             {icon}
         </div>

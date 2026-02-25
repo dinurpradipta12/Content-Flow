@@ -453,7 +453,7 @@ export const ContentPlan: React.FC = () => {
                     {workspaces.map((ws) => (
                         <Card
                             key={ws.id}
-                            className="h-[320px] flex flex-col cursor-pointer hover:-translate-y-2 overflow-hidden relative"
+                            className={`h-[320px] flex flex-col cursor-pointer hover:-translate-y-2 overflow-hidden relative`}
                             headerColor={ws.color}
                             onClick={() => navigate(`/plan/${ws.id}`)}
                         >
@@ -470,98 +470,105 @@ export const ContentPlan: React.FC = () => {
                                 />
                             )}
 
-                            {/* 1. Header Row: Platforms & Menu */}
-                            <div className="flex justify-between items-start mb-3 relative z-20">
-                                <div className="flex gap-2">
-                                    {ws.platforms.map((p, idx) => (
-                                        <React.Fragment key={idx}>
-                                            {renderPlatformIcon(p)}
-                                        </React.Fragment>
-                                    ))}
-                                </div>
+                            {/* Menu Button (Absolute Top Right) */}
+                            <div className="absolute top-4 right-4 z-30">
+                                <button
+                                    className={`p-1.5 rounded-full transition-colors border-2 ${activeMenu === ws.id ? 'bg-slate-100 border-slate-200' : 'border-transparent hover:bg-slate-100'}`}
+                                    onClick={(e) => toggleMenu(e, ws.id)}
+                                >
+                                    <MoreHorizontal size={20} className="text-slate-500" />
+                                </button>
 
-                                {/* Menu Button & Dropdown */}
-                                <div className="relative">
-                                    <button
-                                        className={`p-1.5 rounded-full transition-colors border-2 border-transparent ${activeMenu === ws.id ? 'bg-slate-100 border-slate-200' : 'hover:bg-slate-100'}`}
-                                        onClick={(e) => toggleMenu(e, ws.id)}
-                                    >
-                                        <MoreHorizontal size={20} className="text-slate-500" />
-                                    </button>
-
-                                    {activeMenu === ws.id && (
-                                        <div className="absolute right-0 top-full mt-2 w-56 bg-white border-2 border-slate-800 rounded-xl shadow-hard z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                            <button
-                                                onClick={(e) => handleOpenEditModal(e, ws)}
-                                                className="w-full text-left px-4 py-3 hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-3 transition-colors"
-                                            >
-                                                <Edit size={16} className="text-accent" />
-                                                Edit Info Workspace
-                                            </button>
-                                            <div className="h-[2px] bg-slate-100 w-full"></div>
-                                            <button
-                                                onClick={(e) => handleDeleteWorkspace(e, ws.id)}
-                                                className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-500 font-bold flex items-center gap-3 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                                Hapus Permanen
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 2. Content Row: Title & Logo */}
-                            <div className="mb-3 relative z-10 flex gap-3 items-center">
-                                {/* Logo display in card */}
-                                {ws.logoUrl && (
-                                    <div className="w-12 h-12 flex-shrink-0 bg-white rounded-lg border border-slate-200 overflow-hidden p-1 shadow-sm">
-                                        <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
+                                {activeMenu === ws.id && (
+                                    <div className="absolute right-0 top-full mt-2 w-56 bg-card border-2 border-border rounded-xl shadow-hard z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                        <button
+                                            onClick={(e) => handleOpenEditModal(e, ws)}
+                                            className="w-full text-left px-4 py-3 hover:bg-muted font-bold text-foreground flex items-center gap-3 transition-colors"
+                                        >
+                                            <Edit size={16} className="text-accent" />
+                                            Edit Info Workspace
+                                        </button>
+                                        <div className="h-[2px] bg-border w-full"></div>
+                                        <button
+                                            onClick={(e) => handleDeleteWorkspace(e, ws.id)}
+                                            className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-500 font-bold flex items-center gap-3 transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                            Hapus Permanen
+                                        </button>
                                     </div>
                                 )}
-                                <h3 className="text-2xl font-black font-heading text-slate-800 leading-tight line-clamp-1 drop-shadow-sm" title={ws.name}>{ws.name}</h3>
                             </div>
 
-                            {/* 3. Badges Row: Role & Account Name */}
-                            <div className="flex justify-between items-center mb-5 relative z-10">
-                                <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border-2 border-slate-200">
-                                    {ws.role}
-                                </span>
-
-                                {ws.accountName && (
-                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border-2 ${getAccountStyle(ws.platforms)}`}>
-                                        <AtSign size={12} />
-                                        {ws.accountName.replace('@', '')}
-                                    </span>
+                            {/* Header Layout: Logo Left, Info Stack Right */}
+                            <div className="flex gap-4 items-start mb-6 relative z-20 pr-8">
+                                {/* Left: Logo (Enlarged) */}
+                                {ws.logoUrl ? (
+                                    <div className="ws-logo-box w-[120px] h-[120px] flex-shrink-0 bg-card rounded-2xl border-2 border-border overflow-hidden p-1.5 shadow-sm">
+                                        <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
+                                    </div>
+                                ) : (
+                                    <div className="ws-logo-box w-[120px] h-[120px] flex-shrink-0 bg-muted/50 rounded-2xl border-2 border-border flex items-center justify-center p-1.5 shadow-sm text-mutedForeground">
+                                        <Layers size={36} />
+                                    </div>
                                 )}
+
+                                {/* Right: Stacked Info */}
+                                <div className="flex flex-col flex-1 min-w-0">
+                                    {/* 1. Logos Sosmed */}
+                                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                                        {ws.platforms.map((p, idx) => (
+                                            <React.Fragment key={idx}>
+                                                {renderPlatformIcon(p)}
+                                            </React.Fragment>
+                                        ))}
+                                        {ws.accountName && (
+                                            <div title={ws.accountName} className={`p-1.5 flex items-center justify-center rounded-lg border-2 border-slate-800 shadow-sm transition-transform hover:-translate-y-0.5 cursor-help ${getAccountStyle(ws.platforms)}`}>
+                                                <AtSign size={18} />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 2. Nama Content Plan Workspace */}
+                                    <h3 className="text-xl md:text-3xl font-bold font-heading text-foreground leading-tight truncate drop-shadow-sm mb-2" title={ws.name}>
+                                        {ws.name}
+                                    </h3>
+
+                                    {/* 3. Status Workspace (Owner/Member) */}
+                                    <div>
+                                        <span className="inline-block px-4 py-1 rounded-full text-[11px] font-bold text-mutedForeground bg-muted border-2 border-border shadow-sm">
+                                            {ws.role}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* 4. Stats Row: Progress Bar */}
                             <div className="space-y-2 mb-4 relative z-10">
-                                <div className="flex justify-between text-xs font-bold text-slate-500">
+                                <div className="flex justify-between text-xs font-bold text-mutedForeground">
                                     <span>Published</span>
                                     <span>{ws.totalContent > 0 ? Math.round((ws.publishedCount / ws.totalContent) * 100) : 0}%</span>
                                 </div>
-                                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+                                <div className="w-full bg-muted h-3 rounded-full overflow-hidden border border-border">
                                     <div
                                         className={`h-full rounded-full ${ws.color === 'violet' ? 'bg-accent' : ws.color === 'pink' ? 'bg-secondary' : 'bg-tertiary'} border-r-2 border-slate-900/10 transition-all duration-500`}
                                         style={{ width: `${ws.totalContent > 0 ? (ws.publishedCount / ws.totalContent) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <div className="flex justify-between text-xs font-medium text-slate-400 mt-1">
+                                <div className="flex justify-between text-xs font-medium text-mutedForeground/80 mt-1">
                                     <span>{ws.totalContent - ws.publishedCount} Pending / Draft</span>
                                     <span>{ws.totalContent} Total Konten</span>
                                 </div>
                             </div>
 
                             {/* 5. Footer Row: Members & Action (Pushed to bottom) */}
-                            <div className="mt-auto pt-4 border-t-2 border-slate-100 border-dashed flex items-center justify-between gap-3 relative z-10">
+                            <div className="mt-auto pt-4 border-t-2 border-border border-dashed flex items-center justify-between gap-3 relative z-10">
                                 <div className="flex -space-x-2 overflow-hidden flex-shrink-0 items-center">
                                     {ws.members.slice(0, 3).map((url, i) => (
-                                        <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover z-20" alt="Member" />
+                                        <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted object-cover z-20" alt="Member" />
                                     ))}
                                     {ws.members.length > 3 && (
-                                        <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 z-10 relative">
+                                        <div className="w-8 h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted flex items-center justify-center text-[10px] font-bold text-mutedForeground z-10 relative">
                                             +{ws.members.length - 3}
                                         </div>
                                     )}
@@ -574,15 +581,15 @@ export const ContentPlan: React.FC = () => {
                         </Card>
                     ))}
                     {workspaces.length === 0 && (
-                        <div className="col-span-full py-16 text-center border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
+                        <div className="col-span-full py-16 text-center border-2 border-dashed border-border rounded-2xl bg-muted">
                             {isAdminOrOwner ? (
                                 // Admin: no workspaces yet
                                 <>
                                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/10 border-2 border-accent/20 flex items-center justify-center">
                                         <Layers className="text-accent opacity-60" size={32} />
                                     </div>
-                                    <h3 className="text-slate-700 font-black text-xl mb-1">Belum ada workspace</h3>
-                                    <p className="text-slate-400 font-medium text-sm mb-4">Buat workspace pertama Anda untuk mulai merencanakan konten.</p>
+                                    <h3 className="text-foreground font-black text-xl mb-1">Belum ada workspace</h3>
+                                    <p className="text-mutedForeground font-medium text-sm mb-4">Buat workspace pertama Anda untuk mulai merencanakan konten.</p>
                                     <Button onClick={handleOpenCreateModal} icon={<Plus size={18} />}>Buat Workspace Baru</Button>
                                 </>
                             ) : (
@@ -660,15 +667,15 @@ export const ContentPlan: React.FC = () => {
 
                     {/* Platform Selection */}
                     <div>
-                        <label className="font-bold text-xs text-slate-600 mb-2 block ml-1">Platform (Pilih Minimal 1)</label>
+                        <label className="font-bold text-xs text-mutedForeground mb-2 block ml-1">Platform (Pilih Minimal 1)</label>
                         <div className="flex flex-wrap gap-3 mb-4">
                             {[
-                                { id: 'IG', label: 'Instagram', icon: <Instagram size={18} />, color: 'hover:bg-pink-50 hover:border-pink-200 hover:text-pink-600' },
-                                { id: 'TK', label: 'TikTok', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-black' },
-                                { id: 'YT', label: 'YouTube', icon: <Youtube size={18} />, color: 'hover:bg-red-50 hover:border-red-200 hover:text-red-600' },
-                                { id: 'LI', label: 'LinkedIn', icon: <Linkedin size={18} />, color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700' },
-                                { id: 'FB', label: 'Facebook', icon: <Facebook size={18} />, color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600' },
-                                { id: 'TH', label: 'Threads', icon: <AtSign size={18} />, color: 'hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900' },
+                                { id: 'IG', label: 'Instagram', icon: <Instagram size={18} />, color: 'hover:bg-pink-500/10 hover:border-pink-500/50 hover:text-pink-500' },
+                                { id: 'TK', label: 'TikTok', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>, color: 'hover:bg-slate-500/10 hover:border-slate-500/50 hover:text-foreground' },
+                                { id: 'YT', label: 'YouTube', icon: <Youtube size={18} />, color: 'hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500' },
+                                { id: 'LI', label: 'LinkedIn', icon: <Linkedin size={18} />, color: 'hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-500' },
+                                { id: 'FB', label: 'Facebook', icon: <Facebook size={18} />, color: 'hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-500' },
+                                { id: 'TH', label: 'Threads', icon: <AtSign size={18} />, color: 'hover:bg-slate-500/10 hover:border-slate-500/50 hover:text-foreground' },
                             ].map((p) => {
                                 const isSelected = formData.platforms.includes(p.id);
                                 return (
@@ -676,9 +683,9 @@ export const ContentPlan: React.FC = () => {
                                         key={p.id}
                                         type="button"
                                         onClick={() => togglePlatform(p.id)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all font-bold text-sm ${isSelected
-                                            ? 'bg-slate-800 border-slate-800 text-white shadow-hard'
-                                            : `bg-white border-slate-200 text-slate-500 ${p.color}`
+                                        className={`flex items-center justify-center flex-1 sm:flex-none gap-2 px-4 py-2 rounded-xl border-2 transition-all font-bold text-sm ${isSelected
+                                            ? 'bg-accent border-accent text-white shadow-hard'
+                                            : `bg-muted/50 border-border text-foreground ${p.color}`
                                             }`}
                                     >
                                         {p.icon}
@@ -690,12 +697,12 @@ export const ContentPlan: React.FC = () => {
 
                         {/* Dynamic Profile Links & Account Names */}
                         {formData.platforms.length > 0 && (
-                            <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-200 animate-in slide-in-from-top-2">
-                                <label className="font-bold text-xs text-slate-500 block mb-1">Detail Akun per Platform</label>
+                            <div className="space-y-4 p-4 bg-muted rounded-xl border border-border animate-in slide-in-from-top-2">
+                                <label className="font-bold text-xs text-mutedForeground block mb-1">Detail Akun per Platform</label>
                                 {formData.platforms.map(code => (
-                                    <div key={code} className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-200 last:border-0 last:pb-0">
+                                    <div key={code} className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-border last:border-0 last:pb-0">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-8 flex justify-center text-slate-400">
+                                            <div className="w-8 flex justify-center text-mutedForeground">
                                                 {code === 'IG' ? <Instagram size={16} /> :
                                                     code === 'YT' ? <Youtube size={16} /> :
                                                         code === 'LI' ? <Linkedin size={16} /> :
@@ -733,8 +740,8 @@ export const ContentPlan: React.FC = () => {
                             onChange={(e) => setFormData({ ...formData, period: e.target.value })}
                         />
                         <div className="flex flex-col gap-1">
-                            <label className="font-bold text-xs text-slate-600 ml-1">Owner</label>
-                            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg text-slate-500 cursor-not-allowed">
+                            <label className="font-bold text-xs text-mutedForeground ml-1">Owner</label>
+                            <div className="flex items-center gap-2 px-4 py-3 bg-muted border-2 border-border rounded-lg text-mutedForeground cursor-not-allowed">
                                 <User size={18} />
                                 <span className="font-bold text-sm">{currentUserName} (Anda)</span>
                             </div>
@@ -750,7 +757,7 @@ export const ContentPlan: React.FC = () => {
                     />
 
                     {/* Footer Actions */}
-                    <div className="pt-6 border-t-2 border-slate-100 flex justify-end gap-3">
+                    <div className="pt-6 border-t-2 border-border flex justify-end gap-3">
                         <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
                             Batal
                         </Button>
@@ -762,14 +769,13 @@ export const ContentPlan: React.FC = () => {
                 </form>
             </Modal>
 
-            {/* Modal Join Workspace */}
             <Modal
                 isOpen={isJoinModalOpen}
                 onClose={() => setIsJoinModalOpen(false)}
                 title="Gabung Workspace"
             >
                 <form onSubmit={handleJoinWorkspace} className="space-y-4">
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-600 mb-2">
+                    <div className="p-4 bg-muted rounded-xl border border-border text-sm text-foreground mb-2">
                         Masukkan kode undangan yang diberikan oleh pemilik workspace untuk bergabung. Anda akan otomatis ditambahkan sebagai member.
                     </div>
                     <Input

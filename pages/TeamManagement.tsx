@@ -526,12 +526,12 @@ export const TeamManagement: React.FC = () => {
             <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
                 {/* LEFT: WORKSPACES LIST */}
                 <div className="w-full lg:w-1/3 flex flex-col gap-4 min-h-0">
-                    <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
+                    <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="p-4 bg-primary flex items-center gap-3">
                             <Layers className="text-white" size={24} />
                             <h3 className="font-heading font-black text-white text-lg">Workspace</h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
+                        <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-500/5">
                             {loading && !workspaces.length ? (
                                 <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-slate-400" /></div>
                             ) : workspaces.length === 0 ? (
@@ -542,16 +542,16 @@ export const TeamManagement: React.FC = () => {
                                         key={ws.id}
                                         onClick={() => setSelectedWorkspace(ws)}
                                         className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between ${selectedWorkspace?.id === ws.id
-                                            ? 'bg-white border-slate-900 shadow-[4px_4px_0px_#0f172a] transform -translate-y-1'
-                                            : 'bg-white border-transparent hover:border-slate-300 hover:shadow-sm'
+                                            ? 'bg-card border-slate-900 shadow-[4px_4px_0px_#0f172a] transform -translate-y-1'
+                                            : 'bg-card border-transparent hover:border-slate-300 hover:shadow-sm'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
-                                            <div className="w-10 h-10 rounded-lg bg-pink-100 border-2 border-pink-200 flex items-center justify-center flex-shrink-0">
-                                                <Globe className="text-pink-600" size={20} />
+                                            <div className="w-10 h-10 rounded-lg bg-pink-500/10 border-2 border-pink-500/20 flex items-center justify-center flex-shrink-0">
+                                                <Globe className="text-pink-500" size={20} />
                                             </div>
                                             <div className="min-w-0">
-                                                <h4 className="font-heading font-black text-slate-900 truncate">{ws.name}</h4>
+                                                <h4 className="font-heading font-black text-foreground truncate">{ws.name}</h4>
                                                 <p className="text-xs font-bold text-slate-500">{ws.members?.length || 0} Members</p>
                                             </div>
                                         </div>
@@ -565,7 +565,7 @@ export const TeamManagement: React.FC = () => {
 
                 {/* RIGHT: USERS LIST IN WORKSPACE */}
                 <div className="w-full lg:w-2/3 flex flex-col min-h-0">
-                    <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col h-full">
+                    <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="px-6 py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-4">
                             {/* Geometric detail */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 blur-3xl rounded-full pointer-events-none"></div>
@@ -596,7 +596,7 @@ export const TeamManagement: React.FC = () => {
 
                         {/* Invite Form inline dropdown */}
                         {isInviteOpen && selectedWorkspace && (
-                            <div className="bg-emerald-50 border-b-4 border-slate-900 border-dashed p-6 animate-in fade-in slide-in-from-top-4">
+                            <div className="bg-emerald-500/10 border-b-4 border-slate-900 border-dashed p-6 animate-in fade-in slide-in-from-top-4">
                                 {inviteSuccess ? (
                                     /* Success Panel with Login Link */
                                     <div className="space-y-4">
@@ -605,24 +605,24 @@ export const TeamManagement: React.FC = () => {
                                                 <Plus size={20} className="text-slate-900" />
                                             </div>
                                             <div>
-                                                <h4 className="font-black text-slate-900 text-sm">✅ Berhasil Mendaftarkan {inviteSuccess.fullName}!</h4>
-                                                <p className="text-xs text-slate-600 font-medium">Kirimkan informasi login berikut ke anggota baru:</p>
+                                                <h4 className="font-black text-foreground text-sm">✅ Berhasil Mendaftarkan {inviteSuccess.fullName}!</h4>
+                                                <p className="text-xs text-slate-400 font-medium">Kirimkan informasi login berikut ke anggota baru:</p>
                                             </div>
                                         </div>
 
-                                        <div className="bg-white border-2 border-slate-900 rounded-xl p-4 space-y-2 shadow-[2px_2px_0px_#0f172a]">
+                                        <div className="bg-card border-2 border-slate-900 rounded-xl p-4 space-y-2 shadow-[2px_2px_0px_#0f172a]">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Link Login</span>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Link Login</span>
                                             </div>
-                                            <p className="text-sm font-mono font-bold text-blue-600 break-all">{getLoginLink()}</p>
-                                            <div className="border-t border-slate-100 pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
+                                            <p className="text-sm font-mono font-bold text-blue-500 break-all">{getLoginLink()}</p>
+                                            <div className="border-t border-slate-800 pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Username</span>
-                                                    <p className="font-black text-slate-900">{inviteSuccess.username}</p>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Username</span>
+                                                    <p className="font-black text-foreground">{inviteSuccess.username}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Password</span>
-                                                    <p className="font-black text-slate-900">{inviteSuccess.password}</p>
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Password</span>
+                                                    <p className="font-black text-foreground">{inviteSuccess.password}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -630,7 +630,7 @@ export const TeamManagement: React.FC = () => {
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={handleCopyLoginInfo}
-                                                className="flex-1 px-4 py-2.5 bg-white text-slate-900 font-bold text-xs rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+                                                className="flex-1 px-4 py-2.5 bg-card text-foreground font-bold text-xs rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-slate-500/10 transition-colors flex items-center justify-center gap-2"
                                             >
                                                 📋 Salin Info Login
                                             </button>
@@ -651,14 +651,14 @@ export const TeamManagement: React.FC = () => {
                                 ) : (
                                     /* Invite Form */
                                     <form onSubmit={handleInviteUser}>
-                                        <h4 className="font-black text-slate-900 mb-4 tracking-wide text-sm flex items-center gap-2">
+                                        <h4 className="font-black text-foreground mb-4 tracking-wide text-sm flex items-center gap-2">
                                             <UserMinus size={16} />
                                             Daftarkan & Undang Member Baru
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
-                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
-                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
+                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-transparent border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-foreground shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
+                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-transparent border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-foreground shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
+                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-transparent border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-foreground shadow-[2px_2px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent" />
                                         </div>
                                         <div className="mt-4 flex gap-3">
                                             <Button type="submit" disabled={inviting}>
@@ -666,7 +666,7 @@ export const TeamManagement: React.FC = () => {
                                             </Button>
                                             <Button type="button" variant="secondary" onClick={() => setIsInviteOpen(false)}>Batal</Button>
                                         </div>
-                                        <p className="text-xs text-slate-500 font-bold mt-3">User yang didaftarkan oleh Admin otomatis terverifikasi dan bisa langsung login. Link login akan ditampilkan setelah berhasil.</p>
+                                        <p className="text-xs text-slate-400 font-bold mt-3">User yang didaftarkan oleh Admin otomatis terverifikasi dan bisa langsung login. Link login akan ditampilkan setelah berhasil.</p>
                                     </form>
                                 )}
                             </div>
@@ -695,7 +695,7 @@ export const TeamManagement: React.FC = () => {
                                         return (
                                             <div
                                                 key={user.id}
-                                                className="bg-white border-2 border-slate-900 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a] shadow-[2px_2px_0px_#0f172a] transition-all group"
+                                                className="bg-card border-2 border-slate-900 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a] shadow-[2px_2px_0px_#0f172a] transition-all group"
                                                 onClick={() => handleOpenDetail(user)}
                                             >
                                                 <div className="flex items-center gap-2">
@@ -705,8 +705,8 @@ export const TeamManagement: React.FC = () => {
                                                         alt="Avatar"
                                                     />
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="font-black text-xs text-slate-900 truncate leading-tight">{user.full_name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 truncate">@{user.username}</p>
+                                                        <p className="font-black text-xs text-foreground truncate leading-tight">{user.full_name}</p>
+                                                        <p className="text-[10px] font-bold text-slate-500 truncate">@{user.username}</p>
                                                     </div>
                                                 </div>
                                                 <span className={`self-start inline-block px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
@@ -809,7 +809,7 @@ export const TeamManagement: React.FC = () => {
                                 </div>
 
                                 {/* Add to Workspace feature */}
-                                <div className="bg-emerald-50 rounded-2xl border-2 border-emerald-300 p-3">
+                                <div className="bg-emerald-500/10 rounded-2xl border-2 border-emerald-500/20 p-3">
                                     <p className="text-xs font-bold text-emerald-800 mb-2">Undang ke workspace lain:</p>
                                     <div className="flex gap-2 items-center">
                                         <select
@@ -945,13 +945,13 @@ export const TeamManagement: React.FC = () => {
                                         const isSuccess = pVal >= minCompletionRate;
                                         const isEditingThis = editingKPIId === kpi.id;
                                         return (
-                                            <div key={kpi.id} className={`bg-white p-4 rounded-xl border-2 transition-colors ${isEditingThis ? 'border-violet-400 shadow-[2px_2px_0px_#7c3aed]' : 'border-slate-200 hover:border-slate-900'}`}>
+                                            <div key={kpi.id} className={`bg-card p-4 rounded-xl border-2 transition-colors ${isEditingThis ? 'border-violet-400 shadow-[2px_2px_0px_#7c3aed]' : 'border-slate-200 hover:border-slate-900'}`}>
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h5 className="font-bold text-slate-900 text-sm truncate pr-2">{kpi.metric_name}</h5>
+                                                    <h5 className="font-bold text-foreground text-sm truncate pr-2">{kpi.metric_name}</h5>
                                                     <div className="flex items-center gap-1.5 shrink-0">
-                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${isSuccess ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-red-50 text-red-600 border-red-200'
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${isSuccess ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-red-500/10 text-red-500 border-red-500/10'
                                                             }`}>{isSuccess ? '✓ Berhasil' : '✗ Perlu Ditingkatkan'}</span>
-                                                        <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shadow-sm">{kpi.period}</span>
+                                                        <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-700 shadow-sm">{kpi.period}</span>
                                                         {/* Edit button */}
                                                         {!isEditingThis ? (
                                                             <button
@@ -974,7 +974,7 @@ export const TeamManagement: React.FC = () => {
                                                 </div>
                                                 <div className="flex justify-between items-end mb-1">
                                                     <span className="text-xs font-bold text-slate-500">{kpi.category}</span>
-                                                    <span className="text-xs font-black text-slate-900">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
+                                                    <span className="text-xs font-black text-foreground">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
                                                 </div>
                                                 <div className="w-full bg-slate-100 rounded-full h-2 border border-slate-200 overflow-hidden">
                                                     <div className={`h-2 rounded-full ${pVal >= minCompletionRate ? 'bg-emerald-500' : pVal >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${pVal}%` }} />
@@ -994,9 +994,12 @@ export const TeamManagement: React.FC = () => {
                                                                 <input value={editKPIForm.category} onChange={e => setEditKPIForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black text-slate-400 uppercase block mb-0.5">Periode</label>
-                                                                <select value={editKPIForm.period} onChange={e => setEditKPIForm(p => ({ ...p, period: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold bg-white focus:outline-none focus:border-violet-400">
-                                                                    <option>Monthly</option><option>Quarterly</option><option>Yearly</option><option>Weekly</option>
+                                                                <label className="text-[9px] font-black text-slate-500 uppercase block mb-0.5">Periode</label>
+                                                                <select value={editKPIForm.period} onChange={e => setEditKPIForm(p => ({ ...p, period: e.target.value }))} className="w-full border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold bg-transparent text-foreground focus:outline-none focus:border-violet-400">
+                                                                    <option className="bg-card">Monthly</option>
+                                                                    <option className="bg-card">Quarterly</option>
+                                                                    <option className="bg-card">Yearly</option>
+                                                                    <option className="bg-card">Weekly</option>
                                                                 </select>
                                                             </div>
                                                             <div>
