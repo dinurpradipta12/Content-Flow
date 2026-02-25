@@ -834,7 +834,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [selectedPackageId, setSelectedPackageId] = useState('');
     const [paymentProof, setPaymentProof] = useState('');
     const [selectedTier, setSelectedTier] = useState<'personal' | 'team'>('personal');
-    const [teamSize, setTeamSize] = useState(1);
+    const [teamSize, setTeamSize] = useState(2);
 
     useEffect(() => {
         // Sync selectedPackageId with first package from config based on tier
@@ -870,7 +870,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     const submitPaymentConfirmation = async () => {
         if (!paymentProof) {
-            alert('Harap lampirkan bukti pembayaran.');
+            setStatusModal({ isOpen: true, type: 'error', message: 'Harap lampirkan bukti pembayaran.' });
+            return;
+        }
+
+        if (selectedTier === 'team' && teamSize < 2) {
+            setStatusModal({ isOpen: true, type: 'error', message: 'Paket tim tidak bisa diisi hanya 1 orang. Minimal 2 orang (Admin + 1 Anggota).' });
             return;
         }
 
@@ -1356,13 +1361,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <label className="text-xs font-black text-secondary uppercase tracking-widest">Jumlah Anggota Tim</label>
                                 <div className="flex items-center bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
                                     <button
-                                        onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                                        onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
                                         className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-r-2 border-slate-900"
                                     >-</button>
                                     <input
                                         type="number"
                                         value={teamSize}
-                                        onChange={(e) => setTeamSize(Math.max(1, parseInt(e.target.value) || 1))}
+                                        onChange={(e) => setTeamSize(Math.max(2, parseInt(e.target.value) || 2))}
                                         className="w-12 h-10 text-center font-black text-slate-800 focus:outline-none"
                                     />
                                     <button
