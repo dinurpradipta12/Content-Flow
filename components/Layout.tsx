@@ -626,7 +626,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Branding State
     const [branding, setBranding] = useState({
-        appName: localStorage.getItem('app_name') || 'Arunika',
+        appName: localStorage.getItem('app_name') || 'Aruneeka Content Planner Pro',
         appLogo: localStorage.getItem('app_logo') || '',
         appLogoLight: localStorage.getItem('app_logo_light') || '',
         appFavicon: localStorage.getItem('app_favicon') || '',
@@ -828,7 +828,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // --- BRANDING EFFECT (Title & Favicon) ---
     useEffect(() => {
-        document.title = `${branding.appName} Content Flow`;
+        document.title = branding.appName;
         let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
         if (!link) {
             link = document.createElement('link');
@@ -843,7 +843,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     useEffect(() => {
         if (config) {
             setBranding({
-                appName: config.app_name || 'Arunika',
+                appName: config.app_name || 'Aruneeka Content Planner Pro',
                 appLogo: config.app_logo || '',
                 appLogoLight: config.app_logo_light || '',
                 appFavicon: config.app_favicon || ''
