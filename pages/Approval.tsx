@@ -82,7 +82,7 @@ export const Approval: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2 shrink-0">
                 <div>
-                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-3">
+                    <h2 className="text-4xl font-extrabold text-foreground font-heading tracking-tight flex items-center gap-3">
                         {config?.page_titles?.['approval']?.title || 'Team Approval Section'}
                     </h2>
                     <p className="text-slate-500 font-medium mt-2">

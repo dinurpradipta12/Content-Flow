@@ -147,14 +147,43 @@ export const Messages: React.FC = () => {
     const fetchWorkspaces = async () => {
         const userId = currentUser.id;
         const avatar = currentUser.avatar;
+        const userRole = currentUser.role || 'Member';
         const tenantId = localStorage.getItem('tenant_id') || userId;
-        const { data } = await supabase.from('workspaces')
-            .select('*')
-            .or(`admin_id.eq.${tenantId}${avatar ? `,members.cs.{"${avatar}"}` : ''}`);
+
+        const isBase64Avatar = avatar?.startsWith('data:');
+        const shouldSkipAvatarFilter = isBase64Avatar && avatar.length > 500;
+
+        let query = supabase.from('workspaces').select('*');
+
+        if (userRole === 'Developer') {
+            // Developers see all workspaces in their tenant
+        } else if (shouldSkipAvatarFilter) {
+            // If avatar is too long, only fetch by admin_id to avoid HTTP 431
+            // We will filter by members client-side
+            query = query.eq('admin_id', tenantId);
+        } else {
+            query = query.or(`admin_id.eq.${tenantId}${avatar ? `,members.cs.{"${avatar}"}` : ''}`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error("Error fetching workspaces:", error);
+            return;
+        }
+
         if (data) {
-            const myWorkspaces = data.filter(ws =>
-                ws.admin_id === userId || (ws.members && ws.members.includes(avatar))
-            );
+            // Strict filtering for everyone
+            const myWorkspaces = data.filter(ws => {
+                const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                if (isOwner) return true;
+
+                return (ws.members && ws.members.some((m: string) => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(avatar) || m === avatar; }
+                    catch { return m === avatar; }
+                }));
+            });
+
             setWorkspaces(myWorkspaces);
             setupGlobalRealtime(myWorkspaces);
             if (myWorkspaces.length > 0) setSelectedWorkspace(myWorkspaces[0]);

@@ -427,17 +427,17 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                     <div className={`p-6 md:p-8 border-b-4 border-slate-900 flex flex-col md:flex-row justify-between items-start gap-6 ${getStatusBgColor()}`}>
                         <div className="flex-1">
                             {/* Status Badge */}
-                            <div className="inline-block px-4 py-1.5 rounded-full border-4 border-slate-900 font-black text-sm uppercase mb-6 bg-white shadow-[4px_4px_0px_0px_#0f172a]">
+                            <div className="inline-block px-4 py-1.5 rounded-full border-4 border-slate-900 font-black text-sm uppercase mb-6 bg-card text-foreground shadow-[4px_4px_0px_0px_#0f172a]">
                                 Status: {request.status}
                             </div>
 
                             {/* PIC Info */}
-                            <div className="flex items-center gap-3 mb-6 bg-white/50 w-fit pr-6 rounded-full border-2 border-slate-900">
+                            <div className="flex items-center gap-3 mb-6 bg-card/20 w-fit pr-6 rounded-full border-2 border-slate-900">
                                 {request.requester_avatar ? (
                                     <img src={request.requester_avatar} className="w-10 h-10 rounded-full border-r-2 border-slate-900 object-cover" />
                                 ) : (
-                                    <div className="w-10 h-10 rounded-full bg-slate-100 border-r-2 border-slate-900 flex items-center justify-center">
-                                        <User size={20} />
+                                    <div className="w-10 h-10 rounded-full bg-slate-200 border-r-2 border-slate-900 flex items-center justify-center">
+                                        <User size={20} className="text-foreground" />
                                     </div>
                                 )}
                                 <p className="font-bold text-slate-900 text-sm">
@@ -452,21 +452,21 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
 
                             {/* Sub Info */}
                             <div className="flex flex-wrap gap-4 text-sm font-bold text-slate-900">
-                                <div className="bg-white/60 px-3 py-1.5 rounded-lg border-2 border-slate-900">
+                                <div className="bg-card/40 px-3 py-1.5 rounded-lg border-2 border-slate-900">
                                     <span className="opacity-60 uppercase text-[10px] block leading-none mb-1">Pillar</span>
                                     {request.form_data.pillar || '-'}
                                 </div>
-                                <div className="bg-white/60 px-3 py-1.5 rounded-lg border-2 border-slate-900">
+                                <div className="bg-card/40 px-3 py-1.5 rounded-lg border-2 border-slate-900">
                                     <span className="opacity-60 uppercase text-[10px] block leading-none mb-1">Platform</span>
                                     {request.form_data.platform || '-'}
                                 </div>
                                 {request.form_data.objective && (
-                                    <div className="bg-white/60 px-3 py-1.5 rounded-lg border-2 border-slate-900">
+                                    <div className="bg-card/40 px-3 py-1.5 rounded-lg border-2 border-slate-900">
                                         <span className="opacity-60 uppercase text-[10px] block leading-none mb-1">Objective</span>
                                         {request.form_data.objective}
                                     </div>
                                 )}
-                                <div className="bg-white/60 px-3 py-1.5 rounded-lg border-2 border-slate-900">
+                                <div className="bg-card/40 px-3 py-1.5 rounded-lg border-2 border-slate-900">
                                     <span className="opacity-60 uppercase text-[10px] block leading-none mb-1">Tgl Posting</span>
                                     {request.form_data.tanggal_posting ? new Date(request.form_data.tanggal_posting).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                                 </div>
@@ -474,36 +474,36 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         </div>
 
                         {/* Workspace Label */}
-                        <div className="bg-white border-4 border-slate-900 p-4 rounded-2xl transform rotate-2 shadow-[8px_8px_0px_0px_#0f172a] shrink-0 min-w-[200px]">
-                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Workspace</p>
+                        <div className="bg-card border-4 border-slate-900 p-4 rounded-2xl transform rotate-2 shadow-[8px_8px_0px_0px_#0f172a] shrink-0 min-w-[200px]">
+                            <p className="text-xs font-black text-mutedForeground uppercase tracking-widest mb-1">Workspace</p>
                             <p className="text-2xl font-black text-accent leading-tight">{request.form_data.workspace || '-'}</p>
                         </div>
                     </div>
 
                     {/* Body Area */}
-                    <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-[#FFFDF5]">
+                    <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 bg-background">
 
                         {/* Left Column: Files & Timeline */}
                         <div className="lg:col-span-2 space-y-8">
 
                             {/* Content Files */}
-                            <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a]">
-                                <h3 className="font-black text-2xl mb-6 uppercase tracking-tight flex items-center gap-3">
+                            <div className="bg-card border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a]">
+                                <h3 className="font-black text-2xl mb-6 text-foreground uppercase tracking-tight flex items-center gap-3">
                                     <ImageIcon size={28} className="text-accent" /> Lampiran Konten
                                 </h3>
                                 {renderFiles()}
                             </div>
 
                             {/* User Assignment for Approval Notification */}
-                            <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] mb-8">
-                                <h3 className="font-black text-xl mb-4 uppercase tracking-tight flex items-center gap-3">
+                            <div className="bg-card border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] mb-8">
+                                <h3 className="font-black text-xl mb-4 text-foreground uppercase tracking-tight flex items-center gap-3">
                                     <Bell size={24} className="text-accent" /> Teruskan ke Approver
                                 </h3>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <select
                                         value={targetApproverId}
                                         onChange={(e) => setTargetApproverId(e.target.value)}
-                                        className="flex-1 bg-white border-4 border-slate-900 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:ring-4 focus:ring-slate-400/50 appearance-none"
+                                        className="flex-1 bg-card border-4 border-slate-900 rounded-xl px-4 py-3 font-bold text-foreground outline-none focus:ring-4 focus:ring-slate-400/50 appearance-none"
                                     >
                                         <option value="">Pilih Member...</option>
                                         {allAppUsers.map(user => (
@@ -537,12 +537,12 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h4 className="font-bold text-slate-900">Submit</h4>
-                                                    <p className="text-sm text-slate-600">{request.requester_name}</p>
+                                                    <h4 className="font-bold text-foreground">Submit</h4>
+                                                    <p className="text-sm text-mutedForeground">{request.requester_name}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-sm font-bold text-blue-600">Submitted</span>
-                                                    <p className="text-xs text-slate-500">{new Date(request.created_at).toLocaleString('id-ID')}</p>
+                                                    <p className="text-xs text-mutedForeground">{new Date(request.created_at).toLocaleString('id-ID')}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -568,8 +568,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start">
                                                         <div>
-                                                            <h4 className="font-bold text-slate-900">{step.name}</h4>
-                                                            <p className="text-sm text-slate-600">{log ? log.user_name : step.approver_role}</p>
+                                                            <h4 className="font-bold text-foreground">{step.name}</h4>
+                                                            <p className="text-sm text-mutedForeground">{log ? log.user_name : step.approver_role}</p>
                                                         </div>
                                                         <div className="text-right">
                                                             {log ? (
@@ -577,15 +577,15 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                                                     <span className={`text-sm font-bold ${log.action === 'Approve' ? 'text-green-600' :
                                                                         log.action === 'Reject' ? 'text-red-600' : 'text-orange-600'
                                                                         }`}>{log.action}</span>
-                                                                    <p className="text-xs text-slate-500">{new Date(log.created_at).toLocaleString('id-ID')}</p>
+                                                                    <p className="text-xs text-mutedForeground">{new Date(log.created_at).toLocaleString('id-ID')}</p>
                                                                 </>
                                                             ) : (
-                                                                <span className="text-sm font-bold text-slate-400 italic">Pending</span>
+                                                                <span className="text-sm font-bold text-mutedForeground italic">Pending</span>
                                                             )}
                                                         </div>
                                                     </div>
                                                     {log?.comment && (
-                                                        <div className="mt-2 p-3 bg-slate-50 rounded-lg border-2 border-slate-200 text-sm italic text-slate-700">
+                                                        <div className="mt-2 p-3 bg-muted rounded-lg border-2 border-slate-200 text-sm italic text-foreground">
                                                             "{log.comment}"
                                                         </div>
                                                     )}
@@ -603,7 +603,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start">
-                                                    <h4 className="font-bold text-slate-900">End</h4>
+                                                    <h4 className="font-bold text-foreground">End</h4>
                                                     <span className="text-sm font-bold text-green-600">Disetujui Sepenuhnya</span>
                                                 </div>
                                             </div>
@@ -616,7 +616,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                         {/* Right Column: Actions */}
                         <div className="space-y-8">
                             {/* Comments / Activity Section */}
-                            <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col h-[500px]">
+                            <div className="bg-background border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col h-[500px]">
                                 <h3 className="font-black text-xl mb-4 uppercase tracking-tight border-b-4 border-slate-900 pb-2 shrink-0">Komentar & Aktivitas</h3>
 
                                 {/* Chat Messages */}
@@ -634,8 +634,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                                 </div>
                                                 <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%] relative group`}>
                                                     <div className="flex items-baseline gap-2 mb-1">
-                                                        <span className="font-black text-xs text-slate-900 uppercase tracking-tight">{isMe ? 'Anda' : log.user_name}</span>
-                                                        <span className="text-[10px] font-bold text-slate-400">{new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <span className="font-black text-xs text-foreground uppercase tracking-tight">{isMe ? 'Anda' : log.user_name}</span>
+                                                        <span className="text-[10px] font-bold text-mutedForeground">{new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </div>
 
                                                     {/* Hover Actions */}
@@ -648,7 +648,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                                         </button>
                                                     </div>
 
-                                                    <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-[4px_4px_0px_0px_#0f172a] ${isMe ? 'bg-yellow-100 rounded-tr-none' : 'bg-white rounded-tl-none'
+                                                    <div className={`p-3 rounded-2xl border-2 border-slate-900 text-sm font-bold shadow-[4px_4px_0px_0px_#0f172a] ${isMe ? 'bg-yellow-400 text-slate-900 rounded-tr-none' : 'bg-card text-foreground rounded-tl-none'
                                                         }`}>
                                                         {log.comment}
                                                         {log.attachment && (
@@ -687,7 +687,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                             <input
                                                 type="text"
                                                 placeholder="Tulis komentar..."
-                                                className="w-full border-4 border-slate-900 rounded-xl pl-4 pr-12 py-3 font-bold text-sm focus:outline-none focus:bg-yellow-50 transition-colors shadow-[4px_4px_0px_0px_#0f172a]"
+                                                className="w-full border-4 border-slate-900 rounded-xl bg-card pl-4 pr-12 py-3 font-bold text-foreground text-sm focus:outline-none focus:bg-slate-500/10 transition-colors shadow-[4px_4px_0px_0px_#0f172a]"
                                                 value={chatInput}
                                                 onChange={e => setChatInput(e.target.value)}
                                                 onKeyDown={e => e.key === 'Enter' && handleSendChat()}
@@ -711,8 +711,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             </div>
 
                             {request.status === 'Pending' && (
-                                <div className="bg-white border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] sticky top-6">
-                                    <h3 className="font-black text-xl mb-4 uppercase tracking-tight border-b-4 border-slate-900 pb-2">Aksi</h3>
+                                <div className="bg-card border-4 border-slate-900 rounded-2xl p-6 shadow-[8px_8px_0px_0px_#0f172a] sticky top-6">
+                                    <h3 className="font-black text-xl text-foreground mb-4 uppercase tracking-tight border-b-4 border-slate-900 pb-2">Aksi</h3>
 
                                     <div className="flex flex-col gap-3 relative">
 
@@ -750,9 +750,9 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                 maxWidth="max-w-md"
             >
                 <div className="space-y-4">
-                    <p className="font-black uppercase text-sm text-slate-600">Berikan alasan atau catatan untuk aksi ini:</p>
+                    <p className="font-black uppercase text-sm text-mutedForeground">Berikan alasan atau catatan untuk aksi ini:</p>
                     <textarea
-                        className="w-full border-4 border-slate-900 p-3 rounded-xl font-bold focus:outline-none focus:bg-yellow-50 transition-colors resize-none text-sm shadow-[4px_4px_0px_0px_#0f172a]"
+                        className="w-full border-4 border-slate-900 bg-card p-3 rounded-xl font-bold text-foreground focus:outline-none focus:bg-slate-500/10 transition-colors resize-none text-sm shadow-[4px_4px_0px_0px_#0f172a]"
                         rows={4}
                         placeholder="Tambahkan catatan..."
                         value={comment}

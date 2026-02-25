@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../src/components/Sidebar';
 import { Editor } from '../src/components/Editor';
 import { BottomBar } from '../src/components/BottomBar';
-import { Sparkles, Plus, ChevronLeft, ChevronRight, Palette, X } from 'lucide-react';
+import { Sparkles, Plus, ChevronLeft, ChevronRight, Palette, X, Loader2, Save } from 'lucide-react';
 import { useCarouselStore } from '../src/store/useCarouselStore';
 import { NotesPanel } from '../src/components/NotesPanel';
 import { useAppConfig } from '../components/AppConfigProvider';
@@ -15,6 +15,17 @@ export const CarouselMaker: React.FC = () => {
     const [currentTheme, setCurrentTheme] = useState('light');
     const [customColor, setCustomColor] = useState('#8b5cf6');
     const [showThemeModal, setShowThemeModal] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const {
+        resetCanvas,
+        saveProject,
+        loadProjects,
+        loadFonts,
+        currentProjectId,
+        pages,
+        canvasSize
+    } = useCarouselStore();
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('carousel_ui_theme');
@@ -26,45 +37,76 @@ export const CarouselMaker: React.FC = () => {
         const name = localStorage.getItem('app_name') || 'Arunika';
         setBrandLogo(favicon || logo);
         setBrandName(name);
+
+        loadFonts();
+        loadProjects();
     }, []);
 
-    const resetCanvas = useCarouselStore(state => state.resetCanvas);
+    const handleNewCanvas = async () => {
+        if (window.confirm("Ingin menyimpan project saat ini sebelum mulai baru? Klik 'Cancel' untuk langsung reset tanpa simpan.")) {
+            const name = prompt("Beri nama project ini:");
+            if (name) {
+                try {
+                    setIsSaving(true);
+                    await saveProject(name);
+                    window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Project disimpan!' } }));
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    setIsSaving(false);
+                }
+            }
+        }
+        resetCanvas();
+    };
 
-    const handleNewCanvas = () => {
-        if (window.confirm("Simpan Preset terlebih dahulu sebelum melanjutkan. Memulai canvas baru akan me-reset seluruh halaman ini. Lanjutkan?")) {
-            resetCanvas();
+    const handleQuickSave = async () => {
+        try {
+            setIsSaving(true);
+            let name = "Untitled Project";
+            if (!currentProjectId) {
+                const input = prompt("Nama project baru:", "Project " + new Date().toLocaleDateString());
+                if (!input) return;
+                name = input;
+            }
+            await saveProject(name);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Project Berhasil Disimpan!' } }));
+        } catch (err) {
+            console.error(err);
+            alert("Gagal simpan project.");
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const THEME_STYLES: Record<string, string> = {
         dark: `
-            .theme-dark { background-color: #0f172a !important; border-color: #334155 !important; }
-            .theme-dark header, .theme-dark aside, .theme-dark .bg-white { background-color: #1e293b !important; border-color: #475569 !important; color: #f8fafc !important; }
+            .theme-dark { background-color: #0f172a !important; color: #f8fafc !important; }
+            .theme-dark header, .theme-dark aside, .theme-dark .bg-white, .theme-dark div.bg-white, .theme-dark button.bg-white { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
             .theme-dark .bg-slate-50, .theme-dark .bg-slate-100, .theme-dark .bg-slate-200 { background-color: #0f172a !important; border-color: #334155 !important; }
             .theme-dark .text-slate-900, .theme-dark .text-slate-800, .theme-dark .text-slate-700 { color: #f1f5f9 !important; }
             .theme-dark .text-slate-500, .theme-dark .text-slate-400 { color: #94a3b8 !important; }
-            .theme-dark .border-slate-900, .theme-dark .border-slate-200 { border-color: #475569 !important; }
+            .theme-dark .border-slate-900, .theme-dark .border-slate-200, .theme-dark .border-slate-300 { border-color: #334155 !important; }
             .theme-dark [class*="shadow-"] { box-shadow: 4px 4px 0px 0px #020617 !important; }
             .theme-dark .bg-slate-900 { background-color: #3b82f6 !important; color: #fff !important; }
-            .theme-dark input, .theme-dark select, .theme-dark textarea { background-color: #0f172a !important; color: #fff !important; border-color: #475569 !important; }
+            .theme-dark input, .theme-dark select, .theme-dark textarea { background-color: #0f172a !important; color: #fff !important; border-color: #334155 !important; }
             .theme-dark .bg-red-50 { background-color: #1e3a8a !important; border-color: #1e40af !important; color: #bfdbfe !important; }
             .theme-dark .text-red-500, .theme-dark .text-red-600 { color: #93c5fd !important; }
             .theme-dark .hover\\:bg-red-500:hover { background-color: #3b82f6 !important; color: #fff !important; }
             .theme-dark .hover\\:text-red-500:hover { color: #60a5fa !important; }
             .theme-dark .bg-yellow-400 { background-color: #2563eb !important; color: #fff !important; }
-            .theme-dark .bg-slate-900 .text-red-500, .theme-dark aside .text-red-500 { color: #bfdbfe !important; }
-            .theme-dark .bg-slate-900 .hover\\:bg-red-50:hover, .theme-dark aside .hover\\:bg-red-50:hover { background-color: rgba(59,130,246,0.2) !important; color: #dbeafe !important; }
+            .theme-dark .text-accent { color: #60a5fa !important; }
         `,
         midnight: `
-            .theme-midnight { background-color: #0c1130 !important; border-color: #312e81 !important; }
-            .theme-midnight header, .theme-midnight aside, .theme-midnight .bg-white { background-color: #1e1b4b !important; border-color: #3730a3 !important; color: #e0e7ff !important; }
+            .theme-midnight { background-color: #0c1130 !important; color: #e0e7ff !important; }
+            .theme-midnight header, .theme-midnight aside, .theme-midnight .bg-white, .theme-midnight div.bg-white, .theme-midnight button.bg-white { background-color: #1e1b4b !important; border-color: #3730a3 !important; color: #e0e7ff !important; }
             .theme-midnight .bg-slate-50, .theme-midnight .bg-slate-100, .theme-midnight .bg-slate-200 { background-color: #0c1130 !important; border-color: #312e81 !important; }
             .theme-midnight .text-slate-900, .theme-midnight .text-slate-800, .theme-midnight .text-slate-700 { color: #c7d2fe !important; }
             .theme-midnight .text-slate-500, .theme-midnight .text-slate-400 { color: #818cf8 !important; }
-            .theme-midnight .border-slate-900, .theme-midnight .border-slate-200 { border-color: #4338ca !important; }
+            .theme-midnight .border-slate-900, .theme-midnight .border-slate-200, .theme-midnight .border-slate-300 { border-color: #3730a3 !important; }
             .theme-midnight [class*="shadow-"] { box-shadow: 4px 4px 0px 0px #0b0f29 !important; }
             .theme-midnight .bg-slate-900 { background-color: #6366f1 !important; color: #fff !important; }
-            .theme-midnight input, .theme-midnight select, .theme-midnight textarea { background-color: #0c1130 !important; color: #fff !important; border-color: #4338ca !important; }
+            .theme-midnight input, .theme-midnight select, .theme-midnight textarea { background-color: #0c1130 !important; color: #fff !important; border-color: #3730a3 !important; }
             .theme-midnight .bg-red-50 { background-color: #312e81 !important; border-color: #3730a3 !important; color: #a5b4fc !important; }
             .theme-midnight .text-red-500, .theme-midnight .text-red-600 { color: #a5b4fc !important; }
             .theme-midnight .hover\\:bg-red-500:hover { background-color: #4f46e5 !important; color: #fff !important; }
@@ -225,10 +267,18 @@ export const CarouselMaker: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={handleQuickSave}
+                        disabled={isSaving}
+                        className="flex items-center gap-2 px-4 py-2 bg-accent text-white font-black text-xs tracking-widest hover:brightness-110 rounded-lg transition-all border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] disabled:opacity-50"
+                    >
+                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        {currentProjectId ? 'Update Project' : 'Save Project'}
+                    </button>
                     <button onClick={() => setShowThemeModal(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 font-black text-xs tracking-widest hover:bg-slate-200 rounded-lg transition-colors border-2 border-slate-300">
                         <Palette size={16} /> Theme
                     </button>
-                    <button onClick={handleNewCanvas} className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-900 font-black text-xs tracking-widest hover:bg-slate-200 rounded-lg transition-colors border-2 border-slate-300">
+                    <button onClick={handleNewCanvas} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 font-black text-xs tracking-widest hover:bg-slate-50 rounded-xl transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
                         <Plus size={16} /> New Canvas
                     </button>
                 </div>

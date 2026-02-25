@@ -23,6 +23,13 @@ export const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('abuse') === 'true') {
+            setError("Sistem mendeteksi adanya pendaftaran beberapa akun Free Trial dari perangkat yang sama (Maks. 2 Akun). Sesuai Syarat & Ketentuan, akun Anda dibatasi untuk sementara.");
+        }
+    }, []);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);

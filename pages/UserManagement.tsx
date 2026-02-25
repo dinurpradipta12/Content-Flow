@@ -27,6 +27,8 @@ interface AppUser {
     created_at: string;
     parent_user_id?: string | null;
     invited_by?: string | null;
+    online_status?: 'online' | 'idle' | 'offline';
+    last_activity_at?: string;
 }
 
 interface Workspace {
@@ -89,6 +91,25 @@ export const UserManagement: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Realtime Presence Listener
+    useEffect(() => {
+        const channel = supabase
+            .channel('presence-all-users')
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'app_users'
+            }, (payload) => {
+                const updatedUser = payload.new as AppUser;
+                setUsers(prev => prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const fetchWorkspaces = async () => {
         try {
@@ -534,10 +555,10 @@ export const UserManagement: React.FC = () => {
                                                             <tr key={user.id} className="hover:bg-violet-50/50 transition-colors cursor-pointer" onClick={() => openDetail(user)}>
                                                                 <td className="p-4">
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="relative">
+                                                                        <div className="relative shrink-0">
                                                                             <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                                                className="w-10 h-10 rounded-full border border-slate-200 bg-slate-200 object-cover" alt="Avatar" />
-                                                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${user.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                                                                className="w-10 h-10 rounded-xl border-2 border-slate-900 object-cover bg-card shadow-sm" alt="Avatar" />
+                                                                            <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ${user.online_status === 'online' ? 'bg-emerald-500' : user.online_status === 'idle' ? 'bg-amber-400' : 'bg-slate-300'}`} title={user.online_status === 'online' ? 'Online' : user.online_status === 'idle' ? 'Idle' : 'Offline'} />
                                                                         </div>
                                                                         <div>
                                                                             <span className="font-bold text-slate-800 block text-sm">{user.full_name || 'No Name'}</span>
@@ -625,7 +646,19 @@ export const UserManagement: React.FC = () => {
                                             className="w-20 h-20 rounded-xl border-2 border-border shadow-sm object-cover relative z-10 bg-card" alt="Avatar" />
                                         <div className="relative z-10">
                                             <h3 className="text-xl font-heading font-black text-foreground">{selectedUser.full_name}</h3>
-                                            <p className="text-sm font-bold text-mutedForeground">@{selectedUser.username}</p>
+                                            <p className="text-sm font-bold text-mutedForeground flex items-center gap-2">
+                                                @{selectedUser.username}
+                                                <span className="text-slate-300">•</span>
+                                                <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest ${selectedUser.online_status === 'online' ? 'text-emerald-500' : selectedUser.online_status === 'idle' ? 'text-amber-500' : 'text-slate-400'}`}>
+                                                    <div className={`w-2 h-2 rounded-full ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                                                    {selectedUser.online_status === 'online' ? 'Online' : selectedUser.online_status === 'idle' ? 'Idle' : 'Offline'}
+                                                </span>
+                                            </p>
+                                            {selectedUser.last_activity_at && selectedUser.online_status !== 'online' && (
+                                                <p className="text-[10px] font-bold text-slate-400 mt-1">
+                                                    Terakhir aktif: {new Date(selectedUser.last_activity_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                            )}
                                             {/* Role Selector */}
                                             <div className="mt-2 flex items-center gap-2">
                                                 {(isDeveloper || isAdmin) && selectedUser.username !== 'arunika' ? (
@@ -915,7 +948,8 @@ export const UserManagement: React.FC = () => {
                         })()}
                     </Modal>
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };

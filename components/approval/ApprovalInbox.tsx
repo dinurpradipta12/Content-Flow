@@ -56,8 +56,8 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
         <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
             {/* Left Sidebar: Folders */}
             <div className="w-full md:w-64 shrink-0 flex flex-col gap-4">
-                <div className="bg-white border-4 border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#0f172a] h-full overflow-y-auto custom-scrollbar">
-                    <h3 className="font-black text-lg uppercase tracking-tight mb-4 border-b-4 border-slate-900 pb-2">Account List</h3>
+                <div className="bg-card border-4 border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#0f172a] h-full overflow-y-auto custom-scrollbar">
+                    <h3 className="font-black text-lg text-foreground uppercase tracking-tight mb-4 border-b-4 border-slate-900 pb-2">Account List</h3>
                     <div className="space-y-2">
                         {workspaces.map(ws => {
                             const isSelected = selectedWorkspace === ws;
@@ -66,7 +66,7 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                                 <div key={ws} className="space-y-1">
                                     <div className={`w-full flex items-center justify-between p-1 rounded-xl border-2 font-bold transition-all ${isSelected
                                         ? 'bg-accent text-white border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] translate-x-1'
-                                        : 'bg-white text-slate-700 border-transparent hover:border-slate-300 hover:bg-slate-50'
+                                        : 'bg-card text-mutedForeground border-transparent hover:border-slate-300 hover:bg-slate-500/10'
                                         }`}>
                                         <button
                                             onClick={() => {
@@ -94,8 +94,8 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                                                     key={status}
                                                     onClick={() => setSelectedStatus(status)}
                                                     className={`w-full flex items-center justify-between p-1.5 rounded-lg text-xs font-bold transition-all ${selectedStatus === status
-                                                        ? 'bg-yellow-300 text-slate-900 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]'
-                                                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 border-2 border-transparent'
+                                                        ? 'bg-yellow-400 text-slate-900 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]'
+                                                        : 'text-mutedForeground hover:text-foreground hover:bg-slate-500/10 border-2 border-transparent'
                                                         }`}
                                                 >
                                                     <span>{status === 'All' ? 'Semua Status' : status}</span>
@@ -112,27 +112,27 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
             </div>
 
             {/* Right: Approval List (Cards) */}
-            <div className="flex-1 bg-white border-4 border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] flex flex-col overflow-hidden">
+            <div className="flex-1 bg-card border-4 border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] flex flex-col overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-4 border-b-4 border-slate-900 bg-[#FFFDF5] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h3 className="font-black text-xl uppercase tracking-tight">Daftar Pengajuan</h3>
+                <div className="p-4 border-b-4 border-slate-900 bg-background flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 className="font-black text-xl text-foreground uppercase tracking-tight">Daftar Pengajuan</h3>
                     <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <select
-                            className="px-4 py-2 rounded-xl border-4 border-slate-900 focus:outline-none focus:bg-yellow-50 font-bold text-slate-900 transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-white"
+                            className="px-4 py-2 rounded-xl border-4 border-slate-900 focus:outline-none focus:bg-slate-500/10 font-bold text-foreground transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-card"
                             value={selectedTemplate}
                             onChange={(e) => setSelectedTemplate(e.target.value)}
                         >
-                            <option value="All">Filter Section</option>
+                            <option value="All" className="bg-card">Filter Section</option>
                             {templates.filter(t => t !== 'All').map(t => (
-                                <option key={t} value={t}>{t}</option>
+                                <option key={t} value={t} className="bg-card">{t}</option>
                             ))}
                         </select>
                         <div className="relative w-full sm:w-64">
-                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-900" />
+                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
                             <input
                                 type="text"
                                 placeholder="Cari judul / PIC..."
-                                className="w-full pl-10 pr-4 py-2 rounded-xl border-4 border-slate-900 focus:outline-none focus:bg-yellow-50 font-bold text-slate-900 transition-colors shadow-[2px_2px_0px_0px_#0f172a]"
+                                className="w-full pl-10 pr-4 py-2 rounded-xl border-4 border-slate-900 focus:outline-none focus:bg-slate-500/10 font-bold text-foreground transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-card"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -141,7 +141,7 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                 </div>
 
                 {/* Card List */}
-                <div className="flex-1 overflow-auto custom-scrollbar bg-slate-50 p-6">
+                <div className="flex-1 overflow-auto custom-scrollbar bg-card/50 p-6">
                     {loading && requests.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-slate-900 gap-4">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-slate-900"></div>
@@ -161,24 +161,23 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                                 <div
                                     key={req.id}
                                     onClick={() => onSelectRequest(req)}
-                                    className="bg-white border-4 border-slate-900 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f172a] shadow-[4px_4px_0px_0px_#0f172a] transition-all group"
+                                    className="bg-card border-4 border-slate-900 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f172a] shadow-[4px_4px_0px_0px_#0f172a] transition-all group"
                                 >
                                     <div className="flex justify-between items-start gap-2">
-                                        <h4 className="font-black text-slate-900 text-lg leading-tight group-hover:text-accent transition-colors line-clamp-2">
+                                        <h4 className="font-black text-foreground text-lg leading-tight group-hover:text-accent transition-colors line-clamp-2">
                                             {req.template?.name || 'Approval'}
                                         </h4>
                                         <span className={`shrink-0 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full border-2 ${getStatusColor(req.status)}`}>
                                             {req.status}
                                         </span>
                                     </div>
-
-                                    <div className="space-y-2 text-sm font-bold text-slate-600">
-                                        <p className="truncate"><span className="text-slate-400 uppercase text-[10px] tracking-wider block leading-none mb-0.5">Judul Konten</span> <span className="text-slate-900">{req.form_data.judul_konten || '-'}</span></p>
-                                        <p className="truncate"><span className="text-slate-400 uppercase text-[10px] tracking-wider block leading-none mb-0.5">PIC Script</span> <span className="text-slate-900">{req.form_data.pic_script || '-'}</span></p>
-                                        <p className="truncate"><span className="text-slate-400 uppercase text-[10px] tracking-wider block leading-none mb-0.5">Content Value</span> <span className="text-slate-900">{req.form_data.pillar || '-'}</span></p>
+                                    <div className="space-y-2 text-sm font-bold text-mutedForeground">
+                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">Judul Konten</span> <span className="text-foreground">{req.form_data.judul_konten || '-'}</span></p>
+                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">PIC Script</span> <span className="text-foreground">{req.form_data.pic_script || '-'}</span></p>
+                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">Content Value</span> <span className="text-foreground">{req.form_data.pillar || '-'}</span></p>
                                     </div>
 
-                                    <div className="mt-auto pt-4 border-t-2 border-slate-100 flex justify-between items-end">
+                                    <div className="mt-auto pt-4 border-t-2 border-border/20 flex justify-between items-end">
                                         <div className="flex items-center gap-2">
                                             {req.requester_avatar ? (
                                                 <img src={req.requester_avatar} alt="PIC" className="w-8 h-8 rounded-full border-2 border-slate-900 object-cover" />
@@ -187,11 +186,11 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                                                     <span className="font-black text-xs text-slate-900">{req.requester_name.charAt(0)}</span>
                                                 </div>
                                             )}
-                                            <span className="font-black text-slate-900 text-xs">{req.requester_name}</span>
+                                            <span className="font-black text-foreground text-xs">{req.requester_name}</span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase block leading-none mb-0.5">Arrived</span>
-                                            <span className="text-xs font-bold text-slate-900">{new Date(req.created_at).toISOString().split('T')[0]}</span>
+                                            <span className="text-[10px] font-black text-mutedForeground uppercase block leading-none mb-0.5">Arrived</span>
+                                            <span className="text-xs font-bold text-foreground">{new Date(req.created_at).toISOString().split('T')[0]}</span>
                                         </div>
                                     </div>
                                 </div>

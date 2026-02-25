@@ -40,6 +40,7 @@ import { Modal } from './ui/Modal';
 import { Workspace } from '../types';
 import { updateSupabaseConfig, checkConnectionLatency, supabase } from '../services/supabaseClient';
 import { X } from 'lucide-react';
+import { UserPresence } from './UserPresence';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -74,17 +75,18 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-dark [class*="bg-pink-"] svg, .theme-dark [class*="bg-red-"] svg, .theme-dark [class*="bg-blue-"] svg, .theme-dark .bg-black svg { color: #fff !important; stroke: #fff !important; }
         
         /* Protection for specific branding elements (logos) */
-        .theme-dark .bg-white.rounded-lg, .theme-dark .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
-        .theme-dark .bg-white.rounded-lg svg, .theme-dark .ws-logo-box svg { color: #1e293b !important; stroke: #1e293b !important; }
+        .theme-dark .bg-white.rounded-lg, .theme-dark .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; color: #1e293b !important; }
+        .theme-dark .bg-white.rounded-lg svg, .theme-dark .ws-logo-box svg, .theme-dark .bg-white.rounded-lg span { color: #1e293b !important; stroke: #1e293b !important; }
         
         /* Network Status Badge Fixes - Forced Visibility & Clean Backgrounds */
-        .theme-dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.4) !important; color: #4ade80 !important; }
-        .theme-dark .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #facc15 !important; }
+        .theme-dark .bg-green-50, .theme-dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #34d399 !important; }
+        .theme-dark .bg-yellow-50, .theme-dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.15) !important; border-color: rgba(245, 158, 11, 0.4) !important; color: #fbbf24 !important; }
         .theme-dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
-        .theme-dark .bg-green-50 span, .theme-dark .bg-green-50 svg,
-        .theme-dark .bg-yellow-50 span, .theme-dark .bg-yellow-50 svg,
+        
+        .theme-dark .bg-green-50 span, .theme-dark .bg-green-50 svg, .theme-dark .bg-emerald-50 svg,
+        .theme-dark .bg-yellow-50 span, .theme-dark .bg-yellow-50 svg, .theme-dark .bg-amber-50 svg,
         .theme-dark .bg-red-50 span, .theme-dark .bg-red-50 svg { background-color: transparent !important; color: inherit !important; stroke: currentColor !important; }
-        .theme-dark [class*="bg-"][class*="-50"] svg { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
+        .theme-dark [class*="bg-"][class*="-50"] svg, .theme-dark [class*="bg-"][class*="-100"] svg { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
 
         /* Card Badges Fixes - Premium Translucent Look for Pillars & Types */
         .theme-dark .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #fde047 !important; }
@@ -98,6 +100,19 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         
         .theme-dark .bg-blue-100:not([class*="platform"]) { background-color: rgba(59, 130, 246, 0.15) !important; border-color: rgba(59, 130, 246, 0.4) !important; color: #93c5fd !important; }
         .theme-dark .text-blue-700:not([class*="platform"]), .theme-dark .bg-blue-100:not([class*="platform"]) * { color: #93c5fd !important; }
+
+        /* Shadow Fixes - Neutralize light shadows in dark mode */
+        .theme-dark [class*="shadow-violet-"], 
+        .theme-dark [class*="shadow-emerald-"], 
+        .theme-dark [class*="shadow-pink-"], 
+        .theme-dark [class*="shadow-blue-"], 
+        .theme-dark [class*="shadow-slate-"] { 
+            --tw-shadow-color: rgba(2, 6, 23, 0.5) !important;
+            box-shadow: 0 10px 15px -3px rgba(2, 6, 23, 0.5), 0 4px 6px -2px rgba(2, 6, 23, 0.5) !important;
+        }
+        .theme-dark [class*="hover\\:shadow-"]:hover {
+            box-shadow: 0 20px 25px -5px rgba(2, 6, 23, 0.6), 0 10px 10px -5px rgba(2, 6, 23, 0.6) !important;
+        }
         
         .theme-dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.15) !important; border-color: rgba(249, 115, 22, 0.4) !important; color: #fdba74 !important; }
         .theme-dark .text-orange-700, .theme-dark .bg-orange-100 *, .theme-dark .text-orange-700 * { color: #fdba74 !important; }
@@ -119,6 +134,9 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
 
         .theme-dark .bg-white\\/50, .theme-dark .bg-white\\/60 { background-color: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.15) !important; color: #e2e8f0 !important; }
         .theme-dark .bg-white\\/50 *, .theme-dark .bg-white\\/60 * { color: #e2e8f0 !important; stroke: #e2e8f0 !important; }
+
+        .theme-dark .text-mutedForeground, .theme-dark .text-slate-400 { color: #94a3b8 !important; }
+        .theme-dark .text-mutedForeground svg, .theme-dark .text-slate-400 svg { color: #94a3b8 !important; stroke: #94a3b8 !important; }
     `,
     midnight: () => `
         body.theme-midnight, .theme-midnight, .theme-midnight main, .theme-midnight .bg-background, .theme-midnight.bg-background { background-color: #0c1130 !important; }
@@ -155,13 +173,14 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-midnight .bg-white.rounded-lg svg, .theme-midnight .ws-logo-box svg { color: #1e293b !important; stroke: #1e293b !important; }
 
         /* Network Status Badge Fixes - Forced Visibility & Clean Backgrounds */
-        .theme-midnight .bg-green-50 { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.4) !important; color: #4ade80 !important; }
-        .theme-midnight .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #facc15 !important; }
+        .theme-midnight .bg-green-50, .theme-midnight .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #34d399 !important; }
+        .theme-midnight .bg-yellow-50, .theme-midnight .bg-amber-50 { background-color: rgba(245, 158, 11, 0.15) !important; border-color: rgba(245, 158, 11, 0.4) !important; color: #fbbf24 !important; }
         .theme-midnight .bg-red-50 { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #f87171 !important; }
-        .theme-midnight .bg-green-50 span, .theme-midnight .bg-green-50 svg,
-        .theme-midnight .bg-yellow-50 span, .theme-midnight .bg-yellow-50 svg,
+        
+        .theme-midnight .bg-green-50 span, .theme-midnight .bg-green-50 svg, .theme-midnight .bg-emerald-50 svg,
+        .theme-midnight .bg-yellow-50 span, .theme-midnight .bg-yellow-50 svg, .theme-midnight .bg-amber-50 svg,
         .theme-midnight .bg-red-50 span, .theme-midnight .bg-red-50 svg { background-color: transparent !important; color: inherit !important; stroke: currentColor !important; }
-        .theme-midnight [class*="bg-"][class*="-50"] svg { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
+        .theme-midnight [class*="bg-"][class*="-50"] svg, .theme-midnight [class*="bg-"][class*="-100"] svg { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
 
         /* Card Badges Fixes - Premium Translucent Look for Pillars & Types */
         .theme-midnight .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.15) !important; border-color: rgba(234, 179, 8, 0.4) !important; color: #fde047 !important; }
@@ -196,6 +215,9 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
 
         .theme-midnight .bg-white\\/50, .theme-midnight .bg-white\\/60 { background-color: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.15) !important; color: #e2e8f0 !important; }
         .theme-midnight .bg-white\\/50 *, .theme-midnight .bg-white\\/60 * { color: #e2e8f0 !important; stroke: #e2e8f0 !important; }
+
+        .theme-midnight .text-mutedForeground, .theme-midnight .text-slate-400 { color: #818cf8 !important; }
+        .theme-midnight .text-mutedForeground svg, .theme-midnight .text-slate-400 svg { color: #818cf8 !important; stroke: #818cf8 !important; }
     `,
     pastel: () => `
         body.theme-pastel, .theme-pastel, .theme-pastel main, .theme-pastel .bg-background, .theme-pastel.bg-background { background-color: #fff1f2 !important; }
@@ -548,6 +570,60 @@ begin
   end if;
 end
 $$;
+
+-- 10. Carousel Maker Addons
+create table if not exists public.custom_fonts(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+    user_id uuid not null,
+    name text not null,
+    font_data text not null, -- base64 or url
+    constraint custom_fonts_pkey primary key(id),
+    constraint custom_fonts_user_id_fkey foreign key(user_id) references public.app_users(id) on delete cascade,
+    constraint custom_fonts_user_name_unique unique(user_id, name)
+);
+
+-- MIGRATION: Tambahkan constraint jika belum ada
+alter table public.custom_fonts add constraint custom_fonts_user_name_unique unique(user_id, name);
+
+create table if not exists public.carousel_presets(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+    user_id uuid not null,
+    name text not null,
+    data jsonb not null,
+    constraint carousel_presets_pkey primary key(id),
+    constraint carousel_presets_user_id_fkey foreign key(user_id) references public.app_users(id) on delete cascade
+);
+
+create table if not exists public.carousel_projects(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+    updated_at timestamp with time zone not null default now(),
+    user_id uuid not null,
+    name text not null,
+    data jsonb not null,
+    preview_url text,
+    constraint carousel_projects_pkey primary key(id),
+    constraint carousel_projects_user_id_fkey foreign key(user_id) references public.app_users(id) on delete cascade
+);
+
+alter table public.custom_fonts enable row level security;
+alter table public.carousel_presets enable row level security;
+alter table public.carousel_projects enable row level security;
+
+drop policy if exists "Enable all access" on public.custom_fonts;
+drop policy if exists "Enable all access" on public.carousel_presets;
+drop policy if exists "Enable all access" on public.carousel_projects;
+
+create policy "Enable all access" on public.custom_fonts for all using(true) with check(true);
+create policy "Enable all access" on public.carousel_presets for all using(true) with check(true);
+create policy "Enable all access" on public.carousel_projects for all using(true) with check(true);
+
+-- Enable Realtime for Carousel
+alter publication supabase_realtime add table public.custom_fonts;
+alter publication supabase_realtime add table public.carousel_projects;
+
 `;
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -562,6 +638,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Settings State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
+
+    // Live Time for Header
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     // Notification State
     const { notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick } = useNotifications();
@@ -664,6 +748,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     parentUserId: data.parent_user_id
                 };
                 setUserProfile(profileData);
+
+                // Abuse Protection: Check if more than 2 free trial accounts from same device
+                if (profileData.subscriptionPackage === 'Free') {
+                    const fingerprint = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
+                    const { data: trialCount } = await supabase.rpc('check_trial_abuse', { fingerprint_check: fingerprint });
+                    if (trialCount > 2) {
+                        console.warn('Abuse detected. Protocol: Force Logout.');
+                        handleLogout();
+                        window.location.href = '/login?abuse=true';
+                        return;
+                    }
+                }
 
                 if (data.subscription_end) {
                     localStorage.setItem('subscription_end', data.subscription_end);
@@ -1309,25 +1405,33 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     return (
         <div className={`flex h-screen w-full overflow-hidden bg-background relative theme-${currentTheme}`}>
+            <UserPresence />
             {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
             {/* Sidebar (Fixed position always) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 w-72 bg-card border-r-2 border-slate-200 transition-transform duration-300 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] flex flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'}`}
             >
-                <div className="h-auto flex flex-col items-start justify-center px-8 shrink-0 py-10 gap-4">
-                    <div className="flex items-center justify-start w-full">
+                <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'}`}>
+                    <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'}`}>
                         {(() => {
                             const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
                             const activeLogo = isDarkTheme
                                 ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
                                 : (config?.app_logo || branding.appLogo);
 
-                            if (activeLogo) {
-                                return <img src={activeLogo} className="max-w-[300px] max-h-20 object-contain" alt="Logo" />;
+                            const favicon = config?.app_favicon || branding.appFavicon;
+
+                            if (isSidebarOpen && activeLogo) {
+                                return <img src={activeLogo} className="max-w-[300px] max-h-20 object-contain animate-in fade-in duration-500" alt="Logo" />;
                             }
+
+                            if (!isSidebarOpen && favicon) {
+                                return <img src={favicon} className="w-10 h-10 object-contain animate-in fade-in zoom-in duration-500 rounded-lg" alt="Favicon" />;
+                            }
+
                             return (
-                                <div className="w-14 h-14 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard">
-                                    <Layers className="text-white" size={28} />
+                                <div className={`bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard transition-all duration-500 ${isSidebarOpen ? 'w-14 h-14' : 'w-10 h-10'}`}>
+                                    <Layers className="text-white" size={isSidebarOpen ? 28 : 20} />
                                 </div>
                             );
                         })()}
@@ -1411,46 +1515,74 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         if (filteredItems.length === 0) return null;
                         return (
                             <div key={section} className="mb-8 font-heading">
-                                <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{section}</h3>
-                                <div className="space-y-1">
-                                    {filteredItems.map((item) => (
-                                        <button
-                                            key={item.path}
-                                            onClick={() => navigate(item.path)}
-                                            className={`w-full flex items-center justify-start px-4 py-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-accent text-white shadow-hard-mini translate-x-1' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'}`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'group-hover:text-accent transition-colors'} />
-                                                <span className="font-bold text-sm tracking-tight">{item.label}</span>
-                                            </div>
-                                            {item.badge && (
-                                                <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-black ${location.pathname === item.path ? 'bg-white text-accent' : 'bg-accent text-white'}`}>{item.badge}</span>
-                                            )}
-                                        </button>
-                                    ))}
+                                {isSidebarOpen && (
+                                    <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 animate-in fade-in slide-in-from-left-2">{section}</h3>
+                                )}
+                                <div className="space-y-1 flex flex-col items-center w-full">
+                                    {filteredItems.map((item) => {
+                                        const isActive = location.pathname === item.path;
+                                        return (
+                                            <button
+                                                key={item.path}
+                                                onClick={() => navigate(item.path)}
+                                                className={`flex items-center transition-all duration-500 group overflow-hidden ${isSidebarOpen ? 'w-full justify-start px-4 py-3 rounded-xl' : 'w-12 h-12 justify-center rounded-xl'} ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'} ${isActive && isSidebarOpen ? 'translate-x-1' : ''}`}
+                                                title={!isSidebarOpen ? item.label : ''}
+                                            >
+                                                <div className={`flex items-center ${isSidebarOpen ? 'gap-4 min-w-[200px]' : 'justify-center'}`}>
+                                                    <item.icon size={20} className={`shrink-0 transition-all duration-500 ${isActive ? 'text-white' : 'group-hover:text-accent'}`} />
+                                                    {isSidebarOpen && (
+                                                        <span className={`font-bold text-sm tracking-tight whitespace-nowrap transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'}`}>
+                                                            {item.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {item.badge && isSidebarOpen && (
+                                                    <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-accent animate-in zoom-in">{item.badge}</span>
+                                                )}
+                                                {item.badge && !isSidebarOpen && (
+                                                    <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="p-4 mt-auto border-t-2 border-slate-50 shrink-0">
-                    <button onClick={() => setShowThemeModal(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1">
-                        <Palette size={20} /> UI Theme
+                <div className={`p-4 mt-auto border-t-2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
+                    <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="UI Theme">
+                        <Palette size={20} className="shrink-0" />
+                        {isSidebarOpen && (
+                            <span className="transition-all duration-500 opacity-100 whitespace-nowrap">UI Theme</span>
+                        )}
                     </button>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm">
-                        <LogOut size={20} /> Sign Out
+                    <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="Sign Out">
+                        <LogOut size={20} className="shrink-0" />
+                        {isSidebarOpen && (
+                            <span className="transition-all duration-500 opacity-100 whitespace-nowrap">Sign Out</span>
+                        )}
                     </button>
-                    <p className="text-[10px] text-slate-400 font-bold text-left px-4 mt-4 opacity-70 italic">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
+                    {isSidebarOpen && (
+                        <p className="text-[10px] text-slate-400 font-bold text-left px-4 mt-4 opacity-70 italic animate-in fade-in">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
+                    )}
                 </div>
             </aside>
 
             {/* Main Wrapper-Uses padding left instead of flex width sharing */}
-            <div className={`flex flex-col h-screen overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0'}`}>
-                <header className="mt-4 shrink-0 z-30 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-slate-800 shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
+            <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
+                <header className="mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
-                        {!isSidebarOpen && <h1 className="font-heading font-extrabold text-xl text-accent tracking-tight shrink-0 truncate">{branding.appName}</h1>}
+                        <div className="flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </span>
+                            <span className="text-sm font-black text-slate-900 font-heading tracking-tight leading-none">
+                                {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-3 md:gap-6">
@@ -1465,8 +1597,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                                 </button>
                                 {isNotificationOpen && (
-                                    <div className="absolute top-full right-0 mt-3 w-[400px] bg-card border-2 border-slate-800 shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <div className="px-6 py-4 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                    <div className="absolute top-full right-0 mt-3 w-[400px] bg-card border-2 border-border shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="px-6 py-4 border-b-2 border-border flex items-center justify-between bg-muted/50">
                                             <div className="flex items-center gap-2"><Bell size={16} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-lg">Notifikasi</span></div>
                                             {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg">Tandai Semua Dibaca</button>}
                                         </div>
@@ -1474,12 +1606,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             {notifications.length === 0 ? (
                                                 <div className="py-12 flex flex-col items-center justify-center text-slate-400"><Bell size={40} className="opacity-10 mb-3" /><p className="font-bold text-sm">Tidak ada notifikasi</p></div>
                                             ) : (
-                                                <div className="divide-y divide-slate-50">
+                                                <div className="divide-y divide-border">
                                                     {notifications.map((notif) => (
-                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover: bg-slate-50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
                                                             {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
                                                             <div className="shrink-0">
-                                                                {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-slate-200 object-cover" /> : <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200"><User size={18} /></div>}
+                                                                {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover" /> : <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={18} /></div>}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>

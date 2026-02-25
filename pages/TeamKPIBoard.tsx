@@ -23,6 +23,8 @@ interface WorkspaceItem {
     id: string;
     name: string;
     members: string[];
+    admin_id: string;
+    owner_id?: string;
 }
 
 interface KPI {
@@ -137,14 +139,39 @@ export const TeamKPIBoard: React.FC = () => {
         setLoading(true);
         try {
             const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role') || 'Member';
+            const isBase64Avatar = currentUserAvatar?.startsWith('data:');
+            const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
+
+            let wsQuery = supabase.from('workspaces').select('id,name,members,admin_id');
+
+            if (userRole === 'Developer') {
+                // Developers see all
+            } else if (shouldSkipAvatarFilter) {
+                wsQuery = wsQuery.eq('admin_id', tenantId);
+            } else {
+                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
+            }
+
             const [membersRes, kpisRes, wsRes] = await Promise.all([
                 supabase.from('team_members').select('*').eq('admin_id', tenantId).order('full_name'),
                 supabase.from('team_kpis').select('*').order('created_at', { ascending: false }),
-                supabase.from('workspaces').select('id,name,members').or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`).order('name'),
+                wsQuery.order('name'),
             ]);
+
             if (membersRes.data) setMembers(membersRes.data);
             if (kpisRes.data) setKpis(kpisRes.data);
-            if (wsRes.data) setWorkspaces(wsRes.data as WorkspaceItem[]);
+
+            if (wsRes.data) {
+                const userId = localStorage.getItem('user_id');
+                let accessibleWorkspaces = (wsRes.data as WorkspaceItem[]).filter(ws =>
+                    ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id) || (ws.members && ws.members.some((m: string) => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
+                        catch { return m === currentUserAvatar; }
+                    }))
+                );
+                setWorkspaces(accessibleWorkspaces);
+            }
         } catch (err) {
             console.error('Failed to fetch KPI data:', err);
         }
@@ -461,7 +488,7 @@ export const TeamKPIBoard: React.FC = () => {
                                     <div
                                         key={member.id}
                                         onClick={() => openDetail(member)}
-                                        className="bg-card rounded-2xl border-2 border-border hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100 p-5 cursor-pointer transition-all duration-200 group"
+                                        className="bg-card rounded-2xl border-2 border-border hover:border-accent hover:shadow-lg p-5 cursor-pointer transition-all duration-200 group"
                                     >
                                         {/* Avatar + Info */}
                                         <div className="flex items-center gap-3 mb-4">
@@ -681,7 +708,7 @@ export const TeamKPIBoard: React.FC = () => {
                                         <button
                                             onClick={handleSaveMemberActuals}
                                             disabled={savingActuals}
-                                            className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white py-2.5 rounded-xl font-black text-sm transition-colors shadow-lg shadow-emerald-100"
+                                            className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white py-2.5 rounded-xl font-black text-sm transition-colors shadow-lg"
                                         >
                                             {savingActuals ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                                             {savingActuals ? 'Menyimpan...' : 'Simpan & Tutup'}
@@ -743,7 +770,7 @@ export const TeamKPIBoard: React.FC = () => {
                         <button onClick={() => setIsAddMemberOpen(false)} className="px-4 py-2 text-sm font-medium text-mutedForeground hover:bg-slate-500/10 rounded-lg transition-colors">
                             Cancel
                         </button>
-                        <button onClick={handleAddMember} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-lg shadow-violet-200">
+                        <button onClick={handleAddMember} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-md">
                             Add Member
                         </button>
                     </div>
@@ -846,7 +873,7 @@ export const TeamKPIBoard: React.FC = () => {
                         <button onClick={() => setIsAddKPIOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
                             Cancel
                         </button>
-                        <button onClick={handleAddKPI} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-lg shadow-violet-200">
+                        <button onClick={handleAddKPI} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-md">
                             Add KPI
                         </button>
                     </div>

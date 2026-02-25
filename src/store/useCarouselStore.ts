@@ -37,6 +37,8 @@ interface CarouselState {
     zoom: number;
     referenceData: any | null;
     customFonts: string[];
+    projects: any[];
+    currentProjectId: string | null;
 
     // Actions
     setPages: (pages: CarouselPage[]) => void;
@@ -47,6 +49,7 @@ interface CarouselState {
     setZoom: (zoom: number) => void;
     setReferenceData: (data: any) => void;
     setCustomFonts: (fonts: string[]) => void;
+    setCurrentProjectId: (id: string | null) => void;
 
     addPage: () => void;
     duplicatePage: (index: number) => void;
@@ -57,6 +60,9 @@ interface CarouselState {
     updatePageElements: (index: number, elements: any[], previewUrl?: string) => void;
     savePreset: (name: string, presetData?: { pages: CarouselPage[], canvasSize: CanvasSize }) => Promise<void>;
     loadPresets: () => Promise<any[]>;
+    saveProject: (name: string) => Promise<void>;
+    loadProjects: () => Promise<any[]>;
+    deleteProject: (id: string) => Promise<void>;
     uploadFont: (name: string, data: string) => Promise<void>;
     loadFonts: () => Promise<void>;
     resetCanvas: () => void;
@@ -85,6 +91,8 @@ export const useCarouselStore = create<CarouselState>()(
             zoom: 0.5,
             referenceData: null,
             customFonts: [],
+            projects: [],
+            currentProjectId: null,
 
             setPages: (pages) => set({ pages }),
             setCurrentPageIndex: (currentPageIndex) => set({ currentPageIndex }),
@@ -94,6 +102,7 @@ export const useCarouselStore = create<CarouselState>()(
             setZoom: (zoom) => set({ zoom }),
             setReferenceData: (referenceData) => set({ referenceData }),
             setCustomFonts: (customFonts) => set({ customFonts }),
+            setCurrentProjectId: (currentProjectId) => set({ currentProjectId }),
 
             resetCanvas: () => set({
                 pages: [{
@@ -109,6 +118,7 @@ export const useCarouselStore = create<CarouselState>()(
                 }],
                 currentPageIndex: 0,
                 currentLayers: [],
+                currentProjectId: null,
             }),
 
             addPage: () => set((state) => {
@@ -196,44 +206,94 @@ export const useCarouselStore = create<CarouselState>()(
             loadPresets: async () => {
                 const { supabase } = await import('../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
+                if (!userId) return [];
                 const { data, error } = await supabase
                     .from('carousel_presets')
                     .select('*')
                     .eq('user_id', userId)
                     .order('created_at', { ascending: false });
 
+                if (error) {
+                    if (error.code === 'PGRST204') return [];
+                    throw error;
+                }
+                return data || [];
+            },
+
+            saveProject: async (name) => {
+                const { pages, canvasSize, currentProjectId } = get();
+                const { supabase } = await import('../services/supabaseClient');
+                const userId = localStorage.getItem('user_id');
+                if (!userId) throw new Error('User not logged in');
+
+                const projectData = {
+                    name,
+                    user_id: userId,
+                    data: { pages, canvasSize },
+                    updated_at: new Date().toISOString(),
+                    preview_url: pages[0]?.previewUrl || ''
+                };
+
+                if (currentProjectId) {
+                    const { error } = await supabase.from('carousel_projects').update(projectData).eq('id', currentProjectId);
+                    if (error) throw error;
+                } else {
+                    const { data, error } = await supabase.from('carousel_projects').insert(projectData).select().single();
+                    if (error) throw error;
+                    if (data) set({ currentProjectId: data.id });
+                }
+            },
+
+            loadProjects: async () => {
+                const { supabase } = await import('../services/supabaseClient');
+                const userId = localStorage.getItem('user_id');
+                if (!userId) return [];
+                const { data, error } = await supabase
+                    .from('carousel_projects')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('updated_at', { ascending: false });
+
+                if (error) {
+                    if (error.code === 'PGRST204') return [];
+                    throw error;
+                }
+                set({ projects: data || [] });
+                return data || [];
+            },
+
+            deleteProject: async (id) => {
+                const { supabase } = await import('../services/supabaseClient');
+                const { error } = await supabase.from('carousel_projects').delete().eq('id', id);
                 if (error) throw error;
-                return data;
+                if (get().currentProjectId === id) set({ currentProjectId: null });
+                await get().loadProjects();
             },
 
             uploadFont: async (name, data) => {
                 const { supabase } = await import('../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
+                if (!userId) throw new Error('User not logged in');
 
                 try {
-                    const { error } = await supabase.from('custom_fonts').insert({
+                    const { error } = await supabase.from('custom_fonts').upsert({
                         name,
                         user_id: userId,
                         font_data: data
-                    });
+                    }, { onConflict: 'user_id,name' });
 
-                    if (error) {
-                        // Ignore if table doesn't exist (PGRST205)
-                        if (error.code === 'PGRST205' || error.message.includes('custom_fonts')) {
-                            console.warn('Custom fonts table missing, skipping upload.');
-                            return;
-                        }
-                        throw error;
-                    }
+                    if (error) throw error;
                     await get().loadFonts();
                 } catch (err) {
                     console.error('Font upload failed:', err);
+                    throw err;
                 }
             },
 
             loadFonts: async () => {
                 const { supabase } = await import('../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
+                if (!userId) return;
 
                 try {
                     const { data, error } = await supabase
@@ -242,11 +302,7 @@ export const useCarouselStore = create<CarouselState>()(
                         .eq('user_id', userId);
 
                     if (error) {
-                        // Ignore if table doesn't exist (PGRST205)
-                        if (error.code === 'PGRST205' || error.message.includes('custom_fonts')) {
-                            console.warn('Custom fonts table missing, skipping load.');
-                            return;
-                        }
+                        if (error.code === 'PGRST204') return;
                         throw error;
                     }
 

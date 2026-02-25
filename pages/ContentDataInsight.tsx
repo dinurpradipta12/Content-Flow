@@ -97,22 +97,31 @@ export const ContentDataInsight: React.FC = () => {
             const userAvatar = localStorage.getItem('user_avatar') || '';
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
 
-            // Fetch all workspaces for this admin tenant or where I am a member
-            const { data: wsData } = await supabase
-                .from('workspaces')
-                .select('id, account_name, members')
-                .or(`admin_id.eq.${tenantId}${userAvatar ? `,members.cs.{"${userAvatar}"}` : ''}`);
+            const isBase64Avatar = userAvatar?.startsWith('data:');
+            const shouldSkipAvatarFilter = isBase64Avatar && userAvatar.length > 500;
+
+            let wsQuery = supabase.from('workspaces').select('id, account_name, members');
+
+            if (userRole === 'Developer') {
+                // Developers see all
+            } else if (shouldSkipAvatarFilter) {
+                wsQuery = wsQuery.eq('admin_id', tenantId);
+            } else {
+                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${userAvatar ? `,members.cs.{"${userAvatar}"}` : ''}`);
+            }
+
+            const { data: wsData, error: wsError } = await wsQuery;
+            if (wsError) throw wsError;
 
             if (wsData) {
-                // For members: only show workspaces they belong to
-                const accessibleWorkspaces = !isAdminOrOwner && userAvatar
-                    ? wsData.filter((w: any) =>
-                        (w.members || []).some((m: string) => {
-                            try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
-                            catch { return m === userAvatar; }
-                        })
-                    )
-                    : wsData;
+                const userId = localStorage.getItem('user_id');
+                // For members: only show workspaces they belong to or own
+                const accessibleWorkspaces = wsData.filter((w: any) =>
+                    w.owner_id === userId || (w.admin_id === userId && !w.owner_id) || (w.members || []).some((m: string) => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
+                        catch { return m === userAvatar; }
+                    })
+                );
 
                 const uniqueAccounts = Array.from(new Set(
                     accessibleWorkspaces.map((w: any) => w.account_name).filter((n: string) => n && n.trim() !== '')

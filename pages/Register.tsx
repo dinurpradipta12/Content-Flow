@@ -85,6 +85,21 @@ export const Register: React.FC = () => {
                 return;
             }
 
+            // Fingerprint Generation (Abuse Protection)
+            const fingerprint = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
+
+            // Check trial abuse (Max 2 accounts per device for Free Trial)
+            if (selectedPackage?.price === 0) {
+                const { data: trialCount, error: abuseError } = await supabase.rpc('check_trial_abuse', { fingerprint_check: fingerprint });
+                if (!abuseError && trialCount >= 2) {
+                    setErrorStatus('Batas maksimal pendaftaran akun Free Trial telah tercapai untuk perangkat ini.');
+                    setLoading(true);
+                    // Force logout or delay to discourage browser manipulation
+                    setTimeout(() => setLoading(false), 2000);
+                    return;
+                }
+            }
+
             // Insert new user into db mapping
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.fullName)}`;
             const now = new Date();
@@ -93,15 +108,22 @@ export const Register: React.FC = () => {
             // Calculate subscription end
             let subscriptionEnd = null;
             let isVerified = false;
+            let memberLimit = 2; // Default limit
 
             if (selectedPackage) {
                 const duration = selectedPackage.durationDays || 30;
+
+                // Set member limit based on package
+                if (selectedPackage.name.includes('Team 10')) memberLimit = 10;
+                else if (selectedPackage.name.includes('Team 5')) memberLimit = 5;
+                else if (selectedPackage.name.includes('Personal')) memberLimit = 1;
+                else memberLimit = 2; // Free / Default
+
                 if (selectedPackage.price === 0) {
-                    // Free trial often auto-activates with fixed duration (requested 3 days but using durationDays from config)
                     const end = new Date();
                     end.setDate(end.getDate() + duration);
                     subscriptionEnd = end.toISOString();
-                    isVerified = true; // Auto verify for free tier
+                    isVerified = true;
                 }
             }
 
@@ -111,13 +133,15 @@ export const Register: React.FC = () => {
                 email: form.email,
                 username: form.username,
                 password: form.password,
-                role: 'Admin', // New admin registration with subscription
+                role: 'Admin',
                 avatar_url: avatarUrl,
                 is_active: true,
                 subscription_start: now.toISOString(),
                 subscription_code: form.subscriptionCode || null,
                 subscription_package: selectedPackage?.name || 'Free',
-                is_verified: isVerified
+                is_verified: isVerified,
+                device_fingerprint: fingerprint,
+                member_limit: memberLimit
             };
 
             if (subscriptionEnd) {
@@ -173,7 +197,7 @@ export const Register: React.FC = () => {
     };
 
     const handleSendWhatsApp = () => {
-        const waNumber = '6281234567890'; // Developer WhatsApp number - replace as needed
+        const waNumber = paymentConfig?.whatsappNumber || '6289619941101';
         const message = encodeURIComponent(
             `Halo Developer Aruneeka,\n\nSaya telah mendaftar akun baru dengan informasi berikut:\n\nNama: ${form.fullName}\nEmail: ${form.email}\nUsername: ${form.username}\nKode Langganan: ${form.subscriptionCode}\n\nMohon diverifikasi agar akun saya dapat diaktifkan.\n\nTerima kasih!`
         );

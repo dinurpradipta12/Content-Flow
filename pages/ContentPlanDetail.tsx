@@ -328,7 +328,7 @@ const KanbanColumn: React.FC<{
             onDrop={handleDrop}
         >
             {/* Column Header */}
-            <div className="flex-shrink-0 mb-6 pt-6">
+            <div className="flex-shrink-0 mb-6 pt-1">
                 <div className="flex items-center justify-between pb-4 border-b-2 border-border">
                     <h3 className={`font-heading font-black text-sm tracking-widest uppercase ${textColor}`}>
                         {status}
@@ -496,16 +496,18 @@ export const ContentPlanDetail: React.FC = () => {
 
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
 
-            // Member Access Control: if user is NOT admin/owner, verify they are in members[]
-            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
-            if (ws && !isAdminOrOwner && freshAvatar) {
-                const wsMembers: string[] = ws.members || [];
-                const isMember = wsMembers.some(m => {
-                    try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar; }
-                    catch { return m === freshAvatar; }
-                });
-                if (!isMember) {
-                    throw new Error("Akses Ditolak. Anda tidak lagi menjadi anggota workspace ini.");
+            // Strict Access Control
+            if (ws) {
+                const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                if (!isOwner) {
+                    const wsMembers: string[] = ws.members || [];
+                    const isMember = wsMembers.some(m => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar || '') || m === freshAvatar; }
+                        catch { return m === freshAvatar; }
+                    });
+                    if (!isMember) {
+                        throw new Error("Akses Ditolak. Anda tidak terdaftar sebagai anggota workspace ini.");
+                    }
                 }
             }
 
@@ -871,7 +873,7 @@ export const ContentPlanDetail: React.FC = () => {
         <>
             <div className="flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
                 {/* Header Section Updated */}
-                <div className={`flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-border pb-0 flex-shrink-0 w-full max-w-full pl-2 md:pl-4 pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
+                <div className={`flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-border pb-6 flex-shrink-0 w-full max-w-full pl-2 md:pl-4 pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
                     {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
                     <div className="flex flex-col items-start gap-4 transition-all duration-300">
                         <div className={`flex items-center gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
@@ -1016,6 +1018,61 @@ export const ContentPlanDetail: React.FC = () => {
                     {/* Background Logo Decoration Removed */}
                 </div>
 
+                {/* Global Filters */}
+                <div className="flex flex-wrap items-center gap-3 mt-6 mb-8 px-2">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
+                        <Filter size={14} /> Filter Platform
+                    </div>
+
+                    <button
+                        onClick={() => setFilterPlatform('all')}
+                        className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
+                    >
+                        <Layers size={14} />
+                        All Platforms
+                    </button>
+
+                    {Object.values(Platform).filter(p => {
+                        // Only show platforms that are selected in workspace settings
+                        const code = p === Platform.INSTAGRAM ? 'IG' :
+                            p === Platform.TIKTOK ? 'TK' :
+                                p === Platform.YOUTUBE ? 'YT' :
+                                    p === Platform.LINKEDIN ? 'LI' :
+                                        p === Platform.FACEBOOK ? 'FB' :
+                                            p === Platform.THREADS ? 'TH' : '';
+                        return workspaceData.platforms.includes(code);
+                    }).map(p => (
+                        <button
+                            key={p}
+                            onClick={() => setFilterPlatform(p)}
+                            className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === p ? 'bg-accent text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
+                        >
+                            {getPlatformIcon(p)}
+                            {p}
+                        </button>
+                    ))}
+
+                    {/* Status Filter for Table View - Kept for utility */}
+                    {viewMode === 'table' && (
+                        <div className="ml-auto flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
+                                Status
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                    className={`appearance-none pl-4 pr-10 py-2.5 rounded-2xl border-2 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini ${filterStatus !== 'all' ? 'bg-blue-50 border-slate-900 text-blue-700' : 'bg-white border-slate-900 text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <option value="all">All Status</option>
+                                    {Object.values(ContentStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-900" />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
                     <div className="flex-1 w-full overflow-x-auto pb-4 no-scrollbar">
@@ -1024,7 +1081,7 @@ export const ContentPlanDetail: React.FC = () => {
                                 <KanbanColumn
                                     key={status}
                                     status={status}
-                                    items={tasks.filter(t => t.status === status)}
+                                    items={tasks.filter(t => t.status === status && (filterPlatform === 'all' || t.platform === filterPlatform))}
                                     textColor={
                                         status === ContentStatus.TODO ? 'text-slate-900' :
                                             status === ContentStatus.IN_PROGRESS ? 'text-blue-500' :
@@ -1044,55 +1101,9 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 ) : (
                     <div className="flex-1 w-full flex flex-col pt-2 pb-6 px-1">
-                        {/* Filter Control Bar (Only for Table View) */}
-                        <div className="flex items-center gap-3 mb-4 px-1 flex-wrap">
-                            <div className="flex items-center gap-2 text-sm font-bold text-slate-500 mr-2">
-                                <Filter size={16} /> Filter:
-                            </div>
-
-                            {/* All */}
-                            <button
-                                onClick={() => { setFilterPlatform('all'); setFilterStatus('all'); }}
-                                className={`px-4 py-1.5 rounded-full border-2 text-xs font-bold transition-all ${filterPlatform === 'all' && filterStatus === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-400'}`}
-                            >
-                                All
-                            </button>
-
-                            {/* Platform Dropdown */}
-                            <div className="relative">
-                                <select
-                                    value={filterPlatform}
-                                    onChange={(e) => setFilterPlatform(e.target.value)}
-                                    className={`appearance-none pl-4 pr-8 py-1.5 rounded-full border-2 text-xs font-bold outline-none cursor-pointer transition-all ${filterPlatform !== 'all' ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}`}
-                                >
-                                    <option value="all">By Platform</option>
-                                    {Object.values(Platform).map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
-                                <ChevronDown size={14} className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${filterPlatform !== 'all' ? 'text-purple-700' : 'text-slate-400'}`} />
-                            </div>
-
-                            {/* Status Dropdown */}
-                            <div className="relative">
-                                <select
-                                    value={filterStatus}
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                    className={`appearance-none pl-4 pr-8 py-1.5 rounded-full border-2 text-xs font-bold outline-none cursor-pointer transition-all ${filterStatus !== 'all' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}`}
-                                >
-                                    <option value="all">By Status</option>
-                                    {Object.values(ContentStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                                <ChevronDown size={14} className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${filterStatus !== 'all' ? 'text-blue-700' : 'text-slate-400'}`} />
-                            </div>
-
-                            {/* Reset Indicator */}
-                            {(filterPlatform !== 'all' || filterStatus !== 'all') && (
-                                <button
-                                    onClick={() => { setFilterPlatform('all'); setFilterStatus('all'); }}
-                                    className="text-xs text-red-500 font-bold hover:underline ml-2"
-                                >
-                                    Reset
-                                </button>
-                            )}
+                        {/* Table View Header */}
+                        <div className="px-2 mb-4">
+                            <h3 className="text-xl font-heading font-black text-slate-900">Summary List</h3>
                         </div>
 
                         {/* Table Container - Custom Scrollbar */}

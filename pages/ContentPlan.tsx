@@ -97,13 +97,26 @@ export const ContentPlan: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             // 1. Parallel Fetch: User Data & Workspaces
-            const currentAvatar = localStorage.getItem('user_avatar');
+            const currentAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
+            const freshAvatar = currentAvatar; // We'll update this after userRes if needed, but for the query we use current
+
+            // 1. Parallel Fetch: User Data & Workspaces
+            const isBase64Avatar = freshAvatar?.startsWith('data:');
+            const shouldSkipAvatarFilter = isBase64Avatar && freshAvatar.length > 500;
+
+            let wsQuery = supabase.from('workspaces').select('*');
+
+            if (userRole === 'Developer') {
+                // Developers can see everything
+            } else if (shouldSkipAvatarFilter) {
+                wsQuery = wsQuery.eq('admin_id', tenantId);
+            } else {
+                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${freshAvatar ? `,members.cs.{"${freshAvatar}"}` : ''}`);
+            }
+
             const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, full_name').eq('id', userId).single(),
-                supabase.from('workspaces')
-                    .select('*')
-                    .or(`admin_id.eq.${tenantId}${currentAvatar ? `,members.cs.{"${currentAvatar}"}` : ''}`)
-                    .order('created_at', { ascending: false })
+                wsQuery.order('created_at', { ascending: false })
             ]);
 
             if (wsRes.error) throw wsRes.error;
@@ -111,7 +124,7 @@ export const ContentPlan: React.FC = () => {
             const userData = userRes.data;
             const wsData = wsRes.data || [];
 
-            const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
+            const updatedAvatar = userData?.avatar_url || freshAvatar;
             const freshName = userData?.full_name || localStorage.getItem('user_name') || 'Anda';
             setCurrentUserName(freshName);
 
@@ -142,8 +155,10 @@ export const ContentPlan: React.FC = () => {
 
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
-                    // Member Access Control
-                    if (isAdminOrOwner) return true;
+                    // Strict Access Control
+                    const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                    if (isOwner) return true;
+
                     if (!freshAvatar) return false;
                     const members: string[] = ws.members || [];
                     return members.some(m => {
@@ -289,7 +304,8 @@ export const ContentPlan: React.FC = () => {
                         account_name: formData.accountName,
                         logo_url: formData.logoUrl, // Base64 string is saved here
                         members: [currentUserAvatar], // Use current user avatar for sync accuracy
-                        admin_id: localStorage.getItem('tenant_id') || localStorage.getItem('user_id')
+                        admin_id: localStorage.getItem('tenant_id') || localStorage.getItem('user_id'),
+                        owner_id: localStorage.getItem('user_id')
                     }
                 ]).select();
 
@@ -523,11 +539,6 @@ export const ContentPlan: React.FC = () => {
                                                 {renderPlatformIcon(p)}
                                             </React.Fragment>
                                         ))}
-                                        {ws.accountName && (
-                                            <div title={ws.accountName} className={`p-1.5 flex items-center justify-center rounded-lg border-2 border-slate-800 shadow-sm transition-transform hover:-translate-y-0.5 cursor-help ${getAccountStyle(ws.platforms)}`}>
-                                                <AtSign size={18} />
-                                            </div>
-                                        )}
                                     </div>
 
                                     {/* 2. Nama Content Plan Workspace */}

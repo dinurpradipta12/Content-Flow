@@ -74,8 +74,9 @@ export const Sidebar: React.FC = () => {
         setPages,
         uploadFont
     } = useCarouselStore();
+    const { projects, loadProjects: loadAllProjects, deleteProject } = useCarouselStore();
 
-    const [activeTab, setActiveTab] = useState<'content' | 'layers'>('content');
+    const [activeTab, setActiveTab] = useState<'content' | 'projects' | 'layers'>('content');
     const [isSaving, setIsSaving] = useState(false);
     const [presets, setPresets] = useState<any[]>([]);
     const [isLoadingPresets, setIsLoadingPresets] = useState(false);
@@ -129,6 +130,8 @@ export const Sidebar: React.FC = () => {
     useEffect(() => {
         if (activeTab === 'content') {
             fetchPresets();
+        } else if (activeTab === 'projects') {
+            loadAllProjects();
         }
     }, [activeTab]);
 
@@ -172,19 +175,41 @@ export const Sidebar: React.FC = () => {
         if (confirm(`Load preset "${preset.name}"? This will replace your current design.`)) {
             setPages(preset.data.pages);
             setCanvasSize(preset.data.canvasSize);
+            // Ensure currentProjectId is cleared if loading a preset (unless we treat it as a new project start)
             window.dispatchEvent(new CustomEvent('canvas:load-preset', { detail: preset.data }));
         }
     };
 
-    const handleExportPreset = (preset: any, e: React.MouseEvent) => {
+    const handleLoadProject = (project: any) => {
+        if (confirm(`Open project "${project.name}"? This will replace your current design.`)) {
+            setPages(project.data.pages);
+            setCanvasSize(project.data.canvasSize);
+            useCarouselStore.getState().setCurrentProjectId(project.id);
+            window.dispatchEvent(new CustomEvent('canvas:load-preset', { detail: project.data }));
+        }
+    };
+
+    const handleExportPreset = async (preset: any, e: React.MouseEvent) => {
         e.stopPropagation();
-        const { supabase: _sb, ...exportData } = preset;
+        const { supabase } = await import('../services/supabaseClient');
+
+        // Fetch fonts to embed
+        let embeddedFonts: any[] = [];
+        try {
+            const userId = localStorage.getItem('user_id');
+            const { data: fonts } = await supabase.from('custom_fonts').select('*').eq('user_id', userId);
+            embeddedFonts = fonts || [];
+        } catch (err) {
+            console.error('Cant fetch fonts for embedding', err);
+        }
+
         const fileContent = JSON.stringify({
             __cfpreset: true,
-            version: '1.0',
+            version: '1.1', // Incremented version for Font embedding support
             exportedAt: new Date().toISOString(),
             name: preset.name,
-            data: preset.data
+            data: preset.data,
+            fonts: embeddedFonts
         }, null, 2);
         const blob = new Blob([fileContent], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -206,6 +231,18 @@ export const Sidebar: React.FC = () => {
                     alert('File tidak valid. Gunakan file .cfpreset yang valid.');
                     return;
                 }
+
+                // Restore fonts if they exist in the import
+                if (json.fonts && Array.isArray(json.fonts)) {
+                    for (const font of json.fonts) {
+                        try {
+                            await useCarouselStore.getState().uploadFont(font.name, font.font_data);
+                        } catch (e) {
+                            console.warn(`Could not restore font ${font.name}`, e);
+                        }
+                    }
+                }
+
                 const importedName = json.name || file.name.replace('.cfpreset', '');
                 const confirmName = prompt(`Import preset sebagai:`, importedName);
                 if (!confirmName) return;
@@ -267,13 +304,19 @@ export const Sidebar: React.FC = () => {
             <div className="flex border-b-4 border-slate-900 shrink-0">
                 <button
                     onClick={() => setActiveTab('content')}
-                    className={`flex-1 py-4 font-bold text-xs tracking-widest transition-colors ${activeTab === 'content' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 font-bold text-[10px] tracking-widest transition-colors ${activeTab === 'content' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
                 >
                     Content
                 </button>
                 <button
+                    onClick={() => setActiveTab('projects')}
+                    className={`flex-1 py-4 font-bold text-[10px] tracking-widest transition-colors border-l-4 border-slate-900 ${activeTab === 'projects' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                >
+                    Projects
+                </button>
+                <button
                     onClick={() => setActiveTab('layers')}
-                    className={`flex-1 py-4 font-bold text-xs tracking-widest transition-colors border-l-4 border-slate-900 ${activeTab === 'layers' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-4 font-bold text-[10px] tracking-widest transition-colors border-l-4 border-slate-900 ${activeTab === 'layers' ? 'bg-yellow-400 text-slate-900' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
                 >
                     Layers
                 </button>
@@ -443,13 +486,13 @@ export const Sidebar: React.FC = () => {
                             <div className="mt-4 flex bg-slate-100 rounded-xl p-1 border-2 border-slate-200">
                                 <button
                                     onClick={() => setApplyBgToAll(false)}
-                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-colors ${!applyBgToAll ? 'bg-white shadow border-slate-200 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
+                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-xl transition-colors ${!applyBgToAll ? 'bg-white shadow border-slate-200 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     Hanya Page Ini
                                 </button>
                                 <button
                                     onClick={() => setApplyBgToAll(true)}
-                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-colors ${applyBgToAll ? 'bg-white shadow border-slate-200 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
+                                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-xl transition-colors ${applyBgToAll ? 'bg-white shadow border-slate-200 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     Terapkan ke Semua
                                 </button>
@@ -555,6 +598,52 @@ export const Sidebar: React.FC = () => {
                                 </label>
                             </div>
                         </section>
+                    </div>
+                ) : activeTab === 'projects' ? (
+                    <div className="space-y-4">
+                        <label className="flex items-center gap-2 text-xs font-bold tracking-widest text-slate-400 mb-4">
+                            <FolderOpen size={14} /> Saved Projects
+                        </label>
+
+                        {projects.length > 0 ? (
+                            <div className="space-y-3">
+                                {projects.map(project => (
+                                    <div
+                                        key={project.id}
+                                        onClick={() => handleLoadProject(project)}
+                                        className="group bg-slate-50 border-2 border-slate-900 rounded-2xl p-3 hover:bg-yellow-50 cursor-pointer transition-all relative overflow-hidden shadow-[2px_2px_0px_0px_#0f172a]"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-black text-xs text-slate-900 leading-tight truncate pr-4">{project.name}</h3>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-1">
+                                                    {new Date(project.updated_at).toLocaleDateString()} · {project.data.pages.length} Slides
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (confirm(`Hapus project "${project.name}"?`)) deleteProject(project.id);
+                                                }}
+                                                className="p-1.5 bg-red-100 text-red-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                        {project.preview_url && (
+                                            <div className="mt-3 aspect-video rounded-xl bg-white border border-slate-200 overflow-hidden">
+                                                <img src={project.preview_url} className="w-full h-full object-cover" alt="Preview" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 border-4 border-dashed border-slate-100 rounded-3xl">
+                                <p className="text-xs font-bold text-slate-400 italic">No saved projects yet</p>
+                                <p className="text-[10px] text-slate-300 mt-1">Design something and click Save Project!</p>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-4">

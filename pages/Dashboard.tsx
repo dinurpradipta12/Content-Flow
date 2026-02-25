@@ -32,12 +32,12 @@ const getGreetingInfo = () => {
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] rounded-xl pointer-events-none">
-                {label && <p className="text-slate-400 font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
+            <div className="bg-card p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] rounded-xl pointer-events-none">
+                {label && <p className="text-mutedForeground font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></div>
-                        <p className="text-slate-900 font-black text-xs">
+                        <p className="text-foreground font-black text-xs">
                             <span className="opacity-50 font-bold">{entry.name}:</span> {entry.value.toLocaleString()}
                         </p>
                     </div>
@@ -378,15 +378,30 @@ export const Dashboard: React.FC = () => {
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
             const userRole = localStorage.getItem('user_role');
 
-            const { data } = await supabase.from('workspaces')
-                .select('*')
-                .or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`)
-                .order('name');
+            const isBase64Avatar = currentUserAvatar?.startsWith('data:');
+            const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
 
-            let myWorkspaces = data || [];
-            if (userRole !== 'Developer') {
-                myWorkspaces = myWorkspaces.filter((w: any) => (w.members || []).includes(currentUserAvatar));
+            let query = supabase.from('workspaces').select('*');
+
+            if (shouldSkipAvatarFilter) {
+                query = query.eq('admin_id', tenantId);
+            } else {
+                query = query.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
             }
+
+            const { data: wsData } = await query.order('name');
+            const userId = localStorage.getItem('user_id');
+
+            // Strict filtering for everyone
+            let myWorkspaces = (wsData || []).filter(ws => {
+                const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                if (isOwner) return true;
+
+                return (ws.members && ws.members.some((m: string) => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
+                    catch { return m === currentUserAvatar; }
+                }));
+            });
 
             setWorkspaces(myWorkspaces);
         };
@@ -577,8 +592,51 @@ export const Dashboard: React.FC = () => {
 
                     {/* Analytics Filtering & Cards */}
                     <div>
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
                             <h2 className="text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
+
+                            <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                                <select
+                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    value={filterPlatform}
+                                    onChange={(e) => setFilterPlatform(e.target.value)}
+                                >
+                                    <option value="all">PLATFORM</option>
+                                    {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
+                                        <option key={p} value={p}>{p.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    value={filterWs}
+                                    onChange={(e) => setFilterWs(e.target.value)}
+                                >
+                                    <option value="all">WORKSPACE</option>
+                                    {workspaces.map(ws => (
+                                        <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                                <div className="flex flex-wrap gap-2">
+                                    <select
+                                        className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                        value={filterMonth}
+                                        onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                                    >
+                                        {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
+                                            <option key={m} value={i}>{m.toUpperCase()}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                        value={filterYear}
+                                        onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                                    >
+                                        {[2024, 2025, 2026].map(y => (
+                                            <option key={y} value={y}>{y}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -629,53 +687,9 @@ export const Dashboard: React.FC = () => {
                     {/* Minimalist Analytics Chart */}
                     <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8">
                         <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-6 mb-8">
-                            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-4 w-full 2xl:w-auto flex-wrap">
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <TrendingUp size={24} className="text-slate-800" />
-                                    <h3 className="text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
-                                </div>
-                                <div className="flex flex-wrap gap-2 w-full xl:w-auto">
-                                    <select
-                                        className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
-                                        value={filterPlatform}
-                                        onChange={(e) => setFilterPlatform(e.target.value)}
-                                    >
-                                        <option value="all">PLATFORM</option>
-                                        {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
-                                            <option key={p} value={p}>{p.toUpperCase()}</option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
-                                        value={filterWs}
-                                        onChange={(e) => setFilterWs(e.target.value)}
-                                    >
-                                        <option value="all">WORKSPACE</option>
-                                        {workspaces.map(ws => (
-                                            <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>
-                                        ))}
-                                    </select>
-                                    <div className="flex flex-wrap gap-2">
-                                        <select
-                                            className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
-                                            value={filterMonth}
-                                            onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                                        >
-                                            {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
-                                                <option key={m} value={i}>{m.toUpperCase()}</option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            className="px-3 py-1.5 border-2 border-slate-200 rounded-full font-black text-[10px] uppercase tracking-wider bg-white text-slate-700 outline-none focus:border-slate-900 cursor-pointer shadow-sm hover:border-slate-300"
-                                            value={filterYear}
-                                            onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                                        >
-                                            {[2024, 2025, 2026].map(y => (
-                                                <option key={y} value={y}>{y}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                                <TrendingUp size={24} className="text-slate-800" />
+                                <h3 className="text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
                                 {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
@@ -684,7 +698,7 @@ export const Dashboard: React.FC = () => {
                                         onClick={() => setSelectedMetric(metric)}
                                         className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border-2 transition-all ${selectedMetric === metric
                                             ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                                            : 'bg-white border-slate-200 text-slate-500 hover:border-slate-400'
+                                            : 'bg-card border-slate-200 text-mutedForeground hover:border-slate-400'
                                             }`}
                                     >
                                         {metric === 'interactions' ? 'Total Eng' : metric}
@@ -734,10 +748,10 @@ export const Dashboard: React.FC = () => {
                     {/* Distribution Pie Charts */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Status Distribution */}
-                        <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8 flex flex-col items-center">
+                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8 flex flex-col items-center">
                             <div className="flex items-center gap-3 mb-8 self-start">
-                                <CheckCircle size={24} className="text-slate-800" />
-                                <h3 className="text-xl font-bold font-heading text-slate-800">Status Distribution</h3>
+                                <CheckCircle size={24} className="text-foreground" />
+                                <h3 className="text-xl font-bold font-heading text-foreground">Status Distribution</h3>
                             </div>
                             <div className="h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
@@ -764,10 +778,10 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Pillar Distribution */}
-                        <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8 flex flex-col items-center">
+                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8 flex flex-col items-center">
                             <div className="flex items-center gap-3 mb-8 self-start">
-                                <Layers size={24} className="text-slate-800" />
-                                <h3 className="text-xl font-bold font-heading text-slate-800">Content Pillars</h3>
+                                <Layers size={24} className="text-foreground" />
+                                <h3 className="text-xl font-bold font-heading text-foreground">Content Pillars</h3>
                             </div>
                             <div className="h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
@@ -799,8 +813,8 @@ export const Dashboard: React.FC = () => {
                     {/* Workspace Gallery */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 mb-6">
-                            <Layers size={28} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-2xl font-bold font-heading text-slate-800">Workspace Gallery</h2>
+                            <Layers size={28} className="text-foreground" strokeWidth={2.5} />
+                            <h2 className="text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {workspaces.length === 0 ? (
@@ -810,7 +824,7 @@ export const Dashboard: React.FC = () => {
                                     <div
                                         key={ws.id}
                                         onClick={() => navigate(`/plan/${ws.id}`)}
-                                        className="group cursor-pointer bg-white rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[220px]"
+                                        className="group cursor-pointer bg-card rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[220px]"
                                     >
                                         {/* Top Section */}
                                         <div className="flex justify-between items-start gap-4 mb-3">
@@ -827,7 +841,7 @@ export const Dashboard: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="w-14 h-14 rounded-2xl border-2 border-slate-900 bg-white flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
+                                            <div className="w-14 h-14 rounded-2xl border-2 border-slate-900 bg-background flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
                                                 {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers size={24} className="text-slate-400" />}
                                             </div>
                                         </div>
@@ -875,14 +889,10 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* --- RIGHT DESKTOP COLUMN (4 of 12) --- */}
-                <div className="lg:col-span-4 space-y-12">
+                <div className="lg:col-span-4 space-y-3 lg:pt-[220px]">
 
                     {/* Religious Card */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Book size={28} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-2xl font-bold font-heading text-slate-800">Daily Wisdom</h2>
-                        </div>
+                    <div className="space-y-2">
                         <div className="bg-slate-900 rounded-[32px] overflow-hidden border-4 border-slate-900 shadow-[0px_8px_0px_#0f172a] relative">
                             {isSelectingReligion ? (
                                 <div className="p-6 bg-slate-50 h-full flex flex-col justify-center overflow-y-auto custom-scrollbar">
@@ -894,7 +904,7 @@ export const Dashboard: React.FC = () => {
                                             <button
                                                 key={rel}
                                                 onClick={() => handleSetReligion(rel)}
-                                                className={`px-4 py-3 border-2 rounded-xl font-bold transition-colors ${religion === rel ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-900 hover:bg-slate-900 hover:text-white'}`}
+                                                className={`px-4 py-3 border-2 rounded-xl font-bold transition-colors ${religion === rel ? 'bg-accent text-white border-slate-900' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
                                             >
                                                 {rel}
                                             </button>
@@ -902,7 +912,7 @@ export const Dashboard: React.FC = () => {
                                     </div>
 
                                     {religion === 'Islam' && (
-                                        <div className="bg-white p-4 rounded-xl border-2 border-slate-200 mt-2">
+                                        <div className="bg-background p-4 rounded-xl border-2 border-slate-200 mt-2">
                                             <h4 className="font-bold text-sm text-slate-800 mb-2">Lokasi Jadwal Sholat (Opsi Manual)</h4>
                                             <p className="text-xs text-slate-500 mb-3 block">Bila kosong, sistem akan menggunakan lokasi otomatis GPS device Anda.</p>
                                             <div className="space-y-3">
@@ -953,7 +963,7 @@ export const Dashboard: React.FC = () => {
                                     )}
                                 </div>
                             ) : religion === 'Islam' ? (
-                                <div className="bg-gradient-to-br from-[#18B878] to-[#0D9F61] p-8 h-full flex flex-col items-center justify-center text-center text-white min-h-[300px] relative">
+                                <div className="bg-gradient-to-br from-[#18B878] to-[#0D9F61] p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[240px] relative">
                                     <button onClick={() => setIsSelectingReligion(true)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
                                         <Settings size={20} />
                                     </button>
@@ -962,13 +972,11 @@ export const Dashboard: React.FC = () => {
                                         {nextPrayerState.countdown} menit lagi memasuki waktu
                                     </p>
                                     <h3 className="text-5xl md:text-6xl font-black font-heading mb-2 drop-shadow-sm">{nextPrayerState.name}</h3>
-                                    <p className="font-bold text-white/90 text-xs md:text-sm mb-6">
+                                    <p className="font-bold text-white/90 text-xs md:text-sm mb-4">
                                         {nextPrayerState.time} {tzLabel} - {cityInfo}
                                     </p>
 
-                                    <div className="w-full h-[1px] bg-white/30 mb-6 max-w-sm"></div>
-
-                                    <p className="text-[11px] uppercase tracking-widest font-black text-white/90 mb-3">your daily surah</p>
+                                    <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
                                     {dailyQuote && typeof dailyQuote === 'object' ? (
                                         <>
                                             {dailyQuote.arabic && (
@@ -988,18 +996,14 @@ export const Dashboard: React.FC = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className={`bg-gradient-to-br ${getReligionStyles(religion)} p-8 h-full flex flex-col items-center justify-center text-center text-white min-h-[300px] relative transition-colors duration-500`}>
-                                    <button onClick={() => setIsSelectingReligion(true)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
+                                <div className={`bg-gradient-to-br ${getReligionStyles(religion)} p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[220px] relative transition-colors duration-500`}>
+                                    <button onClick={() => setIsSelectingReligion(true)} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
                                         <Settings size={20} />
                                     </button>
 
-                                    <Book size={48} className="text-white/20 mb-6 mt-4" />
+                                    <Book size={32} className="text-white/20 mb-4" />
 
-                                    <div className="w-full h-[1px] bg-white/30 mb-6 max-w-sm"></div>
-
-                                    <p className="text-[11px] uppercase tracking-widest font-black text-white/90 mb-6">
-                                        Daily {religion}
-                                    </p>
+                                    <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
 
                                     <div className="flex-1 flex flex-col justify-center items-center">
                                         <h3 className="text-xl md:text-2xl font-bold font-heading leading-relaxed italic mb-4 max-w-md drop-shadow-sm">
@@ -1015,12 +1019,12 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Daily Checklist */}
-                    <div id="daily-checklist" className="space-y-4 pt-10">
-                        <div className="flex items-center gap-3 mb-6">
-                            <CheckCircle size={28} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-2xl font-bold font-heading text-slate-800">Checklist</h2>
+                    <div id="daily-checklist" className="space-y-2">
+                        <div className="flex items-center gap-3 mb-1">
+                            <CheckCircle size={22} className="text-slate-800" strokeWidth={2.5} />
+                            <h2 className="text-lg font-bold font-heading text-slate-800">Checklist</h2>
                         </div>
-                        <div className="bg-white rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
+                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
                             <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
                                 {checklists.length === 0 ? (
                                     <div className="text-center py-10">
@@ -1031,11 +1035,11 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 ) : (
                                     checklists.map(c => (
-                                        <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-white transition-colors">
+                                        <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-card transition-colors">
                                             <button onClick={() => toggleChecklist(c.id)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300 text-transparent'}`}>
                                                 <Check size={14} className={c.done ? 'opacity-100' : 'opacity-0'} />
                                             </button>
-                                            <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{c.text}</p>
+                                            <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-mutedForeground line-through' : 'text-foreground'}`}>{c.text}</p>
                                             <button onClick={() => deleteChecklist(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
                                                 <Trash2 size={16} />
                                             </button>
@@ -1045,7 +1049,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <form onSubmit={addChecklist} className="flex gap-2">
                                 <input
-                                    className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
+                                    className="flex-1 bg-background border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
                                     placeholder="Tugas baru..."
                                     value={newChecklist}
                                     onChange={e => setNewChecklist(e.target.value)}
@@ -1058,12 +1062,12 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {/* KPI Targets Preview */}
-                    <div className="space-y-4 pt-10">
-                        <div className="flex items-center gap-3 mb-6">
-                            <TrendingUp size={28} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-2xl font-bold font-heading text-slate-800">KPI Targets</h2>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3 mb-1">
+                            <TrendingUp size={22} className="text-slate-800" strokeWidth={2.5} />
+                            <h2 className="text-lg font-bold font-heading text-slate-800">KPI Targets</h2>
                         </div>
-                        <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
+                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
                             <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl mb-4">
                                 <p className="text-xs font-bold text-yellow-800">
                                     Berikut adalah target bulan ini yang terkoneksi pada performa kerja Anda secara personal.
@@ -1079,14 +1083,14 @@ export const Dashboard: React.FC = () => {
                                         const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
                                         const isCompleted = kpi.actual_value >= kpi.target_value;
                                         return (
-                                            <div key={kpi.id || idx} className="bg-white border-2 border-slate-100 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
+                                            <div key={kpi.id || idx} className="bg-card border-2 border-border/20 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
                                                 <div className="flex justify-between items-center mb-2">
                                                     <h4 className="font-black text-slate-800 text-sm truncate pr-4">{kpi.metric_name}</h4>
                                                     <span className="text-[10px] font-black bg-slate-100 px-2 py-1 rounded border border-slate-200">
                                                         {kpis[idx].actual_value} / {kpis[idx].target_value} {kpi.unit}
                                                     </span>
                                                 </div>
-                                                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+                                                <div className="w-full bg-background h-3 rounded-full overflow-hidden border border-slate-200">
                                                     <div
                                                         className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-accent'}`}
                                                         style={{ width: `${Math.min(progress, 100)}%` }}

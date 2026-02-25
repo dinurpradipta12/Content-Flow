@@ -201,14 +201,14 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             {field.label} {field.required && <span className="text-red-500">*</span>}
                         </label>
                         <select
-                            className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
+                            className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
                             value={formData[field.id] || ''}
                             onChange={(e) => handleInputChange(field.id, e.target.value)}
                             required={field.required}
                         >
-                            <option value="" disabled>Pilih opsi...</option>
+                            <option value="">Pilih opsi...</option>
                             {field.options?.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
+                                <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
                             ))}
                         </select>
                     </div>
@@ -237,14 +237,14 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             {field.label} {field.required && <span className="text-red-500">*</span>}
                         </label>
                         <select
-                            className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
+                            className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
                             value={formData[field.id] || ''}
                             onChange={(e) => handleInputChange(field.id, e.target.value)}
                             required={field.required}
                         >
-                            <option value="" disabled>{activeWs ? `Pilih PIC di ${activeWs.name}...` : 'Silakan pilih Akun/Workspace di bawah dulu...'}</option>
+                            <option value="">{activeWs ? `Pilih PIC di ${activeWs.name}...` : 'Silakan pilih Akun/Workspace di bawah dulu...'}</option>
                             {filteredUsers.map(u => (
-                                <option key={u.id} value={u.full_name || u.username}>{u.full_name || u.username}</option>
+                                <option key={u.id} value={u.full_name || u.username} className="bg-card text-foreground">{u.full_name || u.username}</option>
                             ))}
                         </select>
                         {selectedWsName && filteredUsers.length === 0 && (
@@ -260,14 +260,14 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             {field.label} {field.required && <span className="text-red-500">*</span>}
                         </label>
                         <select
-                            className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
+                            className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none"
                             value={formData[field.id] || ''}
                             onChange={(e) => handleInputChange(field.id, e.target.value)}
                             required={field.required}
                         >
-                            <option value="" disabled>Pilih Workspace/Akun...</option>
+                            <option value="">Pilih Workspace/Akun...</option>
                             {workspaces.map(ws => (
-                                <option key={ws.id} value={ws.name}>{ws.name} {ws.account_name ? `(@${ws.account_name})` : ''}</option>
+                                <option key={ws.id} value={ws.name} className="bg-card text-foreground">{ws.name} {ws.account_name ? `(@${ws.account_name})` : ''}</option>
                             ))}
                         </select>
                     </div>
@@ -279,7 +279,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             {field.label} {field.required && <span className="text-red-500">*</span>}
                         </label>
                         <textarea
-                            className="w-full bg-white border-2 border-slate-300 text-slate-800 rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6]"
+                            className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground"
                             rows={3}
                             value={formData[field.id] || ''}
                             onChange={(e) => handleInputChange(field.id, e.target.value)}
@@ -334,13 +334,13 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             <button
                                 key={template.id}
                                 onClick={() => handleTemplateSelect(template)}
-                                className="flex flex-col items-start p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-accent hover:shadow-hard transition-all text-left group"
+                                className="flex flex-col items-start p-6 bg-card border-2 border-slate-200 rounded-xl hover:border-accent hover:shadow-hard transition-all text-left group"
                             >
-                                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-accent group-hover:text-white transition-colors">
+                                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center mb-4 group-hover:bg-accent group-hover:text-white transition-colors">
                                     <FileText size={24} className="text-slate-400 group-hover:text-white" />
                                 </div>
-                                <h3 className="font-bold text-lg text-slate-800 mb-1">{template.name}</h3>
-                                <p className="text-sm text-slate-500 line-clamp-2">{template.description}</p>
+                                <h3 className="font-bold text-lg text-foreground mb-1">{template.name}</h3>
+                                <p className="text-sm text-mutedForeground line-clamp-2">{template.description}</p>
                             </button>
                         ))}
 
@@ -372,13 +372,13 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                                 <FileText size={20} />
                             </div>
                             <div>
-                                <h4 className="font-bold text-blue-800">{selectedTemplate.name}</h4>
-                                <p className="text-sm text-blue-600/80">{selectedTemplate.description}</p>
+                                <h4 className="font-bold text-blue-800 dark:text-blue-300">{selectedTemplate.name}</h4>
+                                <p className="text-sm text-blue-600/80 dark:text-blue-400">{selectedTemplate.description}</p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setSelectedTemplate(null)}
-                                className="ml-auto text-xs font-bold text-blue-500 hover:text-blue-700 underline"
+                                className="ml-auto text-xs font-bold text-blue-500 dark:text-blue-400 hover:text-blue-700 underline"
                             >
                                 Ganti Template
                             </button>

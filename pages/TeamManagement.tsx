@@ -22,6 +22,10 @@ interface AppUser {
     created_at: string;
     parent_user_id?: string;
     invited_by?: string;
+    member_limit?: number;
+    subscription_package?: string;
+    online_status?: 'online' | 'idle' | 'offline';
+    last_activity_at?: string;
 }
 
 interface WorkspaceData extends Workspace {
@@ -58,6 +62,12 @@ export const TeamManagement: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [newPassword, setNewPassword] = useState('');
     const [saving, setSaving] = useState(false);
+    const [currentAdmin, setCurrentAdmin] = useState<AppUser | null>(null);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [upgradeStep, setUpgradeStep] = useState<'info' | 'payment' | 'success'>('info');
+    const [selectedPkgId, setSelectedPkgId] = useState('');
+    const [upgradeOrderId, setUpgradeOrderId] = useState('');
+    const [requestingUpgrade, setRequestingUpgrade] = useState(false);
 
     // KPI Add Form
     const [showAddKPI, setShowAddKPI] = useState(false);
@@ -117,20 +127,30 @@ export const TeamManagement: React.FC = () => {
         try {
             // Fetch workspaces that current user is a part of
             const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
-            const { data: wsData, error: wsError } = await supabase
-                .from('workspaces')
-                .select('*')
-                .or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`)
-                .order('name');
+            const userRole = localStorage.getItem('user_role');
+
+            const isBase64Avatar = currentUserAvatar?.startsWith('data:');
+            const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
+
+            let wsQuery = supabase.from('workspaces').select('*');
+
+            if (userRole === 'Developer') {
+                // Developers can see everything
+            } else if (shouldSkipAvatarFilter) {
+                wsQuery = wsQuery.eq('admin_id', tenantId);
+            } else {
+                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
+            }
+
+            const { data: wsData, error: wsError } = await wsQuery.order('name');
             if (wsError) throw wsError;
 
-            // Simple filter for ownership/membership via avatar for this MVP
-            // If they are Admin/Developer they might see all, but let's just show those they are strictly a part of
-            const userRole = localStorage.getItem('user_role');
-            let myWorkspaces = wsData || [];
-            if (userRole !== 'Developer') {
-                myWorkspaces = myWorkspaces.filter(w => (w.members || []).includes(currentUserAvatar));
-            }
+            const userId = localStorage.getItem('user_id');
+            let myWorkspaces = (wsData || []).filter(w =>
+                w.owner_id === userId || (w.admin_id === userId && !w.owner_id) || (w.members || []).some((m: string) => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
+                    catch { return m === currentUserAvatar; }
+                }));
             setWorkspaces(myWorkspaces);
 
             if (myWorkspaces.length > 0) {
@@ -142,15 +162,34 @@ export const TeamManagement: React.FC = () => {
                 }
             }
 
-            const { data: allWsData } = await supabase.from('workspaces').select('*').or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
-            if (allWsData) setAllWorkspaces(allWsData);
+            let allWsQuery = supabase.from('workspaces').select('*');
+            if (userRole === 'Developer') {
+                // All good
+            } else if (shouldSkipAvatarFilter) {
+                allWsQuery = allWsQuery.eq('admin_id', tenantId);
+            } else {
+                allWsQuery = allWsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
+            }
+
+            const { data: allWsData } = await allWsQuery;
+            if (allWsData) {
+                const filteredAllWs = allWsData.filter(ws =>
+                    ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id) || (ws.members && ws.members.some((m: string) => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
+                        catch { return m === currentUserAvatar; }
+                    }))
+                );
+                setAllWorkspaces(filteredAllWs);
+            }
 
             // Fetch team members and KPIs
-            const { data: tmData } = await supabase.from('team_members').select('*').eq('admin_id', tenantId);
-            if (tmData) setTeamMembers(tmData);
+            const [tmRes, kRes] = await Promise.all([
+                supabase.from('team_members').select('*').eq('admin_id', tenantId),
+                supabase.from('team_kpis').select('*')
+            ]);
 
-            const { data: kData } = await supabase.from('team_kpis').select('*');
-            if (kData) setKpis(kData);
+            if (tmRes.data) setTeamMembers(tmRes.data);
+            if (kRes.data) setKpis(kRes.data);
 
             // Fetch all users to map avatars
             const { data: userData, error: userError } = await supabase
@@ -159,14 +198,40 @@ export const TeamManagement: React.FC = () => {
                 .order('full_name');
             if (userError) throw userError;
 
-            // ISOLATION: Admin only sees users they created (or themselves).
+            // ISOLATION: Admin sees users they created (admin_id), themselves, 
+            // OR anyone who shared a workspace with them.
             const currentUserId = localStorage.getItem('user_id');
             let isolatedUsers = userData as any[];
-            if (userRole !== 'Developer') {
-                isolatedUsers = isolatedUsers.filter(u => u.admin_id === currentUserId || u.id === currentUserId);
+
+            // Strict Isolation for everyone (Admins and Developers)
+            if (isolatedUsers) {
+                // Collect all member avatars from my workspaces
+                const myWsMemberAvatars = new Set<string>();
+                myWorkspaces.forEach(ws => {
+                    (ws.members || []).forEach((m: string) => myWsMemberAvatars.add(m));
+                });
+
+                isolatedUsers = isolatedUsers.filter(u =>
+                    u.admin_id === currentUserId ||
+                    u.id === currentUserId ||
+                    // If their avatar (encoded or plain) is in my workspace member list, I can see them
+                    Array.from(myWsMemberAvatars).some(m => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(u.avatar_url) || m === u.avatar_url; }
+                        catch { return m === u.avatar_url; }
+                    })
+                );
             }
 
             setUsers(isolatedUsers as AppUser[]);
+
+            // Fetch current admin's quota info
+            const currentAdminData = isolatedUsers.find(u => u.id === currentUserId);
+            if (currentAdminData) setCurrentAdmin(currentAdminData);
+            else {
+                // If not in isolated list (unlikely for admin themselves), fetch directly
+                const { data: me } = await supabase.from('app_users').select('*').eq('id', currentUserId).single();
+                if (me) setCurrentAdmin(me);
+            }
         } catch (err) {
             console.error("Error fetching team management data:", err);
         } finally {
@@ -494,8 +559,50 @@ export const TeamManagement: React.FC = () => {
             setEditingKPIId(null);
             fetchData();
         } catch (err: any) { window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menyimpan: ' + err?.message } })); }
-        finally { setSavingEditKPI(false); }
     };
+
+    const handleSendUpgradeRequest = async () => {
+        if (!currentAdmin || !selectedPkgId || !upgradeOrderId) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Pilih paket dan masukkan Order ID!' } }));
+            return;
+        }
+
+        const pkg = [...(config?.payment_config?.teamPackages || []), ...(config?.payment_config?.personalPackages || [])].find(p => p.id === selectedPkgId);
+
+        setRequestingUpgrade(true);
+        try {
+            const { error } = await supabase.from('developer_inbox').insert([{
+                sender_name: currentAdmin.full_name,
+                sender_email: currentAdmin.email,
+                sender_username: currentAdmin.username,
+                subscription_code: upgradeOrderId,
+                user_id: currentAdmin.id,
+                message: `PERMINTAAN UPGRADE/TAMBAH KUOTA:\nPaket yang dipilih: ${pkg?.name}\nOrder ID: ${upgradeOrderId}\nUser ingin menambah kapasitas tim.`,
+                is_read: false,
+                is_resolved: false
+            }]);
+
+            if (error) throw error;
+            setUpgradeStep('success');
+        } catch (err: any) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengirim permintaan: ' + err.message } }));
+        } finally {
+            setRequestingUpgrade(false);
+        }
+    };
+
+    const handleWhatsAppFollowUp = () => {
+        const waNumber = config?.payment_config?.whatsappNumber || '6289619941101';
+        const msg = encodeURIComponent(`Halo Developer,\n\nSaya ${currentAdmin?.full_name} (@${currentAdmin?.username}) telah melakukan pembayaran untuk upgrade paket ke ${[...(config?.payment_config?.teamPackages || []), ...(config?.payment_config?.personalPackages || [])].find(p => p.id === selectedPkgId)?.name}.\n\nOrder ID: ${upgradeOrderId}\n\nMohon diverifikasi. Terima kasih!`);
+        window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank');
+    };
+
+    const handleUpgradePackage = () => {
+        setUpgradeStep('payment');
+    };
+
+    const subUsersCount = users.filter(u => u.parent_user_id === currentAdmin?.id && u.role !== 'Admin').length;
+    const isLimitReached = subUsersCount >= (currentAdmin?.member_limit || 2);
 
     return (
         <div className="space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
@@ -507,10 +614,30 @@ export const TeamManagement: React.FC = () => {
                     </h2>
                     <p className="text-slate-500 font-bold mt-2">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
                 </div>
-                <div className="flex z-10">
+                <div className="flex z-10 items-center gap-3">
+                    {currentAdmin && (
+                        <div className="hidden md:flex flex-col items-end mr-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kapasitas Tim</span>
+                            <div className="flex items-center gap-2">
+                                <div className="w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full transition-all duration-500 ${isLimitReached ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                        style={{ width: `${Math.min((subUsersCount / (currentAdmin.member_limit || 2)) * 100, 100)}%` }}
+                                    />
+                                </div>
+                                <span className={`text-xs font-black ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
+                                    {subUsersCount}/{currentAdmin.member_limit || 2}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                     <Button
-                        className="whitespace-nowrap shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all"
+                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all`}
                         onClick={() => {
+                            if (isLimitReached) {
+                                setIsUpgradeModalOpen(true);
+                                return;
+                            }
                             if (!selectedWorkspace) {
                                 window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Pilih Workspace di kiri dulu!' } }));
                                 return;
@@ -518,7 +645,7 @@ export const TeamManagement: React.FC = () => {
                             setIsInviteOpen(!isInviteOpen);
                         }}
                     >
-                        + Mendaftarkan Anggota
+                        {isLimitReached ? 'Kuota Penuh (Upgrade)' : '+ Mendaftarkan Anggota'}
                     </Button>
                 </div>
             </div>
@@ -699,11 +826,14 @@ export const TeamManagement: React.FC = () => {
                                                 onClick={() => handleOpenDetail(user)}
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <img
-                                                        src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                        className="w-9 h-9 rounded-xl border-2 border-slate-900 object-cover shrink-0 group-hover:-rotate-3 transition-transform"
-                                                        alt="Avatar"
-                                                    />
+                                                    <div className="relative shrink-0 transition-transform group-hover:-rotate-3">
+                                                        <img
+                                                            src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
+                                                            className="w-9 h-9 rounded-xl border-2 border-slate-900 object-cover"
+                                                            alt="Avatar"
+                                                        />
+                                                        <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm ${user.online_status === 'online' ? 'bg-emerald-500' : user.online_status === 'idle' ? 'bg-amber-400' : 'bg-slate-300'}`} />
+                                                    </div>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="font-black text-xs text-foreground truncate leading-tight">{user.full_name}</p>
                                                         <p className="text-[10px] font-bold text-slate-500 truncate">@{user.username}</p>
@@ -742,9 +872,22 @@ export const TeamManagement: React.FC = () => {
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
                                 <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
                                     className="w-16 h-16 rounded-xl border-2 border-border shadow-sm object-cover relative z-10 bg-card" alt="Avatar" />
-                                <div className="relative z-10">
-                                    <h3 className="text-xl font-heading font-black text-foreground">{selectedUser.full_name}</h3>
-                                    <p className="text-sm font-bold text-mutedForeground mb-1">@{selectedUser.username}</p>
+                                <div className="relative z-10 w-full">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <h3 className="text-xl font-heading font-black text-foreground">{selectedUser.full_name}</h3>
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${selectedUser.online_status === 'online' ? 'text-emerald-500' : selectedUser.online_status === 'idle' ? 'text-amber-500' : 'text-slate-400'}`}>
+                                            <div className={`w-2 h-2 rounded-full ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                                            {selectedUser.online_status === 'online' ? 'Online' : selectedUser.online_status === 'idle' ? 'Idle' : 'Offline'}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm font-bold text-mutedForeground mb-1 flex items-center gap-2">
+                                        @{selectedUser.username}
+                                        {selectedUser.last_activity_at && selectedUser.online_status !== 'online' && (
+                                            <span className="text-[10px] font-bold text-slate-400">
+                                                (Aktif: {new Date(selectedUser.last_activity_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})
+                                            </span>
+                                        )}
+                                    </p>
                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-accent shadow-sm">
                                         {selectedUser.role}
                                     </span>
@@ -1038,6 +1181,150 @@ export const TeamManagement: React.FC = () => {
                                     })
                                 )}
                             </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+            {/* UPGRADE PACKAGE MODAL */}
+            <Modal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => {
+                    setIsUpgradeModalOpen(false);
+                    setTimeout(() => setUpgradeStep('info'), 300);
+                }}
+                title={upgradeStep === 'success' ? 'Permintaan Terkirim' : 'Upgrade Kuota Tim'}
+                maxWidth="max-w-md"
+            >
+                {upgradeStep === 'info' && (
+                    <div className="flex flex-col items-center justify-center text-center space-y-5 p-4 animate-in fade-in zoom-in duration-300">
+                        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a]">
+                            <Users size={40} className="text-amber-500" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight">Kuota Tim Tercapai</h3>
+                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                                Batas maksimal anggota tim Anda ({currentAdmin?.member_limit || 2} orang) telah terpenuhi.
+                                Silakan upgrade paket Anda untuk menambah kapasitas anggota.
+                            </p>
+                        </div>
+
+                        <div className="w-full bg-slate-50 border-4 border-slate-900 rounded-2xl p-4 text-left my-2 shadow-[4px_4px_0px_#0f172a]">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[10px] font-black uppercase text-slate-400">Status Saat Ini</span>
+                                <span className="text-[10px] font-black uppercase bg-slate-900 text-white px-2 py-0.5 rounded">{currentAdmin?.subscription_package}</span>
+                            </div>
+                            <p className="text-sm font-black text-slate-700">Penggunaan: {subUsersCount}/{currentAdmin?.member_limit || 2} Orang</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 w-full gap-3">
+                            <Button
+                                onClick={handleUpgradePackage}
+                                className="w-full h-12 text-sm font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 border-emerald-700 shadow-[4px_4px_0px_#064e3b]"
+                            >
+                                Upgrade Sekarang
+                            </Button>
+                            <button
+                                onClick={() => setIsUpgradeModalOpen(false)}
+                                className="w-full h-12 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors"
+                            >
+                                Nanti Saja
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {upgradeStep === 'payment' && (
+                    <div className="p-4 space-y-5 animate-in slide-in-from-right duration-300">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Pilih Paket Baru</label>
+                                <select
+                                    value={selectedPkgId}
+                                    onChange={e => setSelectedPkgId(e.target.value)}
+                                    className="w-full bg-slate-50 border-4 border-slate-900 rounded-xl p-3 text-sm font-black focus:outline-none focus:ring-4 focus:ring-accent/10"
+                                >
+                                    <option value="">-- Pilih Paket --</option>
+                                    {config?.payment_config?.teamPackages?.map((pkg: any) => (
+                                        <option key={pkg.id} value={pkg.id}>
+                                            {pkg.name} - Rp {pkg.price.toLocaleString('id-ID')}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {selectedPkgId && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="bg-slate-900 text-white rounded-2xl p-4 border-4 border-slate-800 shadow-[4px_4px_0px_#334155]">
+                                        <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Informasi Pembayaran</p>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-black">{config?.payment_config?.bankName || 'BANK MANDIRI'}</p>
+                                            <p className="text-xl font-mono font-black tracking-wider text-accent">{config?.payment_config?.accountNumber || '1234567890'}</p>
+                                            <p className="text-xs font-bold text-slate-300 uppercase">A.N {config?.payment_config?.accountName || 'DEVELOPER ARUNEEKA'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                            <Key size={12} /> Masukkan Order ID Invoice / Bukti Bayar
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="CONTOH: ORDER-001"
+                                            value={upgradeOrderId}
+                                            onChange={e => setUpgradeOrderId(e.target.value.toUpperCase())}
+                                            className="w-full bg-amber-50 border-4 border-amber-400 rounded-xl p-3 text-lg font-black text-center tracking-widest focus:outline-none focus:bg-white uppercase"
+                                        />
+                                        <p className="text-[9px] font-bold text-slate-400 mt-2 leading-tight italics">
+                                            * Masukkan kode yang Anda terima setelah pembayaran sukses. Permintaan akan diverifikasi dalam 1x24 jam.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            onClick={() => setUpgradeStep('info')}
+                                            className="px-6 py-3 border-4 border-slate-900 rounded-xl font-black text-xs uppercase"
+                                        >
+                                            Kembali
+                                        </button>
+                                        <Button
+                                            onClick={handleSendUpgradeRequest}
+                                            disabled={requestingUpgrade || !selectedPkgId || !upgradeOrderId}
+                                            className="flex-1 shadow-[4px_4px_0px_#0f172a]"
+                                        >
+                                            {requestingUpgrade ? <Loader2 size={16} className="animate-spin" /> : 'Kirim Permintaan'}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {upgradeStep === 'success' && (
+                    <div className="flex flex-col items-center justify-center text-center space-y-6 p-6 animate-in zoom-in duration-300">
+                        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center border-4 border-slate-900 shadow-[4px_4px_0px_#064e3b]">
+                            <Save size={40} className="text-emerald-500" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-black text-slate-900 font-heading">Permintaan Terkirim!</h3>
+                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                                Bukti pembayaran Anda telah masuk ke antrean verifikasi Developer. Akun Anda akan di-upgrade secara otomatis setelah divalidasi.
+                            </p>
+                        </div>
+
+                        <div className="w-full space-y-3">
+                            <Button
+                                onClick={handleWhatsAppFollowUp}
+                                className="w-full bg-emerald-500 hover:bg-emerald-600 border-emerald-700 shadow-[4px_4px_0px_#064e3b]"
+                            >
+                                Konfirmasi via WhatsApp
+                            </Button>
+                            <button
+                                onClick={() => setIsUpgradeModalOpen(false)}
+                                className="w-full py-3 text-xs font-black uppercase text-slate-400 hover:text-slate-900"
+                            >
+                                Tutup Halaman
+                            </button>
                         </div>
                     </div>
                 )}

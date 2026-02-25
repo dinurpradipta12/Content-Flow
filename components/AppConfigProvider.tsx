@@ -17,6 +17,7 @@ interface PaymentConfig {
     personalPackages?: { id: string; name: string; price: number; durationDays?: number }[];
     teamPackages?: { id: string; name: string; price: number; durationDays?: number }[];
     teamPricePerPerson?: number;
+    whatsappNumber?: string;
 }
 
 interface AppConfig {
