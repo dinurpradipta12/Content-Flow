@@ -614,11 +614,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // User Profile State
     const [userProfile, setUserProfile] = useState({
+        id: localStorage.getItem('user_id') || '',
         name: localStorage.getItem('user_name') || 'User',
         role: localStorage.getItem('user_role') || 'Member',
         avatar: localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40',
         jobTitle: localStorage.getItem('user_job_title') || '',
-        subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal'
+        subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal',
+        parentUserId: localStorage.getItem('parent_user_id') || null
     });
 
     // Branding State
@@ -647,14 +649,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (!userId) return;
 
         try {
-            const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title, subscription_end, subscription_package').eq('id', userId).single();
+            const { data, error } = await supabase.from('app_users')
+                .select('id, full_name, role, avatar_url, job_title, subscription_end, subscription_package, parent_user_id')
+                .eq('id', userId)
+                .single();
             if (data && !error) {
                 const profileData = {
+                    id: data.id,
                     name: data.full_name || 'User',
                     role: data.role || 'Member',
                     avatar: data.avatar_url || 'https://picsum.photos/40/40',
                     jobTitle: data.job_title || '',
-                    subscriptionPackage: data.subscription_package || 'Personal'
+                    subscriptionPackage: data.subscription_package || 'Personal',
+                    parentUserId: data.parent_user_id
                 };
                 setUserProfile(profileData);
 
@@ -670,8 +677,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 localStorage.setItem('user_name', profileData.name);
                 localStorage.setItem('user_role', profileData.role);
                 localStorage.setItem('user_avatar', profileData.avatar);
-                localStorage.setItem('user_job_title', profileData.jobTitle);
                 localStorage.setItem('user_subscription_package', profileData.subscriptionPackage);
+                if (profileData.parentUserId) localStorage.setItem('parent_user_id', profileData.parentUserId);
+                else localStorage.removeItem('parent_user_id');
             }
         } catch (err) {
             console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
@@ -708,11 +716,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         // 4. Listen for User Updates (Sync between Profile page and Layout)
         const handleUserUpdate = () => {
             setUserProfile({
+                id: localStorage.getItem('user_id') || '',
                 name: localStorage.getItem('user_name') || 'User',
                 role: localStorage.getItem('user_role') || 'Member',
                 avatar: localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40',
                 jobTitle: localStorage.getItem('user_job_title') || '',
-                subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal'
+                subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal',
+                parentUserId: localStorage.getItem('parent_user_id') || null
             });
         };
         window.addEventListener('user_updated', handleUserUpdate);
@@ -1357,10 +1367,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             // Developer bypasses all visual hiding logic to see everything
                             if (isDeveloper) return true;
 
-                            // Package-based visibility restrictions
-                            // If user profile package starts with "Personal" or is empty/Free, hide Team Mgmt
-                            if (item.id === 'team' && (!userProfile.subscriptionPackage || userProfile.subscriptionPackage.startsWith('Personal') || userProfile.subscriptionPackage === 'Free')) {
-                                return false;
+                            // Package-based visibility restrictions & Role Access
+                            if (item.id === 'team') {
+                                // Developer bypasses
+                                if (isDeveloper) return true;
+
+                                // Must be Admin/Owner AND Self-Registered (no parent)
+                                const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
+                                if (!isSelfRegisteredAdmin) return false;
+
+                                // Allow self-registered admins to see Team Mgmt regardless of package 
+                                // so they can manage/upgrade their team.
+                                return true;
                             }
 
                             // Known core pages that are visible by default unless explicitly hidden
