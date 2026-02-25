@@ -48,9 +48,43 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const audio = type === 'special' ? specialAudioRef.current : audioRef.current;
         if (audio) {
             audio.currentTime = 0;
-            audio.play().catch(err => console.log('Audio play failed:', err));
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.warn('Audio play failed (maybe needs interaction):', err);
+                });
+            }
         }
     };
+
+    // Audio Unlock for Mobile/iPad
+    useEffect(() => {
+        const unlockAudio = () => {
+            if (audioRef.current) {
+                audioRef.current.play().then(() => {
+                    audioRef.current?.pause();
+                    audioRef.current!.currentTime = 0;
+                }).catch(() => { });
+            }
+            if (specialAudioRef.current) {
+                specialAudioRef.current.play().then(() => {
+                    specialAudioRef.current?.pause();
+                    specialAudioRef.current!.currentTime = 0;
+                }).catch(() => { });
+            }
+            console.log('Audio context unlocked for iPad/Mobile');
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
+        };
+
+        window.addEventListener('click', unlockAudio);
+        window.addEventListener('touchstart', unlockAudio);
+
+        return () => {
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
+        };
+    }, []);
 
     // Check for user ID changes (e.g., login/logout)
     useEffect(() => {
@@ -91,9 +125,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         console.log('Subscribing to notifications for user:', currentUserId);
 
-        // Realtime subscription
+        // Realtime subscription - use a more unique channel name and persistent connection
         const channel = supabase
-            .channel(`notifications-${currentUserId}`)
+            .channel(`notif_realtime_${currentUserId}`)
             .on(
                 'postgres_changes',
                 {
@@ -103,46 +137,57 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     filter: `recipient_id=eq.${currentUserId}`
                 },
                 async (payload) => {
-                    console.log('New notification received via real-time:', payload);
+                    console.log('Real-time event received:', payload);
 
                     try {
-                        // Play sound - checking if it's a special developer notification
-                        if (payload.new.metadata?.sound === 'special') {
-                            playNotificationSound('special');
-                        } else {
-                            playNotificationSound('default');
+                        // 1. Play sound immediately to be as fast as possible
+                        playNotificationSound(payload.new.metadata?.sound === 'special' ? 'special' : 'default');
+
+                        // 2. Refresh the notification list from DB to ensure consistency
+                        fetchNotifications();
+
+                        // 3. Prepare Toast with actor data
+                        let actorData = null;
+                        if (payload.new.actor_id) {
+                            const { data } = await supabase
+                                .from('app_users')
+                                .select('full_name, avatar_url')
+                                .eq('id', payload.new.actor_id)
+                                .single();
+                            actorData = data;
                         }
 
-                        // Fetch actor details for the new notification
-                        const { data: actorData } = await supabase
-                            .from('app_users')
-                            .select('full_name, avatar_url')
-                            .eq('id', payload.new.actor_id)
-                            .single();
+                        const newNotif = {
+                            ...payload.new,
+                            actor: actorData || { full_name: 'Seseorang', avatar_url: null }
+                        } as AppNotification;
 
-                        const newNotif = { ...payload.new, actor: actorData } as AppNotification;
-
-                        // Update list
-                        setNotifications(prev => [newNotif, ...prev]);
-
-                        // Add to toasts
+                        // 4. Update toasts
                         setToasts(prev => {
                             if (prev.find(t => t.id === newNotif.id)) return prev;
-                            const newToasts = [...prev, newNotif];
-                            return newToasts.slice(-3); // Max 3 items
+                            const updated = [...prev, newNotif];
+                            return updated.slice(-3);
                         });
 
-                        // Remove toast after 10 seconds per request
+                        // Notify custom event for other components (like Layout)
+                        window.dispatchEvent(new CustomEvent('new-notification', { detail: payload.new }));
+
                         setTimeout(() => {
                             setToasts(prev => prev.filter(t => t.id !== newNotif.id));
                         }, 10000);
                     } catch (err) {
-                        console.error('Error handling real-time notification:', err);
+                        console.error('Error handling real-time payload:', err);
                     }
                 }
             )
-            .subscribe((status) => {
-                console.log('Notification subscription status:', status);
+            .subscribe((status, error) => {
+                console.log(`Notification status [${currentUserId}]:`, status);
+                if (error) console.error('Subscription error:', error);
+
+                if (status === 'CHANNEL_ERROR') {
+                    console.warn('Real-time channel error. Retrying in 5s...');
+                    setTimeout(() => fetchNotifications(), 5000);
+                }
             });
 
         return () => {
@@ -225,8 +270,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         key={toast.id}
                         onClick={() => handleNotificationClick(toast)}
                         className={`pointer-events-auto border-2 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer transition-all ${toast.metadata?.sound === 'special'
-                                ? 'bg-amber-50 border-amber-500 hover:bg-amber-100'
-                                : 'bg-white border-slate-800 hover:bg-slate-50'
+                            ? 'bg-amber-50 border-amber-500 hover:bg-amber-100'
+                            : 'bg-white border-slate-800 hover:bg-slate-50'
                             }`}
                     >
                         {/* Progress Bar for 10s timer */}

@@ -630,21 +630,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             )
             .subscribe();
 
-        // 1c. Realtime Listener for Renewal Success Notifications
-        const notifChannel = supabase
-            .channel('renewal_success_checker')
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${currentUserId}` },
-                (payload: any) => {
-                    if (payload.new.type === 'renewal_success') {
-                        setShowRenewalSuccessModal(true);
-                        // Refresh profile to get new date
-                        fetchUserProfile();
-                    }
-                }
-            )
-            .subscribe();
+        // 1c. Listen for New Notifications from NotificationProvider
+        const handleNewNotification = (e: any) => {
+            if (e.detail.type === 'renewal_success') {
+                setShowRenewalSuccessModal(true);
+                fetchUserProfile();
+            }
+        };
+        window.addEventListener('new-notification', handleNewNotification);
 
         // 1b. Realtime Listener for Admin/Tenant (Auto Logout if Admin Deactivated)
         let tenantChannel: any = null;
@@ -656,9 +649,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${tenantId}` },
                     (payload: any) => {
                         if (payload.new.is_active === false) {
-                            alert("Sesi berakhir karena Administrator tim Anda telah dinonaktifkan.");
-                            localStorage.clear();
-                            navigate('/login');
+                            setStatusModal({
+                                isOpen: true,
+                                type: 'error',
+                                message: 'Sesi berakhir karena Administrator tim Anda telah dinonaktifkan.'
+                            });
+                            setTimeout(() => {
+                                localStorage.clear();
+                                navigate('/login');
+                            }, 3000);
                         }
                     }
                 )
@@ -698,9 +697,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             if (tenantId && tenantId !== currentUserId) {
                 const { data: adminData } = await supabase.from('app_users').select('is_active').eq('id', tenantId).single();
                 if (adminData && adminData.is_active === false) {
-                    alert("Akses dihentikan: Administrator tim Anda sudah tidak aktif.");
-                    localStorage.clear();
-                    navigate('/login');
+                    setStatusModal({
+                        isOpen: true,
+                        type: 'error',
+                        message: 'Akses dihentikan: Administrator tim Anda sudah tidak aktif.'
+                    });
+                    setTimeout(() => {
+                        localStorage.clear();
+                        navigate('/login');
+                    }, 3000);
                 }
             }
         };
@@ -714,6 +719,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             if (tenantChannel) supabase.removeChannel(tenantChannel);
             clearInterval(subInterval);
             window.removeEventListener('sub_updated', checkExpiration);
+            window.removeEventListener('new-notification', handleNewNotification);
         };
     }, []);
 
@@ -1012,13 +1018,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <aside
                 className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r-2 border-slate-200 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <div className="h-auto flex flex-col items-center justify-center px-6 shrink-0 py-8 gap-4">
-                    <div className="flex items-center justify-center w-full">
+                <div className="h-auto flex flex-col items-start justify-center px-8 shrink-0 py-10 gap-4">
+                    <div className="flex items-center justify-start w-full">
                         {config?.app_logo || branding.appLogo ? (
-                            <img src={config?.app_logo || branding.appLogo} className="w-full max-h-24 object-contain" alt="Logo" />
+                            <img src={config?.app_logo || branding.appLogo} className="max-w-[180px] max-h-20 object-contain" alt="Logo" />
                         ) : (
-                            <div className="w-16 h-16 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center mx-auto shadow-hard">
-                                <Layers className="text-white" size={32} />
+                            <div className="w-14 h-14 bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard">
+                                <Layers className="text-white" size={28} />
                             </div>
                         )}
                     </div>
@@ -1099,14 +1105,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         <button
                                             key={item.path}
                                             onClick={() => navigate(item.path)}
-                                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-accent text-white shadow-hard-mini translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                                            className={`w-full flex items-center justify-start px-4 py-3 rounded-xl transition-all duration-300 group ${location.pathname === item.path ? 'bg-accent text-white shadow-hard-mini translate-x-1' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <item.icon size={20} className={location.pathname === item.path ? 'text-white' : 'group-hover:text-accent transition-colors'} />
                                                 <span className="font-bold text-sm tracking-tight">{item.label}</span>
                                             </div>
                                             {item.badge && (
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${location.pathname === item.path ? 'bg-white text-accent' : 'bg-accent text-white'}`}>{item.badge}</span>
+                                                <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-black ${location.pathname === item.path ? 'bg-white text-accent' : 'bg-accent text-white'}`}>{item.badge}</span>
                                             )}
                                         </button>
                                     ))}
@@ -1120,7 +1126,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold text-sm">
                         <LogOut size={20} /> Sign Out
                     </button>
-                    <p className="text-xs text-slate-400 font-bold text-center mt-4">v{config?.app_version || '1.0.0'} {config?.app_name || branding.appName}</p>
+                    <p className="text-[10px] text-slate-400 font-bold text-left px-4 mt-4 opacity-70 italic">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
                 </div>
             </aside>
 
