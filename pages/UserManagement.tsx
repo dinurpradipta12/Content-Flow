@@ -619,20 +619,20 @@ export const UserManagement: React.FC = () => {
                             return (
                                 <div className="space-y-6">
                                     {/* User Header */}
-                                    <div className="flex items-start gap-4 p-4 border-2 border-slate-900 rounded-2xl bg-slate-50 relative overflow-hidden">
+                                    <div className="flex items-start gap-4 p-4 border-2 border-border rounded-2xl bg-muted relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
                                         <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                            className="w-20 h-20 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-white" alt="Avatar" />
+                                            className="w-20 h-20 rounded-xl border-2 border-border shadow-sm object-cover relative z-10 bg-card" alt="Avatar" />
                                         <div className="relative z-10">
-                                            <h3 className="text-xl font-heading font-black text-slate-900">{selectedUser.full_name}</h3>
-                                            <p className="text-sm font-bold text-slate-500">@{selectedUser.username}</p>
+                                            <h3 className="text-xl font-heading font-black text-foreground">{selectedUser.full_name}</h3>
+                                            <p className="text-sm font-bold text-mutedForeground">@{selectedUser.username}</p>
                                             {/* Role Selector */}
                                             <div className="mt-2 flex items-center gap-2">
                                                 {(isDeveloper || isAdmin) && selectedUser.username !== 'arunika' ? (
                                                     <select
                                                         value={selectedUser.role}
                                                         onChange={e => handleChangeRole(selectedUser.id, e.target.value)}
-                                                        className="bg-white border-2 border-slate-900 rounded-lg px-3 py-1 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer shadow-[2px_2px_0px_#0f172a]"
+                                                        className="bg-card border-2 border-border rounded-lg px-3 py-1 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer shadow-sm appearance-none"
                                                     >
                                                         <option value="Member">Member</option>
                                                         <option value="Admin">Admin</option>
@@ -641,7 +641,7 @@ export const UserManagement: React.FC = () => {
                                                 ) : (
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border-2 shadow-[2px_2px_0px_#0f172a] ${selectedUser.role === 'Developer' ? 'bg-slate-900 text-white border-slate-900' :
                                                         selectedUser.role === 'Admin' || selectedUser.role === 'Owner' ? 'bg-accent text-white border-slate-900' :
-                                                            'bg-white text-slate-900 border-slate-900'
+                                                            'bg-card text-foreground border-border'
                                                         }`}>
                                                         {selectedUser.role}
                                                     </span>
@@ -651,7 +651,7 @@ export const UserManagement: React.FC = () => {
                                         <div className="ml-auto relative z-10">
                                             {isDeveloper && (
                                                 <button onClick={() => handleDeleteUser(selectedUser.id, selectedUser.username)}
-                                                    className="p-3 bg-white text-slate-900 hover:bg-red-500 hover:text-white rounded-xl transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a]"
+                                                    className="p-3 bg-card text-foreground hover:bg-red-500 hover:text-white rounded-xl transition-colors border-2 border-border shadow-sm hover:border-red-500"
                                                     disabled={selectedUser.username === 'arunika'} title="Hapus User">
                                                     <Trash2 size={20} />
                                                 </button>
@@ -661,31 +661,31 @@ export const UserManagement: React.FC = () => {
 
                                     {/* Detail Pendaftaran */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Metode Daftar</p>
+                                        <div className="bg-card rounded-2xl border-2 border-border shadow-sm p-3">
+                                            <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest mb-1">Metode Daftar</p>
                                             <div className="flex items-center gap-2">
                                                 {selectedUser.invited_by ? (
                                                     <>
                                                         <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
-                                                        <span className="text-sm font-black text-slate-900">Admin Invited</span>
+                                                        <span className="text-sm font-black text-foreground">Admin Invited</span>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                        <span className="text-sm font-black text-slate-900">Self Register</span>
+                                                        <span className="text-sm font-black text-foreground">Self Register</span>
                                                     </>
                                                 )}
                                             </div>
                                             {selectedUser.invited_by && (
-                                                <p className="text-xs font-bold text-slate-500 mt-1">Oleh: {selectedUser.invited_by}</p>
+                                                <p className="text-xs font-bold text-mutedForeground mt-1">Oleh: {selectedUser.invited_by}</p>
                                             )}
                                         </div>
-                                        <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 text-right">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Terdaftar Pada</p>
-                                            <p className="text-sm font-black text-slate-900">
+                                        <div className="bg-card rounded-2xl border-2 border-border shadow-sm p-3 text-right">
+                                            <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest mb-1">Terdaftar Pada</p>
+                                            <p className="text-sm font-black text-foreground">
                                                 {new Date(selectedUser.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </p>
-                                            <p className="text-xs font-bold text-slate-500">
+                                            <p className="text-xs font-bold text-mutedForeground">
                                                 {new Date(selectedUser.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                                             </p>
                                         </div>

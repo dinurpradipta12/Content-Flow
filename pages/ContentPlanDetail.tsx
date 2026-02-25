@@ -1002,7 +1002,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 href={link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="bg-card border-2 border-border rounded-lg px-3 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-sm transition-all flex items-center gap-2 text-foreground font-bold text-sm group"
+                                                className="bg-muted border-2 border-border rounded-lg px-3 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-sm transition-all flex items-center gap-2 text-foreground font-bold text-sm group"
                                                 title={`Visit ${p} Profile`}
                                             >
                                                 {getPlatformIcon(p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : p === 'YT' ? Platform.YOUTUBE : p === 'LI' ? Platform.LINKEDIN : p === 'FB' ? Platform.FACEBOOK : Platform.THREADS)}
@@ -1012,10 +1012,10 @@ export const ContentPlanDetail: React.FC = () => {
                                         );
                                     })
                                 ) : (
-                                    <div className="bg-card border-2 border-border rounded-lg px-4 py-2 shadow-hard inline-block">
+                                    <div className="bg-muted border-2 border-border rounded-lg px-4 py-2 shadow-hard inline-block">
                                         <h3 className="font-heading font-black text-lg text-accent flex items-center gap-2 justify-end">
                                             {workspaceData.account_name || '@username'}
-                                            <CheckCircle size={16} className="fill-blue-500 text-white" />
+                                            <CheckCircle size={16} className="text-accent" />
                                         </h3>
                                     </div>
                                 )}

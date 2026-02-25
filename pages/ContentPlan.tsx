@@ -444,7 +444,7 @@ export const ContentPlan: React.FC = () => {
                 <div className="flex items-center justify-center h-64 text-slate-400">
                     <div className="flex flex-col items-center gap-2">
                         <Loader2 className="animate-spin" size={32} />
-                        <span className="font-bold">Memuat data dari Supabase...</span>
+                        <span className="font-bold">Memuat data ...</span>
                     </div>
                 </div>
             ) : (

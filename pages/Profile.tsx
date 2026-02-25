@@ -245,13 +245,13 @@ export const Profile: React.FC = () => {
                 <div className="flex gap-2 animate-in fade-in">
                   <input
                     autoFocus
-                    className="bg-white border-2 border-slate-800 rounded-lg px-2 py-1 text-xs font-bold outline-none w-32"
+                    className="bg-card border-2 border-border text-foreground rounded-lg px-2 py-1 text-xs font-bold outline-none w-32 focus:border-accent"
                     value={customStatus}
                     onChange={(e) => setCustomStatus(e.target.value)}
                     onBlur={() => updateProfile({ custom_status: customStatus })}
                     onKeyDown={(e) => e.key === 'Enter' && updateProfile({ custom_status: customStatus })}
                   />
-                  <button onMouseDown={() => updateProfile({ custom_status: customStatus })} className="p-1 bg-quaternary text-slate-900 rounded border-2 border-slate-800"><Check size={12} strokeWidth={3} /></button>
+                  <button onMouseDown={() => updateProfile({ custom_status: customStatus })} className="p-1 bg-accent text-white rounded border-2 border-accent hover:bg-accent/80"><Check size={12} strokeWidth={3} /></button>
                 </div>
               ) : (
                 <button
@@ -330,19 +330,19 @@ export const Profile: React.FC = () => {
                   <div className="flex gap-2 mt-1 animate-in fade-in">
                     <input
                       autoFocus
-                      className="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-accent"
+                      className="w-full bg-card border-2 border-border text-foreground rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-accent"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && updateProfile({ email })}
                       placeholder="nama@email.com"
                     />
-                    <button onClick={() => updateProfile({ email })} className="px-3 bg-accent text-white rounded-lg border-2 border-slate-800 hover:bg-accent/90">
+                    <button onClick={() => updateProfile({ email })} className="px-3 bg-accent text-white rounded-lg border-2 border-accent hover:bg-accent/90">
                       <Check size={16} />
                     </button>
                   </div>
                 ) : (
-                  <p className="font-bold text-lg text-slate-800 truncate" onDoubleClick={() => setIsEditingEmail(true)}>
-                    {email || <span className="text-slate-400 italic font-normal">Belum ada email.</span>}
+                  <p className="font-bold text-lg text-foreground truncate cursor-text" onDoubleClick={() => setIsEditingEmail(true)}>
+                    {email || <span className="text-mutedForeground italic font-normal">Belum ada email.</span>}
                   </p>
                 )}
               </div>
@@ -355,14 +355,14 @@ export const Profile: React.FC = () => {
         <Card title="Status Berlangganan" icon={<Shield size={20} />} headerColor="emerald">
           <div className="space-y-4">
             <div className="flex items-center gap-4 py-2">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 border-2 border-emerald-100 shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border-2 border-emerald-500/20 shrink-0">
                 <Zap size={24} fill="currentColor" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Paket Saat Ini</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground">Paket Saat Ini</p>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-black text-2xl text-slate-800">{user.subscription_code || 'Free Member'}</h4>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border-2 shadow-sm ${new Date(user.subscription_end || '') > new Date() ? 'bg-emerald-500 text-white border-slate-900 shadow-[2px_2px_0px_#1E293B]' : 'bg-red-500 text-white border-slate-900 shadow-[2px_2px_0px_#1E293B]'
+                  <h4 className="font-black text-2xl text-foreground">{user.subscription_code || 'Free Member'}</h4>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase border-2 shadow-sm ${new Date(user.subscription_end || '') > new Date() ? 'bg-emerald-500 text-white border-emerald-600 shadow-[2px_2px_0px_rgba(16,185,129,0.5)]' : 'bg-red-500 text-white border-red-600 shadow-[2px_2px_0px_#7f1d1d]'
                     }`}>
                     {new Date(user.subscription_end || '') > new Date() ? 'Aktif' : 'Expired'}
                   </span>
@@ -370,21 +370,21 @@ export const Profile: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Masa Aktif Hingga</p>
-                <p className="font-bold text-slate-700">
+            <div className="bg-muted border-2 border-border rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground">Masa Aktif Hingga</p>
+                <p className="font-bold text-foreground mt-0.5">
                   {user.subscription_end ? new Date(user.subscription_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Tidak Terbatas'}
                 </p>
               </div>
               <button
                 onClick={() => window.dispatchEvent(new Event('open-payment-modal'))}
-                className="px-6 py-2 bg-slate-900 text-white font-black rounded-xl border-2 border-slate-900 shadow-hard-mini hover:bg-emerald-500 transition-all hover:-translate-y-1 active:translate-y-0"
+                className="w-full sm:w-auto px-6 py-2.5 bg-accent text-white font-black rounded-xl border-2 border-accent shadow-hard-mini hover:bg-emerald-500 hover:border-emerald-600 transition-all hover:-translate-y-1 active:translate-y-0"
               >
                 UPGRADE / PERPANJANG
               </button>
             </div>
-            <p className="text-[10px] font-bold text-slate-400 text-center uppercase tracking-widest leading-relaxed">
+            <p className="text-[10px] font-bold text-mutedForeground text-center uppercase tracking-widest leading-relaxed">
               Klik upgrade untuk memilih paket baru dan memperpanjang akses eksklusif Anda.
             </p>
           </div>

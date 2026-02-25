@@ -738,14 +738,14 @@ export const TeamManagement: React.FC = () => {
                         {/* LEFT COL */}
                         <div className="space-y-6">
                             {/* Header User */}
-                            <div className="flex items-start gap-4 p-4 border-2 border-slate-900 rounded-2xl bg-white relative overflow-hidden shadow-[4px_4px_0px_#0f172a]">
+                            <div className="flex items-start gap-4 p-4 border-2 border-border rounded-2xl bg-muted relative overflow-hidden shadow-sm">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
                                 <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                    className="w-16 h-16 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-white" alt="Avatar" />
+                                    className="w-16 h-16 rounded-xl border-2 border-border shadow-sm object-cover relative z-10 bg-card" alt="Avatar" />
                                 <div className="relative z-10">
-                                    <h3 className="text-xl font-heading font-black text-slate-900">{selectedUser.full_name}</h3>
-                                    <p className="text-sm font-bold text-slate-500 mb-1">@{selectedUser.username}</p>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-slate-900 text-white border-slate-900">
+                                    <h3 className="text-xl font-heading font-black text-foreground">{selectedUser.full_name}</h3>
+                                    <p className="text-sm font-bold text-mutedForeground mb-1">@{selectedUser.username}</p>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-accent shadow-sm">
                                         {selectedUser.role}
                                     </span>
                                 </div>
@@ -753,29 +753,29 @@ export const TeamManagement: React.FC = () => {
 
                             {/* Reset Password */}
                             <div>
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                     <Key size={16} /> Password User
                                 </h4>
-                                <div className="bg-slate-50 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
+                                <div className="bg-card rounded-2xl border-2 border-border shadow-sm p-4">
                                     <div className="mb-4">
-                                        <p className="text-sm font-bold text-slate-700 mb-2">Password Saat Ini:</p>
-                                        <div className="flex justify-between items-center bg-white border-2 border-slate-900 p-3 rounded-xl shadow-inner">
-                                            <span className="font-mono font-bold text-slate-900">
+                                        <p className="text-sm font-bold text-mutedForeground mb-2">Password Saat Ini:</p>
+                                        <div className="flex justify-between items-center bg-muted border-2 border-border p-3 rounded-xl shadow-inner">
+                                            <span className="font-mono font-bold text-foreground">
                                                 {showPassword ? selectedUser.password : '••••••••'}
                                             </span>
-                                            <button onClick={() => setShowPassword(!showPassword)} className="text-slate-500 hover:text-slate-900">
+                                            <button onClick={() => setShowPassword(!showPassword)} className="text-mutedForeground hover:text-foreground">
                                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
                                         </div>
                                     </div>
-                                    <form onSubmit={handleUpdatePassword} className="border-t-2 border-slate-200 pt-4 flex gap-3">
+                                    <form onSubmit={handleUpdatePassword} className="border-t-2 border-border pt-4 flex gap-3">
                                         <input
                                             type="text"
                                             value={newPassword}
                                             onChange={e => setNewPassword(e.target.value)}
                                             placeholder="Ketik password baru..."
                                             required
-                                            className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent shadow-[2px_2px_0px_#0f172a]"
+                                            className="flex-1 bg-muted border-2 border-border rounded-xl px-4 py-2 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent shadow-sm placeholder:text-mutedForeground"
                                         />
                                         <Button type="submit" disabled={saving || !newPassword}>
                                             {saving ? <Loader2 className="animate-spin" size={16} /> : 'Ubah Password'}
@@ -785,18 +785,18 @@ export const TeamManagement: React.FC = () => {
                             </div>
 
                             {/* WORKSPACES INFO & INVITE */}
-                            <div className="space-y-3 pt-4 border-t-2 border-slate-200">
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                            <div className="space-y-3 pt-4 border-t-2 border-border">
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                     <Globe size={16} /> Workspaces
                                 </h4>
                                 {/* Workspace tags with individual remove button */}
                                 <div className="flex flex-wrap gap-2">
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).map(ws => (
-                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border-2 border-slate-900 rounded-lg text-xs font-bold text-slate-700 shadow-[2px_2px_0px_#0f172a]">
+                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-card border-2 border-border rounded-lg text-xs font-bold text-foreground shadow-sm">
                                             {ws.name}
                                             <button
                                                 onClick={() => handleRemoveFromSpecificWorkspace(ws.id, ws.name)}
-                                                className="text-slate-400 hover:text-red-600 transition-colors ml-0.5"
+                                                className="text-mutedForeground hover:text-red-500 transition-colors ml-0.5"
                                                 title={`Hapus dari ${ws.name}`}
                                             >
                                                 <X size={12} />
@@ -804,17 +804,17 @@ export const TeamManagement: React.FC = () => {
                                         </span>
                                     ))}
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).length === 0 && (
-                                        <p className="text-xs text-slate-400 italic">Tidak ada workspace</p>
+                                        <p className="text-xs text-mutedForeground italic">Tidak ada workspace</p>
                                     )}
                                 </div>
 
                                 {/* Add to Workspace feature */}
                                 <div className="bg-emerald-500/10 rounded-2xl border-2 border-emerald-500/20 p-3">
-                                    <p className="text-xs font-bold text-emerald-800 mb-2">Undang ke workspace lain:</p>
+                                    <p className="text-xs font-bold text-emerald-500 mb-2">Undang ke workspace lain:</p>
                                     <div className="flex gap-2 items-center">
                                         <select
                                             id="ws-select"
-                                            className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 shadow-[2px_2px_0px_#0f172a]"
+                                            className="flex-1 bg-muted/50 border-2 border-border rounded-xl px-3 py-2 text-sm font-bold text-foreground shadow-sm appearance-none"
                                         >
                                             <option value="">-- Pilih Workspace --</option>
                                             {allWorkspaces.filter(ws => !ws.members?.includes(selectedUser.avatar_url)).map(ws => (
@@ -830,14 +830,14 @@ export const TeamManagement: React.FC = () => {
                             </div>
 
                             {/* Hapus dari workspace aktif */}
-                            <div className="pt-4 border-t-2 border-slate-200">
-                                <div className="bg-red-50 rounded-2xl border-2 border-red-300 p-3 flex flex-col sm:flex-row gap-3 items-center justify-between">
-                                    <p className="text-xs font-bold text-red-800">
+                            <div className="pt-4 border-t-2 border-border">
+                                <div className="bg-red-500/10 rounded-2xl border-2 border-red-500/30 p-3 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                                    <p className="text-xs font-bold text-red-500">
                                         Keluarkan dari workspace <span className="italic">{selectedWorkspace?.name}</span>.
                                     </p>
                                     <button
                                         onClick={handleRemoveFromWorkspace}
-                                        className="whitespace-nowrap bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs px-4 py-2.5 rounded-xl border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:shadow-none"
+                                        className="whitespace-nowrap bg-card text-red-500 hover:bg-red-500 hover:text-white font-black text-xs px-4 py-2.5 rounded-xl border-2 border-red-500/50 shadow-sm transition-all hover:translate-y-[2px] hover:shadow-none"
                                     >
                                         <UserMinus size={14} className="inline mr-1" /> Keluarkan
                                     </button>
@@ -846,18 +846,18 @@ export const TeamManagement: React.FC = () => {
                         </div>
 
                         {/* RIGHT COL - KPI */}
-                        <div className="space-y-4 bg-slate-50 p-6 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] h-full flex flex-col">
+                        <div className="space-y-4 bg-muted/30 p-6 rounded-2xl border-2 border-border shadow-sm h-full flex flex-col">
                             {/* KPI Header */}
-                            <div className="pb-3 border-b-2 border-slate-200">
+                            <div className="pb-3 border-b-2 border-border">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-heading font-black text-xl text-slate-900">Daftar KPI</h4>
+                                    <h4 className="font-heading font-black text-xl text-foreground">Daftar KPI</h4>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm px-3 py-1 bg-accent text-white rounded-full shadow-[2px_2px_0px_#0f172a]">
                                             {getKPICompletion(selectedUser)}% Selesai
                                         </span>
                                         <button
                                             onClick={() => setShowAddKPI(!showAddKPI)}
-                                            className="p-1.5 bg-emerald-500 text-white rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-emerald-600 transition-colors"
+                                            className="p-1.5 bg-emerald-500 text-white rounded-lg border-2 border-emerald-600 shadow-sm hover:bg-emerald-600 transition-colors"
                                             title="Tambah KPI"
                                         >
                                             <Plus size={16} />
@@ -865,17 +865,17 @@ export const TeamManagement: React.FC = () => {
                                     </div>
                                 </div>
                                 {/* Min Completion Rate setter */}
-                                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                                    <Target size={14} className="text-amber-600 shrink-0" />
-                                    <span className="text-xs font-bold text-amber-800">Completion min:</span>
+                                <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+                                    <Target size={14} className="text-amber-500 shrink-0" />
+                                    <span className="text-xs font-bold text-amber-500">Completion min:</span>
                                     <input
                                         type="number"
                                         min={0} max={100}
                                         value={minCompletionRate}
                                         onChange={e => setMinCompletionRate(Number(e.target.value))}
-                                        className="w-16 bg-white border border-amber-300 rounded px-2 py-0.5 text-xs font-black text-amber-900 text-center focus:outline-none"
+                                        className="w-16 bg-card border mx-2 border-amber-500/30 rounded px-2 py-0.5 text-xs font-black text-amber-500 text-center focus:outline-none"
                                     />
-                                    <span className="text-xs font-bold text-amber-700">%</span>
+                                    <span className="text-xs font-bold text-amber-500">%</span>
                                 </div>
                                 {/* Add KPI Form */}
                                 {showAddKPI && (
