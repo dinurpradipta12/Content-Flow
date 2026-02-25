@@ -120,7 +120,7 @@ export const TeamManagement: React.FC = () => {
             const { data: wsData, error: wsError } = await supabase
                 .from('workspaces')
                 .select('*')
-                .eq('admin_id', tenantId)
+                .or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`)
                 .order('name');
             if (wsError) throw wsError;
 
@@ -142,7 +142,7 @@ export const TeamManagement: React.FC = () => {
                 }
             }
 
-            const { data: allWsData } = await supabase.from('workspaces').select('*').eq('admin_id', tenantId);
+            const { data: allWsData } = await supabase.from('workspaces').select('*').or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
             if (allWsData) setAllWorkspaces(allWsData);
 
             // Fetch team members and KPIs

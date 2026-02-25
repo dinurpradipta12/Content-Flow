@@ -147,7 +147,10 @@ export const Messages: React.FC = () => {
     const fetchWorkspaces = async () => {
         const userId = currentUser.id;
         const avatar = currentUser.avatar;
-        const { data } = await supabase.from('workspaces').select('*');
+        const tenantId = localStorage.getItem('tenant_id') || userId;
+        const { data } = await supabase.from('workspaces')
+            .select('*')
+            .or(`admin_id.eq.${tenantId}${avatar ? `,members.cs.{"${avatar}"}` : ''}`);
         if (data) {
             const myWorkspaces = data.filter(ws =>
                 ws.admin_id === userId || (ws.members && ws.members.includes(avatar))

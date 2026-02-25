@@ -97,9 +97,13 @@ export const ContentPlan: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             // 1. Parallel Fetch: User Data & Workspaces
+            const currentAvatar = localStorage.getItem('user_avatar');
             const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, full_name').eq('id', userId).single(),
-                supabase.from('workspaces').select('*').eq('admin_id', tenantId).order('created_at', { ascending: false })
+                supabase.from('workspaces')
+                    .select('*')
+                    .or(`admin_id.eq.${tenantId}${currentAvatar ? `,members.cs.{"${currentAvatar}"}` : ''}`)
+                    .order('created_at', { ascending: false })
             ]);
 
             if (wsRes.error) throw wsRes.error;

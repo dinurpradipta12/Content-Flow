@@ -140,7 +140,7 @@ export const TeamKPIBoard: React.FC = () => {
             const [membersRes, kpisRes, wsRes] = await Promise.all([
                 supabase.from('team_members').select('*').eq('admin_id', tenantId).order('full_name'),
                 supabase.from('team_kpis').select('*').order('created_at', { ascending: false }),
-                supabase.from('workspaces').select('id,name,members').eq('admin_id', tenantId).order('name'),
+                supabase.from('workspaces').select('id,name,members').or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`).order('name'),
             ]);
             if (membersRes.data) setMembers(membersRes.data);
             if (kpisRes.data) setKpis(kpisRes.data);

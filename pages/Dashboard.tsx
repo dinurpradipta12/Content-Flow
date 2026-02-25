@@ -378,7 +378,10 @@ export const Dashboard: React.FC = () => {
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
             const userRole = localStorage.getItem('user_role');
 
-            const { data } = await supabase.from('workspaces').select('*').eq('admin_id', tenantId).order('name');
+            const { data } = await supabase.from('workspaces')
+                .select('*')
+                .or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`)
+                .order('name');
 
             let myWorkspaces = data || [];
             if (userRole !== 'Developer') {

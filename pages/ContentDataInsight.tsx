@@ -97,11 +97,11 @@ export const ContentDataInsight: React.FC = () => {
             const userAvatar = localStorage.getItem('user_avatar') || '';
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
 
-            // Fetch all workspaces for this admin tenant
+            // Fetch all workspaces for this admin tenant or where I am a member
             const { data: wsData } = await supabase
                 .from('workspaces')
                 .select('id, account_name, members')
-                .eq('admin_id', tenantId);
+                .or(`admin_id.eq.${tenantId}${userAvatar ? `,members.cs.{"${userAvatar}"}` : ''}`);
 
             if (wsData) {
                 // For members: only show workspaces they belong to

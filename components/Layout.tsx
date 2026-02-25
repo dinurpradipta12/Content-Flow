@@ -407,11 +407,6 @@ create table if not exists public.global_broadcasts(
 
 --Enable RLS & Realtime
 alter table public.global_broadcasts enable row level security;
-do $$ begin
-  if not exists(select 1 from pg_policies where policyname = 'Public view for global_broadcasts') then
-    create policy "Public view for global_broadcasts" on public.global_broadcasts for select using(true);
-    end if;
-end $$;
 alter publication supabase_realtime add table global_broadcasts;
 
 alter table public.app_config enable row level security;
@@ -420,11 +415,13 @@ drop policy if exists "Enable all access" on public.workspaces;
 drop policy if exists "Enable all access" on public.content_items;
 drop policy if exists "Enable all access" on public.app_users;
 drop policy if exists "Enable all access" on public.app_config;
+drop policy if exists "Enable all access" on public.global_broadcasts;
 
 create policy "Enable all access" on public.workspaces for all using(true) with check(true);
 create policy "Enable all access" on public.content_items for all using(true) with check(true);
 create policy "Enable all access" on public.app_users for all using(true) with check(true);
 create policy "Enable all access" on public.app_config for all using(true) with check(true);
+create policy "Enable all access" on public.global_broadcasts for all using(true) with check(true);
 
 --7. Team KPI Board Tables
 create table if not exists public.team_members(
