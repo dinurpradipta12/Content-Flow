@@ -20,6 +20,7 @@ import {
     Database,
     Code,
     CheckCircle,
+    XCircle,
     AlertCircle,
     Globe,
     ChevronUp,
@@ -359,6 +360,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [activeBroadcast, setActiveBroadcast] = useState<{ id: string, title: string, message: string, type: string } | null>(null);
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
 
+    // Status Modal State
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean;
+        type: 'success' | 'error' | 'confirm';
+        message: string;
+        title?: string;
+        onConfirm?: () => void;
+    }>({ isOpen: false, type: 'success', message: '' });
+
     // Network State
     const [networkStatus, setNetworkStatus] = useState<'good' | 'unstable' | 'bad' | 'offline'>('good');
     const [latency, setLatency] = useState(0);
@@ -462,14 +472,39 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         window.addEventListener('user_updated', handleUserUpdate);
         window.addEventListener('sub_updated', handleUserUpdate);
 
+
+        // 5. Global Event Listeners
+        const handleOpenPayment = () => setShowPaymentModal(true);
+        const handleAppAlert = (e: any) => {
+            setStatusModal({
+                isOpen: true,
+                type: e.detail.type || 'success',
+                message: e.detail.message,
+                title: e.detail.title
+            });
+        };
+        const handleAppConfirm = (e: any) => {
+            setStatusModal({
+                isOpen: true,
+                type: 'confirm',
+                message: e.detail.message,
+                title: e.detail.title || 'Konfirmasi',
+                onConfirm: e.detail.onConfirm
+            });
+        };
+
+        window.addEventListener('open-payment-modal', handleOpenPayment);
+        window.addEventListener('app-alert', handleAppAlert);
+        window.addEventListener('app-confirm', handleAppConfirm);
+
         return () => {
             clearInterval(interval);
             window.removeEventListener('user_updated', handleUserUpdate);
             window.removeEventListener('sub_updated', handleUserUpdate);
+            window.removeEventListener('open-payment-modal', handleOpenPayment);
+            window.removeEventListener('app-alert', handleAppAlert);
+            window.removeEventListener('app-confirm', handleAppConfirm);
         };
-        // 5. Global Event Listeners
-        const handleOpenPayment = () => setShowPaymentModal(true);
-        window.addEventListener('open-payment-modal', handleOpenPayment);
 
         // 6. Fetch Global Broadcast
         const fetchLatestBroadcast = async () => {
@@ -899,19 +934,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             if (error) throw error;
 
-            // Notify Developers about new renewal submission
             await notifyDevelopers({
                 title: 'Konfirmasi Pembayaran Baru!',
                 content: `${userProfile.name} telah mengirimkan bukti perpanjangan untuk paket ${packageName}.`,
                 metadata: { type: 'renewal', user_id: userId, package: packageName }
             });
 
-            alert('Bukti pembayaran berhasil dikirim! Developer akan segera memproses akun Anda.');
+            setStatusModal({ isOpen: true, type: 'success', message: 'Bukti pembayaran berhasil dikirim! Developer akan segera memproses akun Anda.' });
             setShowPaymentModal(false);
             setPaymentProof('');
         } catch (err) {
             console.error(err);
-            alert('Gagal mengirim konfirmasi. Coba sebentar lagi.');
+            setStatusModal({ isOpen: true, type: 'error', message: 'Gagal mengirim konfirmasi. Coba sebentar lagi.' });
         }
     };
 
@@ -1436,6 +1470,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     >
                         MENGERTI
                     </Button>
+                </div>
+            </Modal>
+
+            {/* Status Modal */}
+            <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} title={statusModal.title || (statusModal.type === 'success' ? 'Sukses' : statusModal.type === 'error' ? 'Gagal' : 'Konfirmasi')}>
+                <div className="p-8 text-center space-y-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                        {statusModal.type === 'success' ? <CheckCircle size={32} /> : statusModal.type === 'error' ? <XCircle size={32} /> : <AlertTriangle size={32} />}
+                    </div>
+                    <p className="text-slate-800 font-bold">{statusModal.message}</p>
+                    <div className="flex gap-3 pt-4">
+                        {statusModal.type === 'confirm' ? (
+                            <>
+                                <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} variant="outline" className="flex-1">Batal</Button>
+                                <Button onClick={() => { statusModal.onConfirm?.(); setStatusModal({ ...statusModal, isOpen: false }); }} className="flex-1 bg-slate-900 text-white">Ya, Lanjutkan</Button>
+                            </>
+                        ) : (
+                            <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} className="w-full bg-slate-900 text-white mt-4">Tutup</Button>
+                        )}
+                    </div>
                 </div>
             </Modal>
         </div>

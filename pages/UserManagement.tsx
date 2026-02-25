@@ -249,7 +249,10 @@ export const UserManagement: React.FC = () => {
     };
 
     const handleUpdateSubscriptionEnd = async (userId: string, newEnd: string) => {
-        if (!isDeveloper) { alert('Hanya Developer yang dapat mengubah subscription.'); return; }
+        if (!isDeveloper) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Hanya Developer yang dapat mengubah subscription.' } }));
+            return;
+        }
         try {
             await supabase.from('app_users').update({ subscription_end: newEnd || null }).eq('id', userId);
             window.dispatchEvent(new Event('sub_updated'));
@@ -263,7 +266,10 @@ export const UserManagement: React.FC = () => {
     };
 
     const handleUpdateSubscriptionPackage = async (userId: string, newPackage: string) => {
-        if (!isDeveloper) { alert('Hanya Developer yang dapat mengubah paket langganan.'); return; }
+        if (!isDeveloper) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Hanya Developer yang dapat mengubah paket langganan.' } }));
+            return;
+        }
         try {
             await supabase.from('app_users').update({ subscription_package: newPackage }).eq('id', userId);
             fetchUsers();

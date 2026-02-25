@@ -127,10 +127,10 @@ export const WorkspaceSettings: React.FC = () => {
             }).eq('id', 1);
 
             if (error) throw error;
-            alert('Konfigurasi antarmuka berhasil disimpan secara global!');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Konfigurasi antarmuka berhasil disimpan secara global!' } }));
         } catch (err: any) {
             console.error('Save Interface Error:', err);
-            alert(`Gagal menyimpan konfigurasi: ${err.message || JSON.stringify(err)}`);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: `Gagal menyimpan konfigurasi: ${err.message || JSON.stringify(err)}` } }));
         } finally {
             setSaving(false);
         }
@@ -145,10 +145,10 @@ export const WorkspaceSettings: React.FC = () => {
             }).eq('id', 1);
 
             if (error) throw error;
-            alert('Konfigurasi Pembayaran berhasil disimpan!');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Konfigurasi Pembayaran berhasil disimpan!' } }));
         } catch (err: any) {
             console.error('Save Payment Error:', err);
-            alert(`Gagal menyimpan konfigurasi pembayaran: ${err.message || JSON.stringify(err)}`);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: `Gagal menyimpan konfigurasi pembayaran: ${err.message || JSON.stringify(err)}` } }));
         } finally {
             setSaving(false);
         }
@@ -202,13 +202,12 @@ export const WorkspaceSettings: React.FC = () => {
             });
 
             if (error) throw error;
-
-            alert('Broadcast berhasil dikirim ke seluruh user!');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Broadcast berhasil dikirim ke seluruh user!' } }));
             setBroadcastTitle('');
             setBroadcastMessage('');
         } catch (err: any) {
             console.error('Broadcast error:', err);
-            alert('Gagal mengirim broadcast: ' + err.message);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengirim broadcast: ' + err.message } }));
         } finally {
             setSendingBroadcast(false);
         }

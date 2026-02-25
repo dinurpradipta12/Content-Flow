@@ -118,7 +118,7 @@ export const Register: React.FC = () => {
             setInboxSent(true);
         } catch (err) {
             console.error(err);
-            alert('Gagal mengirim pesan ke Developer Inbox. Silakan hubungi via WhatsApp.');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengirim pesan ke Developer Inbox. Silakan hubungi via WhatsApp.' } }));
         } finally {
             setSendingInbox(false);
         }

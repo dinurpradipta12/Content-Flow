@@ -232,11 +232,15 @@ export const TeamManagement: React.FC = () => {
         return `${window.location.origin}${window.location.pathname}#/login`;
     };
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Info login berhasil disalin!' } }));
+    };
+
     const handleCopyLoginInfo = () => {
         if (!inviteSuccess) return;
         const text = `Halo ${inviteSuccess.fullName},\n\nAkun Anda telah dibuat di Aruneeka.\n\nLink Login: ${getLoginLink()}\nUsername: ${inviteSuccess.username}\nPassword: ${inviteSuccess.password}\n\nSilakan login dan segera ganti password Anda.`;
-        navigator.clipboard.writeText(text);
-        alert('Info login berhasil disalin!');
+        copyToClipboard(text);
     };
 
     const handleShareViaWhatsApp = () => {
@@ -318,7 +322,7 @@ export const TeamManagement: React.FC = () => {
                     return;
                 }
             }
-            alert('Gagal menambahkan anggota. Cek apakah username sudah ada.');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menambahkan anggota. Cek apakah username sudah ada.' } }));
         } finally {
             setInviting(false);
         }
@@ -344,14 +348,14 @@ export const TeamManagement: React.FC = () => {
                 .eq('id', selectedUser.id);
             if (error) throw error;
 
-            alert('Password berhasil diperbarui.');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Password berhasil diperbarui.' } }));
             setNewPassword('');
             fetchData();
             // Automatically update the local selectedUser object so we can see it
             setSelectedUser(prev => prev ? { ...prev, password: newPassword } : null);
         } catch (error) {
             console.error(error);
-            alert('Gagal mengupdate password.');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengupdate password.' } }));
         } finally {
             setSaving(false);
         }
@@ -376,7 +380,7 @@ export const TeamManagement: React.FC = () => {
             fetchData();
         } catch (error) {
             console.error(error);
-            alert('Gagal mengeluarkan anggota.');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengeluarkan anggota.' } }));
         }
     };
 
@@ -385,7 +389,7 @@ export const TeamManagement: React.FC = () => {
         const wsToUpdate = allWorkspaces.find(w => w.id === workspaceId);
         if (!wsToUpdate) return;
         if (wsToUpdate.members?.includes(selectedUser.avatar_url)) {
-            alert("User sudah ada di workspace ini.");
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'User sudah ada di workspace ini.' } }));
             return;
         }
 
@@ -393,9 +397,9 @@ export const TeamManagement: React.FC = () => {
         const { error } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', workspaceId);
         if (error) {
             console.error(error);
-            alert("Gagal menambahkan ke workspace.");
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menambahkan ke workspace.' } }));
         } else {
-            alert("Berhasil mengundang ke workspace!");
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Berhasil mengundang ke workspace!' } }));
             fetchData();
         }
     };
@@ -407,7 +411,7 @@ export const TeamManagement: React.FC = () => {
         if (!ws) return;
         const updatedMembers = (ws.members || []).filter(m => m !== selectedUser.avatar_url);
         const { error } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', wsId);
-        if (error) { console.error(error); alert('Gagal menghapus dari workspace.'); }
+        if (error) { console.error(error); window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menghapus dari workspace.' } })); }
         else { fetchData(); }
     };
 
@@ -454,7 +458,7 @@ export const TeamManagement: React.FC = () => {
             setKpiForm({ metric_name: '', category: 'General', target_value: 100, actual_value: 0, unit: '%', period: 'Monthly', period_date: new Date().toISOString().split('T')[0], notes: '' });
             setShowAddKPI(false);
             fetchData();
-        } catch (err: any) { console.error(err); alert('Gagal menambahkan KPI: ' + (err?.message || '')); }
+        } catch (err: any) { console.error(err); window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menambahkan KPI: ' + (err?.message || '') } })); }
         finally { setAddingKPI(false); }
     };
 
@@ -489,7 +493,7 @@ export const TeamManagement: React.FC = () => {
             await notifyByMention(editKPIForm.notes, editKPIForm.metric_name);
             setEditingKPIId(null);
             fetchData();
-        } catch (err: any) { alert('Gagal menyimpan: ' + err?.message); }
+        } catch (err: any) { window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menyimpan: ' + err?.message } })); }
         finally { setSavingEditKPI(false); }
     };
 
@@ -507,7 +511,10 @@ export const TeamManagement: React.FC = () => {
                     <Button
                         className="whitespace-nowrap shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all"
                         onClick={() => {
-                            if (!selectedWorkspace) return alert('Pilih Workspace di kiri dulu!');
+                            if (!selectedWorkspace) {
+                                window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Pilih Workspace di kiri dulu!' } }));
+                                return;
+                            }
                             setIsInviteOpen(!isInviteOpen);
                         }}
                     >

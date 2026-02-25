@@ -35,6 +35,22 @@ export const DeveloperInbox: React.FC = () => {
     const [search, setSearch] = useState('');
     const [verifyingId, setVerifyingId] = useState<string | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean;
+        type: 'success' | 'error' | 'confirm';
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+    }>({
+        isOpen: false,
+        type: 'success',
+        title: '',
+        message: ''
+    });
+
+    const showStatus = (type: 'success' | 'error' | 'confirm', title: string, message: string, onConfirm?: () => void) => {
+        setStatusModal({ isOpen: true, type, title, message, onConfirm });
+    };
 
     const fetchMessages = async () => {
         setLoading(true);
@@ -108,18 +124,21 @@ export const DeveloperInbox: React.FC = () => {
                 .update({ is_resolved: true, is_read: true })
                 .eq('id', msg.id);
 
-            alert(`✅ User "${msg.sender_name}" berhasil diverifikasi! Kode cocok.`);
+            showStatus('success', 'Berhasil', `✅ User "${msg.sender_name}" berhasil diverifikasi! Kode cocok.`);
             fetchMessages();
         } catch (err) {
             console.error(err);
-            alert('Gagal memverifikasi user.');
+            showStatus('error', 'Gagal', 'Gagal memverifikasi user.');
         } finally {
             setVerifyingId(null);
         }
     };
 
-    const handleVerifyRenewal = async (msg: InboxMessage) => {
-        if (!confirm(`Konfirmasi perpanjangan untuk ${msg.sender_name}?`)) return;
+    const handleVerifyRenewal = (msg: InboxMessage) => {
+        showStatus('confirm', 'Konfirmasi', `Konfirmasi perpanjangan untuk ${msg.sender_name}?`, () => executeVerifyRenewal(msg));
+    };
+
+    const executeVerifyRenewal = async (msg: InboxMessage) => {
         setVerifyingId(msg.id);
         try {
             // 1. Ambil data user saat ini
@@ -130,7 +149,7 @@ export const DeveloperInbox: React.FC = () => {
                 .single();
 
             if (userErr || !user) {
-                alert('User tidak ditemukan.');
+                showStatus('error', 'Gagal', 'User tidak ditemukan.');
                 return;
             }
 
@@ -169,20 +188,21 @@ export const DeveloperInbox: React.FC = () => {
                 .update({ is_resolved: true, is_read: true })
                 .eq('id', msg.id);
 
-            alert(`✅ Perpanjangan "${msg.sender_name}" berhasil! Expire baru: ${newExpiry.toLocaleDateString('id-ID')}`);
+            showStatus('success', 'Berhasil', `✅ Perpanjangan "${msg.sender_name}" berhasil! Expire baru: ${newExpiry.toLocaleDateString('id-ID')}`);
             fetchMessages();
         } catch (err) {
             console.error(err);
-            alert('Gagal memverifikasi perpanjangan.');
+            showStatus('error', 'Gagal', 'Gagal memverifikasi perpanjangan.');
         } finally {
             setVerifyingId(null);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Hapus pesan ini?')) return;
-        await supabase.from('developer_inbox').delete().eq('id', id);
-        fetchMessages();
+    const handleDelete = (id: string) => {
+        showStatus('confirm', 'Hapus Pesan', 'Hapus pesan ini?', async () => {
+            await supabase.from('developer_inbox').delete().eq('id', id);
+            fetchMessages();
+        });
     };
 
     const filteredMessages = messages.filter(msg => {
@@ -405,6 +425,29 @@ export const DeveloperInbox: React.FC = () => {
                     <img src={previewImage || ''} alt="Bukti Transfer" className="w-full rounded-xl border-4 border-slate-900" />
                     <div className="mt-4 flex justify-end">
                         <Button onClick={() => setPreviewImage(null)} className="bg-slate-900">Tutup Preview</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Status Modal */}
+            <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} title={statusModal.title}>
+                <div className="p-8 text-center space-y-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' :
+                            statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+                        }`}>
+                        {statusModal.type === 'success' ? <CheckCircle size={32} /> :
+                            statusModal.type === 'error' ? <XCircle size={32} /> : <Clock size={32} />}
+                    </div>
+                    <p className="text-slate-800 font-bold">{statusModal.message}</p>
+                    <div className="flex gap-3 pt-4">
+                        {statusModal.type === 'confirm' ? (
+                            <>
+                                <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} variant="outline" className="flex-1">Batal</Button>
+                                <Button onClick={() => { statusModal.onConfirm?.(); setStatusModal({ ...statusModal, isOpen: false }); }} className="flex-1 bg-slate-900 text-white">Ya, Lanjutkan</Button>
+                            </>
+                        ) : (
+                            <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} className="w-full bg-slate-900 text-white">Tutup</Button>
+                        )}
                     </div>
                 </div>
             </Modal>

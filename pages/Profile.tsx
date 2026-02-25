@@ -165,10 +165,11 @@ export const Profile: React.FC = () => {
 
       // Trigger event so Layout updates too
       window.dispatchEvent(new Event('user_updated'));
+      window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Profil berhasil diperbarui!' } }));
 
     } catch (err) {
-      console.error("Error updating profile:", err);
-      alert("Gagal menyimpan perubahan.");
+      console.error(err);
+      window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menyimpan perubahan.' } }));
     } finally {
       setIsEditingStatus(false);
       setIsEditingBio(false);
@@ -179,7 +180,10 @@ export const Profile: React.FC = () => {
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) { alert("File terlalu besar (Max 1MB)"); return; }
+      if (file.size > 1024 * 1024) {
+        window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'File terlalu besar (Max 1MB)' } }));
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         const res = reader.result as string;
