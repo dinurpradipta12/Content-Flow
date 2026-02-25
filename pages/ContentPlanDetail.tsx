@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
-import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown } from 'lucide-react';
+import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
@@ -87,7 +87,7 @@ const getPillarStyle = (pillar: string) => {
 };
 
 // --- RICH TEXT RENDERER COMPONENT ---
-const RichTextRenderer: React.FC<{ text: string }> = ({ text }) => {
+const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => void }> = ({ text, onPdfClick }) => {
     if (!text) return <span className="text-slate-400 italic">Belum ada script atau catatan yang ditambahkan.</span>;
     return (
         <div className="space-y-1">
@@ -98,21 +98,42 @@ const RichTextRenderer: React.FC<{ text: string }> = ({ text }) => {
                     const fileUrl = fileMatch[2];
                     const isImage = fileUrl.startsWith('data:image');
                     return (
-                        <div key={lineIdx} className="my-3 group relative bg-white border-2 border-slate-200 rounded-xl p-3 flex items-center gap-4 hover:border-accent hover:shadow-md transition-all">
+                        <div
+                            className={`my-3 group relative bg-white border-2 border-slate-200 rounded-xl p-3 flex items-center gap-4 hover:border-accent hover:shadow-md transition-all ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer hover:bg-slate-50' : ''
+                                }`}
+                            onClick={() => {
+                                if ((fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) && onPdfClick) {
+                                    onPdfClick(fileUrl);
+                                }
+                            }}
+                        >
                             {isImage ? (
                                 <div className="w-12 h-12 bg-slate-100 rounded-lg border border-slate-200 overflow-hidden flex-shrink-0">
                                     <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
                                 </div>
                             ) : (
-                                <div className="w-12 h-12 bg-red-50 text-red-500 rounded-lg border border-red-100 flex items-center justify-center flex-shrink-0">
+                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center flex-shrink-0 ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf'))
+                                    ? 'bg-red-50 text-red-500 border-red-100'
+                                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                                    }`}>
                                     <FileText size={24} />
                                 </div>
                             )}
                             <div className="flex-1 min-w-0">
                                 <p className="font-bold text-slate-800 text-sm truncate">{fileName}</p>
-                                <p className="text-xs text-slate-500">{isImage ? 'Image File' : 'Document / File'}</p>
+                                <p className="text-xs text-slate-500">
+                                    {isImage ? 'Image File' : (fileName.toLowerCase().endsWith('.pdf') ? 'PDF Document (Klik untuk Preview)' : 'Document / File')}
+                                </p>
                             </div>
-                            <a href={fileUrl} download={fileName} target="_blank" rel="noreferrer" className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-accent hover:text-white transition-colors" title="Download / Preview">
+                            <a
+                                href={fileUrl}
+                                download={fileName}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-accent hover:text-white transition-colors"
+                                title="Download"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 <Download size={18} />
                             </a>
                         </div>
@@ -292,7 +313,7 @@ const KanbanColumn: React.FC<{
 
     return (
         <div
-            className="min-w-[320px] w-[320px] flex-shrink-0 flex flex-col pb-0"
+            className="flex-1 min-w-[300px] flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -384,6 +405,20 @@ export const ContentPlanDetail: React.FC = () => {
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
     const [editingId, setEditingId] = useState<string | null>(null);
 
+    // PDF Preview States
+    const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [pdfMounted, setPdfMounted] = useState(false);
+
+    useEffect(() => {
+        if (isPdfPreviewOpen) {
+            setPdfMounted(true);
+        } else {
+            const timer = setTimeout(() => setPdfMounted(false), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [isPdfPreviewOpen]);
+
     // Invite Code
     const [copied, setCopied] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
@@ -473,12 +508,25 @@ export const ContentPlanDetail: React.FC = () => {
                 .select('*')
                 .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`);
 
-            // Map to Member type
-            const mappedMembers: Member[] = (allUsers || []).map((u: any) => ({
-                id: u.id,
-                name: u.full_name || u.email || 'Unknown',
-                avatar: u.avatar_url || ''
-            }));
+            // Map to Member type and filter by workspace membership (using avatar list comparison)
+            const wsMembersList: string[] = ws.members || [];
+            const mappedMembers: Member[] = (allUsers || [])
+                .filter((u: any) => {
+                    // Check if user's avatar is in workspace's members list
+                    return wsMembersList.some(avatar => {
+                        try {
+                            return decodeURIComponent(avatar) === decodeURIComponent(u.avatar_url) || avatar === u.avatar_url;
+                        } catch {
+                            return avatar === u.avatar_url;
+                        }
+                    });
+                })
+                .map((u: any) => ({
+                    id: u.id,
+                    name: u.full_name || u.email || 'Unknown',
+                    avatar: u.avatar_url || ''
+                }));
+
             setTeamMembers(mappedMembers);
 
             // Update workspace members avatar list for header
@@ -974,7 +1022,7 @@ export const ContentPlanDetail: React.FC = () => {
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
                     <div className="flex-1 w-full overflow-x-auto pb-4 no-scrollbar">
-                        <div className="inline-flex gap-6 items-start pl-1 pr-8">
+                        <div className="flex gap-6 items-start pl-1 pr-8">
                             {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                                 <KanbanColumn
                                     key={status}
@@ -1250,11 +1298,19 @@ export const ContentPlanDetail: React.FC = () => {
             {selectedTask && (
                 <Modal
                     isOpen={isDetailModalOpen}
-                    onClose={() => setIsDetailModalOpen(false)}
+                    onClose={() => {
+                        setIsDetailModalOpen(false);
+                        setIsPdfPreviewOpen(false);
+                        setPdfUrl(null);
+                    }}
                     title="Detail Konten"
-                    maxWidth="max-w-5xl"
+                    maxWidth={isPdfPreviewOpen ? "max-w-[47vw]" : "max-w-4xl"}
+                    duration={800}
+                    zIndex={9990}
+                    overlayClassName={isPdfPreviewOpen ? 'bg-slate-900/40 backdrop-blur-none transition-all' : ''}
+                    className={isPdfPreviewOpen ? '-translate-x-[52%] shadow-2xl' : 'translate-x-0'}
                 >
-                    <div className="space-y-8">
+                    <div className="space-y-8 px-2 h-[75vh] overflow-y-auto no-scrollbar">
                         {/* Header: Title & Platform */}
                         <div className="flex flex-col-reverse md:flex-row md:items-start justify-between gap-4">
                             <h2 className="text-3xl md:text-5xl font-black font-heading text-slate-800 leading-tight">
@@ -1392,7 +1448,17 @@ export const ContentPlanDetail: React.FC = () => {
                             </div>
 
                             <div className="text-slate-700 font-medium font-sans text-base min-h-[100px] overflow-hidden">
-                                <RichTextRenderer text={(selectedTask as any).script} />
+                                <RichTextRenderer
+                                    text={(selectedTask as any).script}
+                                    onPdfClick={(url) => {
+                                        // Use Google Docs Viewer for external URLs, direct for data URIs
+                                        const finalUrl = url.startsWith('http')
+                                            ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+                                            : url;
+                                        setPdfUrl(finalUrl);
+                                        setIsPdfPreviewOpen(true);
+                                    }}
+                                />
                             </div>
                         </div>
 
@@ -1405,16 +1471,59 @@ export const ContentPlanDetail: React.FC = () => {
                                 <Trash2 size={18} /> Hapus Konten
                             </button>
                             <div className="flex gap-4 w-full md:w-auto">
-                                <Button variant="secondary" onClick={() => setIsDetailModalOpen(false)} className="w-full md:w-auto">Tutup</Button>
+                                <button
+                                    onClick={() => {
+                                        setIsDetailModalOpen(false);
+                                        setIsPdfPreviewOpen(false);
+                                        setPdfUrl(null);
+                                    }}
+                                    className="px-6 py-2.5 rounded-full border-2 border-slate-800 font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                >
+                                    Tutup
+                                </button>
                                 <Button
-                                    onClick={() => { setIsDetailModalOpen(false); handleOpenEditModal(selectedTask); }}
+                                    onClick={() => {
+                                        setIsDetailModalOpen(false);
+                                        setIsPdfPreviewOpen(false);
+                                        handleOpenEditModal(selectedTask);
+                                    }}
                                     icon={<Edit size={18} />}
-                                    className="w-full md:w-auto"
                                 >
                                     Edit Konten
                                 </Button>
                             </div>
                         </div>
+                    </div>
+                </Modal>
+            )}
+
+            {/* --- SEPARATE PDF PREVIEW MODAL (Side-by-side with Detail) --- */}
+            {pdfMounted && pdfUrl && (
+                <Modal
+                    isOpen={isPdfPreviewOpen}
+                    onClose={() => setIsPdfPreviewOpen(false)}
+                    title={
+                        <div className="flex items-center gap-2">
+                            <div className="p-1 bg-white/20 rounded">
+                                <FileText size={18} />
+                            </div>
+                            <span>PDF Preview</span>
+                        </div>
+                    }
+                    maxWidth="max-w-[47vw]"
+                    duration={1000}
+                    zIndex={10000}
+                    overlayClassName="bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
+                    className={`pointer-events-auto shadow-2xl overflow-hidden ${isPdfPreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                >
+                    <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
+                        {pdfUrl && (
+                            <iframe
+                                src={pdfUrl}
+                                className="w-full h-full border-none"
+                                title="PDF Content"
+                            />
+                        )}
                     </div>
                 </Modal>
             )}
@@ -1646,6 +1755,21 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </Modal>
 
+            <style>{`
+                .wipe-mask {
+                    clip-path: inset(0 50% 0 50%);
+                }
+                .wipe-active {
+                    clip-path: inset(0 0 0 0);
+                }
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            `}</style>
         </>
     );
 };

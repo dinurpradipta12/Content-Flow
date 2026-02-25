@@ -14,6 +14,9 @@ interface PaymentConfig {
     accountNumber: string;
     accountName: string;
     packages: { id: string; name: string; price: number; durationDays?: number }[];
+    personalPackages?: { id: string; name: string; price: number; durationDays?: number }[];
+    teamPackages?: { id: string; name: string; price: number; durationDays?: number }[];
+    teamPricePerPerson?: number;
 }
 
 interface AppConfig {

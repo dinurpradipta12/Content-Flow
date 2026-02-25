@@ -43,7 +43,11 @@ export const UserManagement: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     const { config } = useAppConfig();
-    const availablePackages = config?.payment_config?.packages || [];
+    const availablePackages = [
+        ...(config?.payment_config?.personalPackages || []),
+        ...(config?.payment_config?.teamPackages || []),
+        ...(config?.payment_config?.packages || [])
+    ];
 
     // Current user role
     const currentUserRole = localStorage.getItem('user_role') || 'Member';

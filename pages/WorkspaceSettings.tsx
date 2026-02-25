@@ -20,7 +20,9 @@ import {
     Smartphone,
     Rocket,
     CreditCard,
-    Send
+    Send,
+    User,
+    Users
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 
@@ -42,6 +44,9 @@ interface PaymentConfig {
     accountNumber: string;
     accountName: string;
     packages: PaymentPackage[];
+    personalPackages?: PaymentPackage[];
+    teamPackages?: PaymentPackage[];
+    teamPricePerPerson?: number;
 }
 
 interface AppConfig {
@@ -509,92 +514,220 @@ export const WorkspaceSettings: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="border-t-2 border-slate-100 pt-6 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Paket Langganan (Subscription)</h4>
-                                        <button
-                                            onClick={() => {
-                                                const newPkg = { id: Date.now().toString(), name: 'Paket Baru', price: 0, durationDays: 30 };
-                                                setConfig(prev => {
-                                                    if (!prev) return null;
-                                                    const pkgs = prev.payment_config?.packages || [];
-                                                    return { ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', accountNumber: '', packages: [] }), packages: [...pkgs, newPkg] } };
-                                                });
-                                            }}
-                                            className="text-[10px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-slate-700"
-                                        >
-                                            + Tambah Paket
-                                        </button>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {(config?.payment_config?.packages || []).map((pkg, idx) => (
-                                            <div key={pkg.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
-                                                <input
-                                                    value={pkg.name}
-                                                    onChange={e => {
-                                                        const name = e.target.value;
-                                                        setConfig(prev => {
-                                                            if (!prev) return null;
-                                                            const newPkgs = [...(prev.payment_config?.packages || [])];
-                                                            newPkgs[idx].name = name;
-                                                            return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
-                                                        });
-                                                    }}
-                                                    className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
-                                                    placeholder="Nama Paket"
-                                                />
-                                                <input
-                                                    type="number"
-                                                    value={pkg.price}
-                                                    onChange={e => {
-                                                        const price = Number(e.target.value);
-                                                        setConfig(prev => {
-                                                            if (!prev) return null;
-                                                            const newPkgs = [...(prev.payment_config?.packages || [])];
-                                                            newPkgs[idx].price = price;
-                                                            return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
-                                                        });
-                                                    }}
-                                                    className="w-28 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
-                                                    placeholder="Harga"
-                                                />
-                                                <div className="flex items-center gap-2">
+                                <div className="border-t-2 border-slate-100 pt-6 space-y-6">
+                                    {/* PERSONAL PACKAGES */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <User size={18} className="text-accent" />
+                                                <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Paket Personal</h4>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const newPkg = { id: Date.now().toString(), name: 'Paket Personal Baru', price: 0, durationDays: 30 };
+                                                    setConfig(prev => {
+                                                        if (!prev) return null;
+                                                        const pkgs = prev.payment_config?.personalPackages || [];
+                                                        return { ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', accountNumber: '', packages: [] }), personalPackages: [...pkgs, newPkg] } };
+                                                    });
+                                                }}
+                                                className="text-[10px] font-black bg-accent text-white px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-slate-700"
+                                            >
+                                                + Tambah Personal
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {(config?.payment_config?.personalPackages || []).map((pkg, idx) => (
+                                                <div key={pkg.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
                                                     <input
-                                                        type="number"
-                                                        value={pkg.durationDays || 30}
+                                                        value={pkg.name}
                                                         onChange={e => {
-                                                            const days = Number(e.target.value);
+                                                            const name = e.target.value;
                                                             setConfig(prev => {
                                                                 if (!prev) return null;
-                                                                const newPkgs = [...(prev.payment_config?.packages || [])];
-                                                                newPkgs[idx].durationDays = days;
-                                                                return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
+                                                                const newPkgs = [...(prev.payment_config?.personalPackages || [])];
+                                                                newPkgs[idx].name = name;
+                                                                return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
                                                             });
                                                         }}
-                                                        className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-accent outline-none"
+                                                        className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                        placeholder="Nama Paket"
                                                     />
-                                                    <span className="text-[10px] font-black text-slate-400">HARI</span>
+                                                    <input
+                                                        type="number"
+                                                        value={pkg.price}
+                                                        onChange={e => {
+                                                            const price = Number(e.target.value);
+                                                            setConfig(prev => {
+                                                                if (!prev) return null;
+                                                                const newPkgs = [...(prev.payment_config?.personalPackages || [])];
+                                                                newPkgs[idx].price = price;
+                                                                return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
+                                                            });
+                                                        }}
+                                                        className="w-28 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                        placeholder="Harga"
+                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            value={pkg.durationDays || 30}
+                                                            onChange={e => {
+                                                                const days = Number(e.target.value);
+                                                                setConfig(prev => {
+                                                                    if (!prev) return null;
+                                                                    const newPkgs = [...(prev.payment_config?.personalPackages || [])];
+                                                                    newPkgs[idx].durationDays = days;
+                                                                    return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
+                                                                });
+                                                            }}
+                                                            className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-accent outline-none"
+                                                        />
+                                                        <span className="text-[10px] font-black text-slate-400">HARI</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setConfig(prev => {
+                                                                if (!prev) return null;
+                                                                const newPkgs = [...(prev.payment_config?.personalPackages || [])];
+                                                                newPkgs.splice(idx, 1);
+                                                                return { ...prev, payment_config: { ...prev.payment_config!, personalPackages: newPkgs } };
+                                                            });
+                                                        }}
+                                                        className="w-10 h-10 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-lg border-2 border-red-200 hover:bg-red-500 hover:text-white transition-colors"
+                                                    >
+                                                        <AlertCircle size={16} />
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    onClick={() => {
-                                                        setConfig(prev => {
-                                                            if (!prev) return null;
-                                                            const newPkgs = [...(prev.payment_config?.packages || [])];
-                                                            newPkgs.splice(idx, 1);
-                                                            return { ...prev, payment_config: { ...prev.payment_config!, packages: newPkgs } };
-                                                        });
-                                                    }}
-                                                    className="w-10 h-10 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-lg border-2 border-red-200 hover:bg-red-500 hover:text-white transition-colors"
-                                                >
-                                                    <AlertCircle size={16} />
-                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* TEAM PACKAGES */}
+                                    <div className="space-y-4 pt-4 border-t-2 border-dashed border-slate-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Users size={18} className="text-secondary" />
+                                                <h4 className="font-black text-slate-800 uppercase tracking-widest text-sm">Konfigurasi Team</h4>
                                             </div>
-                                        ))}
-                                        {(!config?.payment_config?.packages || config.payment_config.packages.length === 0) && (
-                                            <div className="text-center p-6 text-slate-400 font-bold text-sm border-2 border-dashed border-slate-200 rounded-xl">
-                                                Belum ada paket langganan. Tambahkan minimal satu.
+                                        </div>
+
+                                        <div className="bg-secondary/5 border-2 border-secondary/20 rounded-2xl p-4 mb-2">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <h5 className="text-xs font-black text-secondary uppercase tracking-widest mb-1">Harga Per Orang (Team)</h5>
+                                                    <p className="text-[10px] font-bold text-slate-500">Harga ini akan dikalikan dengan jumlah anggota yang dipilih user.</p>
+                                                </div>
+                                                <div className="relative w-48">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">Rp</span>
+                                                    <input
+                                                        type="number"
+                                                        value={config?.payment_config?.teamPricePerPerson || 0}
+                                                        onChange={e => {
+                                                            const price = Number(e.target.value);
+                                                            setConfig(prev => {
+                                                                if (!prev) return null;
+                                                                return { ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', accountNumber: '', packages: [] }), teamPricePerPerson: price } };
+                                                            });
+                                                        }}
+                                                        className="w-full bg-white border-2 border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm font-black text-slate-900 focus:border-secondary outline-none transition-all"
+                                                        placeholder="30000"
+                                                    />
+                                                </div>
                                             </div>
-                                        )}
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 px-1">
+                                                <h4 className="font-black text-slate-400 uppercase tracking-widest text-[10px]">Daftar Paket Team</h4>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const newPkg = { id: Date.now().toString(), name: 'Paket Team Baru', price: 0, durationDays: 30 };
+                                                    setConfig(prev => {
+                                                        if (!prev) return null;
+                                                        const pkgs = prev.payment_config?.teamPackages || [];
+                                                        return { ...prev, payment_config: { ...(prev.payment_config || { bankName: '', accountName: '', accountNumber: '', packages: [] }), teamPackages: [...pkgs, newPkg] } };
+                                                    });
+                                                }}
+                                                className="text-[10px] font-black bg-secondary text-white px-3 py-1.5 rounded-lg uppercase tracking-widest hover:bg-slate-700"
+                                            >
+                                                + Tambah Paket
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {(config?.payment_config?.teamPackages || []).map((pkg, idx) => (
+                                                <div key={pkg.id} className="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border-2 border-slate-200">
+                                                    <input
+                                                        value={pkg.name}
+                                                        onChange={e => {
+                                                            const name = e.target.value;
+                                                            setConfig(prev => {
+                                                                if (!prev) return null;
+                                                                const newPkgs = [...(prev.payment_config?.teamPackages || [])];
+                                                                newPkgs[idx].name = name;
+                                                                return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
+                                                            });
+                                                        }}
+                                                        className="flex-1 bg-white border-2 border-slate-200 rounded-lg px-3 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                        placeholder="Nama Paket Team"
+                                                    />
+                                                    <div className="relative w-32">
+                                                        <input
+                                                            type="number"
+                                                            value={pkg.price}
+                                                            onChange={e => {
+                                                                const price = Number(e.target.value);
+                                                                setConfig(prev => {
+                                                                    if (!prev) return null;
+                                                                    const newPkgs = [...(prev.payment_config?.teamPackages || [])];
+                                                                    newPkgs[idx].price = price;
+                                                                    return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
+                                                                });
+                                                            }}
+                                                            className="w-full bg-white border-2 border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm font-bold focus:border-accent outline-none"
+                                                            placeholder="Harga"
+                                                        />
+                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">ORG</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            value={pkg.durationDays || 30}
+                                                            onChange={e => {
+                                                                const days = Number(e.target.value);
+                                                                setConfig(prev => {
+                                                                    if (!prev) return null;
+                                                                    const newPkgs = [...(prev.payment_config?.teamPackages || [])];
+                                                                    newPkgs[idx].durationDays = days;
+                                                                    return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
+                                                                });
+                                                            }}
+                                                            className="w-16 bg-white border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold text-center focus:border-accent outline-none"
+                                                        />
+                                                        <span className="text-[10px] font-black text-slate-400">HARI</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setConfig(prev => {
+                                                                if (!prev) return null;
+                                                                const newPkgs = [...(prev.payment_config?.teamPackages || [])];
+                                                                newPkgs.splice(idx, 1);
+                                                                return { ...prev, payment_config: { ...prev.payment_config!, teamPackages: newPkgs } };
+                                                            });
+                                                        }}
+                                                        className="w-10 h-10 shrink-0 bg-red-50 text-red-500 flex items-center justify-center rounded-lg border-2 border-red-200 hover:bg-red-500 hover:text-white transition-colors"
+                                                    >
+                                                        <AlertCircle size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {(!config?.payment_config?.personalPackages?.length && !config?.payment_config?.teamPackages?.length) && (
+                                                <div className="text-center p-6 text-slate-400 font-bold text-sm border-2 border-dashed border-slate-200 rounded-xl">
+                                                    Belum ada paket yang dikonfigurasi.
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

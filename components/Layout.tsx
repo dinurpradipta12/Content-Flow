@@ -368,7 +368,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         name: localStorage.getItem('user_name') || 'User',
         role: localStorage.getItem('user_role') || 'Member',
         avatar: localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40',
-        jobTitle: localStorage.getItem('user_job_title') || ''
+        jobTitle: localStorage.getItem('user_job_title') || '',
+        subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal'
     });
 
     // Branding State
@@ -396,13 +397,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (!userId) return;
 
         try {
-            const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title, subscription_end').eq('id', userId).single();
+            const { data, error } = await supabase.from('app_users').select('full_name, role, avatar_url, job_title, subscription_end, subscription_package').eq('id', userId).single();
             if (data && !error) {
                 const profileData = {
                     name: data.full_name || 'User',
                     role: data.role || 'Member',
                     avatar: data.avatar_url || 'https://picsum.photos/40/40',
-                    jobTitle: data.job_title || ''
+                    jobTitle: data.job_title || '',
+                    subscriptionPackage: data.subscription_package || 'Personal'
                 };
                 setUserProfile(profileData);
 
@@ -419,6 +421,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 localStorage.setItem('user_role', profileData.role);
                 localStorage.setItem('user_avatar', profileData.avatar);
                 localStorage.setItem('user_job_title', profileData.jobTitle);
+                localStorage.setItem('user_subscription_package', profileData.subscriptionPackage);
             }
         } catch (err) {
             console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
@@ -452,11 +455,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 name: localStorage.getItem('user_name') || 'User',
                 role: localStorage.getItem('user_role') || 'Member',
                 avatar: localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40',
-                jobTitle: localStorage.getItem('user_job_title') || ''
+                jobTitle: localStorage.getItem('user_job_title') || '',
+                subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal'
             });
         };
         window.addEventListener('user_updated', handleUserUpdate);
+        window.addEventListener('sub_updated', handleUserUpdate);
 
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('user_updated', handleUserUpdate);
+            window.removeEventListener('sub_updated', handleUserUpdate);
+        };
         // 5. Global Event Listeners
         const handleOpenPayment = () => setShowPaymentModal(true);
         window.addEventListener('open-payment-modal', handleOpenPayment);
@@ -788,17 +798,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // UI Helpers
     const [selectedPackageId, setSelectedPackageId] = useState('');
     const [paymentProof, setPaymentProof] = useState('');
+    const [selectedTier, setSelectedTier] = useState<'personal' | 'team'>('personal');
+    const [teamSize, setTeamSize] = useState(1);
 
     useEffect(() => {
-        // Sync selectedPackageId with first package from config if currently empty or using fallback
-        if (!selectedPackageId || selectedPackageId === '1-month') {
-            if (config?.payment_config?.packages?.length) {
-                setSelectedPackageId(config.payment_config.packages[0].id);
-            } else if (!selectedPackageId) {
-                setSelectedPackageId('1-month');
+        // Sync selectedPackageId with first package from config based on tier
+        const getPackages = () => {
+            if (selectedTier === 'personal') {
+                return config?.payment_config?.personalPackages?.length
+                    ? config.payment_config.personalPackages
+                    : config?.payment_config?.packages || [];
             }
+            return config?.payment_config?.teamPackages || [];
+        };
+
+        const pkgs = getPackages();
+        if (pkgs.length > 0) {
+            // Only auto-select if current selection is not valid for new list or empty
+            if (!pkgs.find(p => p.id === selectedPackageId)) {
+                setSelectedPackageId(pkgs[0].id);
+            }
+        } else if (!selectedPackageId) {
+            setSelectedPackageId('1-month'); // Legacy fallback
         }
-    }, [config, selectedPackageId]);
+    }, [config, selectedTier]);
 
     const handlePaymentProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -828,12 +851,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             let packageName = '';
             let durationDays = 30;
 
-            if (config?.payment_config?.packages) {
-                const pkg = config.payment_config.packages.find(p => p.id === selectedPackageId);
-                if (pkg) {
-                    amount = pkg.price;
-                    packageName = pkg.name;
-                    durationDays = pkg.durationDays || 30;
+            const getPackages = () => {
+                if (selectedTier === 'personal') {
+                    return config?.payment_config?.personalPackages?.length
+                        ? config.payment_config.personalPackages
+                        : config?.payment_config?.packages || [];
+                }
+                return config?.payment_config?.teamPackages || [];
+            };
+
+            const pkgs = getPackages();
+            const pkg = pkgs.find(p => p.id === selectedPackageId);
+            if (pkg) {
+                amount = pkg.price;
+                packageName = `${selectedTier === 'personal' ? 'Personal' : 'Team'}: ${pkg.name}`;
+                durationDays = pkg.durationDays || 30;
+
+                // Adjust amount if team tier
+                if (selectedTier === 'team') {
+                    const rate = pkg.price || config?.payment_config?.teamPricePerPerson || 0;
+                    amount = rate * teamSize;
+                    packageName = `Team: ${pkg.name} (${teamSize} Orang)`;
                 }
             }
 
@@ -979,6 +1017,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                             // Developer bypasses all visual hiding logic to see everything
                             if (isDeveloper) return true;
+
+                            // Package-based visibility restrictions
+                            // If user profile package starts with "Personal" or is empty/Free, hide Team Mgmt
+                            if (item.id === 'team' && (!userProfile.subscriptionPackage || userProfile.subscriptionPackage.startsWith('Personal') || userProfile.subscriptionPackage === 'Free')) {
+                                return false;
+                            }
 
                             // Known core pages that are visible by default unless explicitly hidden
                             const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
@@ -1216,28 +1260,95 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="p-4 space-y-5">
                     <p className="text-sm text-slate-600 font-bold">Harap lengkapi detail perpanjangan di bawah ini.</p>
 
+                    <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
+                        <button
+                            onClick={() => setSelectedTier('personal')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'personal' ? 'bg-white text-accent border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'}`}
+                        >
+                            <User size={16} /> Personal
+                        </button>
+                        <button
+                            onClick={() => setSelectedTier('team')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'team' ? 'bg-white text-secondary border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'}`}
+                        >
+                            <Users size={16} /> Team
+                        </button>
+                    </div>
+
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Pilih Paket Langganan</label>
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Pilih Paket {selectedTier === 'personal' ? 'Personal' : 'Team'}</label>
                         <select
                             className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:border-accent transition-colors"
                             value={selectedPackageId}
                             onChange={(e) => setSelectedPackageId(e.target.value)}
                         >
-                            {config?.payment_config?.packages?.length ? (
-                                config.payment_config.packages.map(pkg => (
-                                    <option key={pkg.id} value={pkg.id}>
-                                        {pkg.name} (Rp {pkg.price.toLocaleString('id-ID')})
-                                    </option>
-                                ))
-                            ) : (
-                                <>
-                                    <option value="1-month">1 Bulan (Rp 150.000)</option>
-                                    <option value="3-month">3 Bulan (Rp 400.000)</option>
-                                    <option value="lifetime">Lifetime (Rp 1.500.000)</option>
-                                </>
-                            )}
+                            {(() => {
+                                const pkgs = selectedTier === 'personal'
+                                    ? (config?.payment_config?.personalPackages?.length ? config.payment_config.personalPackages : (config?.payment_config?.packages || []))
+                                    : (config?.payment_config?.teamPackages || []);
+
+                                if (pkgs.length > 0) {
+                                    return pkgs.map(pkg => (
+                                        <option key={pkg.id} value={pkg.id}>
+                                            {pkg.name} (Rp {pkg.price.toLocaleString('id-ID')}{selectedTier === 'team' ? ' / orang' : ''})
+                                        </option>
+                                    ));
+                                }
+
+                                // Fallback for personal
+                                if (selectedTier === 'personal') {
+                                    return (
+                                        <>
+                                            <option value="1-month">1 Bulan (Rp 150.000)</option>
+                                            <option value="3-month">3 Bulan (Rp 400.000)</option>
+                                            <option value="lifetime">Lifetime (Rp 1.500.000)</option>
+                                        </>
+                                    );
+                                }
+
+                                return <option value="">Belum ada paket team tersedia</option>;
+                            })()}
                         </select>
+                        {selectedTier === 'team' && (config?.payment_config?.teamPackages?.length || 0) === 0 && (
+                            <p className="text-[10px] font-bold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                                Saat ini belum ada paket khusus tim. Silakan hubungi admin untuk penawaran khusus.
+                            </p>
+                        )}
                     </div>
+
+                    {selectedTier === 'team' && (
+                        <div className="space-y-3 bg-secondary/5 border-2 border-secondary/20 rounded-2xl p-4 animate-in zoom-in-95 duration-200">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-black text-secondary uppercase tracking-widest">Jumlah Anggota Tim</label>
+                                <div className="flex items-center bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
+                                    <button
+                                        onClick={() => setTeamSize(Math.max(1, teamSize - 1))}
+                                        className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-r-2 border-slate-900"
+                                    >-</button>
+                                    <input
+                                        type="number"
+                                        value={teamSize}
+                                        onChange={(e) => setTeamSize(Math.max(1, parseInt(e.target.value) || 1))}
+                                        className="w-12 h-10 text-center font-black text-slate-800 focus:outline-none"
+                                    />
+                                    <button
+                                        onClick={() => setTeamSize(teamSize + 1)}
+                                        className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-l-2 border-slate-900"
+                                    >+</button>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-secondary/20">
+                                <span className="text-[10px] font-black text-slate-400 uppercase">Estimasi Total</span>
+                                <span className="font-black text-secondary">
+                                    {(() => {
+                                        const pkg = config?.payment_config?.teamPackages?.find(p => p.id === selectedPackageId);
+                                        const rate = pkg ? pkg.price : (config?.payment_config?.teamPricePerPerson || 0);
+                                        return `Rp ${(rate * teamSize).toLocaleString('id-ID')}`;
+                                    })()}
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-5 space-y-3">
                         <div>

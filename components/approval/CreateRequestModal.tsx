@@ -83,9 +83,16 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
 
     const fetchDropdownData = async () => {
         try {
+            const userId = localStorage.getItem('user_id');
+            const tenantId = localStorage.getItem('tenant_id') || userId;
+
             const [usersRes, wsRes] = await Promise.all([
-                supabase.from('app_users').select('id, full_name, username, avatar_url'),
-                supabase.from('workspaces').select('id, name, account_name, members')
+                supabase.from('app_users')
+                    .select('id, full_name, username, avatar_url')
+                    .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`),
+                supabase.from('workspaces')
+                    .select('id, name, account_name, members')
+                    .eq('admin_id', tenantId)
             ]);
 
             if (usersRes.data) setUsers(usersRes.data);
@@ -106,19 +113,40 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
 
     const handleFileUpload = (fieldId: string, e: React.ChangeEvent<HTMLInputElement>, isMultiple: boolean) => {
         const files = e.target.files;
-        if (!files) return;
+        if (!files || files.length === 0) return;
 
         if (isMultiple) {
             if (files.length > 15) {
                 alert("Maksimal 15 file diperbolehkan.");
                 return;
             }
-            // For demo, we just store file names. In real app, upload to storage.
-            const fileNames = (Array.from(files) as File[]).map(f => f.name).join(', ');
-            handleInputChange(fieldId, `[Files: ${fileNames}]`);
+
+            // For multiple files, we'll store a list of [name](data)
+            const processedFiles: string[] = [];
+            let loadedCount = 0;
+
+            (Array.from(files) as File[]).forEach((file: File) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64 = reader.result as string;
+                    processedFiles.push(`[${file.name}](${base64})`);
+                    loadedCount++;
+                    if (loadedCount === files.length) {
+                        handleInputChange(fieldId, `[Files: ${processedFiles.join(', ')}]`);
+                        alert(`${files.length} file berhasil dilampirkan!`);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
         } else {
-            const file = files[0];
-            handleInputChange(fieldId, `[File: ${file.name}]`);
+            const file = files[0] as File;
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                handleInputChange(fieldId, `[File: ${file.name}](${base64})`);
+                alert(`File "${file.name}" berhasil dilampirkan!`);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -192,8 +220,16 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                 const activeWs = workspaces.find(w => w.name === selectedWsName);
 
                 const filteredUsers = activeWs && activeWs.members
-                    ? users.filter(u => activeWs.members.includes(u.avatar_url))
-                    : users;
+                    ? users.filter(u => {
+                        return activeWs.members.some((m: string) => {
+                            try {
+                                return decodeURIComponent(m) === decodeURIComponent(u.avatar_url) || m === u.avatar_url;
+                            } catch {
+                                return m === u.avatar_url;
+                            }
+                        });
+                    })
+                    : []; // Force selection of workspace first
 
                 return (
                     <div key={field.id} className="flex flex-col gap-1">
@@ -206,13 +242,13 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                             onChange={(e) => handleInputChange(field.id, e.target.value)}
                             required={field.required}
                         >
-                            <option value="" disabled>{activeWs ? `Pilih PIC di ${activeWs.name}...` : 'Pilih PIC...'}</option>
+                            <option value="" disabled>{activeWs ? `Pilih PIC di ${activeWs.name}...` : 'Silakan pilih Akun/Workspace di bawah dulu...'}</option>
                             {filteredUsers.map(u => (
                                 <option key={u.id} value={u.full_name || u.username}>{u.full_name || u.username}</option>
                             ))}
                         </select>
                         {selectedWsName && filteredUsers.length === 0 && (
-                            <p className="text-[10px] text-red-500 font-bold ml-1 italic">Tidak ada anggota ditemukan di workspace ini.</p>
+                            <p className="text-[10px] text-red-500 font-bold ml-1 italic">Tidak ada anggota tim ditemukan di workspace ini.</p>
                         )}
                     </div>
                 );
