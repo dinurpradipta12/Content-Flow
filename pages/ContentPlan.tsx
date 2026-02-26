@@ -157,7 +157,7 @@ export const ContentPlan: React.FC = () => {
                 .filter(ws => {
                     // Strict Access Control
                     const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
-                    if (isOwner) return true;
+                    if (isOwner || userRole === 'Developer') return true;
 
                     if (!freshAvatar) return false;
                     const members: string[] = ws.members || [];

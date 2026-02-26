@@ -551,7 +551,7 @@ export const ContentPlanDetail: React.FC = () => {
                 logo_url: ws?.logo_url || '',
                 period: ws?.period || '',
                 account_name: ws?.account_name || '',
-                members: headerMembers.length > 0 ? headerMembers : (ws?.members || [])
+                members: ws?.members || []
             });
 
             // MAP Supabase data (snake_case) to Frontend Type (camelCase)

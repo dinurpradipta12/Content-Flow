@@ -55,6 +55,12 @@ export const TeamManagement: React.FC = () => {
     const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceData | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Refs for stable logic
+    const hasLoadedOnce = React.useRef(false);
+    const isFetching = React.useRef(false);
+    const fetchTimer = React.useRef<any>(null);
 
     // Modal state
     const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
@@ -122,99 +128,54 @@ export const TeamManagement: React.FC = () => {
     };
 
 
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = React.useCallback(async () => {
+        if (isFetching.current) return;
+        isFetching.current = true;
+
+        const isInitial = !hasLoadedOnce.current;
+        if (isInitial) setLoading(true);
+        else setRefreshing(true);
+
         try {
-            // Fetch workspaces that current user is a part of
             const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role');
+            const currentUserId = localStorage.getItem('user_id');
+            const isDeveloper = userRole === 'Developer';
 
             const isBase64Avatar = currentUserAvatar?.startsWith('data:');
             const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
 
+            // 1. Fetch Workspaces
             let wsQuery = supabase.from('workspaces').select('*');
-
-            if (userRole === 'Developer') {
-                // Developers can see everything
-            } else if (shouldSkipAvatarFilter) {
-                wsQuery = wsQuery.eq('admin_id', tenantId);
-            } else {
-                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
-            }
-
-            const { data: wsData, error: wsError } = await wsQuery.order('name');
-            if (wsError) throw wsError;
-
-            const userId = localStorage.getItem('user_id');
-            let myWorkspaces = (wsData || []).filter(w =>
-                w.owner_id === userId || (w.admin_id === userId && !w.owner_id) || (w.members || []).some((m: string) => {
-                    try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
-                    catch { return m === currentUserAvatar; }
-                }));
-            setWorkspaces(myWorkspaces);
-
-            if (myWorkspaces.length > 0) {
-                if (!selectedWorkspace) {
-                    setSelectedWorkspace(myWorkspaces[0]);
+            if (!isDeveloper) {
+                if (shouldSkipAvatarFilter) {
+                    wsQuery = wsQuery.eq('admin_id', tenantId);
                 } else {
-                    const updatedSelected = myWorkspaces.find(w => w.id === selectedWorkspace.id);
-                    if (updatedSelected) setSelectedWorkspace(updatedSelected);
+                    wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
                 }
             }
+            const { data: wsData } = await wsQuery.order('name');
+            const myWorkspaces = (wsData || []).filter(w =>
+                isDeveloper ||
+                w.owner_id === currentUserId ||
+                (w.admin_id === currentUserId && !w.owner_id) ||
+                (w.members || []).some((m: string) => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
+                    catch { return m === currentUserAvatar; }
+                })
+            );
 
-            let allWsQuery = supabase.from('workspaces').select('*');
-            if (userRole === 'Developer') {
-                // All good
-            } else if (shouldSkipAvatarFilter) {
-                allWsQuery = allWsQuery.eq('admin_id', tenantId);
-            } else {
-                allWsQuery = allWsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
-            }
+            // 2. Fetch All User Data
+            const { data: userData } = await supabase.from('app_users').select('*').order('full_name');
+            let isolatedUsers = (userData || []) as any[];
+            let finalUsers = isolatedUsers;
 
-            const { data: allWsData } = await allWsQuery;
-            if (allWsData) {
-                const filteredAllWs = allWsData.filter(ws =>
-                    ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id) || (ws.members && ws.members.some((m: string) => {
-                        try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
-                        catch { return m === currentUserAvatar; }
-                    }))
-                );
-                setAllWorkspaces(filteredAllWs);
-            }
-
-            // Fetch team members and KPIs
-            const [tmRes, kRes] = await Promise.all([
-                supabase.from('team_members').select('*').eq('admin_id', tenantId),
-                supabase.from('team_kpis').select('*')
-            ]);
-
-            if (tmRes.data) setTeamMembers(tmRes.data);
-            if (kRes.data) setKpis(kRes.data);
-
-            // Fetch all users to map avatars
-            const { data: userData, error: userError } = await supabase
-                .from('app_users')
-                .select('*')
-                .order('full_name');
-            if (userError) throw userError;
-
-            // ISOLATION: Admin sees users they created (admin_id), themselves, 
-            // OR anyone who shared a workspace with them.
-            const currentUserId = localStorage.getItem('user_id');
-            let isolatedUsers = userData as any[];
-
-            // Strict Isolation for everyone (Admins and Developers)
-            if (isolatedUsers) {
-                // Collect all member avatars from my workspaces
+            if (!isDeveloper) {
                 const myWsMemberAvatars = new Set<string>();
-                myWorkspaces.forEach(ws => {
-                    (ws.members || []).forEach((m: string) => myWsMemberAvatars.add(m));
-                });
-
-                isolatedUsers = isolatedUsers.filter(u =>
+                myWorkspaces.forEach(ws => (ws.members || []).forEach((m: string) => myWsMemberAvatars.add(m)));
+                finalUsers = isolatedUsers.filter(u =>
                     u.admin_id === currentUserId ||
                     u.id === currentUserId ||
-                    // If their avatar (encoded or plain) is in my workspace member list, I can see them
                     Array.from(myWsMemberAvatars).some(m => {
                         try { return decodeURIComponent(m) === decodeURIComponent(u.avatar_url) || m === u.avatar_url; }
                         catch { return m === u.avatar_url; }
@@ -222,13 +183,42 @@ export const TeamManagement: React.FC = () => {
                 );
             }
 
-            setUsers(isolatedUsers as AppUser[]);
+            // 3. Fetch Team Members & KPIs
+            const [tmRes, kRes] = await Promise.all([
+                supabase.from('team_members').select('*').eq('admin_id', tenantId),
+                supabase.from('team_kpis').select('*')
+            ]);
 
-            // Fetch current admin's quota info
-            const currentAdminData = isolatedUsers.find(u => u.id === currentUserId);
+            // 4. Batch Updates
+            setWorkspaces(myWorkspaces);
+            setAllWorkspaces(wsData || []);
+            setUsers(finalUsers as AppUser[]);
+            if (tmRes.data) setTeamMembers(tmRes.data);
+            if (kRes.data) setKpis(kRes.data);
+
+            // Update Selected Workspace ONLY if it changed to avoid flickering
+            if (myWorkspaces.length > 0) {
+                if (!selectedWorkspace) {
+                    setSelectedWorkspace(myWorkspaces[0]);
+                } else {
+                    const updatedSelected = myWorkspaces.find(w => w.id === selectedWorkspace.id);
+                    if (updatedSelected) {
+                        // Compare simple fields to avoid unnecessary state update
+                        const hasChanged = updatedSelected.name !== selectedWorkspace.name ||
+                            updatedSelected.description !== selectedWorkspace.description ||
+                            (updatedSelected.members || []).length !== (selectedWorkspace.members || []).length;
+
+                        if (hasChanged) {
+                            setSelectedWorkspace(updatedSelected);
+                        }
+                    }
+                }
+            }
+
+            // Update Admin Data
+            const currentAdminData = finalUsers.find(u => u.id === currentUserId);
             if (currentAdminData) setCurrentAdmin(currentAdminData);
             else {
-                // If not in isolated list (unlikely for admin themselves), fetch directly
                 const { data: me } = await supabase.from('app_users').select('*').eq('id', currentUserId).single();
                 if (me) setCurrentAdmin(me);
             }
@@ -236,7 +226,18 @@ export const TeamManagement: React.FC = () => {
             console.error("Error fetching team management data:", err);
         } finally {
             setLoading(false);
+            setRefreshing(false);
+            isFetching.current = false;
+            hasLoadedOnce.current = true;
         }
+    }, [selectedWorkspace, workspaces.length, users.length]);
+
+    // Debounced version for realtime events
+    const debouncedFetch = () => {
+        if (fetchTimer.current) clearTimeout(fetchTimer.current);
+        fetchTimer.current = setTimeout(() => {
+            fetchData();
+        }, 300); // 300ms debounce
     };
 
     useEffect(() => {
@@ -244,18 +245,19 @@ export const TeamManagement: React.FC = () => {
 
         // Supabase Realtime
         const appUsersChannel = supabase.channel('team_mgmt_app_users')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'app_users' }, fetchData)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'app_users' }, debouncedFetch)
             .subscribe();
 
         const workspacesChannel = supabase.channel('team_mgmt_workspaces')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'workspaces' }, fetchData)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'workspaces' }, debouncedFetch)
             .subscribe();
 
         return () => {
+            if (fetchTimer.current) clearTimeout(fetchTimer.current);
             supabase.removeChannel(appUsersChannel);
             supabase.removeChannel(workspacesChannel);
         };
-    }, []);
+    }, [fetchData]);
 
     const getUserKPIs = (user: AppUser) => {
         const tm = teamMembers.find(t => t.full_name === user.full_name);
@@ -601,8 +603,10 @@ export const TeamManagement: React.FC = () => {
         setUpgradeStep('payment');
     };
 
+    const userRole = localStorage.getItem('user_role');
+    const isDeveloper = userRole === 'Developer';
     const subUsersCount = users.filter(u => u.parent_user_id === currentAdmin?.id && u.role !== 'Admin').length;
-    const isLimitReached = subUsersCount >= (currentAdmin?.member_limit || 2);
+    const isLimitReached = !isDeveloper && subUsersCount >= (currentAdmin?.member_limit || 2);
 
     return (
         <div className="space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
@@ -626,7 +630,7 @@ export const TeamManagement: React.FC = () => {
                                     />
                                 </div>
                                 <span className={`text-xs font-black ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
-                                    {subUsersCount}/{currentAdmin.member_limit || 2}
+                                    {isDeveloper ? 'Unlimited' : `${subUsersCount}/${currentAdmin.member_limit || 2}`}
                                 </span>
                             </div>
                         </div>
@@ -810,7 +814,7 @@ export const TeamManagement: React.FC = () => {
                                     <Briefcase size={48} className="mb-2 opacity-50" />
                                     <p className="font-bold">Pilih workspace di panel kiri</p>
                                 </div>
-                            ) : filteredUsers.length === 0 ? (
+                            ) : filteredUsers.length === 0 && !refreshing ? (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-slate-400">
                                     <Users size={48} className="mb-2 opacity-50" />
                                     <p className="font-bold">Belum ada anggota di workspace ini</p>

@@ -750,7 +750,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 setUserProfile(profileData);
 
                 // Abuse Protection: Check if more than 2 free trial accounts from same device
-                if (profileData.subscriptionPackage === 'Free') {
+                if (profileData.subscriptionPackage === 'Free' && profileData.role !== 'Developer') {
                     const fingerprint = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
                     const { data: trialCount } = await supabase.rpc('check_trial_abuse', { fingerprint_check: fingerprint });
                     if (trialCount > 2) {
@@ -1000,7 +1000,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     if (payload.new.is_active === false) {
                         setShowSubExpiredModal(true);
                     }
-                    if (payload.new.subscription_end) {
+                    if (payload.new.subscription_end && userProfile.role !== 'Developer') {
                         localStorage.setItem('subscription_end', payload.new.subscription_end);
                         if (new Date() > new Date(payload.new.subscription_end)) {
                             // Auto deactivate
@@ -1053,6 +1053,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         // 2. Local Polling for Time-based Expiration & Tenant Check
         const checkExpiration = async () => {
+            if (userProfile.role === 'Developer') return;
             const subEnd = localStorage.getItem('subscription_end');
             if (subEnd) {
                 const endDate = new Date(subEnd);

@@ -9,8 +9,21 @@ export const UserPresence = () => {
         let idleTimer: NodeJS.Timeout;
         const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
-        const updateStatus = async (status: 'online' | 'idle' | 'offline') => {
+        const updateStatus = async (status: 'online' | 'idle' | 'offline', force = false) => {
+            // Rate limit updates: don't update if same status was sent recently, 
+            // unless it's a critical change (online -> idle/offline)
+            const now = Date.now();
+            const lastUpdate = Number(sessionStorage.getItem('last_presence_update') || 0);
+            const lastStatus = sessionStorage.getItem('last_presence_status');
+
+            if (!force && status === 'online' && lastStatus === 'online' && (now - lastUpdate < 60000)) {
+                return; // Only update 'online' once per minute
+            }
+
             try {
+                sessionStorage.setItem('last_presence_update', now.toString());
+                sessionStorage.setItem('last_presence_status', status);
+
                 const { error } = await supabase
                     .from('app_users')
                     .update({
@@ -20,7 +33,6 @@ export const UserPresence = () => {
                     .eq('id', userId);
 
                 if (error) {
-                    // Fail silently or handle rate limits
                     if (error.code !== 'PGRST116') console.warn('Presence update error:', error.message);
                 }
             } catch (err) {
@@ -31,12 +43,12 @@ export const UserPresence = () => {
         const handleActivity = () => {
             clearTimeout(idleTimer);
             updateStatus('online');
-            idleTimer = setTimeout(() => updateStatus('idle'), IDLE_TIMEOUT);
+            idleTimer = setTimeout(() => updateStatus('idle', true), IDLE_TIMEOUT);
         };
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden') {
-                updateStatus('idle'); // When tab is hidden, mark as idle instead of offline immediately
+                updateStatus('idle', true);
             } else {
                 handleActivity();
             }
