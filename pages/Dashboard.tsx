@@ -379,11 +379,17 @@ export const Dashboard: React.FC = () => {
         const fetchWs = async () => {
             const userId = localStorage.getItem('user_id');
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
-            const userRole = localStorage.getItem('user_role');
 
-            let query = supabase.from('workspaces').select('*');
-            // Strict visibility: only own or invited (Applies strictly to ALL roles including Developer)
-            query = query.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
+            // OPTIMIZATION: Select only needed columns for the dropdown
+            let query = supabase.from('workspaces').select('id, name, owner_id, members');
+
+            // Construct OR condition safely: Avoid massive base64 strings in URL
+            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
+                // Backward compatibility for URL-based avatars
+                orCond += `,members.cs.{"${currentUserAvatar}"}`;
+            }
+            query = query.or(orCond);
 
             const { data: wsData } = await query.order('name');
 
@@ -393,6 +399,7 @@ export const Dashboard: React.FC = () => {
                 if (isOwner) return true;
 
                 return (ws.members && ws.members.some((m: string) => {
+                    if (m === userId) return true;
                     try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
                     catch { return m === currentUserAvatar; }
                 }));
@@ -847,7 +854,7 @@ export const Dashboard: React.FC = () => {
                                         </p>
 
                                         {/* Divider */}
-                                        <div className="w-full h-[2px] bg-slate-100 mb-5 relative overflow-hidden">
+                                        <div className="w-full h-[1px] bg-slate-100 mb-5 relative overflow-hidden">
                                             {/* decorative dashed effect */}
                                             <div className="absolute top-0 left-0 w-full border-t-2 border-dashed border-slate-200"></div>
                                         </div>
@@ -899,7 +906,7 @@ export const Dashboard: React.FC = () => {
                                             <button
                                                 key={rel}
                                                 onClick={() => handleSetReligion(rel)}
-                                                className={`px-4 py-3 border-2 rounded-xl font-bold transition-colors ${religion === rel ? 'bg-accent text-white border-slate-900' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
+                                                className={`px-4 py-3 border-2 rounded-xl font-bold transition-colors ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
                                             >
                                                 {rel}
                                             </button>

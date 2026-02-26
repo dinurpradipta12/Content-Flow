@@ -13,7 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
     RefreshCcw,
-    Activity
+    Activity,
+    Layers
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -23,11 +24,14 @@ export const ActivityLog: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [actionFilter, setActionFilter] = useState('all');
+    const [workspaces, setWorkspaces] = useState<any[]>([]);
+    const [selectedWorkspace, setSelectedWorkspace] = useState('all');
 
     const tenantId = localStorage.getItem('tenant_id');
     const userRole = localStorage.getItem('user_role');
 
     useEffect(() => {
+        fetchWorkspaces();
         loadLogs();
 
         // Subscribe to real-time changes
@@ -47,14 +51,49 @@ export const ActivityLog: React.FC = () => {
         };
     }, []);
 
+    useEffect(() => {
+        loadLogs();
+    }, [selectedWorkspace]);
+
+    const fetchWorkspaces = async () => {
+        try {
+            const userId = localStorage.getItem('user_id');
+            const currentUserAvatar = localStorage.getItem('user_avatar') || '';
+
+            let wsQuery = supabase.from('workspaces').select('id, name');
+
+            // Apply same privacy logic as ContentPlan
+            if (userRole !== 'Developer') {
+                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
+            }
+
+            const { data } = await wsQuery.order('name');
+            if (data) setWorkspaces(data);
+        } catch (err) {
+            console.error('Failed to fetch workspaces:', err);
+        }
+    };
+
     const loadLogs = async () => {
         setLoading(true);
         try {
-            // If developer, maybe show all logs or just tenant logs? 
-            // The request says "bagi admin dan developer", so usually they care about their team.
-            // But developers usually see everything. Let's filter by tenant unless role is Developer.
-            const workspaceId = userRole === 'Developer' ? undefined : (tenantId || undefined);
-            const data = await fetchActivityLogs(workspaceId);
+            let wsIdToFetch: string | string[] | undefined = undefined;
+
+            if (selectedWorkspace !== 'all') {
+                wsIdToFetch = selectedWorkspace;
+            } else if (userRole !== 'Developer') {
+                // Fetch only from workspaces we have access to
+                const wsIds = workspaces.map(w => w.id);
+                // If we don't have any workspaces yet, wait for them
+                if (wsIds.length === 0) {
+                    setLogs([]);
+                    setLoading(false);
+                    return;
+                }
+                wsIdToFetch = wsIds;
+            }
+
+            const data = await fetchActivityLogs(wsIdToFetch);
             setLogs(data || []);
         } catch (error) {
             console.error('Failed to fetch logs:', error);
@@ -107,7 +146,7 @@ export const ActivityLog: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-3xl border-4 border-slate-900 shadow-hard-mini">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 rounded-3xl border-4 border-slate-900 shadow-hard-mini">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
@@ -117,6 +156,19 @@ export const ActivityLog: React.FC = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                </div>
+                <div className="relative">
+                    <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <select
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-slate-900 focus:ring-0 transition-all font-bold text-sm appearance-none"
+                        value={selectedWorkspace}
+                        onChange={(e) => setSelectedWorkspace(e.target.value)}
+                    >
+                        <option value="all">Semua Workspace</option>
+                        {workspaces.map(ws => (
+                            <option key={ws.id} value={ws.id}>{ws.name}</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="relative">
                     <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -132,6 +184,7 @@ export const ActivityLog: React.FC = () => {
                         <option value="DELETE_CONTENT">Hapus Konten</option>
                         <option value="INVITE_USER">Undang Tim</option>
                         <option value="UPDATE_PROFILE">Update Profil</option>
+                        <option value="UPDATE_WORKSPACE">Update Workspace</option>
                     </select>
                 </div>
                 <div className="flex items-center gap-2 px-4 bg-slate-50 border-2 border-slate-200 rounded-xl">
@@ -147,6 +200,7 @@ export const ActivityLog: React.FC = () => {
                         <thead>
                             <tr className="bg-slate-900 text-white font-black text-sm">
                                 <th className="px-6 py-4 uppercase tracking-wider">Waktu</th>
+                                <th className="px-6 py-4 uppercase tracking-wider">Workspace</th>
                                 <th className="px-6 py-4 uppercase tracking-wider">Aktor</th>
                                 <th className="px-6 py-4 uppercase tracking-wider">Aksi</th>
                                 <th className="px-6 py-4 uppercase tracking-wider">Detail</th>
@@ -158,6 +212,7 @@ export const ActivityLog: React.FC = () => {
                                     <tr key={i} className="animate-pulse">
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-24"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-32"></div></td>
+                                        <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-28"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-20"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-48"></div></td>
                                     </tr>
@@ -174,6 +229,12 @@ export const ActivityLog: React.FC = () => {
                                                     hour: '2-digit',
                                                     minute: '2-digit'
                                                 })}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2 text-slate-800 font-black text-xs uppercase">
+                                                <Layers size={14} className="text-accent" />
+                                                {(log as any).workspace?.name || 'Global / System'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -212,7 +273,7 @@ export const ActivityLog: React.FC = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-20 text-center">
+                                    <td colSpan={5} className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 border-2 border-slate-100">
                                                 <History size={32} />

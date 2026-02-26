@@ -143,7 +143,7 @@ export const TeamKPIBoard: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             let wsQuery = supabase.from('workspaces').select('id,name,members,admin_id,owner_id');
-            // Strict visibility: only own or invited (Strictly all roles)
+            // Strict visibility: only own or invited (Applies to ALL roles)
             wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
 
             const [membersRes, kpisRes, wsRes] = await Promise.all([

@@ -46,18 +46,23 @@ export const logActivity = async (activity: ActivityLog) => {
     }
 };
 
-export const fetchActivityLogs = async (workspaceId?: string, limit = 50) => {
+export const fetchActivityLogs = async (workspaceId?: string | string[], limit = 50) => {
     let query = supabase
         .from('activity_logs')
         .select(`
             *,
-            actor:app_users!user_id(full_name, username, avatar_url)
+            actor:app_users!user_id(full_name, username, avatar_url),
+            workspace:workspaces!workspace_id(name)
         `)
         .order('created_at', { ascending: false })
         .limit(limit);
 
     if (workspaceId) {
-        query = query.eq('workspace_id', workspaceId);
+        if (Array.isArray(workspaceId)) {
+            query = query.in('workspace_id', workspaceId);
+        } else {
+            query = query.eq('workspace_id', workspaceId);
+        }
     }
 
     const { data, error } = await query;

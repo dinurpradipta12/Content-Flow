@@ -166,9 +166,16 @@ export const Messages: React.FC = () => {
         const avatar = currentUser.avatar;
         const userRole = currentUser.role || 'Member';
 
-        let query = supabase.from('workspaces').select('*');
-        // Strict visibility: only own or invited (Strictly all roles)
-        query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
+        // OPTIMIZATION: Select only needed columns for the sidebar
+        let query = supabase.from('workspaces').select('id, name, owner_id, admin_id, members, logo_url');
+
+        // Construct OR condition safely: Avoid massive base64 strings in URL
+        let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+        if (avatar && !avatar.startsWith('data:')) {
+            // Backward compatibility for URL-based avatars
+            orCond += `,members.cs.{"${avatar}"}`;
+        }
+        query = query.or(orCond);
 
         const { data, error } = await query.order('name');
 
@@ -181,11 +188,11 @@ export const Messages: React.FC = () => {
         if (data) {
             // Safety filtering
             const myWorkspaces = data.filter(ws => {
-
                 const isOwner = ws.owner_id === userId;
                 if (isOwner) return true;
 
                 return (ws.members && ws.members.some((m: string) => {
+                    if (m === userId) return true;
                     try { return decodeURIComponent(m) === decodeURIComponent(avatar) || m === avatar; }
                     catch { return m === avatar; }
                 }));

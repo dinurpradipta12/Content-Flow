@@ -98,9 +98,15 @@ export const ContentPlan: React.FC = () => {
             // 1. Fetch User Data & Workspaces in Parallel
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
-            let wsQuery = supabase.from('workspaces').select('*');
-            // Strict visibility: only own or invited (Strictly all roles)
-            wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
+            // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
+            let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period');
+
+            // Construct OR condition safely: Avoid massive base64 strings in URL
+            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
+                orCond += `,members.cs.{"${currentUserAvatar}"}`;
+            }
+            wsQuery = wsQuery.or(orCond);
 
             const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, full_name').eq('id', userId || '').single(),
@@ -121,11 +127,11 @@ export const ContentPlan: React.FC = () => {
                 return;
             }
 
-            // 2. Fetch Content Stats — ONLY for these specific workspaces
+            // 2. Fetch Content Stats — ONLY needed columns for counting
             const wsIds = wsData.map(ws => ws.id);
             const { data: contentData, error: contentError } = await supabase
                 .from('content_items')
-                .select('workspace_id, status')
+                .select('workspace_id, status') // Fetch ONLY these 2 columns
                 .in('workspace_id', wsIds);
 
             if (contentError) throw contentError;
@@ -142,11 +148,11 @@ export const ContentPlan: React.FC = () => {
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
                     const isOwner = ws.owner_id === userId;
-                    if (isOwner) return true;
 
                     if (!currentAvatar) return false;
                     const members: string[] = ws.members || [];
                     return members.some(m => {
+                        if (m === userId) return true;
                         try { return decodeURIComponent(m) === decodeURIComponent(currentAvatar) || m === currentAvatar; }
                         catch { return m === currentAvatar; }
                     });
@@ -274,6 +280,7 @@ export const ContentPlan: React.FC = () => {
 
         const colors: ('violet' | 'pink' | 'yellow' | 'green')[] = ['violet', 'pink', 'yellow', 'green'];
         const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        const userId = localStorage.getItem('user_id') || '';
         const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
         try {
@@ -288,11 +295,11 @@ export const ContentPlan: React.FC = () => {
                         period: formData.period,
                         account_name: formData.accountName,
                         logo_url: formData.logoUrl, // Base64 string is saved here
-                        members: [currentUserAvatar], // Use current user avatar for sync accuracy
-                        admin_id: localStorage.getItem('tenant_id') || localStorage.getItem('user_id'),
-                        owner_id: localStorage.getItem('user_id')
+                        members: [userId, currentUserAvatar], // Include both ID and Avatar for reliability and dispay
+                        admin_id: localStorage.getItem('tenant_id') || userId,
+                        owner_id: userId
                     }
-                ]).select();
+                ]).select('id'); // Only select id to minimize response size (prevents "Failed to fetch" on large rows)
 
                 if (error) throw error;
                 fetchWorkspaces();
@@ -334,13 +341,14 @@ export const ContentPlan: React.FC = () => {
                 return;
             }
 
-            // 2. Check if already joined (Assuming based on avatar for this demo as we don't have proper user IDs)
+            const userId = localStorage.getItem('user_id') || '';
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
             const currentMembers: string[] = data.members || [];
 
-            // Simple duplication check
-            if (!currentMembers.includes(currentUserAvatar)) {
-                const updatedMembers = [...currentMembers, currentUserAvatar];
+            // Check if already joined by ID or Avatar
+            if (!currentMembers.includes(userId) && !currentMembers.includes(currentUserAvatar)) {
+                // Store both for backward compatibility and to fix URL length issues in queries
+                const updatedMembers = [...currentMembers, userId, currentUserAvatar];
                 const { error: updateError } = await supabase
                     .from('workspaces')
                     .update({ members: updatedMembers })

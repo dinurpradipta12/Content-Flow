@@ -145,14 +145,22 @@ export const TeamManagement: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || currentUserId;
 
             // 1. Fetch Workspaces
-            let wsQuery = supabase.from('workspaces').select('*');
-            // Strict visibility: only own or invited (Strictly all roles)
-            wsQuery = wsQuery.or(`owner_id.eq.${currentUserId},members.cs.{"${currentUserAvatar}"}`);
+            // OPTIMIZATION: Select only needed columns
+            let wsQuery = supabase.from('workspaces').select('id, name, owner_id, members, admin_id, description');
+
+            // Construct OR condition safely: Avoid massive base64 strings in URL
+            let orCond = `owner_id.eq.${currentUserId},members.cs.{"${currentUserId}"}`;
+            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
+                // Backward compatibility for URL-based avatars
+                orCond += `,members.cs.{"${currentUserAvatar}"}`;
+            }
+            wsQuery = wsQuery.or(orCond);
 
             const { data: wsData } = await wsQuery.order('name');
             const myWorkspaces = (wsData || []).filter(w =>
                 w.owner_id === currentUserId ||
                 (w.members || []).some((m: string) => {
+                    if (m === currentUserId) return true;
                     try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
                     catch { return m === currentUserAvatar; }
                 })
@@ -163,18 +171,16 @@ export const TeamManagement: React.FC = () => {
             let isolatedUsers = (userData || []) as any[];
             let finalUsers = isolatedUsers;
 
-            if (!isDeveloper) {
-                const myWsMemberAvatars = new Set<string>();
-                myWorkspaces.forEach(ws => (ws.members || []).forEach((m: string) => myWsMemberAvatars.add(m)));
-                finalUsers = isolatedUsers.filter(u =>
-                    u.admin_id === currentUserId ||
-                    u.id === currentUserId ||
-                    Array.from(myWsMemberAvatars).some(m => {
-                        try { return decodeURIComponent(m) === decodeURIComponent(u.avatar_url) || m === u.avatar_url; }
-                        catch { return m === u.avatar_url; }
-                    })
-                );
-            }
+            const myWsMemberAvatars = new Set<string>();
+            myWorkspaces.forEach(ws => (ws.members || []).forEach((m: string) => myWsMemberAvatars.add(m)));
+            finalUsers = isolatedUsers.filter(u =>
+                u.admin_id === currentUserId ||
+                u.id === currentUserId ||
+                Array.from(myWsMemberAvatars).some(m => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(u.avatar_url) || m === u.avatar_url; }
+                    catch { return m === u.avatar_url; }
+                })
+            );
 
             // 3. Fetch Team Members & KPIs
             const [tmRes, kRes] = await Promise.all([

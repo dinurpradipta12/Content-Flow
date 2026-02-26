@@ -97,12 +97,18 @@ export const ContentDataInsight: React.FC = () => {
             const userAvatar = localStorage.getItem('user_avatar') || '';
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
 
-            const isBase64Avatar = userAvatar?.startsWith('data:');
-            const shouldSkipAvatarFilter = isBase64Avatar && userAvatar.length > 500;
+            // No changes here, just removing the lines below in the replacement range
 
+            // OPTIMIZATION: Select only needed columns for account list
             let wsQuery = supabase.from('workspaces').select('id, account_name, members, owner_id');
-            // Strict visibility: only own or invited (Strictly all roles)
-            wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${userAvatar}"}`);
+
+            // Construct OR condition safely: Avoid massive base64 strings in URL
+            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+            if (userAvatar && !userAvatar.startsWith('data:')) {
+                // Backward compatibility for URL-based avatars
+                orCond += `,members.cs.{"${userAvatar}"}`;
+            }
+            wsQuery = wsQuery.or(orCond);
 
             const { data: wsData, error: wsError } = await wsQuery;
             if (wsError) throw wsError;
@@ -112,6 +118,7 @@ export const ContentDataInsight: React.FC = () => {
                 const accessibleWorkspaces = wsData.filter((w: any) =>
                     w.owner_id === userId ||
                     (w.members || []).some((m: string) => {
+                        if (m === userId) return true;
                         try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
                         catch { return m === userAvatar; }
                     })

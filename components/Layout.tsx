@@ -1389,7 +1389,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     const getNetworkLabel = () => {
         switch (networkStatus) {
-            case 'good': return 'Live Sync';
+            case 'good': return 'Online';
             case 'unstable': return 'Unstable';
             case 'bad': return 'Bad Conn.';
             default: return 'Offline';
@@ -1515,7 +1515,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             }
 
                             // Known core pages that are visible by default unless explicitly hidden
-                            const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+                            const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
 
                             const isHidden = config?.hidden_pages?.includes(item.id);
 

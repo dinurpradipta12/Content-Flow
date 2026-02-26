@@ -134,7 +134,7 @@ export const UserManagement: React.FC = () => {
             const avatar = localStorage.getItem('user_avatar') || '';
 
             let query = supabase.from('workspaces').select('id, name');
-            // Strict visibility: only own or invited (Strictly all roles)
+            // Strict visibility: only own or invited (Applies to ALL roles)
             query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
 
             const { data } = await query.order('name');

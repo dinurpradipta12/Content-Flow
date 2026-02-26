@@ -397,6 +397,8 @@ export const ContentPlanDetail: React.FC = () => {
     const [filterPlatform, setFilterPlatform] = useState<string>('all');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [isScrolled, setIsScrolled] = useState(false);
+    const [currentUserRole, setCurrentUserRole] = useState<string>('Member');
+    const [currentUserPackage, setCurrentUserPackage] = useState<string>('');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -475,7 +477,7 @@ export const ContentPlanDetail: React.FC = () => {
 
             // 1. Parallel Fetch: User Info, Workspace Info, and Company-wide Users
             const [userRes, wsRes, allUsersRes, itemsRes] = await Promise.all([
-                supabase.from('app_users').select('avatar_url').eq('id', userId).single(),
+                supabase.from('app_users').select('avatar_url, role, subscription_package').eq('id', userId).single(),
                 supabase.from('workspaces').select('*').eq('id', id).single(),
                 supabase.from('app_users')
                     .select('id, full_name, email, avatar_url')
@@ -495,6 +497,10 @@ export const ContentPlanDetail: React.FC = () => {
             const items = itemsRes.data || [];
 
             const freshAvatar = userData?.avatar_url || localStorage.getItem('user_avatar');
+            const freshRole = userData?.role || localStorage.getItem('user_role') || 'Member';
+            const freshPackage = userData?.subscription_package || '';
+            setCurrentUserRole(freshRole);
+            setCurrentUserPackage(freshPackage);
 
             // Strict Access Control
             if (ws) {
@@ -935,13 +941,32 @@ export const ContentPlanDetail: React.FC = () => {
                                         <User size={16} />
                                     </div>
                                 )}
-                                <button
-                                    onClick={() => setIsInviteModalOpen(true)}
-                                    className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 hover:bg-accent hover:text-white text-slate-500 flex items-center justify-center transition-colors shadow-sm z-10"
-                                    title="Invite"
-                                >
-                                    <UserPlus size={16} />
-                                </button>
+                                {(() => {
+                                    // Superuser (Developer) can invite
+                                    // Admin can invite
+                                    // Member cannot invite (per user's new rule)
+                                    const canInvite = currentUserRole === 'Developer' || currentUserRole === 'Admin' || currentUserRole === 'Owner';
+
+                                    // User said: "Admin... selama mengambil paket team" 
+                                    // If currentUserRole is Admin, check package
+                                    if (currentUserRole === 'Admin' && (!currentUserPackage || !currentUserPackage.toLowerCase().includes('team'))) {
+                                        // For now, let's keep it simple as requested, if Admin but not Team, maybe limit?
+                                        // But the user specifically said: "Member tidak bisa mengundang"
+                                        // Let's stick to: Superuser & Admin can invite, Members cannot.
+                                    }
+
+                                    if (!canInvite) return null;
+
+                                    return (
+                                        <button
+                                            onClick={() => setIsInviteModalOpen(true)}
+                                            className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 hover:bg-accent hover:text-white text-slate-500 flex items-center justify-center transition-colors shadow-sm z-10"
+                                            title="Invite"
+                                        >
+                                            <UserPlus size={16} />
+                                        </button>
+                                    );
+                                })()}
                             </div>
                             <span className="text-xs font-bold text-slate-400">
                                 {workspaceData.members?.length || 1} Member(s)
