@@ -88,6 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('user_id', data.id);
           localStorage.setItem('user_role', data.role);
           localStorage.setItem('isAuthenticated', 'true');
+          if (data.username) localStorage.setItem('user_username', data.username);
+          if (data.full_name) localStorage.setItem('user_name', data.full_name);
+          if (data.avatar_url) localStorage.setItem('user_avatar', data.avatar_url);
+          if (data.parent_user_id) localStorage.setItem('tenant_id', data.parent_user_id);
         } else {
           console.warn("User profile not found or inactive.");
           if (data?.is_active === false) {

@@ -565,6 +565,7 @@ export const ContentPlanDetail: React.FC = () => {
                 if (!isOwner) {
                     const wsMembers: string[] = ws.members || [];
                     const isMember = wsMembers.some(m => {
+                        if (m === userId) return true;
                         try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar || '') || m === freshAvatar; }
                         catch { return m === freshAvatar; }
                     });
@@ -591,9 +592,10 @@ export const ContentPlanDetail: React.FC = () => {
             const wsMembersList: string[] = ws?.members || [];
             const mappedMembers: Member[] = allUsers
                 .filter((u: any) => {
-                    return wsMembersList.some(avatar => {
-                        try { return decodeURIComponent(avatar) === decodeURIComponent(u.avatar_url) || avatar === u.avatar_url; }
-                        catch { return avatar === u.avatar_url; }
+                    return wsMembersList.some(token => {
+                        if (token === u.id || token === u.username) return true;
+                        try { return decodeURIComponent(token) === decodeURIComponent(u.avatar_url) || token === u.avatar_url; }
+                        catch { return token === u.avatar_url; }
                     });
                 })
                 .map((u: any) => ({
@@ -1001,22 +1003,21 @@ export const ContentPlanDetail: React.FC = () => {
 
                         <div className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                             <div className="flex -space-x-3">
-                                {workspaceData.members && workspaceData.members.length > 0 ? (
+                                {teamMembers.length > 0 ? (
                                     <>
-                                        {workspaceData.members
-                                            .filter(m => m.includes('/') || m.startsWith('data:'))
+                                        {teamMembers
                                             .slice(0, 3)
                                             .map((m, i) => (
                                                 <button key={i} onClick={() => setIsMemberModalOpen(true)} className="relative group focus:outline-none">
-                                                    <img src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
+                                                    <img src={m.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.name)}`} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
                                                 </button>
                                             ))}
-                                        {workspaceData.members.filter(m => m.includes('/') || m.startsWith('data:')).length > 3 && (
+                                        {teamMembers.length > 3 && (
                                             <button
                                                 onClick={() => setIsMemberModalOpen(true)}
                                                 className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold z-10 relative hover:bg-slate-200 transition-colors"
                                             >
-                                                +{workspaceData.members.filter(m => m.includes('/') || m.startsWith('data:')).length - 3}
+                                                +{teamMembers.length - 3}
                                             </button>
                                         )}
                                     </>
@@ -1065,7 +1066,7 @@ export const ContentPlanDetail: React.FC = () => {
                             >
                                 <Users size={16} className="text-slate-500 group-hover:text-slate-700" />
                                 <span className="text-xs font-black text-slate-600">
-                                    {workspaceData.members?.filter(m => m.includes('/') || m.startsWith('data:')).length || 1} Member(s)
+                                    {teamMembers.length || 1} Member(s)
                                 </span>
                                 <ChevronDown size={14} className="text-slate-400" />
                             </button>

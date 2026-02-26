@@ -177,8 +177,10 @@ export const TeamManagement: React.FC = () => {
                 u.admin_id === currentUserId ||
                 u.id === currentUserId ||
                 Array.from(myWsMemberAvatars).some(m => {
-                    try { return decodeURIComponent(m) === decodeURIComponent(u.avatar_url) || m === u.avatar_url; }
-                    catch { return m === u.avatar_url; }
+                    const stringM = String(m);
+                    if (stringM === u.id || stringM === u.username) return true;
+                    try { return decodeURIComponent(stringM) === decodeURIComponent(u.avatar_url) || stringM === u.avatar_url; }
+                    catch { return stringM === u.avatar_url; }
                 })
             );
 

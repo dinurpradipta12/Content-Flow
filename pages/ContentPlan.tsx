@@ -391,12 +391,17 @@ export const ContentPlan: React.FC = () => {
 
             const userId = localStorage.getItem('user_id') || '';
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
+            const currentUsername = localStorage.getItem('user_name') || '';
             const currentMembers: string[] = data.members || [];
 
-            // Check if already joined by ID or Avatar
-            if (!currentMembers.includes(userId) && !currentMembers.includes(currentUserAvatar)) {
-                // Store both for backward compatibility and to fix URL length issues in queries
-                const updatedMembers = [...currentMembers, userId, currentUserAvatar];
+            // Check if already joined by ID, Avatar or Username
+            const alreadyJoined = currentMembers.includes(userId) || currentMembers.includes(currentUserAvatar);
+            if (!alreadyJoined) {
+                // Store userId + username for visibility in all views
+                const newTokens = [userId];
+                if (currentUsername && !currentMembers.includes(currentUsername)) newTokens.push(currentUsername);
+                if (currentUserAvatar && !currentUserAvatar.startsWith('data:') && !currentMembers.includes(currentUserAvatar)) newTokens.push(currentUserAvatar);
+                const updatedMembers = [...currentMembers, ...newTokens];
                 const { error: updateError } = await supabase
                     .from('workspaces')
                     .update({ members: updatedMembers })

@@ -77,6 +77,7 @@ export const UserManagement: React.FC = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [showDetailPassword, setShowDetailPassword] = useState(false);
     const [verifyCodeInput, setVerifyCodeInput] = useState('');
+    const [selectedWorkspaceToAssign, setSelectedWorkspaceToAssign] = useState('');
 
     // Registration form
     const [form, setForm] = useState({
@@ -135,7 +136,7 @@ export const UserManagement: React.FC = () => {
 
             let query = supabase.from('workspaces').select('id, name');
             // Strict visibility: only own or invited (Applies to ALL roles)
-            query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
+            query = query.or(`owner_id.eq.${userId},members.cs.{"${userId}"}`);
 
             const { data } = await query.order('name');
 
@@ -286,6 +287,45 @@ export const UserManagement: React.FC = () => {
             }
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleAddUserToWorkspace = async () => {
+        if (!selectedWorkspaceToAssign || !selectedUser) return;
+
+        try {
+            const { data: ws, error: wsError } = await supabase
+                .from('workspaces')
+                .select('members, name')
+                .eq('id', selectedWorkspaceToAssign)
+                .single();
+
+            if (wsError || !ws) {
+                alert('Workspace tidak ditemukan.');
+                return;
+            }
+
+            const currentMembers: string[] = ws.members || [];
+
+            if (currentMembers.includes(selectedUser.id)) {
+                alert(`User ${selectedUser.username} sudah ada di workspace ${ws.name}.`);
+                return;
+            }
+
+            const updatedMembers = [...currentMembers, selectedUser.id];
+
+            const { error: updateError } = await supabase
+                .from('workspaces')
+                .update({ members: updatedMembers })
+                .eq('id', selectedWorkspaceToAssign);
+
+            if (updateError) throw updateError;
+
+            alert(`Berhasil menambahkan user ${selectedUser.username} ke workspace ${ws.name}!`);
+            setSelectedWorkspaceToAssign('');
+        } catch (err) {
+            console.error('Error adding user to workspace:', err);
+            alert('Gagal menambahkan user ke workspace.');
         }
     };
 
@@ -1078,11 +1118,18 @@ export const UserManagement: React.FC = () => {
                                             <Globe size={16} /> Beri Akses Workspace Lain
                                         </h4>
                                         <div className="flex items-center gap-3">
-                                            <select className="flex-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer">
+                                            <select
+                                                value={selectedWorkspaceToAssign}
+                                                onChange={(e) => setSelectedWorkspaceToAssign(e.target.value)}
+                                                className="flex-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer"
+                                            >
                                                 <option value="">Pilih Workspace...</option>
                                                 {workspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
                                             </select>
-                                            <button className="p-3 bg-accent border-2 border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-white hover:shadow-[4px_4px_0px_#0f172a] transition-all">
+                                            <button
+                                                onClick={handleAddUserToWorkspace}
+                                                className="p-3 bg-accent border-2 border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-white hover:shadow-[4px_4px_0px_#0f172a] transition-all"
+                                            >
                                                 <UserPlus size={20} />
                                             </button>
                                         </div>
