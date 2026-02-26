@@ -1068,9 +1068,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
-            { id: 'approval', path: '/approval', label: 'Team Approval', icon: CheckCircle },
+            { id: 'approval', path: '/approval', label: 'Approval Area', icon: CheckCircle },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
-            { id: 'carousel', path: '/carousel', label: 'Aruneeka Carousel', icon: ImageIcon },
+            { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },
             { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
         ],
         'Admin Zone': [
