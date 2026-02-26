@@ -97,14 +97,19 @@ export const ContentPlan: React.FC = () => {
 
             // 1. Fetch User Data & Workspaces in Parallel
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
+            const tenantId = localStorage.getItem('tenant_id') || userId;
 
             // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
             let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period');
 
-            // Construct OR condition safely: Avoid massive base64 strings in URL
+            // Construct OR condition: Match by owner, user ID in members, avatar in members, OR owner is the admin (tenant)
             let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
             if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
                 orCond += `,members.cs.{"${currentUserAvatar}"}`;
+            }
+            // Also include workspaces owned by the tenant (admin) — ensures invited members see their workspaces
+            if (tenantId && tenantId !== userId) {
+                orCond += `,owner_id.eq.${tenantId}`;
             }
             wsQuery = wsQuery.or(orCond);
 
@@ -144,15 +149,18 @@ export const ContentPlan: React.FC = () => {
                 if (item.status === 'Published') statsMap[item.workspace_id].published++;
             });
 
-            // 4. Merge & Access Control
+            // 4. Merge & Access Control — check membership by user ID, avatar, or ownership
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
-                    const isOwner = ws.owner_id === userId;
+                    const isOwner = ws.owner_id === userId || ws.owner_id === tenantId;
+                    if (isOwner) return true;
 
-                    if (!currentAvatar) return false;
                     const members: string[] = ws.members || [];
+                    // Check by user ID first (most reliable)
+                    if (members.includes(userId || '')) return true;
+                    // Then check by avatar URL
+                    if (!currentAvatar) return false;
                     return members.some(m => {
-                        if (m === userId) return true;
                         try { return decodeURIComponent(m) === decodeURIComponent(currentAvatar) || m === currentAvatar; }
                         catch { return m === currentAvatar; }
                     });

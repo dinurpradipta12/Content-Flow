@@ -355,8 +355,9 @@ export const TeamManagement: React.FC = () => {
                 details: { fullName: inviteForm.full_name, workspace: selectedWorkspace.name }
             });
 
-            // Automatically append this member's avatar to selectedWorkspace.members
-            const updatedMembers = [...(selectedWorkspace.members || []), avatarUrl];
+            // Automatically append this member's ID AND avatar to selectedWorkspace.members
+            // Adding both ensures Content Plan can match by user_id (reliable) and avatar (display)
+            const updatedMembers = [...(selectedWorkspace.members || []), newUser.id, avatarUrl];
             const { error: wsError } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', selectedWorkspace.id);
 
             if (wsError) throw wsError;
@@ -383,9 +384,9 @@ export const TeamManagement: React.FC = () => {
                     is_verified: true,
                     subscription_start: new Date().toISOString()
                 };
-                const { error: fallbackError } = await supabase.from('app_users').insert([insertData]);
-                if (!fallbackError) {
-                    const updatedMembers = [...(selectedWorkspace.members || []), avatarUrl];
+                const { data: fallbackUser, error: fallbackError } = await supabase.from('app_users').insert([insertData]).select().single();
+                if (!fallbackError && fallbackUser) {
+                    const updatedMembers = [...(selectedWorkspace.members || []), fallbackUser.id, avatarUrl];
                     await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', selectedWorkspace.id);
                     setInviteSuccess({
                         username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
@@ -479,12 +480,14 @@ export const TeamManagement: React.FC = () => {
         if (!selectedUser) return;
         const wsToUpdate = allWorkspaces.find(w => w.id === workspaceId);
         if (!wsToUpdate) return;
-        if (wsToUpdate.members?.includes(selectedUser.avatar_url)) {
+        const currentMembers = wsToUpdate.members || [];
+        if (currentMembers.includes(selectedUser.avatar_url) || currentMembers.includes(selectedUser.id)) {
             window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'User sudah ada di workspace ini.' } }));
             return;
         }
 
-        const updatedMembers = [...(wsToUpdate.members || []), selectedUser.avatar_url];
+        // Add both user ID and avatar URL for reliable matching
+        const updatedMembers = [...currentMembers, selectedUser.id, selectedUser.avatar_url];
         const { error } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', workspaceId);
         if (error) {
             console.error(error);

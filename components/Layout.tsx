@@ -1531,7 +1531,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     Segera perpanjang akun Anda agar akses tidak terhenti.
                                 </p>
                                 <button className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl Lowercase tracking-widest hover:bg-slate-800 transition-all border-2 border-slate-900 shadow-[4px_4px_0px_#fff] active:translate-y-1 active:shadow-none">
-                                    Tutup Banner
+                                    Perpanjang Layanan
                                 </button>
                             </div>
                         </div>
