@@ -75,7 +75,6 @@ const App: React.FC = () => {
             {/* Protected Routes */}
             <Route element={<RequireAuth />}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="messages" element={<Messages />} />
               <Route path="plan" element={<ContentPlan />} />
               <Route path="plan/:id" element={<ContentPlanDetail />} />
               <Route path="approval" element={<Approval />} />
@@ -88,6 +87,7 @@ const App: React.FC = () => {
               <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
 
               {/* Developer Routes (Developer only) */}
+              <Route path="messages" element={<RequireDeveloper><Messages /></RequireDeveloper>} />
               <Route path="admin/activity" element={<RequireDeveloper><ActivityLog /></RequireDeveloper>} />
               <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
               <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />

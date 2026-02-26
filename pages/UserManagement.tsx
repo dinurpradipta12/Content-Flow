@@ -554,7 +554,7 @@ export const UserManagement: React.FC = () => {
                         {/* ===== REGISTRATION FORM ===== */}
                         <div className="w-full lg:w-[380px] shrink-0">
                             <div className="bg-white rounded-2xl border-4 border-slate-900 overflow-hidden sticky top-6 shadow-hard">
-                                <div className="p-5 pb-4 border-b-4 border-slate-900 bg-emerald-300 relative">
+                                <div className="p-5 pb-4 border-b-4 border-slate-900 bg-yellow-300 relative">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 rounded-full blur-xl mix-blend-overlay"></div>
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] relative z-10">
                                         <UserPlus className="text-slate-900" size={22} />

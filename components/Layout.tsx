@@ -1457,7 +1457,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const NAV_ITEMS: Record<string, NavItem[]> = {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
-            { id: 'messages', path: '/messages', label: 'Messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : null },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: CalendarDays },
             { id: 'approval', path: '/approval', label: 'Team Approval', icon: CheckCircle },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
@@ -1468,6 +1467,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
         ],
         'Superuser': [
+            { id: 'messages', path: '/messages', label: 'Messages', icon: MessageSquare, developerOnly: true, badge: unreadCount > 0 ? unreadCount : null },
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
             { id: 'activity', path: '/admin/activity', label: 'Activity Log', icon: Presentation, developerOnly: true },
             { id: 'inbox', path: '/admin/inbox', label: 'Developer Inbox', icon: Inbox, developerOnly: true },
