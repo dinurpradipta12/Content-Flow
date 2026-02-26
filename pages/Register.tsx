@@ -49,10 +49,16 @@ export const Register: React.FC = () => {
         setErrorStatus('');
 
         // Basic Validation
-        if (!form.fullName || !form.email || !form.username || !form.password || !form.selectedPackageId) {
+        if (!form.fullName.trim() || !form.email.trim() || !form.username.trim() || !form.password.trim() || !form.selectedPackageId) {
             setErrorStatus('Nama lengkap, email, username, password, dan paket wajib diisi.');
             return;
         }
+
+        // Normalize inputs to prevent login mismatches
+        const normalizedUsername = form.username.trim().toLowerCase();
+        const normalizedEmail = form.email.trim().toLowerCase();
+        const trimmedPassword = form.password.trim();
+        const trimmedFullName = form.fullName.trim();
 
         // Validate subscription code if premium
         if (selectedPackage && selectedPackage.price > 0 && !form.subscriptionCode) {
@@ -60,14 +66,14 @@ export const Register: React.FC = () => {
             return;
         }
 
-        if (form.password.length < 6) {
+        if (trimmedPassword.length < 6) {
             setErrorStatus('Password minimal 6 karakter.');
             return;
         }
 
         // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(form.email)) {
+        if (!emailRegex.test(normalizedEmail)) {
             setErrorStatus('Format email tidak valid.');
             return;
         }
@@ -78,7 +84,7 @@ export const Register: React.FC = () => {
             const { data: existingUser } = await supabase
                 .from('app_users')
                 .select('id')
-                .or(`username.eq.${form.username},email.eq.${form.email}`)
+                .or(`username.ilike.${normalizedUsername},email.ilike.${normalizedEmail}`)
                 .maybeSingle();
 
             if (existingUser) {
@@ -87,23 +93,8 @@ export const Register: React.FC = () => {
                 return;
             }
 
-            // Fingerprint Generation (Abuse Protection)
-            const fingerprint = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
-
-            // Check trial abuse (Max 2 accounts per device for Free Trial)
-            if (selectedPackage?.price === 0) {
-                const { data: trialCount, error: abuseError } = await supabase.rpc('check_trial_abuse', { fingerprint_check: fingerprint });
-                if (!abuseError && trialCount >= 2) {
-                    setErrorStatus('Batas maksimal pendaftaran akun Free Trial telah tercapai untuk perangkat ini.');
-                    setLoading(true);
-                    // Force logout or delay to discourage browser manipulation
-                    setTimeout(() => setLoading(false), 2000);
-                    return;
-                }
-            }
-
             // Insert new user into db mapping
-            const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.fullName)}`;
+            const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(trimmedFullName)}`;
             const now = new Date();
             const newUserId = crypto.randomUUID();
 
@@ -129,13 +120,13 @@ export const Register: React.FC = () => {
                 }
             }
 
-            const hashedPassword = bcrypt.hashSync(form.password, 10);
+            const hashedPassword = bcrypt.hashSync(trimmedPassword, 10);
 
             const insertData: any = {
                 id: newUserId,
-                full_name: form.fullName,
-                email: form.email,
-                username: form.username,
+                full_name: trimmedFullName,
+                email: normalizedEmail,
+                username: normalizedUsername,
                 password: hashedPassword,
                 role: 'Admin',
                 avatar_url: avatarUrl,
@@ -144,7 +135,6 @@ export const Register: React.FC = () => {
                 subscription_code: form.subscriptionCode || null,
                 subscription_package: selectedPackage?.name || 'Free',
                 is_verified: isVerified,
-                device_fingerprint: fingerprint,
                 member_limit: memberLimit,
                 last_activity_at: null // Set to null so FirstLoginModal triggers on first login
             };

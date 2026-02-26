@@ -26,16 +26,23 @@ export const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     React.useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('abuse') === 'true') {
-            setError("Sistem mendeteksi adanya pendaftaran beberapa akun Free Trial dari perangkat yang sama (Maks. 2 Akun). Sesuai Syarat & Ketentuan, akun Anda dibatasi untuk sementara.");
-        }
+        // Reserved for future use
     }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        // Trim whitespace from inputs — a common cause of login failures
+        const trimmedUsername = username.trim();
+        const trimmedPassword = password.trim();
+
+        if (!trimmedUsername || !trimmedPassword) {
+            setError("Username dan Password tidak boleh kosong.");
+            setLoading(false);
+            return;
+        }
 
         // Bypass check for demo if unconfigured, but usually we need Supabase
         if (!isSupabaseConfigured()) {
@@ -45,112 +52,125 @@ export const Login: React.FC = () => {
         }
 
         try {
-            // Query for user by username first
-            const { data, error: dbError } = await supabase
+            // 1. Try case-insensitive username match first
+            let { data, error: dbError } = await supabase
                 .from('app_users')
                 .select('*')
-                .eq('username', username)
-                .single();
+                .ilike('username', trimmedUsername)
+                .limit(1)
+                .maybeSingle();
+
+            // 2. If no match by username, try by email as fallback
+            if (!data && !dbError) {
+                const emailResult = await supabase
+                    .from('app_users')
+                    .select('*')
+                    .ilike('email', trimmedUsername)
+                    .limit(1)
+                    .maybeSingle();
+                data = emailResult.data;
+                dbError = emailResult.error;
+            }
 
             if (dbError) {
-                if (dbError.code === 'PGRST116') {
-                    throw new Error("Username atau Password salah.");
-                } else {
-                    console.error(dbError);
-                    throw new Error("Gagal terhubung ke database. Pastikan tabel 'app_users' sudah dibuat via SQL Script di Settings.");
+                console.error('Login DB error:', dbError);
+                throw new Error("Gagal terhubung ke database. Pastikan tabel 'app_users' sudah dibuat via SQL Script di Settings.");
+            }
+
+            if (!data) {
+                throw new Error("Username tidak ditemukan. Pastikan Anda memasukkan username yang benar (bukan email), atau coba daftar ulang.");
+            }
+
+            // Password verification
+            let isPasswordCorrect = false;
+
+            // Check if stored password is a bcrypt hash (usually starts with $2a$ or $2b$)
+            if (data.password && (data.password.startsWith('$2a$') || data.password.startsWith('$2b$'))) {
+                isPasswordCorrect = bcrypt.compareSync(trimmedPassword, data.password);
+            } else if (data.password) {
+                // Plaintext check (Migration phase)
+                isPasswordCorrect = trimmedPassword === data.password;
+
+                // If correct, update to hash immediately
+                if (isPasswordCorrect) {
+                    const newHash = bcrypt.hashSync(trimmedPassword, 10);
+                    await supabase.from('app_users').update({ password: newHash }).eq('id', data.id);
+                    console.log("Migrated user password to hash.");
                 }
             }
 
-            if (data) {
-                let isPasswordCorrect = false;
-
-                // Check if stored password is a bcrypt hash (usually starts with $2a$ or $2b$)
-                if (data.password.startsWith('$2a$') || data.password.startsWith('$2b$')) {
-                    isPasswordCorrect = bcrypt.compareSync(password, data.password);
-                } else {
-                    // Plaintext check (Migration phase)
-                    isPasswordCorrect = password === data.password;
-
-                    // If correct, update to hash immediately
-                    if (isPasswordCorrect) {
-                        const newHash = bcrypt.hashSync(password, 10);
-                        await supabase.from('app_users').update({ password: newHash }).eq('id', data.id);
-                        console.log("Migrated user password to hash.");
-                    }
-                }
-
-                if (!isPasswordCorrect) {
-                    throw new Error("Username atau Password salah.");
-                }
-                // Check verification status (Developer implicitly verified)
-                if (data.is_verified === false && data.role !== 'Developer') {
-                    throw new Error("Akun Anda belum diverifikasi oleh Administrator. Mohon tunggu proses validasi kode langganan Anda.");
-                }
-
-                // Check account active status
-                if (data.is_active === false) {
-                    throw new Error("Akun Anda telah dinonaktifkan. Hubungi Developer/Admin untuk mengaktifkan kembali.");
-                }
-
-                // Check subscription end date
-                if (data.subscription_end) {
-                    const endDate = new Date(data.subscription_end);
-                    const now = new Date();
-
-                    if (now > endDate) {
-                        // Auto-deactivate in DB
-                        await supabase.from('app_users').update({ is_active: false }).eq('id', data.id);
-                        throw new Error(`Langganan Anda berakhir pada ${endDate.toLocaleString('id-ID')}. Hubungi Developer/Admin untuk memperpanjang.`);
-                    }
-                }
-
-                // Check Admin's subscription if user is a sub-member
-                if (data.admin_id) {
-                    const { data: adminData } = await supabase.from('app_users').select('subscription_end, is_active').eq('id', data.admin_id).single();
-                    if (adminData) {
-                        if (adminData.is_active === false) {
-                            throw new Error("Akun Administrator Anda telah dinonaktifkan. Anda tidak dapat login sementara waktu.");
-                        }
-                        if (adminData.subscription_end) {
-                            const adminEnd = new Date(adminData.subscription_end);
-                            if (new Date() > adminEnd) {
-                                throw new Error("Akses ditolak: Langganan Administrator tim Anda telah berakhir.");
-                            }
-                        }
-                    }
-                }
-
-                // Login Success
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('user_id', data.id);
-                localStorage.setItem('tenant_id', data.admin_id || data.id);
-                localStorage.setItem('user_name', data.full_name || data.username);
-                localStorage.setItem('user_role', data.role || 'Member');
-                localStorage.setItem('user_avatar', data.avatar_url || 'https://picsum.photos/40/40');
-                localStorage.setItem('user_job_title', data.job_title || '');
-                if (data.subscription_end) {
-                    localStorage.setItem('subscription_end', data.subscription_end);
-                } else {
-                    localStorage.removeItem('subscription_end');
-                }
-
-                // Check if this is their very first login via admin/system
-                if (!data.last_activity_at) {
-                    localStorage.setItem('is_first_login', 'true');
-                } else {
-                    localStorage.removeItem('is_first_login');
-                }
-
-                // Log login activity
-                await logActivity({
-                    user_id: data.id,
-                    workspace_id: data.admin_id || data.id,
-                    action: 'LOGIN',
-                    details: { role: data.role }
-                });
-
-                navigate('/');
+            if (!isPasswordCorrect) {
+                throw new Error("Password salah. Periksa kembali password Anda. (Perhatikan huruf besar/kecil)");
             }
+
+            // Check verification status (Developer implicitly verified)
+            if (data.is_verified === false && data.role !== 'Developer') {
+                throw new Error("Akun Anda belum diverifikasi oleh Administrator. Mohon tunggu proses validasi kode langganan Anda.");
+            }
+
+            // Check account active status
+            if (data.is_active === false) {
+                throw new Error("Akun Anda telah dinonaktifkan. Hubungi Developer/Admin untuk mengaktifkan kembali.");
+            }
+
+            // Check subscription end date
+            if (data.subscription_end) {
+                const endDate = new Date(data.subscription_end);
+                const now = new Date();
+
+                if (now > endDate) {
+                    // Auto-deactivate in DB
+                    await supabase.from('app_users').update({ is_active: false }).eq('id', data.id);
+                    throw new Error(`Langganan Anda berakhir pada ${endDate.toLocaleString('id-ID')}. Hubungi Developer/Admin untuk memperpanjang.`);
+                }
+            }
+
+            // Check Admin's subscription if user is a sub-member
+            if (data.admin_id) {
+                const { data: adminData } = await supabase.from('app_users').select('subscription_end, is_active').eq('id', data.admin_id).single();
+                if (adminData) {
+                    if (adminData.is_active === false) {
+                        throw new Error("Akun Administrator Anda telah dinonaktifkan. Anda tidak dapat login sementara waktu.");
+                    }
+                    if (adminData.subscription_end) {
+                        const adminEnd = new Date(adminData.subscription_end);
+                        if (new Date() > adminEnd) {
+                            throw new Error("Akses ditolak: Langganan Administrator tim Anda telah berakhir.");
+                        }
+                    }
+                }
+            }
+
+            // Login Success
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('user_id', data.id);
+            localStorage.setItem('tenant_id', data.admin_id || data.id);
+            localStorage.setItem('user_name', data.full_name || data.username);
+            localStorage.setItem('user_role', data.role || 'Member');
+            localStorage.setItem('user_avatar', data.avatar_url || 'https://picsum.photos/40/40');
+            localStorage.setItem('user_job_title', data.job_title || '');
+            if (data.subscription_end) {
+                localStorage.setItem('subscription_end', data.subscription_end);
+            } else {
+                localStorage.removeItem('subscription_end');
+            }
+
+            // Check if this is their very first login via admin/system
+            if (!data.last_activity_at) {
+                localStorage.setItem('is_first_login', 'true');
+            } else {
+                localStorage.removeItem('is_first_login');
+            }
+
+            // Log login activity
+            await logActivity({
+                user_id: data.id,
+                workspace_id: data.admin_id || data.id,
+                action: 'LOGIN',
+                details: { role: data.role }
+            });
+
+            navigate('/');
 
         } catch (err: any) {
             setError(err.message || "Terjadi kesalahan.");

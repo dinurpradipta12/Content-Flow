@@ -86,9 +86,9 @@ const App: React.FC = () => {
 
               {/* Admin Routes (Developer + Admin) */}
               <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
-              <Route path="admin/activity" element={<RequireAdmin><ActivityLog /></RequireAdmin>} />
 
               {/* Developer Routes (Developer only) */}
+              <Route path="admin/activity" element={<RequireDeveloper><ActivityLog /></RequireDeveloper>} />
               <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
               <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
               <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />

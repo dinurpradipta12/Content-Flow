@@ -1466,10 +1466,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
-            { id: 'activity', path: '/admin/activity', label: 'Activity Log', icon: Presentation, adminOnly: true },
         ],
         'Superuser': [
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
+            { id: 'activity', path: '/admin/activity', label: 'Activity Log', icon: Presentation, developerOnly: true },
             { id: 'inbox', path: '/admin/inbox', label: 'Developer Inbox', icon: Inbox, developerOnly: true },
             { id: 'analytics', path: '/admin/analytics', label: 'Analytics', icon: BarChart3, developerOnly: true },
             { id: 'workspace', path: '/admin/workspace', label: 'Workspace Settings', icon: Settings, developerOnly: true },
