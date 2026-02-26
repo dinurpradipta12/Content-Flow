@@ -532,24 +532,47 @@ export const ContentPlanDetail: React.FC = () => {
             const userRole = localStorage.getItem('user_role') || 'Member';
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
-            // 1. Parallel Fetch: User Info, Workspace Info, and Company-wide Users
-            const [userRes, wsRes, allUsersRes, itemsRes] = await Promise.all([
+            // 1. Parallel Fetch: User Info, Workspace Info
+            const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, role, subscription_package').eq('id', userId).single(),
                 supabase.from('workspaces').select('*').eq('id', id).single(),
+            ]);
+
+            if (wsRes.error) throw new Error("Akses Ditolak atau Workspace tidak ditemukan.");
+
+            const ws = wsRes.error ? null : wsRes.data;
+            const userData = userRes.data;
+
+            // 2. Build a comprehensive user query: tenant users + all workspace members
+            const wsMemberIds = (ws?.members || []).filter((m: string) => {
+                // Filter for values that look like UUIDs (user IDs)
+                return m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i);
+            });
+
+            let userOrCond = `admin_id.eq.${tenantId},id.eq.${tenantId}`;
+            if (wsMemberIds.length > 0) {
+                userOrCond += `,id.in.(${wsMemberIds.join(',')})`;
+            }
+            // Also match by username in members
+            const wsMemberUsernames = (ws?.members || []).filter((m: string) => {
+                return !m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i) && !m.includes('/') && !m.startsWith('data:');
+            });
+            if (wsMemberUsernames.length > 0) {
+                userOrCond += `,username.in.(${wsMemberUsernames.join(',')})`;
+            }
+
+            const [allUsersRes, itemsRes] = await Promise.all([
                 supabase.from('app_users')
-                    .select('id, full_name, email, avatar_url, role, online_status, last_activity_at')
-                    .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`),
+                    .select('id, full_name, email, avatar_url, role, online_status, last_activity_at, username')
+                    .or(userOrCond),
                 supabase.from('content_items')
                     .select('*')
                     .eq('workspace_id', id)
                     .order('created_at', { ascending: false })
             ]);
 
-            if (wsRes.error) throw new Error("Akses Ditolak atau Workspace tidak ditemukan.");
             if (itemsRes.error) throw itemsRes.error;
 
-            const ws = wsRes.error ? null : wsRes.data;
-            const userData = userRes.data;
             const allUsers = allUsersRes.data || [];
             const items = itemsRes.data || [];
 
