@@ -6,9 +6,16 @@ import { supabase } from '../services/supabaseClient';
 import {
     Users, Trash2, RefreshCw, Loader2, Shield, UserPlus, Hash, Mail, Key, Globe,
     Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search,
-    ShieldCheck, ShieldX, AlertTriangle
+    ShieldCheck, ShieldX, AlertTriangle, TrendingUp, UserCheck, Bell, UserMinus,
+    ArrowRight, Activity
 } from 'lucide-react';
 import { useAppConfig } from '../components/AppConfigProvider';
+import bcrypt from 'bcryptjs';
+import { logActivity } from '../services/activityService';
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
+    ResponsiveContainer, AreaChart, Area
+} from 'recharts';
 
 interface AppUser {
     id: string;
@@ -43,6 +50,15 @@ export const UserManagement: React.FC = () => {
     const [registering, setRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Dashboard Modal States
+    const [isGrowthModalOpen, setIsGrowthModalOpen] = useState(false);
+    const [isExpiringModalOpen, setIsExpiringModalOpen] = useState(false);
+    const [isAdminStatsModalOpen, setIsAdminStatsModalOpen] = useState(false);
+    const [isAdminTeamModalOpen, setIsAdminTeamModalOpen] = useState(false);
+    const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
+
+    const [viewingAdminTeam, setViewingAdminTeam] = useState<AppUser | null>(null);
 
     const { config } = useAppConfig();
     const availablePackages = [
@@ -113,7 +129,16 @@ export const UserManagement: React.FC = () => {
 
     const fetchWorkspaces = async () => {
         try {
-            const { data } = await supabase.from('workspaces').select('id, name').order('name');
+            const userId = localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role');
+            const avatar = localStorage.getItem('user_avatar') || '';
+
+            let query = supabase.from('workspaces').select('id, name');
+            if (userRole !== 'Developer') {
+                query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
+            }
+
+            const { data } = await query.order('name');
             if (data) setWorkspaces(data);
         } catch (err) {
             console.error(err);
@@ -137,11 +162,12 @@ export const UserManagement: React.FC = () => {
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.full_name)}`;
             const now = new Date().toISOString();
 
+            const hashedPassword = bcrypt.hashSync(form.password, 10);
             const insertData: any = {
                 full_name: form.full_name,
                 email: form.email,
                 username: form.username,
-                password: form.password,
+                password: hashedPassword,
                 role: 'Member',
                 avatar_url: avatarUrl,
                 is_active: true,
@@ -153,8 +179,16 @@ export const UserManagement: React.FC = () => {
             }
 
 
-            const { error } = await supabase.from('app_users').insert([insertData]);
+            const { data: newUser, error } = await supabase.from('app_users').insert([insertData]).select().single();
             if (error) throw error;
+
+            // Log activity
+            await logActivity({
+                action: 'INVITE_USER',
+                entity_type: 'user',
+                entity_id: newUser.id,
+                details: { fullName: form.full_name, package: insertData.subscription_package }
+            });
 
             setFormSuccess(`User "${form.username}" berhasil didaftarkan!`);
             setForm({ full_name: '', email: '', username: '', password: '', workspace_id: '', subscription_end: '', subscription_package: '' });
@@ -377,6 +411,46 @@ export const UserManagement: React.FC = () => {
         }
     }, [users]);
 
+    // --- DASHBOARD CALCULATIONS ---
+    const now = new Date();
+    const fiveDaysFromNow = new Date();
+    fiveDaysFromNow.setDate(now.getDate() + 5);
+
+    const expiringUsers = users.filter(u =>
+        u.subscription_end &&
+        new Date(u.subscription_end) > now &&
+        new Date(u.subscription_end) <= fiveDaysFromNow
+    );
+
+    const admins = users.filter(u => u.role === 'Admin' || u.role === 'Owner');
+    const adminTeamStats = admins.map(admin => {
+        const teamCount = users.filter(u => u.invited_by === admin.username).length;
+        return { ...admin, teamCount };
+    });
+
+    const inactiveUsers = users.filter(u =>
+        !u.is_active ||
+        (u.subscription_end && new Date(u.subscription_end) < now)
+    );
+
+    const newestUsers = [...users]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
+
+    const growthData = React.useMemo(() => {
+        const countsByDate: Record<string, number> = {};
+        const sortedUsers = [...users].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+        let runningTotal = 0;
+        sortedUsers.forEach(u => {
+            const date = new Date(u.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            runningTotal++;
+            countsByDate[date] = runningTotal;
+        });
+
+        return Object.entries(countsByDate).map(([name, value]) => ({ name, value }));
+    }, [users]);
+
     return (
         <div className="space-y-6 flex-1 flex flex-col min-h-0">
             {/* Access guard: Member = no access */}
@@ -391,17 +465,86 @@ export const UserManagement: React.FC = () => {
             {(isAdmin || isDeveloper) && (
                 <>
                     {/* Header */}
-                    <div className="flex justify-between items-center shrink-0">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                <Shield className="text-violet-500" size={26} />
-                                User Management
-                            </h2>
-                            <p className="text-slate-500 text-sm mt-1">Kelola pengguna aplikasi (Developer Access Only).</p>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center border-4 border-slate-900 shadow-hard rotate-3">
+                                <Users size={28} className="text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-heading font-black text-slate-900 leading-tight Lowercase ">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
+                                <p className="text-slate-500 font-bold">Total {users.length} pengguna terdaftar.</p>
+                            </div>
                         </div>
-                        <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={18} />}>
-                            Refresh
+                        <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={18} className={loading ? 'animate-spin' : ''} />} className="shadow-hard border-2 border-slate-900">
+                            Refresh Data
                         </Button>
+                    </div>
+
+                    {/* Summary Strategy Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Card 1: Total Users */}
+                        <div onClick={() => setIsGrowthModalOpen(true)}
+                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
+                                    <Users className="text-blue-600" size={20} />
+                                </div>
+                                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-tighter">Growth</span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Total Users</h4>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-slate-900">{users.length}</span>
+                                <span className="text-xs font-bold text-emerald-500 flex items-center"><TrendingUp size={12} className="mr-0.5" /> Live</span>
+                            </div>
+                        </div>
+
+                        {/* Card 2: Expiring */}
+                        <div onClick={() => setIsExpiringModalOpen(true)}
+                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
+                                    <Bell className="text-amber-600" size={20} />
+                                </div>
+                                <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-full uppercase tracking-tighter">Retention</span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Masa Tenggang</h4>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-slate-900">{expiringUsers.length}</span>
+                                <span className="text-xs font-bold text-slate-400">User / 5 Hari</span>
+                            </div>
+                        </div>
+
+                        {/* Card 3: Admins */}
+                        <div onClick={() => setIsAdminStatsModalOpen(true)}
+                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
+                                    <ShieldCheck className="text-purple-600" size={20} />
+                                </div>
+                                <span className="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-1 rounded-full uppercase tracking-tighter">Structure</span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Admin Roles</h4>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-slate-900">{admins.length}</span>
+                                <span className="text-xs font-bold text-slate-400">Total Admin</span>
+                            </div>
+                        </div>
+
+                        {/* Card 4: Inactive */}
+                        <div onClick={() => setIsInactiveModalOpen(true)}
+                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
+                                    <UserMinus className="text-red-600" size={20} />
+                                </div>
+                                <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-full uppercase tracking-tighter">Alert</span>
+                            </div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Non-Aktif / Expired</h4>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-slate-900">{inactiveUsers.length}</span>
+                                <span className="text-xs font-bold text-red-500">Warning</span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Main: Form + Table side-by-side */}
@@ -947,9 +1090,293 @@ export const UserManagement: React.FC = () => {
                             );
                         })()}
                     </Modal>
+
+                    {/* Modal Dash 1: Growth & Top New */}
+                    <Modal isOpen={isGrowthModalOpen} onClose={() => setIsGrowthModalOpen(false)} title="Analisa Pertumbuhan User" maxWidth="max-w-4xl">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="bg-white p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[350px]">
+                                    <h4 className="font-heading font-black text-slate-900 uppercase italic mb-6">Kumulatif User Baru</h4>
+                                    <ResponsiveContainer width="100%" height="80%">
+                                        <AreaChart data={growthData}>
+                                            <defs>
+                                                <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
+                                            <YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
+                                            <ReTooltip
+                                                contentStyle={{ borderRadius: '12px', border: '3px solid #0f172a', fontWeight: 'bold', boxShadow: '4px 4px 0px #0f172a' }}
+                                            />
+                                            <Area type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={4} fillOpacity={1} fill="url(#growthGrad)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="font-heading font-black text-slate-900 uppercase italic mb-4 flex items-center gap-2">
+                                    <TrendingUp size={18} className="text-accent" /> 5 User Terbaru
+                                </h4>
+                                <div className="space-y-3">
+                                    {newestUsers.map(u => (
+                                        <div key={u.id} className="bg-white p-3 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center gap-3">
+                                            <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
+                                                className="w-10 h-10 rounded-lg border-2 border-slate-900" alt="" />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-black text-slate-900 line-clamp-1 uppercase tracking-tight">{u.full_name}</p>
+                                                <p className="text-[10px] font-bold text-slate-400">Join: {new Date(u.created_at).toLocaleDateString('id-ID')}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    {/* Modal Dash 2: Expiring Users */}
+                    <Modal isOpen={isExpiringModalOpen} onClose={() => setIsExpiringModalOpen(false)} title="Prioritas Retention (Tenggang)" maxWidth="max-w-2xl">
+                        <div className="space-y-4">
+                            <p className="text-sm font-bold text-slate-500 mb-2">User yang masa berlangganannya akan habis dalam &lt; 5 hari.</p>
+                            {expiringUsers.length === 0 ? (
+                                <div className="bg-slate-50 p-8 rounded-2xl border-2 border-dashed border-slate-200 text-center">
+                                    <CheckCircle className="mx-auto text-emerald-400 mb-2" size={32} />
+                                    <p className="font-bold text-slate-400">Semua aman. Tidak ada user di masa tenggang.</p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {expiringUsers.map(u => {
+                                        const status = getSubscriptionStatus(u);
+                                        return (
+                                            <div
+                                                key={u.id}
+                                                onClick={() => { setSelectedUser(u); setIsDetailOpen(true); setIsExpiringModalOpen(false); }}
+                                                className="bg-white p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini hover:translate-x-1 transition-all cursor-pointer flex items-center justify-between group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
+                                                        className="w-10 h-10 rounded-lg border-2 border-slate-900" alt="" />
+                                                    <div>
+                                                        <p className="font-black text-slate-900 text-sm italic">{u.full_name}</p>
+                                                        <p className="text-xs font-bold text-slate-400">@{u.username}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${status.color}`}>
+                                                        {status.label}
+                                                    </span>
+                                                    <p className="text-[10px] font-bold text-slate-400 mt-1">{new Date(u.subscription_end!).toLocaleDateString('id-ID')}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </Modal>
+
+                    {/* Modal Dash 3: Admin Overview */}
+                    <Modal isOpen={isAdminStatsModalOpen} onClose={() => setIsAdminStatsModalOpen(false)} title="Struktur Admin & Team" maxWidth="max-w-3xl">
+                        <div className="space-y-4">
+                            <div className="bg-purple-600 p-4 rounded-xl border-4 border-slate-900 shadow-hard text-white flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-3">
+                                    <ShieldCheck size={32} />
+                                    <div>
+                                        <h4 className="font-black text-lg leading-none">Admin Monitoring</h4>
+                                        <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest mt-1">Invitation performance tracking</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-3xl font-black">{admins.length}</span>
+                                    <p className="text-[10px] uppercase font-bold text-white/50 leading-none">Total Admins</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {adminTeamStats.map(admin => (
+                                    <div key={admin.id} className="bg-white p-4 rounded-2xl border-4 border-slate-900 shadow-hard relative group overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-20 h-20 bg-slate-50 rounded-full -mr-10 -mt-10 group-hover:bg-purple-50 transition-colors"></div>
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <img src={admin.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(admin.full_name || 'U')}`}
+                                                    className="w-12 h-12 rounded-xl border-2 border-slate-900" alt="" />
+                                                <div>
+                                                    <h5 className="font-black text-slate-900 uppercase italic tracking-tight">{admin.full_name}</h5>
+                                                    <span className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full font-bold text-slate-500 uppercase">{admin.subscription_package || 'Free'}</span>
+                                                </div>
+                                            </div>
+                                            <div
+                                                onClick={() => { setViewingAdminTeam(admin); setIsAdminTeamModalOpen(true); }}
+                                                className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border-2 border-slate-900 cursor-pointer hover:bg-purple-50 transition-colors group/team"
+                                            >
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Team Members</p>
+                                                    <p className="text-2xl font-black text-slate-900">{admin.teamCount}</p>
+                                                </div>
+                                                <div className="w-10 h-10 bg-white rounded-lg border-2 border-slate-900 flex items-center justify-center group-hover/team:scale-110 transition-transform">
+                                                    <UserCheck className="text-emerald-500" size={20} />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 mt-3">
+                                                <Button
+                                                    onClick={() => { setViewingAdminTeam(admin); setIsAdminTeamModalOpen(true); }}
+                                                    variant="secondary" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 shadow-hard-mini"
+                                                >
+                                                    List Team
+                                                </Button>
+                                                <Button
+                                                    onClick={() => { setSelectedUser(admin); setIsDetailOpen(true); setIsAdminStatsModalOpen(false); }}
+                                                    variant="secondary" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 shadow-hard-mini"
+                                                >
+                                                    Full Info
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Modal>
+
+                    {/* Modal Dash 3.5: Admin Team List */}
+                    <Modal
+                        isOpen={isAdminTeamModalOpen}
+                        onClose={() => setIsAdminTeamModalOpen(false)}
+                        title={`Tim ${viewingAdminTeam?.full_name || ''}`}
+                        maxWidth="max-w-2xl"
+                    >
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border-2 border-slate-900 mb-6">
+                                <img
+                                    src={viewingAdminTeam?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(viewingAdminTeam?.full_name || 'U')}`}
+                                    className="w-14 h-14 rounded-xl border-2 border-slate-900"
+                                    alt=""
+                                />
+                                <div>
+                                    <h4 className="font-heading font-black text-xl text-slate-900 uppercase italic">Head of Team</h4>
+                                    <p className="text-sm font-bold text-slate-500">@{viewingAdminTeam?.username} &bull; {viewingAdminTeam?.subscription_package || 'No Package'}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Member Terdaftar ({users.filter(u => u.invited_by === viewingAdminTeam?.username).length})</h5>
+                                {users.filter(u => u.invited_by === viewingAdminTeam?.username).length === 0 ? (
+                                    <div className="text-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                                        <Users size={32} className="mx-auto text-slate-300 mb-2" />
+                                        <p className="font-bold text-slate-400">Belum ada user yang diundang.</p>
+                                    </div>
+                                ) : (
+                                    users.filter(u => u.invited_by === viewingAdminTeam?.username).map(member => {
+                                        const status = getSubscriptionStatus(member);
+                                        return (
+                                            <div
+                                                key={member.id}
+                                                className="bg-white p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center justify-between group"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name || 'M')}`}
+                                                        className="w-10 h-10 rounded-lg border-2 border-slate-900"
+                                                        alt=""
+                                                    />
+                                                    <div>
+                                                        <p className="font-black text-slate-900 text-sm leading-none mb-1">{member.full_name}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400">@{member.username} &bull; Joined {new Date(member.created_at).toLocaleDateString('id-ID')}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${status.color}`}>
+                                                        {status.label}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedUser(member);
+                                                            setIsDetailOpen(true);
+                                                            setIsAdminTeamModalOpen(false);
+                                                            setIsAdminStatsModalOpen(false);
+                                                        }}
+                                                        className="text-[9px] font-bold text-accent hover:underline"
+                                                    >
+                                                        Lihat Detail
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            <Button
+                                onClick={() => setIsAdminTeamModalOpen(false)}
+                                className="w-full mt-6 bg-slate-900 text-white font-black uppercase tracking-widest py-4 border-b-4 border-slate-700 active:border-b-0 hover:translate-y-0.5 transition-all"
+                            >
+                                Tutup
+                            </Button>
+                        </div>
+                    </Modal>
+
+                    {/* Modal Dash 4: Inactive Accounts */}
+                    <Modal isOpen={isInactiveModalOpen} onClose={() => setIsInactiveModalOpen(false)} title="Audit Akun Non-Aktif" maxWidth="max-w-2xl">
+                        <div className="space-y-4">
+                            <div className="bg-red-50 p-4 rounded-xl border-2 border-red-200 flex items-center gap-3 mb-4">
+                                <AlertTriangle className="text-red-500 shrink-0" size={20} />
+                                <p className="text-xs font-bold text-red-700">Akun berikut dalam status non-aktif atau masa langganan telah berakhir. User tidak dapat mengakses dashboard utama.</p>
+                            </div>
+
+                            <div className="grid gap-3">
+                                {inactiveUsers.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <Activity size={40} className="text-emerald-400 mx-auto mb-2" />
+                                        <p className="font-black text-slate-900">Sistem Bersih!</p>
+                                        <p className="text-xs font-bold text-slate-400">Tidak ada akun non-aktif yang terdeteksi.</p>
+                                    </div>
+                                ) : (
+                                    inactiveUsers.map(u => (
+                                        <div key={u.id} className="bg-white p-4 rounded-2xl border-4 border-slate-900 shadow-hard-mini flex items-center justify-between group">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
+                                                    <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
+                                                        className="w-12 h-12 rounded-xl border-2 border-slate-900 grayscale" alt="" />
+                                                    <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 border-2 border-white shadow-sm">
+                                                        <Power size={8} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-slate-900 text-sm uppercase italic">{u.full_name}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${!u.is_active ? 'bg-red-500 text-white' : 'bg-amber-500 text-white'}`}>
+                                                            {!u.is_active ? 'Banned' : 'Expired'}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-slate-400">@{u.username}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleToggleActive(u)}
+                                                    className="px-4 py-2 bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
+                                                >
+                                                    Aktifkan
+                                                </button>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    onClick={() => { setSelectedUser(u); setIsDetailOpen(true); setIsInactiveModalOpen(false); }}
+                                                    className="h-9 px-3 border-2 border-slate-900 shadow-hard-mini"
+                                                >
+                                                    Detail
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </Modal>
                 </>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 };

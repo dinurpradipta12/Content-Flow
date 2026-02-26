@@ -377,27 +377,24 @@ export const Dashboard: React.FC = () => {
     const [workspaces, setWorkspaces] = useState<any[]>([]);
     useEffect(() => {
         const fetchWs = async () => {
-            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const userId = localStorage.getItem('user_id');
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
             const userRole = localStorage.getItem('user_role');
 
-            const isBase64Avatar = currentUserAvatar?.startsWith('data:');
-            const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
-
             let query = supabase.from('workspaces').select('*');
 
-            if (shouldSkipAvatarFilter) {
-                query = query.eq('admin_id', tenantId);
-            } else {
-                query = query.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
+            if (userRole !== 'Developer') {
+                // Strict visibility: only own or invited
+                query = query.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
             }
 
             const { data: wsData } = await query.order('name');
-            const userId = localStorage.getItem('user_id');
 
-            // Strict filtering for everyone
+            // Optional secondary safety filter (already handled by DB query above but for absolute certainty)
             let myWorkspaces = (wsData || []).filter(ws => {
-                const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                if (userRole === 'Developer') return true;
+
+                const isOwner = ws.owner_id === userId;
                 if (isOwner) return true;
 
                 return (ws.members && ws.members.some((m: string) => {

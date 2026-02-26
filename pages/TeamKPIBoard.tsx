@@ -138,19 +138,15 @@ export const TeamKPIBoard: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
-            const isBase64Avatar = currentUserAvatar?.startsWith('data:');
-            const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
+            const tenantId = localStorage.getItem('tenant_id') || userId;
 
-            let wsQuery = supabase.from('workspaces').select('id,name,members,admin_id');
+            let wsQuery = supabase.from('workspaces').select('id,name,members,admin_id,owner_id');
 
-            if (userRole === 'Developer') {
-                // Developers see all
-            } else if (shouldSkipAvatarFilter) {
-                wsQuery = wsQuery.eq('admin_id', tenantId);
-            } else {
-                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
+            if (userRole !== 'Developer') {
+                // Strict visibility: only own or invited
+                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
             }
 
             const [membersRes, kpisRes, wsRes] = await Promise.all([
@@ -163,9 +159,11 @@ export const TeamKPIBoard: React.FC = () => {
             if (kpisRes.data) setKpis(kpisRes.data);
 
             if (wsRes.data) {
-                const userId = localStorage.getItem('user_id');
+                // For members: only show workspaces they belong to or own (redundancy check)
                 let accessibleWorkspaces = (wsRes.data as WorkspaceItem[]).filter(ws =>
-                    ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id) || (ws.members && ws.members.some((m: string) => {
+                    userRole === 'Developer' ||
+                    ws.owner_id === userId ||
+                    (ws.members && ws.members.some((m: string) => {
                         try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
                         catch { return m === currentUserAvatar; }
                     }))

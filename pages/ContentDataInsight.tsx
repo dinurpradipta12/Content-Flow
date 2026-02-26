@@ -92,7 +92,7 @@ export const ContentDataInsight: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
+            const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
             const userAvatar = localStorage.getItem('user_avatar') || '';
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
@@ -100,24 +100,22 @@ export const ContentDataInsight: React.FC = () => {
             const isBase64Avatar = userAvatar?.startsWith('data:');
             const shouldSkipAvatarFilter = isBase64Avatar && userAvatar.length > 500;
 
-            let wsQuery = supabase.from('workspaces').select('id, account_name, members');
+            let wsQuery = supabase.from('workspaces').select('id, account_name, members, owner_id');
 
-            if (userRole === 'Developer') {
-                // Developers see all
-            } else if (shouldSkipAvatarFilter) {
-                wsQuery = wsQuery.eq('admin_id', tenantId);
-            } else {
-                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${userAvatar ? `,members.cs.{"${userAvatar}"}` : ''}`);
+            if (userRole !== 'Developer') {
+                // Strict visibility: only own or invited
+                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${userAvatar}"}`);
             }
 
             const { data: wsData, error: wsError } = await wsQuery;
             if (wsError) throw wsError;
 
             if (wsData) {
-                const userId = localStorage.getItem('user_id');
-                // For members: only show workspaces they belong to or own
+                // For members: only show workspaces they belong to or own (redundancy check for security)
                 const accessibleWorkspaces = wsData.filter((w: any) =>
-                    w.owner_id === userId || (w.admin_id === userId && !w.owner_id) || (w.members || []).some((m: string) => {
+                    userRole === 'Developer' ||
+                    w.owner_id === userId ||
+                    (w.members || []).some((m: string) => {
                         try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
                         catch { return m === userAvatar; }
                     })
@@ -136,7 +134,6 @@ export const ContentDataInsight: React.FC = () => {
                     .from('content_items')
                     .select(`*, workspaces!inner(name, account_name, admin_id)`)
                     .eq('status', 'Published')
-                    .eq('workspaces.admin_id', tenantId)
                     .in('workspace_id', accessibleIds.length > 0 ? accessibleIds : ['00000000-0000-0000-0000-000000000000'])
                     .order('date', { ascending: true });
 

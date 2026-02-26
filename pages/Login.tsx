@@ -6,6 +6,8 @@ import { Layers, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
 import { useAppConfig } from '../components/AppConfigProvider';
+import bcrypt from 'bcryptjs';
+import { logActivity } from '../services/activityService';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -43,18 +45,15 @@ export const Login: React.FC = () => {
         }
 
         try {
-            // Query to custom table app_users
-            // Note: Password is plain text as per user requirement (ar4925) for this demo.
+            // Query for user by username first
             const { data, error: dbError } = await supabase
                 .from('app_users')
                 .select('*')
                 .eq('username', username)
-                .eq('password', password)
                 .single();
 
             if (dbError) {
                 if (dbError.code === 'PGRST116') {
-                    // No rows found
                     throw new Error("Username atau Password salah.");
                 } else {
                     console.error(dbError);
@@ -63,6 +62,26 @@ export const Login: React.FC = () => {
             }
 
             if (data) {
+                let isPasswordCorrect = false;
+
+                // Check if stored password is a bcrypt hash (usually starts with $2a$ or $2b$)
+                if (data.password.startsWith('$2a$') || data.password.startsWith('$2b$')) {
+                    isPasswordCorrect = bcrypt.compareSync(password, data.password);
+                } else {
+                    // Plaintext check (Migration phase)
+                    isPasswordCorrect = password === data.password;
+
+                    // If correct, update to hash immediately
+                    if (isPasswordCorrect) {
+                        const newHash = bcrypt.hashSync(password, 10);
+                        await supabase.from('app_users').update({ password: newHash }).eq('id', data.id);
+                        console.log("Migrated user password to hash.");
+                    }
+                }
+
+                if (!isPasswordCorrect) {
+                    throw new Error("Username atau Password salah.");
+                }
                 // Check verification status (Developer implicitly verified)
                 if (data.is_verified === false && data.role !== 'Developer') {
                     throw new Error("Akun Anda belum diverifikasi oleh Administrator. Mohon tunggu proses validasi kode langganan Anda.");
@@ -114,6 +133,22 @@ export const Login: React.FC = () => {
                 } else {
                     localStorage.removeItem('subscription_end');
                 }
+
+                // Check if this is their very first login via admin/system
+                if (!data.last_activity_at) {
+                    localStorage.setItem('is_first_login', 'true');
+                } else {
+                    localStorage.removeItem('is_first_login');
+                }
+
+                // Log login activity
+                await logActivity({
+                    user_id: data.id,
+                    workspace_id: data.admin_id || data.id,
+                    action: 'LOGIN',
+                    details: { role: data.role }
+                });
+
                 navigate('/');
             }
 

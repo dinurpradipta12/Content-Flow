@@ -40,43 +40,32 @@ export const Terms: React.FC = () => {
                         <li>Membagikan akun atau kredensial login kepada pihak yang tidak berwenang.</li>
                     </ul>
 
-                    <h3 className="text-lg font-black text-slate-900">3. Pendaftaran & Akun</h3>
-                    <p>Untuk mengakses fitur penuh Aplikasi, Pengguna wajib mendaftarkan akun dengan menyediakan informasi yang benar, akurat, dan terkini. Informasi yang diperlukan meliputi:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                        <li><strong>Nama Lengkap</strong> — Nama asli sesuai identitas.</li>
-                        <li><strong>Email Aktif</strong> — Email yang valid dan dapat dihubungi.</li>
-                        <li><strong>Username Login</strong> — Nama unik untuk masuk ke sistem.</li>
-                        <li><strong>Password</strong> — Minimal 6 karakter, menjadi tanggung jawab Pengguna.</li>
-                        <li><strong>Kode Unik Langganan (Order ID)</strong> — Kode khusus yang diambil dari Order ID invoice saat pembelian pertama paket berlangganan.</li>
+                    <h3 className="text-lg font-black text-slate-900">3. Paket Layanan: Personal vs Squad (Team)</h3>
+                    <p>Kami menyediakan dua kategori utama paket untuk mendukung kebutuhan konten Anda:</p>
+                    <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Paket Personal:</strong> Dirancang untuk penggunaan individu. Anda memiliki akses penuh ke workstation pribadi tanpa fitur kolaborasi tim. Akun hanya bisa diakses oleh 1 orang.</li>
+                        <li><strong>Paket Squad (Team):</strong> Khusus untuk kolaborasi. Administrator atau Owner dapat menambah anggota tim (Members) sesuai limit paket. Fitur mencakup berbagi workspace, persetujuan konten tim (Approval), dan KPI Board tim.</li>
                     </ul>
 
-                    <h3 className="text-lg font-black text-slate-900">4. Verifikasi & Aktivasi Akun</h3>
-                    <p>Setelah pendaftaran, akun Pengguna akan masuk dalam status <strong>"Menunggu Verifikasi"</strong>. Proses verifikasi dilakukan oleh Administrator/Developer melalui mekanisme berikut:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                        <li>Administrator akan mencocokkan <strong>Order ID Invoice</strong> yang dimasukkan Pengguna saat registrasi dengan data pembayaran/pembelian yang tercatat.</li>
-                        <li>Jika kode cocok dan valid, akun akan diverifikasi dan Pengguna dapat langsung login ke Aplikasi.</li>
-                        <li>Jika kode <strong>tidak cocok</strong> atau <strong>tidak valid</strong>, akun tidak akan diverifikasi dan Pengguna tidak akan dapat mengakses Aplikasi.</li>
-                        <li>Administrator berhak menolak atau mencabut verifikasi kapan saja tanpa pemberitahuan terlebih dahulu.</li>
+                    <h3 className="text-lg font-black text-slate-900">4. Pendaftaran & Akun</h3>
+                    <p>Untuk mengakses fitur penuh Aplikasi, Pengguna wajib mendaftarkan akun dengan menyediakan informasi yang benar. Untuk anggota tim baru yang didaftarkan oleh Admin, sistem mewajibkan pengaturan profil dan perubahan password pertama sebagai langkah pengamanan.</p>
+
+                    <h3 className="text-lg font-black text-slate-900">5. Verifikasi & Aktivasi Akun</h3>
+                    <p>Akun Pengguna baru (selain yang diundang Admin) akan masuk dalam status "Menunggu Verifikasi". Administrator akan mencocokkan Order ID Invoice Anda untuk mengaktifkan layanan.</p>
+
+                    <h3 className="text-lg font-black text-slate-900">6. Masa Aktif & Perpanjangan (Penting untuk Admin)</h3>
+                    <p>Subscription memiliki masa berlaku. Kami memberikan perhatian khusus pada keberlanjutan data Anda:</p>
+                    <ul className="list-disc pl-6 space-y-2">
+                        <li><strong>Akibat Penangguhan:</strong> Jika langganan berakhir dan tidak diperpanjang, akses ke dashboard akan diblokir sementara. Namun, <strong>Data Anda tidak langsung dihapus</strong>.</li>
+                        <li><strong>Masa Tenggang (Grace Period):</strong> Kami menyimpan data Anda selama 14 hari setelah masa aktif habis. Selama periode ini, data tetap utuh dan dapat diakses kembali segera setelah perpanjangan berhasil dilakukan.</li>
+                        <li><strong>Penghapusan Data:</strong> Jika dalam 14 hari tidak ada perpanjangan, sistem berhak melakukan penghapusan data secara permanen demi efisiensi resource.</li>
+                        <li><strong>Tanggung Jawab Admin:</strong> Khusus Paket Squad, Admin bertanggung jawab memastikan langganan tim tetap aktif. Kelalaian perpanjangan akan memutus akses seluruh anggota tim di bawahnya.</li>
                     </ul>
 
-                    <h3 className="text-lg font-black text-slate-900">5. Langganan & Pembayaran</h3>
-                    <p>Akses ke Aplikasi tersedia melalui paket langganan berbayar. Dengan berlangganan, Pengguna menyetujui:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                        <li>Pembayaran dilakukan sesuai metode dan nominal yang ditentukan oleh penyedia layanan.</li>
-                        <li>Order ID Invoice (Kode Unik) yang diberikan bersifat satu kali pakai dan terikat pada satu akun.</li>
-                        <li>Masa aktif langganan dapat diatur oleh Administrator. Akun yang masa aktifnya habis akan dinonaktifkan secara otomatis.</li>
-                        <li>Perpanjangan langganan harus dilakukan sebelum masa aktif berakhir untuk memastikan akses tanpa gangguan.</li>
-                    </ul>
+                    <h3 className="text-lg font-black text-slate-900">7. Privasi & Keamanan Data</h3>
+                    <p>Data yang Anda input adalah milik Anda. Kami menggunakan enkripsi standar untuk melindungi kredensial Anda. Pengguna diwajibkan mengganti password secara berkala dan tidak membagikan akses kepada pihak ketiga di luar tim resmi.</p>
 
-                    <h3 className="text-lg font-black text-slate-900">6. Privasi & Keamanan Data</h3>
-                    <p>Kami berkomitmen untuk melindungi privasi data Pengguna. Data yang dikumpulkan hanya digunakan untuk keperluan operasional Aplikasi. Pengguna bertanggung jawab atas:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                        <li>Menjaga kerahasiaan username dan password akun masing-masing.</li>
-                        <li>Segala aktivitas yang dilakukan melalui akun yang terdaftar atas namanya.</li>
-                        <li>Melaporkan segala bentuk penyalahgunaan atau akses tidak sah ke Administrator.</li>
-                    </ul>
-
-                    <h3 className="text-lg font-black text-slate-900">7. Penolakan & Batasan Tanggung Jawab</h3>
+                    <h3 className="text-lg font-black text-slate-900">8. Penolakan & Batasan Tanggung Jawab</h3>
                     <p>Aplikasi disediakan "sebagaimana adanya" (<em>as is</em>). Kami tidak memberikan jaminan, tersurat maupun tersirat, terkait ketersediaan, akurasi, atau kesesuaian Aplikasi untuk tujuan tertentu. Dalam keadaan apa pun, kami tidak bertanggung jawab atas:</p>
                     <ul className="list-disc pl-6 space-y-1">
                         <li>Kehilangan data, keuntungan, atau kerugian bisnis akibat penggunaan Aplikasi.</li>
@@ -84,10 +73,10 @@ export const Terms: React.FC = () => {
                         <li>Kerusakan perangkat atau sistem akibat penggunaan fitur Aplikasi.</li>
                     </ul>
 
-                    <h3 className="text-lg font-black text-slate-900">8. Hak Kekayaan Intelektual</h3>
+                    <h3 className="text-lg font-black text-slate-900">9. Hak Kekayaan Intelektual</h3>
                     <p>Seluruh konten, desain, kode sumber, dan aset visual dalam Aplikasi merupakan hak milik pengembang. Pengguna tidak diperkenankan untuk mereproduksi, menyalin, atau mengklaim kepemilikan atas komponen apa pun dari Aplikasi.</p>
 
-                    <h3 className="text-lg font-black text-slate-900">9. Pemberhentian Layanan</h3>
+                    <h3 className="text-lg font-black text-slate-900">10. Pemberhentian Layanan</h3>
                     <p>Kami berhak untuk menangguhkan atau menghentikan akses Pengguna tanpa pemberitahuan sebelumnya apabila ditemukan pelanggaran terhadap S&K ini, termasuk namun tidak terbatas pada:</p>
                     <ul className="list-disc pl-6 space-y-1">
                         <li>Penyalahgunaan fitur Aplikasi.</li>
@@ -95,7 +84,7 @@ export const Terms: React.FC = () => {
                         <li>Tindakan yang merugikan Pengguna lain atau penyedia layanan.</li>
                     </ul>
 
-                    <h3 className="text-lg font-black text-slate-900">10. Perubahan Syarat & Ketentuan</h3>
+                    <h3 className="text-lg font-black text-slate-900">11. Perubahan Syarat & Ketentuan</h3>
                     <p>Kami berhak mengubah, memperbarui, atau menambahkan klausul dalam S&K ini kapan saja. Perubahan akan berlaku efektif segera setelah dipublikasikan. Pengguna disarankan untuk secara berkala meninjau S&K ini. Penggunaan Aplikasi yang berlanjut setelah perubahan dianggap sebagai persetujuan Pengguna terhadap S&K terbaru.</p>
 
                     <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 mt-6">

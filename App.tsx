@@ -19,6 +19,7 @@ import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
 import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
+import { ActivityLog } from './pages/ActivityLog';
 import { NotificationProvider } from './components/NotificationProvider';
 import { AppConfigProvider } from './components/AppConfigProvider';
 
@@ -85,6 +86,7 @@ const App: React.FC = () => {
 
               {/* Admin Routes (Developer + Admin) */}
               <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
+              <Route path="admin/activity" element={<RequireAdmin><ActivityLog /></RequireAdmin>} />
 
               {/* Developer Routes (Developer only) */}
               <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />

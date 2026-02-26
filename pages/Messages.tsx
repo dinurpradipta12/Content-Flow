@@ -165,34 +165,28 @@ export const Messages: React.FC = () => {
         const userId = currentUser.id;
         const avatar = currentUser.avatar;
         const userRole = currentUser.role || 'Member';
-        const tenantId = localStorage.getItem('tenant_id') || userId;
-
-        const isBase64Avatar = avatar?.startsWith('data:');
-        const shouldSkipAvatarFilter = isBase64Avatar && avatar.length > 500;
 
         let query = supabase.from('workspaces').select('*');
 
-        if (userRole === 'Developer') {
-            // Developers see all workspaces in their tenant
-        } else if (shouldSkipAvatarFilter) {
-            // If avatar is too long, only fetch by admin_id to avoid HTTP 431
-            // We will filter by members client-side
-            query = query.eq('admin_id', tenantId);
-        } else {
-            query = query.or(`admin_id.eq.${tenantId}${avatar ? `,members.cs.{"${avatar}"}` : ''}`);
+        if (userRole !== 'Developer') {
+            // Strict visibility: only own or invited
+            query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query.order('name');
 
         if (error) {
             console.error("Error fetching workspaces:", error);
+            setIsLoaded(true);
             return;
         }
 
         if (data) {
-            // Strict filtering for everyone
+            // Safety filtering
             const myWorkspaces = data.filter(ws => {
-                const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                if (userRole === 'Developer') return true;
+
+                const isOwner = ws.owner_id === userId;
                 if (isOwner) return true;
 
                 return (ws.members && ws.members.some((m: string) => {

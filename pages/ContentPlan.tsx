@@ -94,28 +94,19 @@ export const ContentPlan: React.FC = () => {
         try {
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
-            const tenantId = localStorage.getItem('tenant_id') || userId;
 
-            // 1. Parallel Fetch: User Data & Workspaces
-            const currentAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
-            const freshAvatar = currentAvatar; // We'll update this after userRes if needed, but for the query we use current
-
-            // 1. Parallel Fetch: User Data & Workspaces
-            const isBase64Avatar = freshAvatar?.startsWith('data:');
-            const shouldSkipAvatarFilter = isBase64Avatar && freshAvatar.length > 500;
+            // 1. Fetch User Data & Workspaces in Parallel
+            const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
             let wsQuery = supabase.from('workspaces').select('*');
 
-            if (userRole === 'Developer') {
-                // Developers can see everything
-            } else if (shouldSkipAvatarFilter) {
-                wsQuery = wsQuery.eq('admin_id', tenantId);
-            } else {
-                wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${freshAvatar ? `,members.cs.{"${freshAvatar}"}` : ''}`);
+            if (userRole !== 'Developer') {
+                // Strict visibility: only own or invited
+                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
             }
 
             const [userRes, wsRes] = await Promise.all([
-                supabase.from('app_users').select('avatar_url, full_name').eq('id', userId).single(),
+                supabase.from('app_users').select('avatar_url, full_name').eq('id', userId || '').single(),
                 wsQuery.order('created_at', { ascending: false })
             ]);
 
@@ -124,7 +115,7 @@ export const ContentPlan: React.FC = () => {
             const userData = userRes.data;
             const wsData = wsRes.data || [];
 
-            const updatedAvatar = userData?.avatar_url || freshAvatar;
+            const currentAvatar = userData?.avatar_url || currentUserAvatar;
             const freshName = userData?.full_name || localStorage.getItem('user_name') || 'Anda';
             setCurrentUserName(freshName);
 
@@ -151,19 +142,19 @@ export const ContentPlan: React.FC = () => {
             });
 
             // 4. Merge & Access Control
-            const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
-
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
-                    // Strict Access Control
-                    const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
-                    if (isOwner || userRole === 'Developer') return true;
+                    // Strict filtering already mostly done by query, but as safety:
+                    if (userRole === 'Developer') return true;
 
-                    if (!freshAvatar) return false;
+                    const isOwner = ws.owner_id === userId;
+                    if (isOwner) return true;
+
+                    if (!currentAvatar) return false;
                     const members: string[] = ws.members || [];
                     return members.some(m => {
-                        try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar) || m === freshAvatar; }
-                        catch { return m === freshAvatar; }
+                        try { return decodeURIComponent(m) === decodeURIComponent(currentAvatar) || m === currentAvatar; }
+                        catch { return m === currentAvatar; }
                     });
                 })
                 .map(ws => ({
@@ -426,6 +417,9 @@ export const ContentPlan: React.FC = () => {
         }));
     };
 
+    const currentUserId = localStorage.getItem('user_id');
+    const isDeveloper = userRole === 'Developer';
+
     return (
         <div className="space-y-8 pb-12">
             {/* Page Header */}
@@ -487,35 +481,37 @@ export const ContentPlan: React.FC = () => {
                                 />
                             )}
 
-                            {/* Menu Button (Absolute Top Right) */}
-                            <div className="absolute top-4 right-4 z-30">
-                                <button
-                                    className={`p-1.5 rounded-full transition-colors border-2 ${activeMenu === ws.id ? 'bg-slate-100 border-slate-200' : 'border-transparent hover:bg-slate-100'}`}
-                                    onClick={(e) => toggleMenu(e, ws.id)}
-                                >
-                                    <MoreHorizontal size={20} className="text-slate-500" />
-                                </button>
+                            {/* Menu Button (Absolute Top Right) - Only for Owner or Developer */}
+                            {(isDeveloper || currentUserId === ws.owner_id) && (
+                                <div className="absolute top-4 right-4 z-30">
+                                    <button
+                                        className={`p-1.5 rounded-full transition-colors border-2 ${activeMenu === ws.id ? 'bg-slate-100 border-slate-200' : 'border-transparent hover:bg-slate-100'}`}
+                                        onClick={(e) => toggleMenu(e, ws.id)}
+                                    >
+                                        <MoreHorizontal size={20} className="text-slate-500" />
+                                    </button>
 
-                                {activeMenu === ws.id && (
-                                    <div className="absolute right-0 top-full mt-2 w-56 bg-card border-2 border-border rounded-xl shadow-hard z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                        <button
-                                            onClick={(e) => handleOpenEditModal(e, ws)}
-                                            className="w-full text-left px-4 py-3 hover:bg-muted font-bold text-foreground flex items-center gap-3 transition-colors"
-                                        >
-                                            <Edit size={16} className="text-accent" />
-                                            Edit Info Workspace
-                                        </button>
-                                        <div className="h-[2px] bg-border w-full"></div>
-                                        <button
-                                            onClick={(e) => handleDeleteWorkspace(e, ws.id)}
-                                            className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-500 font-bold flex items-center gap-3 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                            Hapus Permanen
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                    {activeMenu === ws.id && (
+                                        <div className="absolute right-0 top-full mt-2 w-56 bg-card border-2 border-border rounded-xl shadow-hard z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                            <button
+                                                onClick={(e) => handleOpenEditModal(e, ws)}
+                                                className="w-full text-left px-4 py-3 hover:bg-muted font-bold text-foreground flex items-center gap-3 transition-colors"
+                                            >
+                                                <Edit size={16} className="text-accent" />
+                                                Edit Info Workspace
+                                            </button>
+                                            <div className="h-[2px] bg-border w-full"></div>
+                                            <button
+                                                onClick={(e) => handleDeleteWorkspace(e, ws.id)}
+                                                className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-500 font-bold flex items-center gap-3 transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                                Hapus Permanen
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Header Layout: Logo Left, Info Stack Right */}
                             <div className="flex gap-4 items-start mb-6 relative z-20 pr-8">

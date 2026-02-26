@@ -154,7 +154,7 @@ export const PresenceToast = () => {
 
     return (
         <div
-            className={`fixed top-24 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/95 backdrop-blur-md border-[2.5px] border-slate-900 shadow-hard transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] scale-90 sm:scale-100 whitespace-nowrap z-[1000] ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'
+            className={`fixed top-24 left-1/2 -translate-x-1/2 flex items-center gap-3 px-5 py-2.5 rounded-full bg-card backdrop-blur-md border-[2.5px] border-slate-900 shadow-hard transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] scale-90 sm:scale-100 whitespace-nowrap z-[1000] ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'
                 }`}
         >
             <div className={`w-3 h-3 rounded-full border-2 border-white ${getStatusColor(presence.status)} animate-pulse shrink-0`}></div>
@@ -164,7 +164,7 @@ export const PresenceToast = () => {
                     <img src={presence.avatar} alt="" className="w-8 h-8 rounded-full border-2 border-slate-200 object-cover shadow-sm" />
                 ) : (
                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200">
-                        <UserIcon size={14} className="text-slate-600" />
+                        <UserIcon size={14} className="text-slate-400" />
                     </div>
                 )}
             </div>

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { notifyDevelopers } from '../services/notificationService';
 import { supabase } from '../services/supabaseClient';
 import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info, Rocket } from 'lucide-react';
+import bcrypt from 'bcryptjs';
+import { logActivity } from '../services/activityService';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -127,12 +129,14 @@ export const Register: React.FC = () => {
                 }
             }
 
+            const hashedPassword = bcrypt.hashSync(form.password, 10);
+
             const insertData: any = {
                 id: newUserId,
                 full_name: form.fullName,
                 email: form.email,
                 username: form.username,
-                password: form.password,
+                password: hashedPassword,
                 role: 'Admin',
                 avatar_url: avatarUrl,
                 is_active: true,
@@ -141,7 +145,8 @@ export const Register: React.FC = () => {
                 subscription_package: selectedPackage?.name || 'Free',
                 is_verified: isVerified,
                 device_fingerprint: fingerprint,
-                member_limit: memberLimit
+                member_limit: memberLimit,
+                last_activity_at: now.toISOString()
             };
 
             if (subscriptionEnd) {
@@ -151,6 +156,13 @@ export const Register: React.FC = () => {
             const { error } = await supabase.from('app_users').insert([insertData]);
 
             if (error) { throw error; }
+
+            // Log activity
+            await logActivity({
+                user_id: newUserId,
+                action: 'VERIFY_USER', // or CREATE_ACCOUNT if I add that action
+                details: { package: insertData.subscription_package, email: form.email }
+            });
 
             setRegisteredUserId(newUserId);
             setSuccess(true);

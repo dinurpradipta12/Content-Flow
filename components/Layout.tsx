@@ -42,6 +42,7 @@ import { updateSupabaseConfig, checkConnectionLatency, supabase } from '../servi
 import { X } from 'lucide-react';
 import { UserPresence } from './UserPresence';
 import { PresenceToast } from './PresenceToast';
+import { FirstLoginModal } from './FirstLoginModal';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -428,9 +429,24 @@ create table if not exists public.global_broadcasts(
                             constraint global_broadcasts_pkey primary key(id)
 );
 
+--9. Table: Activity Logs
+create table if not exists public.activity_logs(
+    id uuid not null default gen_random_uuid(),
+    created_at timestamp with time zone not null default now(),
+    user_id uuid references public.app_users(id) on delete set null,
+    workspace_id uuid references public.workspaces(id) on delete cascade,
+    action text not null,
+    entity_type text,
+    entity_id uuid,
+    details jsonb,
+    constraint activity_logs_pkey primary key(id)
+);
+
 --Enable RLS & Realtime
 alter table public.global_broadcasts enable row level security;
+alter table public.activity_logs enable row level security;
 alter publication supabase_realtime add table global_broadcasts;
+alter publication supabase_realtime add table activity_logs;
 
 alter table public.app_config enable row level security;
 
@@ -439,12 +455,14 @@ drop policy if exists "Enable all access" on public.content_items;
 drop policy if exists "Enable all access" on public.app_users;
 drop policy if exists "Enable all access" on public.app_config;
 drop policy if exists "Enable all access" on public.global_broadcasts;
+drop policy if exists "Enable all access" on public.activity_logs;
 
 create policy "Enable all access" on public.workspaces for all using(true) with check(true);
 create policy "Enable all access" on public.content_items for all using(true) with check(true);
 create policy "Enable all access" on public.app_users for all using(true) with check(true);
 create policy "Enable all access" on public.app_config for all using(true) with check(true);
 create policy "Enable all access" on public.global_broadcasts for all using(true) with check(true);
+create policy "Enable all access" on public.activity_logs for all using(true) with check(true);
 
 --7. Team KPI Board Tables
 create table if not exists public.team_members(
@@ -678,6 +696,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Broadcast State
     const [activeBroadcast, setActiveBroadcast] = useState<{ id: string, title: string, message: string, type: string } | null>(null);
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+    const [showFirstLoginModal, setShowFirstLoginModal] = useState(false);
+
 
     // Status Modal State
     const [statusModal, setStatusModal] = useState<{
@@ -809,6 +829,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         // Global Config is now managed by AppConfigProvider
         fetchUserProfile();
+
+        // Check for first login setup
+        if (localStorage.getItem('is_first_login') === 'true') {
+            setShowFirstLoginModal(true);
+        }
+
 
         // 4. Listen for User Updates (Sync between Profile page and Layout)
         const handleUserUpdate = () => {
@@ -1396,6 +1422,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
+            { id: 'activity', path: '/admin/activity', label: 'Activity Log', icon: Presentation, adminOnly: true },
         ],
         'Superuser': [
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
@@ -2031,6 +2058,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
             )
             }
+
+            <FirstLoginModal
+                isOpen={showFirstLoginModal}
+                onComplete={() => {
+                    setShowFirstLoginModal(false);
+                    fetchUserProfile();
+                    // Optional: show a success toast or alert
+                    setStatusModal({
+                        isOpen: true,
+                        type: 'success',
+                        message: 'Profil Anda telah berhasil diperbarui. Selamat menggunakan Aruneeka!'
+                    });
+                }}
+            />
         </div >
     );
 };

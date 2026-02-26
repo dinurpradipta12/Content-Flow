@@ -7,6 +7,8 @@ import { Button } from '../components/ui/Button';
 import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save, Bell } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 import { useAppConfig } from '../components/AppConfigProvider';
+import bcrypt from 'bcryptjs';
+import { logActivity } from '../services/activityService';
 
 interface AppUser {
     id: string;
@@ -137,28 +139,23 @@ export const TeamManagement: React.FC = () => {
         else setRefreshing(true);
 
         try {
-            const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
-            const userRole = localStorage.getItem('user_role');
             const currentUserId = localStorage.getItem('user_id');
+            const userRole = localStorage.getItem('user_role');
             const isDeveloper = userRole === 'Developer';
-
-            const isBase64Avatar = currentUserAvatar?.startsWith('data:');
-            const shouldSkipAvatarFilter = isBase64Avatar && currentUserAvatar.length > 500;
+            const tenantId = localStorage.getItem('tenant_id') || currentUserId;
 
             // 1. Fetch Workspaces
             let wsQuery = supabase.from('workspaces').select('*');
+
             if (!isDeveloper) {
-                if (shouldSkipAvatarFilter) {
-                    wsQuery = wsQuery.eq('admin_id', tenantId);
-                } else {
-                    wsQuery = wsQuery.or(`admin_id.eq.${tenantId}${currentUserAvatar ? `,members.cs.{"${currentUserAvatar}"}` : ''}`);
-                }
+                // Strict visibility: only own or invited
+                wsQuery = wsQuery.or(`owner_id.eq.${currentUserId},members.cs.{"${currentUserAvatar}"}`);
             }
+
             const { data: wsData } = await wsQuery.order('name');
             const myWorkspaces = (wsData || []).filter(w =>
                 isDeveloper ||
                 w.owner_id === currentUserId ||
-                (w.admin_id === currentUserId && !w.owner_id) ||
                 (w.members || []).some((m: string) => {
                     try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
                     catch { return m === currentUserAvatar; }
@@ -328,10 +325,11 @@ export const TeamManagement: React.FC = () => {
         const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(inviteForm.full_name)}`;
 
         try {
+            const hashedPassword = bcrypt.hashSync(inviteForm.password, 10);
             let insertData: any = {
                 full_name: inviteForm.full_name,
                 username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
-                password: inviteForm.password,
+                password: hashedPassword,
                 role: 'Member',
                 avatar_url: avatarUrl,
                 is_active: true,
@@ -346,6 +344,14 @@ export const TeamManagement: React.FC = () => {
 
             const { data: newUser, error: insertError } = await supabase.from('app_users').insert([insertData]).select().single();
             if (insertError) throw insertError;
+
+            // Log activity
+            await logActivity({
+                action: 'INVITE_USER',
+                entity_type: 'user',
+                entity_id: newUser.id,
+                details: { fullName: inviteForm.full_name, workspace: selectedWorkspace.name }
+            });
 
             // Automatically append this member's avatar to selectedWorkspace.members
             const updatedMembers = [...(selectedWorkspace.members || []), avatarUrl];
@@ -408,18 +414,26 @@ export const TeamManagement: React.FC = () => {
 
         setSaving(true);
         try {
-            // Because passwords are plaintext in this MVP implementation
+            const hashedPassword = bcrypt.hashSync(newPassword, 10);
             const { error } = await supabase
                 .from('app_users')
-                .update({ password: newPassword })
+                .update({ password: hashedPassword })
                 .eq('id', selectedUser.id);
             if (error) throw error;
+
+            // Log activity
+            await logActivity({
+                action: 'CHANGE_PASSWORD',
+                entity_type: 'user',
+                entity_id: selectedUser.id,
+                details: { actor: 'Admin', target: selectedUser.full_name }
+            });
 
             window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Password berhasil diperbarui.' } }));
             setNewPassword('');
             fetchData();
-            // Automatically update the local selectedUser object so we can see it
-            setSelectedUser(prev => prev ? { ...prev, password: newPassword } : null);
+            // Automatically update the local selectedUser object 
+            setSelectedUser(prev => prev ? { ...prev, password: hashedPassword } : null);
         } catch (error) {
             console.error(error);
             window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengupdate password.' } }));
@@ -440,6 +454,14 @@ export const TeamManagement: React.FC = () => {
                 .update({ members: updatedMembers })
                 .eq('id', selectedWorkspace.id);
             if (error) throw error;
+
+            // Log activity
+            await logActivity({
+                action: 'UPDATE_WORKSPACE',
+                entity_type: 'user',
+                entity_id: selectedUser.id,
+                details: { info: `Removed ${selectedUser.full_name} from workspace ${selectedWorkspace.name}` }
+            });
 
             // Local state update before refresh to make it snappier
             setSelectedWorkspace(prev => prev ? { ...prev, members: updatedMembers } : null);
