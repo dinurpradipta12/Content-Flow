@@ -46,7 +46,9 @@ export interface ContentItem {
   workspaces?: {
     account_name: string;
     name: string;
-  }
+  };
+  gcal_event_id?: string;
+  publish_time?: string;
 }
 
 export interface Workspace {

@@ -20,24 +20,58 @@ interface WorkspaceData extends Workspace {
     period?: string;
     accountName?: string;
     logoUrl?: string;
+    profile_links?: Record<string, string>;
+    account_names?: Record<string, string>;
 }
 
-// Helper to render platform icons
-const renderPlatformIcon = (code: string) => {
-    const style = "p-1.5 rounded-lg border-2 border-slate-800 shadow-sm transition-transform hover:-translate-y-0.5 flex items-center justify-center";
-    switch (code) {
-        case 'IG': return <div key="IG" title="Instagram" className={`bg-pink-100 text-pink-600 ${style}`}><Instagram size={18} /></div>;
-        case 'TK': return <div key="TK" title="TikTok" className={`bg-black text-white ${style}`}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-            </svg>
-        </div>;
-        case 'LI': return <div key="LI" title="LinkedIn" className={`bg-blue-100 text-blue-700 ${style}`}><Linkedin size={18} /></div>;
-        case 'YT': return <div key="YT" title="YouTube" className={`bg-red-100 text-red-600 ${style}`}><Youtube size={18} /></div>;
-        case 'FB': return <div key="FB" title="Facebook" className={`bg-blue-50 text-blue-600 ${style}`}><Facebook size={18} /></div>;
-        case 'TH': return <div key="TH" title="Threads" className={`bg-slate-100 text-slate-800 ${style}`}><AtSign size={18} /></div>;
-        default: return null;
-    }
+// Helper to render platform icons as links
+const renderPlatformLink = (code: string, links?: Record<string, string>) => {
+    const profileUrl = links?.[code] || '#';
+    const style = "p-1.5 rounded-lg border-2 border-slate-800 shadow-sm transition-transform hover:-translate-y-1 hover:scale-110 flex items-center justify-center cursor-pointer";
+
+    const content = (() => {
+        switch (code) {
+            case 'IG': return <Instagram size={18} />;
+            case 'TK': return (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                </svg>
+            );
+            case 'LI': return <Linkedin size={18} />;
+            case 'YT': return <Youtube size={18} />;
+            case 'FB': return <Facebook size={18} />;
+            case 'TH': return <AtSign size={18} />;
+            default: return null;
+        }
+    })();
+
+    if (!content) return null;
+
+    const bgClass = (() => {
+        switch (code) {
+            case 'IG': return 'bg-pink-100 text-pink-600';
+            case 'TK': return 'bg-black text-white';
+            case 'LI': return 'bg-blue-100 text-blue-700';
+            case 'YT': return 'bg-red-100 text-red-600';
+            case 'FB': return 'bg-blue-50 text-blue-600';
+            case 'TH': return 'bg-slate-100 text-slate-800';
+            default: return '';
+        }
+    })();
+
+    return (
+        <a
+            key={code}
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${code}: ${profileUrl}`}
+            onClick={(e) => e.stopPropagation()} // Prevent card navigation
+            className={`${bgClass} ${style}`}
+        >
+            {content}
+        </a>
+    );
 };
 
 // Helper to get account badge style based on platform
@@ -100,7 +134,7 @@ export const ContentPlan: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
-            let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period');
+            let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period, profile_links, account_names');
 
             // Construct OR condition: Match by owner, user ID in members, avatar in members, OR owner is the admin (tenant)
             let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
@@ -176,6 +210,8 @@ export const ContentPlan: React.FC = () => {
                     accountName: ws.account_name,
                     logoUrl: ws.logo_url,
                     members: ws.members || [],
+                    profile_links: ws.profile_links || {},
+                    account_names: ws.account_names || {},
                     totalContent: statsMap[ws.id]?.total || 0,
                     publishedCount: statsMap[ws.id]?.published || 0
                 }));
@@ -237,8 +273,8 @@ export const ContentPlan: React.FC = () => {
             platforms: workspace.platforms,
             description: workspace.description || '',
             period: workspace.period || '',
-            profileLinks: {}, // TODO: Load existing links if available in DB
-            accountNames: { [workspace.platforms[0]]: workspace.accountName || '' } // Basic init
+            profileLinks: workspace.profile_links || {},
+            accountNames: workspace.account_names || { [workspace.platforms[0]]: workspace.accountName || '' }
         });
         setIsModalOpen(true);
         setActiveMenu(null);
@@ -305,7 +341,9 @@ export const ContentPlan: React.FC = () => {
                         logo_url: formData.logoUrl, // Base64 string is saved here
                         members: [userId, currentUserAvatar], // Include both ID and Avatar for reliability and dispay
                         admin_id: localStorage.getItem('tenant_id') || userId,
-                        owner_id: userId
+                        owner_id: userId,
+                        profile_links: formData.profileLinks,
+                        account_names: formData.accountNames
                     }
                 ]).select('id'); // Only select id to minimize response size (prevents "Failed to fetch" on large rows)
 
@@ -319,7 +357,9 @@ export const ContentPlan: React.FC = () => {
                     description: formData.description,
                     period: formData.period,
                     account_name: formData.accountName,
-                    logo_url: formData.logoUrl
+                    logo_url: formData.logoUrl,
+                    profile_links: formData.profileLinks,
+                    account_names: formData.accountNames
                 }).eq('id', editingId);
 
                 if (error) throw error;
@@ -546,11 +586,7 @@ export const ContentPlan: React.FC = () => {
                                 <div className="flex flex-col flex-1 min-w-0">
                                     {/* 1. Logos Sosmed */}
                                     <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                                        {ws.platforms.map((p, idx) => (
-                                            <React.Fragment key={idx}>
-                                                {renderPlatformIcon(p)}
-                                            </React.Fragment>
-                                        ))}
+                                        {ws.platforms.map((p, idx) => renderPlatformLink(p, ws.profile_links))}
                                     </div>
 
                                     {/* 2. Nama Content Plan Workspace */}

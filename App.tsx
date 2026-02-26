@@ -16,6 +16,7 @@ import { UserManagement } from './pages/UserManagement';
 import { DeveloperInbox } from './pages/DeveloperInbox';
 import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
+import { CalendarPage } from './pages/CalendarPage';
 import { Messages } from './pages/Messages';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
 import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
@@ -77,7 +78,8 @@ const App: React.FC = () => {
               <Route path="/" element={<Dashboard />} />
               <Route path="plan" element={<ContentPlan />} />
               <Route path="plan/:id" element={<ContentPlanDetail />} />
-              <Route path="approval" element={<Approval />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="approval" element={<RequireAdmin><Approval /></RequireAdmin>} />
               <Route path="insight" element={<ContentDataInsight />} />
               <Route path="carousel" element={<CarouselMaker />} />
               <Route path="script" element={<TeamKPIBoard />} />

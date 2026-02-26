@@ -7,6 +7,7 @@ import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
 import { useNotifications } from '../components/NotificationProvider';
+import { googleCalendarService } from '../services/googleCalendarService';
 
 // --- TYPES & HELPERS ---
 
@@ -849,6 +850,17 @@ export const ContentPlanDetail: React.FC = () => {
 
             setIsModalOpen(false);
             fetchData();
+
+            // Sync to Google Calendar (Silently)
+            try {
+                await googleCalendarService.syncEvent({
+                    id: currentContentId,
+                    ...payload,
+                    gcal_event_id: oldTask?.gcal_event_id
+                });
+            } catch (err) {
+                console.warn("Failed to sync to GCal", err);
+            }
         } catch (error) {
             console.error("Error saving content:", error);
             alert("Gagal menyimpan konten.");
@@ -1908,10 +1920,10 @@ export const ContentPlanDetail: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-bold text-foreground truncate">{member.name}</h4>
                                         <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${member.role === 'Developer'
-                                                ? 'bg-purple-100 text-purple-700 border-purple-200'
-                                                : member.role === 'Admin' || member.role === 'Owner'
-                                                    ? 'bg-amber-100 text-amber-700 border-amber-200'
-                                                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                                            ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                            : member.role === 'Admin' || member.role === 'Owner'
+                                                ? 'bg-amber-100 text-amber-700 border-amber-200'
+                                                : 'bg-slate-100 text-slate-500 border-slate-200'
                                             }`}>
                                             {member.role || 'Member'}
                                         </span>
@@ -1925,10 +1937,10 @@ export const ContentPlanDetail: React.FC = () => {
                                             <WifiOff size={10} className="text-mutedForeground" />
                                         )}
                                         <span className={`text-[10px] font-bold ${member.online_status === 'online'
-                                                ? 'text-emerald-600'
-                                                : member.online_status === 'idle'
-                                                    ? 'text-amber-600'
-                                                    : 'text-mutedForeground'
+                                            ? 'text-emerald-600'
+                                            : member.online_status === 'idle'
+                                                ? 'text-amber-600'
+                                                : 'text-mutedForeground'
                                             }`}>
                                             {member.online_status === 'online'
                                                 ? 'Sedang Aktif'

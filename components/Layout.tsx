@@ -327,6 +327,8 @@ create table if not exists public.workspaces(
                                     logo_url text null,
                                         members text[] null,
                                             invite_code text null,
+                                            profile_links jsonb default '{}'::jsonb,
+                                            account_names jsonb default '{}'::jsonb,
                                                 constraint workspaces_pkey primary key(id)
 );
 
@@ -346,8 +348,9 @@ create table if not exists public.content_items(
                                             pic text null,
                                                 approval text null,
                                                     content_link text null,
-                                                        metrics jsonb null,
-                                                            constraint content_items_pkey primary key(id),
+                                                            metrics jsonb null,
+                                                            gcal_event_id text null,
+                                                                constraint content_items_pkey primary key(id),
                                                                 constraint content_items_workspace_id_fkey foreign key(workspace_id) references workspaces(id) on delete cascade
 );
 
@@ -367,6 +370,9 @@ create table if not exists public.app_users(
                                 custom_status text,
                                     job_title text,
                                         email text,
+                                        gcal_access_token text,
+                                        gcal_refresh_token text,
+                                        gcal_token_expiry timestamptz,
                                             constraint app_users_pkey primary key(id)
 );
 
@@ -1457,7 +1463,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const NAV_ITEMS: Record<string, NavItem[]> = {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
-            { id: 'plan', path: '/plan', label: 'Content Plan', icon: CalendarDays },
+            { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
+            { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
             { id: 'approval', path: '/approval', label: 'Team Approval', icon: CheckCircle },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka Carousel', icon: ImageIcon },

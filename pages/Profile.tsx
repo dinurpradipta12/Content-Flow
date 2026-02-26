@@ -6,6 +6,8 @@ import {
 import { Card } from '../components/ui/Card';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { googleCalendarService } from '../services/googleCalendarService';
+import { Globe } from 'lucide-react';
 
 interface UserData {
   id: string;
@@ -21,6 +23,8 @@ interface UserData {
   subscription_start?: string;
   subscription_end?: string;
   subscription_code?: string;
+  gcal_access_token?: string;
+  gcal_token_expiry?: string;
 }
 
 interface KPI {
@@ -174,6 +178,18 @@ export const Profile: React.FC = () => {
       setIsEditingStatus(false);
       setIsEditingBio(false);
       setIsEditingEmail(false);
+    }
+  };
+
+  const handleConnectGCal = async () => {
+    try {
+      await googleCalendarService.connect();
+      // Refresh user data to show connection status
+      fetchProfileData();
+      window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Google Calendar Berhasil Terhubung!' } }));
+    } catch (err) {
+      console.error(err);
+      window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal terhubung ke Google Calendar.' } }));
     }
   };
 
@@ -387,6 +403,42 @@ export const Profile: React.FC = () => {
             <p className="text-[10px] font-bold text-mutedForeground text-center uppercase tracking-widest leading-relaxed">
               Klik upgrade untuk memilih paket baru dan memperpanjang akses eksklusif Anda.
             </p>
+          </div>
+        </Card>
+
+        {/* Integration Card */}
+        <Card title="Integrasi Layanan" icon={<Globe size={20} />} headerColor="pink">
+          <div className="space-y-4">
+            <div className={`p-4 rounded-2xl border-2 transition-all ${user.gcal_access_token ? 'bg-emerald-50 border-emerald-200 shadow-[4px_4px_0px_#10b981]' : 'bg-muted border-border shadow-sm'}`}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 ${user.gcal_access_token ? 'bg-white border-emerald-500 text-emerald-500' : 'bg-white border-slate-200 text-slate-400'}`}>
+                    <Calendar size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-slate-800">Google Calendar</h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {user.gcal_access_token ? 'Sudah Terhubung' : 'Belum Terhubung'}
+                    </p>
+                  </div>
+                </div>
+                {user.gcal_access_token ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase shadow-sm">
+                    <CheckCircle size={14} /> Terhubung
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleConnectGCal}
+                    className="px-4 py-2 bg-slate-900 text-white text-xs font-black rounded-xl border-2 border-slate-900 shadow-hard-mini hover:-translate-y-1 active:translate-y-0 transition-all"
+                  >
+                    Hubungkan
+                  </button>
+                )}
+              </div>
+              <p className="text-[9px] font-medium text-slate-500 mt-4 leading-relaxed">
+                Sinkronisasikan konten plan Anda secara otomatis ke Google Calendar sebagai event tugas agar tidak ada yang terlewat.
+              </p>
+            </div>
           </div>
         </Card>
 
