@@ -931,11 +931,13 @@ export const ContentPlanDetail: React.FC = () => {
                         <div className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                             <div className="flex -space-x-3">
                                 {workspaceData.members && workspaceData.members.length > 0 ? (
-                                    workspaceData.members.map((m, i) => (
-                                        <button key={i} onClick={() => navigate('/profile')} className="relative group focus:outline-none">
-                                            <img src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
-                                        </button>
-                                    ))
+                                    workspaceData.members
+                                        .filter(m => m.includes('/') || m.startsWith('data:'))
+                                        .map((m, i) => (
+                                            <button key={i} onClick={() => navigate('/profile')} className="relative group focus:outline-none">
+                                                <img src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
+                                            </button>
+                                        ))
                                 ) : (
                                     <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400">
                                         <User size={16} />
@@ -969,7 +971,7 @@ export const ContentPlanDetail: React.FC = () => {
                                 })()}
                             </div>
                             <span className="text-xs font-bold text-slate-400">
-                                {workspaceData.members?.length || 1} Member(s)
+                                {workspaceData.members?.filter(m => m.includes('/') || m.startsWith('data:')).length || 1} Member(s)
                             </span>
                         </div>
                     </div>

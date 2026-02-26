@@ -574,12 +574,12 @@ export const ContentPlan: React.FC = () => {
                             {/* 5. Footer Row: Members & Action (Pushed to bottom) */}
                             <div className="mt-auto pt-4 border-t-2 border-border border-dashed flex items-center justify-between gap-3 relative z-10">
                                 <div className="flex -space-x-2 overflow-hidden flex-shrink-0 items-center">
-                                    {ws.members.slice(0, 3).map((url, i) => (
+                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url, i) => (
                                         <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted object-cover z-20" alt="Member" />
                                     ))}
-                                    {ws.members.length > 3 && (
+                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length > 3 && (
                                         <div className="w-8 h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted flex items-center justify-center text-[10px] font-bold text-mutedForeground z-10 relative">
-                                            +{ws.members.length - 3}
+                                            +{(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length - 3}
                                         </div>
                                     )}
                                 </div>
