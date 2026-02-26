@@ -41,6 +41,7 @@ import { Workspace } from '../types';
 import { updateSupabaseConfig, checkConnectionLatency, supabase } from '../services/supabaseClient';
 import { X } from 'lucide-react';
 import { UserPresence } from './UserPresence';
+import { PresenceToast } from './PresenceToast';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -1587,7 +1588,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
 
                     <div className="flex items-center gap-3 md:gap-6">
-                        <div className="flex items-center gap-3 md:gap-4">
+                        <div className="flex items-center gap-3 md:gap-4 py-1 relative">
+                            <PresenceToast />
                             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
                                 <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
                                 <span className="hidden sm:inline">{getNetworkLabel()}</span>

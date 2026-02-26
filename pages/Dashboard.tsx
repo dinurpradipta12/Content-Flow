@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { RELIGION_CONTENT } from './religionData';
 import { Button } from '../components/ui/Button';
-import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, CheckCircle, Book, Settings, Clock, Layers, Circle, Check, TrendingUp, ArrowUpRight, Eye, MousePointerClick, CalendarCheck, TrendingDown } from 'lucide-react';
+import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, CheckCircle, Book, Settings, Clock, Layers, Circle, Check, TrendingUp, ArrowUpRight, Eye, MousePointerClick, CalendarCheck, TrendingDown, X, CheckCheck } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { useNotifications } from '../components/NotificationProvider';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -50,6 +51,8 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 
 export const Dashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { notifications, handleNotificationClick, unreadCount, markAllAsRead, clearAllNotifications } = useNotifications();
+    const [showNotifSidebar, setShowNotifSidebar] = useState(false);
     const userName = localStorage.getItem('user_name') || 'Aditya';
 
     // 1. Time Info
@@ -1061,6 +1064,59 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Notification Box */}
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3 mb-1">
+                            <Bell size={22} className="text-slate-800" strokeWidth={2.5} />
+                            <h2 className="text-lg font-bold font-heading text-slate-800">Notifikasi</h2>
+                        </div>
+                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                {notifications.length === 0 ? (
+                                    <div className="text-center py-10">
+                                        <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <Bell size={24} className="text-slate-300" />
+                                        </div>
+                                        <p className="text-slate-500 font-bold text-sm">Belum ada notifikasi baru.</p>
+                                    </div>
+                                ) : (
+                                    notifications.slice(0, 5).map(n => (
+                                        <div
+                                            key={n.id}
+                                            onClick={() => handleNotificationClick(n)}
+                                            className={`group flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer ${n.is_read ? 'border-slate-100 bg-slate-50 opacity-70' : 'border-slate-200 hover:border-slate-300 bg-card shadow-sm'}`}
+                                        >
+                                            <div className="shrink-0 relative mt-1">
+                                                {n.actor?.avatar_url ? (
+                                                    <img src={n.actor.avatar_url} className="w-8 h-8 rounded-full border border-slate-900 object-cover" alt="" />
+                                                ) : (
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white border border-slate-900 text-[10px] font-bold ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
+                                                        {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
+                                                    </div>
+                                                )}
+                                                {!n.is_read && (
+                                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start mb-0.5">
+                                                    <p className="text-[9px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
+                                                    <p className="text-[8px] font-bold text-slate-400 shrink-0 ml-2">
+                                                        {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                                <p className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{n.content}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            <Button className="w-full mt-6" variant="outline" size="sm" onClick={() => setShowNotifSidebar(true)}>
+                                Lihat Semua <ArrowRight size={14} className="ml-2" />
+                            </Button>
+                        </div>
+                    </div>
+
                     {/* KPI Targets Preview */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-3 mb-1">
@@ -1108,6 +1164,122 @@ export const Dashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Notification Sidebar Overlay */}
+            {showNotifSidebar && (
+                <div className="fixed inset-0 z-[10001] flex justify-end">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                        onClick={() => setShowNotifSidebar(false)}
+                    />
+
+                    {/* Sidebar Content */}
+                    <div className="relative w-full max-w-[450px] bg-card h-full border-l-4 border-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                        {/* Header */}
+                        <div className="p-6 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-hard-mini">
+                                    <Bell size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Semua Notifikasi</h2>
+                                    <p className="text-[10px] font-black text-accent uppercase tracking-widest">{unreadCount} belum dibaca</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowNotifSidebar(false)}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Top Action Bar */}
+                        <div className="px-6 py-4 border-b-2 border-slate-50 flex items-center justify-between bg-white">
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="text-[10px] font-black uppercase text-slate-600 hover:text-accent transition-colors flex items-center gap-2"
+                                >
+                                    <CheckCheck size={14} /> Tandai Semua Terbaca
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('Hapus semua notifikasi permanen?')) {
+                                            clearAllNotifications();
+                                        }
+                                    }}
+                                    className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2"
+                                >
+                                    <Trash2 size={14} /> Hapus Semua
+                                </button>
+                            </div>
+                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Terbaru</span>
+                        </div>
+
+                        {/* Notification List */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/30">
+                            {notifications.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-12">
+                                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-slate-200">
+                                        <Bell size={32} className="text-slate-200" />
+                                    </div>
+                                    <h3 className="text-slate-900 font-black uppercase tracking-tight mb-1">Hening Sekali...</h3>
+                                    <p className="text-xs font-bold text-slate-400">Belum ada notifikasi yang masuk untuk Anda saat ini.</p>
+                                </div>
+                            ) : (
+                                notifications.map(n => (
+                                    <div
+                                        key={n.id}
+                                        onClick={() => {
+                                            handleNotificationClick(n);
+                                        }}
+                                        className={`group flex items-start gap-4 p-5 rounded-[24px] border-2 transition-all cursor-pointer relative overflow-hidden ${n.is_read
+                                            ? 'border-slate-100 bg-white/50 opacity-60'
+                                            : 'border-slate-900 bg-white shadow-hard-mini hover:-translate-y-1'
+                                            }`}
+                                    >
+                                        <div className="shrink-0 relative">
+                                            {n.actor?.avatar_url ? (
+                                                <img src={n.actor.avatar_url} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" alt="" />
+                                            ) : (
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white border-2 border-slate-900 font-black text-sm ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
+                                                    {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
+                                                </div>
+                                            )}
+                                            {!n.is_read && (
+                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-pulse shadow-sm"></div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="text-[10px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
+                                                <p className="text-[9px] font-black text-slate-400 shrink-0 ml-2 bg-slate-50 px-2 py-0.5 rounded-full">
+                                                    {new Date(n.created_at).toLocaleDateString() === new Date().toLocaleDateString()
+                                                        ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                        : new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
+                                                    }
+                                                </p>
+                                            </div>
+                                            <p className="text-sm font-bold text-slate-700 leading-snug">
+                                                {n.content}
+                                            </p>
+
+                                            {/* Action Indicator on dark border cards */}
+                                            {!n.is_read && (
+                                                <div className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-900 uppercase">
+                                                    Lihat Detail <ArrowRight size={12} strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

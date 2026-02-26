@@ -29,6 +29,7 @@ interface NotificationContextType {
         type?: string;
         metadata?: any;
     }) => Promise<void>;
+    clearAllNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -74,15 +75,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     useEffect(() => {
         const unlockAudio = () => {
             if (audioRef.current) {
+                audioRef.current.muted = true;
                 audioRef.current.play().then(() => {
                     audioRef.current?.pause();
                     audioRef.current!.currentTime = 0;
+                    audioRef.current!.muted = false;
                 }).catch(() => { });
             }
             if (specialAudioRef.current) {
+                specialAudioRef.current.muted = true;
                 specialAudioRef.current.play().then(() => {
                     specialAudioRef.current?.pause();
                     specialAudioRef.current!.currentTime = 0;
+                    specialAudioRef.current!.muted = false;
                 }).catch(() => { });
             }
             console.log('Audio context unlocked for iPad/Mobile');
@@ -260,6 +265,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     };
 
+    const clearAllNotifications = async () => {
+        if (!currentUserId) return;
+
+        // Visual confirmation could be added here, but for now we follow the instruction
+        const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .eq('recipient_id', currentUserId);
+
+        if (!error) {
+            setNotifications([]);
+        }
+    };
+
     const handleNotificationClick = (notif: AppNotification) => {
         // Mark as read
         markAsRead(notif.id);
@@ -347,7 +366,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             markAllAsRead,
             handleNotificationClick,
             sendNotification,
-            notifyWorkspaceMembers
+            notifyWorkspaceMembers,
+            clearAllNotifications
         }}>
             {children}
 

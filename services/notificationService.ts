@@ -123,7 +123,7 @@ export const checkUpcomingContent = async () => {
                     .select('id')
                     .eq('recipient_id', userId)
                     .eq('type', 'CONTENT_H1')
-                    .filter('metadata->>content_id', 'eq', item.id)
+                    .contains('metadata', { content_id: item.id })
                     .maybeSingle();
 
                 if (!existing) {
