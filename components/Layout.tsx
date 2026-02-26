@@ -860,11 +860,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 .maybeSingle();
 
             if (data) {
-                const seenId = localStorage.getItem('seen_broadcast_id');
-                if (seenId !== data.id) {
-                    setActiveBroadcast(data);
-                    setShowBroadcastModal(true);
-                }
+                // We just sync the ID but don't show the modal automatically on refresh
+                // This satisfies the request to only show it "saat dikirimkan" (Realtime)
+                localStorage.setItem('seen_broadcast_id', data.id);
             }
         };
         fetchLatestBroadcast();
@@ -919,9 +917,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const clearSessionPreserveTheme = () => {
         const theme = localStorage.getItem('app_ui_theme');
         const customColor = localStorage.getItem('app_custom_color');
+        const seenBroadcast = localStorage.getItem('seen_broadcast_id');
         localStorage.clear();
         if (theme) localStorage.setItem('app_ui_theme', theme);
         if (customColor) localStorage.setItem('app_custom_color', customColor);
+        if (seenBroadcast) localStorage.setItem('seen_broadcast_id', seenBroadcast);
     };
 
     // --- BRANDING EFFECT (Title & Favicon) ---
@@ -1574,6 +1574,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Main Wrapper-Uses padding left instead of flex width sharing */}
             <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
+                <PresenceToast />
                 <header className="mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
@@ -1589,7 +1590,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     <div className="flex items-center gap-3 md:gap-6">
                         <div className="flex items-center gap-3 md:gap-4 py-1 relative">
-                            <PresenceToast />
                             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
                                 <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
                                 <span className="hidden sm:inline">{getNetworkLabel()}</span>
