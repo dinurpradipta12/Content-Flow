@@ -10,7 +10,8 @@ export const BottomBar: React.FC = () => {
         setCurrentPageIndex,
         addPage,
         duplicatePage,
-        deletePage
+        deletePage,
+        canvasSize
     } = useCarouselStore();
 
     const [isExpanded, setIsExpanded] = React.useState(true);
@@ -44,10 +45,10 @@ export const BottomBar: React.FC = () => {
                     {pages.map((page, index) => (
                         <div
                             key={page.id}
-                            className={`relative group shrink-0 h-full aspect-[4/5] border-4 border-slate-900 rounded-lg overflow-hidden cursor-pointer transition-all shadow-[4px_4px_0px_0px_#0f172a] ${currentPageIndex === index ? 'ring-4 ring-accent ring-offset-2 scale-105 z-10' : 'hover:scale-105'
+                            className={`relative group shrink-0 h-full border-4 border-slate-900 rounded-lg overflow-hidden cursor-pointer transition-all shadow-[4px_4px_0px_0px_#0f172a] ${currentPageIndex === index ? 'ring-4 ring-accent ring-offset-2 scale-105 z-10' : 'hover:scale-105'
                                 }`}
                             onClick={() => setCurrentPageIndex(index)}
-                            style={{ backgroundColor: page.background }}
+                            style={{ backgroundColor: page.background, aspectRatio: `${canvasSize.width}/${canvasSize.height}` }}
                         >
                             {page.previewUrl ? (
                                 <img src={page.previewUrl} alt={`Page ${index + 1}`} className="w-full h-full object-contain pointer-events-none" />
@@ -80,7 +81,8 @@ export const BottomBar: React.FC = () => {
 
                     <button
                         onClick={addPage}
-                        className="shrink-0 h-full aspect-[4/5] border-4 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-accent hover:bg-yellow-50 transition-all group"
+                        className="shrink-0 h-full border-4 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-accent hover:bg-yellow-50 transition-all group"
+                        style={{ aspectRatio: `${canvasSize.width}/${canvasSize.height}` }}
                     >
                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
                             <Plus size={20} />

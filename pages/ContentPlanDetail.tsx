@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
-import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X } from 'lucide-react';
+import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
@@ -14,6 +14,9 @@ interface Member {
     id: string;
     name: string;
     avatar: string;
+    role?: string;
+    online_status?: string;
+    last_activity_at?: string;
 }
 
 // Helper: Get Platform Icon
@@ -390,6 +393,58 @@ export const ContentPlanDetail: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [errorState, setErrorState] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+
+    // --- Presence Helpers ---
+    const getStatusDot = (status: string) => {
+        switch (status) {
+            case 'online': return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+            case 'idle': return 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]';
+            default: return 'bg-slate-400';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'online': return 'Online';
+            case 'idle': return 'Idle';
+            default: return 'Offline';
+        }
+    };
+
+    const formatLastSeen = (dateString?: string) => {
+        if (!dateString) return 'Tidak diketahui';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return 'Baru saja';
+        if (diffMin < 60) return `${diffMin}m lalu`;
+        const diffHour = Math.floor(diffMin / 60);
+        if (diffHour < 24) return `${diffHour}j lalu`;
+        return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    };
+
+    // Subscribing to Presence Changes
+    useEffect(() => {
+        const presenceChannel = supabase
+            .channel('workspace_user_presence')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'app_users' },
+                (payload: any) => {
+                    setTeamMembers(prev => prev.map(u =>
+                        u.id === payload.new.id
+                            ? { ...u, online_status: payload.new.online_status, last_activity_at: payload.new.last_activity_at }
+                            : u
+                    ));
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(presenceChannel);
+        };
+    }, []);
     const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
     const [teamMembers, setTeamMembers] = useState<Member[]>([]); // NEW STATE
 
@@ -399,6 +454,7 @@ export const ContentPlanDetail: React.FC = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [currentUserRole, setCurrentUserRole] = useState<string>('Member');
     const [currentUserPackage, setCurrentUserPackage] = useState<string>('');
+    const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -480,7 +536,7 @@ export const ContentPlanDetail: React.FC = () => {
                 supabase.from('app_users').select('avatar_url, role, subscription_package').eq('id', userId).single(),
                 supabase.from('workspaces').select('*').eq('id', id).single(),
                 supabase.from('app_users')
-                    .select('id, full_name, email, avatar_url')
+                    .select('id, full_name, email, avatar_url, role, online_status, last_activity_at')
                     .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`),
                 supabase.from('content_items')
                     .select('*')
@@ -542,7 +598,10 @@ export const ContentPlanDetail: React.FC = () => {
                 .map((u: any) => ({
                     id: u.id,
                     name: u.full_name || u.email || 'Unknown',
-                    avatar: u.avatar_url || ''
+                    avatar: u.avatar_url || '',
+                    role: u.role || 'Member',
+                    online_status: u.online_status || 'offline',
+                    last_activity_at: u.last_activity_at
                 }));
 
             setTeamMembers(mappedMembers);
@@ -931,13 +990,24 @@ export const ContentPlanDetail: React.FC = () => {
                         <div className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                             <div className="flex -space-x-3">
                                 {workspaceData.members && workspaceData.members.length > 0 ? (
-                                    workspaceData.members
-                                        .filter(m => m.includes('/') || m.startsWith('data:'))
-                                        .map((m, i) => (
-                                            <button key={i} onClick={() => navigate('/profile')} className="relative group focus:outline-none">
-                                                <img src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
+                                    <>
+                                        {workspaceData.members
+                                            .filter(m => m.includes('/') || m.startsWith('data:'))
+                                            .slice(0, 3)
+                                            .map((m, i) => (
+                                                <button key={i} onClick={() => setIsMemberModalOpen(true)} className="relative group focus:outline-none">
+                                                    <img src={m} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
+                                                </button>
+                                            ))}
+                                        {workspaceData.members.filter(m => m.includes('/') || m.startsWith('data:')).length > 3 && (
+                                            <button
+                                                onClick={() => setIsMemberModalOpen(true)}
+                                                className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold z-10 relative hover:bg-slate-200 transition-colors"
+                                            >
+                                                +{workspaceData.members.filter(m => m.includes('/') || m.startsWith('data:')).length - 3}
                                             </button>
-                                        ))
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400">
                                         <User size={16} />
@@ -970,15 +1040,24 @@ export const ContentPlanDetail: React.FC = () => {
                                     );
                                 })()}
                             </div>
-                            <span className="text-xs font-bold text-slate-400">
-                                {workspaceData.members?.filter(m => m.includes('/') || m.startsWith('data:')).length || 1} Member(s)
-                            </span>
                         </div>
                     </div>
 
                     {/* RIGHT SIDE: Actions & Account Info */}
                     <div className="flex flex-col items-end gap-3 w-full lg:w-auto mt-4 lg:mt-0">
                         <div className="flex items-center gap-3">
+                            {/* Member Count Button Added Here */}
+                            <button
+                                onClick={() => setIsMemberModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 border-2 border-slate-200 rounded-xl hover:bg-slate-200 transition-all group"
+                            >
+                                <Users size={16} className="text-slate-500 group-hover:text-slate-700" />
+                                <span className="text-xs font-black text-slate-600">
+                                    {workspaceData.members?.filter(m => m.includes('/') || m.startsWith('data:')).length || 1} Member(s)
+                                </span>
+                                <ChevronDown size={14} className="text-slate-400" />
+                            </button>
+
                             <div className="flex items-center gap-2 bg-muted p-1 rounded-lg border border-border">
                                 <button
                                     onClick={() => setViewMode('kanban')}
@@ -1789,6 +1868,93 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Member List Modal */}
+            <Modal
+                isOpen={isMemberModalOpen}
+                onClose={() => setIsMemberModalOpen(false)}
+            >
+                <div className="p-1">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center border-2 border-accent/20">
+                            <Users size={24} className="text-accent" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-foreground">Anggota Workspace</h3>
+                            <p className="text-xs font-bold text-mutedForeground">Tim yang berkolaborasi di {workspaceData.name}</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+                        {teamMembers.map((member) => (
+                            <div
+                                key={member.id}
+                                className="flex items-center gap-4 p-3 rounded-2xl border-2 border-slate-100 hover:border-slate-200 transition-all bg-card shadow-sm"
+                            >
+                                <div className="relative shrink-0">
+                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 overflow-hidden bg-slate-100">
+                                        {member.avatar ? (
+                                            <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                <User size={20} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-card ${getStatusDot(member.online_status || 'offline')}`}></div>
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="font-bold text-foreground truncate">{member.name}</h4>
+                                        <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${member.role === 'Developer'
+                                                ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                                : member.role === 'Admin' || member.role === 'Owner'
+                                                    ? 'bg-amber-100 text-amber-700 border-amber-200'
+                                                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                                            }`}>
+                                            {member.role || 'Member'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        {member.online_status === 'online' ? (
+                                            <Wifi size={10} className="text-emerald-500" />
+                                        ) : member.online_status === 'idle' ? (
+                                            <Clock size={10} className="text-amber-500" />
+                                        ) : (
+                                            <WifiOff size={10} className="text-mutedForeground" />
+                                        )}
+                                        <span className={`text-[10px] font-bold ${member.online_status === 'online'
+                                                ? 'text-emerald-600'
+                                                : member.online_status === 'idle'
+                                                    ? 'text-amber-600'
+                                                    : 'text-mutedForeground'
+                                            }`}>
+                                            {member.online_status === 'online'
+                                                ? 'Sedang Aktif'
+                                                : member.online_status === 'idle'
+                                                    ? 'Sedang Idle'
+                                                    : `Terakhir aktif: ${formatLastSeen(member.last_activity_at)}`
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-6">
+                        <Button
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => setIsMemberModalOpen(false)}
+                        >
+                            Tutup
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
 
             <style>{`
                 .wipe-mask {

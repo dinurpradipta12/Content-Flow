@@ -340,6 +340,19 @@ export const Editor: React.FC = () => {
     useEffect(() => {
         if (!canvasRef.current) return;
 
+        // --- GLOBAL FABRIC SETTINGS: Enhance UI Selection visibility ---
+        fabric.FabricObject.prototype.set({
+            transparentCorners: false,
+            cornerColor: '#ffffff',
+            borderColor: '#3b82f6', // High contrast blue
+            cornerStrokeColor: '#000000', // Black stroke for visibility on white
+            cornerSize: 14,
+            cornerStyle: 'circle',
+            borderScaleFactor: 3, // Very thick border
+            padding: 10,
+            borderDashArray: null
+        });
+
         setHistory([]);
         setHistoryIndex(-1);
         historyRef.current = [];

@@ -707,7 +707,7 @@ export const TeamManagement: React.FC = () => {
                                             </div>
                                             <div className="min-w-0">
                                                 <h4 className="font-heading font-black text-foreground truncate">{ws.name}</h4>
-                                                <p className="text-xs font-bold text-slate-500">{ws.members?.length || 0} Members</p>
+                                                <p className="text-xs font-bold text-slate-500">{ws.members?.filter((m: string) => m.includes('/') || m.startsWith('data:')).length || 0} Members</p>
                                             </div>
                                         </div>
                                         <ChevronRight size={20} className={selectedWorkspace?.id === ws.id ? 'text-accent' : 'text-slate-300'} />
