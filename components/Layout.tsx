@@ -32,7 +32,8 @@ import {
     MessageSquare,
     Inbox,
     AlertTriangle,
-    BarChart3
+    BarChart3,
+    Copy
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -381,10 +382,15 @@ alter table public.app_users add column if not exists religion text;
 alter table public.app_users add column if not exists city text;
 alter table public.app_users add column if not exists timezone text;
 alter table public.app_users add column if not exists subscription_package text;
+alter table public.app_users add column if not exists last_activity_at timestamptz default null;
 
 --Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
 alter table public.app_users alter column subscription_start type timestamptz using subscription_start:: timestamptz;
 alter table public.app_users alter column subscription_end type timestamptz using subscription_end:: timestamptz;
+
+-- Fix: Set last_activity_at to NULL for users who haven't logged in yet
+alter table public.app_users alter column last_activity_at drop default;
+update public.app_users set last_activity_at = null where last_activity_at = created_at;
 
 --4. Table: App Config(Global Branding)
 create table if not exists public.app_config(
@@ -445,8 +451,23 @@ create table if not exists public.activity_logs(
 --Enable RLS & Realtime
 alter table public.global_broadcasts enable row level security;
 alter table public.activity_logs enable row level security;
-alter publication supabase_realtime add table global_broadcasts;
-alter publication supabase_realtime add table activity_logs;
+do $$
+begin
+  if not exists(
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'global_broadcasts'
+  ) then
+    alter publication supabase_realtime add table public.global_broadcasts;
+  end if;
+
+  if not exists(
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'activity_logs'
+  ) then
+    alter publication supabase_realtime add table public.activity_logs;
+  end if;
+end
+$$;
 
 alter table public.app_config enable row level security;
 
@@ -603,7 +624,15 @@ create table if not exists public.custom_fonts(
 );
 
 -- MIGRATION: Tambahkan constraint jika belum ada
-alter table public.custom_fonts add constraint custom_fonts_user_name_unique unique(user_id, name);
+do $$
+begin
+  if not exists(
+    select 1 from pg_constraint where conname = 'custom_fonts_user_name_unique'
+  ) then
+    alter table public.custom_fonts add constraint custom_fonts_user_name_unique unique(user_id, name);
+  end if;
+end
+$$;
 
 create table if not exists public.carousel_presets(
     id uuid not null default gen_random_uuid(),
@@ -640,8 +669,23 @@ create policy "Enable all access" on public.carousel_presets for all using(true)
 create policy "Enable all access" on public.carousel_projects for all using(true) with check(true);
 
 -- Enable Realtime for Carousel
-alter publication supabase_realtime add table public.custom_fonts;
-alter publication supabase_realtime add table public.carousel_projects;
+do $$
+begin
+  if not exists(
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'custom_fonts'
+  ) then
+    alter publication supabase_realtime add table public.custom_fonts;
+  end if;
+
+  if not exists(
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'carousel_projects'
+  ) then
+    alter publication supabase_realtime add table public.carousel_projects;
+  end if;
+end
+$$;
 
 `;
 
@@ -1759,6 +1803,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             <Input label="Supabase Anon Key" value={sbConfig.key} onChange={(e) => setSbConfig({ ...sbConfig, key: e.target.value })} type="password" />
                                             <div className="flex justify-end"><Button type="submit" className="bg-tertiary text-slate-800" icon={<CheckCircle size={16} />}>Update Koneksi</Button></div>
                                         </form>
+                                        <div className="mt-8 pt-6 border-t border-slate-200">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="font-bold text-xs text-mutedForeground uppercase tracking-widest">Database Schema Sync (SQL)</label>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(INITIAL_SQL_SCRIPT);
+                                                        alert("SQL Script berhasil disalin!");
+                                                    }}
+                                                    className="text-[10px] font-black text-accent underline flex items-center gap-1"
+                                                >
+                                                    <Copy size={10} /> SALIN SQL
+                                                </button>
+                                            </div>
+                                            <div className="bg-slate-900 rounded-xl p-4 overflow-hidden relative">
+                                                <pre className="text-[10px] text-slate-300 font-mono overflow-auto max-h-[200px] custom-scrollbar selection:bg-accent/30 selection:text-white">
+                                                    {INITIAL_SQL_SCRIPT}
+                                                </pre>
+                                                <div className="absolute bottom-4 right-4 animate-pulse">
+                                                    <Database size={16} className="text-slate-700" />
+                                                </div>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 font-bold mt-2 leading-tight">
+                                                Gunakan script ini di Supabase SQL Editor jika fitur aplikasi tidak berjalan semestinya setelah update.
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>

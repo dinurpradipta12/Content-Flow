@@ -173,6 +173,7 @@ export const UserManagement: React.FC = () => {
                 is_active: true,
                 subscription_start: now,
                 subscription_package: form.subscription_package || 'Free',
+                last_activity_at: null, // Explicit null to trigger FirstLoginModal on first login
             };
             if (form.subscription_end) {
                 insertData.subscription_end = new Date(form.subscription_end).toISOString();

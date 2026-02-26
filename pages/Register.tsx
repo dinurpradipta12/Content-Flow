@@ -146,7 +146,7 @@ export const Register: React.FC = () => {
                 is_verified: isVerified,
                 device_fingerprint: fingerprint,
                 member_limit: memberLimit,
-                last_activity_at: now.toISOString()
+                last_activity_at: null // Set to null so FirstLoginModal triggers on first login
             };
 
             if (subscriptionEnd) {
