@@ -14,14 +14,15 @@ import {
     MoreHorizontal,
     Plus,
     Search,
-    Clock,
-    CheckCircle2
+    Clock
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { supabase } from '../services/supabaseClient';
 import { ContentItem, ContentStatus, Platform } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { Modal } from '../components/ui/Modal';
+import { Input, Select } from '../components/ui/Input';
 
 interface WorkspaceFilter {
     id: string;
@@ -40,6 +41,11 @@ export const CalendarPage: React.FC = () => {
     const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
     const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Detail Modal
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [updating, setUpdating] = useState(false);
 
     const userId = localStorage.getItem('user_id');
 
@@ -156,6 +162,54 @@ export const CalendarPage: React.FC = () => {
         }
     };
 
+    const getPlatformCardStyle = (platform: string) => {
+        switch (platform) {
+            case 'Instagram': return 'bg-pink-50 border-pink-200 text-pink-700 hover:border-pink-400 dark:bg-pink-900/20 dark:border-pink-800 dark:text-pink-300';
+            case 'TikTok': return 'bg-slate-900 border-slate-800 text-white hover:border-slate-600 shadow-hard-mini dark:bg-slate-800 dark:border-slate-700';
+            case 'LinkedIn': return 'bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300';
+            case 'YouTube': return 'bg-red-50 border-red-200 text-red-700 hover:border-red-400 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
+            case 'Facebook': return 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:border-indigo-400 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-300';
+            case 'Threads': return 'bg-slate-50 border-slate-300 text-slate-800 hover:border-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
+            default: return 'bg-white border-slate-200 text-slate-700 hover:border-accent dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
+        }
+    };
+
+    const getTypeIcon = (type: string) => {
+        const t = (type || '').toLowerCase();
+        const size = 10;
+        if (t.includes('video') || t.includes('reels')) return <Video size={size} />;
+        return <Layers size={size} />;
+    };
+
+    const handleOpenDetail = (item: any) => {
+        setSelectedItem(item);
+        setIsDetailOpen(true);
+    };
+
+    const handleUpdateStatus = async (newStatus: string) => {
+        if (!selectedItem) return;
+        setUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('content_items')
+                .update({ status: newStatus })
+                .eq('id', selectedItem.id);
+
+            if (error) throw error;
+
+            // Update local state
+            setContentItems(prev => prev.map(item =>
+                item.id === selectedItem.id ? { ...item, status: newStatus } : item
+            ));
+            setSelectedItem({ ...selectedItem, status: newStatus });
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Status konten diperbarui!' } }));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     return (
         <div className="flex h-[calc(100vh-120px)] gap-6 overflow-hidden">
             {/* Sidebar Filters */}
@@ -176,13 +230,13 @@ export const CalendarPage: React.FC = () => {
                                         key={ws.id}
                                         onClick={() => toggleWorkspace(ws.id)}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 transition-all font-bold text-sm ${selectedWorkspaces.includes(ws.id)
-                                                ? 'bg-slate-50 border-slate-200 text-slate-900 shadow-sm'
-                                                : 'bg-transparent border-transparent text-slate-400 opacity-60'
+                                            ? 'bg-slate-100/50 border-slate-200 text-slate-900 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white'
+                                            : 'bg-transparent border-transparent text-slate-400 opacity-60'
                                             }`}
                                     >
                                         <div className={`w-3 h-3 rounded-full ${ws.color === 'violet' ? 'bg-accent' :
-                                                ws.color === 'pink' ? 'bg-secondary' :
-                                                    ws.color === 'yellow' ? 'bg-tertiary' : 'bg-emerald-400'
+                                            ws.color === 'pink' ? 'bg-secondary' :
+                                                ws.color === 'yellow' ? 'bg-tertiary' : 'bg-emerald-400'
                                             }`} />
                                         <span className="truncate">{ws.name}</span>
                                     </button>
@@ -199,8 +253,8 @@ export const CalendarPage: React.FC = () => {
                                         key={p}
                                         onClick={() => togglePlatform(p)}
                                         className={`flex items-center gap-2 px-2 py-2 rounded-lg border-2 transition-all font-bold text-[10px] ${selectedPlatforms.includes(p)
-                                                ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
-                                                : 'bg-transparent border-transparent text-slate-400'
+                                            ? 'bg-accent/10 border-accent/30 text-accent shadow-sm'
+                                            : 'bg-transparent border-transparent text-slate-400'
                                             }`}
                                     >
                                         <div className="shrink-0">{getPlatformIcon(p)}</div>
@@ -271,10 +325,10 @@ export const CalendarPage: React.FC = () => {
                 </div>
 
                 {/* Calendar Grid Body */}
-                <div className="flex-1 grid grid-cols-7 grid-rows-5 overflow-y-auto scrollbar-hide">
+                <div className="flex-1 grid grid-cols-7 auto-rows-min overflow-y-auto scrollbar-hide">
                     {/* Empty slots for previous month */}
                     {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                        <div key={`prev-${i}`} className="border-r border-b border-border bg-slate-50/50" />
+                        <div key={`prev-${i}`} className="border-r border-b border-border bg-slate-100/30 dark:bg-slate-950/50" />
                     ))}
 
                     {/* Actual month days */}
@@ -284,43 +338,45 @@ export const CalendarPage: React.FC = () => {
                         const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
 
                         return (
-                            <div key={day} className={`min-h-[140px] border-r border-b border-border p-2 group bg-card hover:bg-slate-50/50 transition-colors flex flex-col gap-1.5`}>
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-black transition-all ${isToday ? 'bg-accent text-white shadow-[0_4px_10px_rgba(59,130,246,0.3)]' : 'text-slate-400 group-hover:text-slate-900 group-hover:scale-110'
+                            <div key={day} className={`min-h-[140px] border-r border-b border-border p-1.5 group bg-card hover:bg-slate-50/50 transition-colors flex flex-col gap-1 overflow-hidden relative`}>
+                                <div className="flex justify-between items-center mb-0.5">
+                                    <span className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-black transition-all ${isToday ? 'bg-accent text-white shadow-[0_4px_10px_rgba(59,130,246,0.3)]' : 'text-slate-400 group-hover:text-slate-900 group-hover:scale-110 dark:text-slate-500'
                                         }`}>
                                         {day}
                                     </span>
-                                    {dayItems.length > 0 && <span className="text-[10px] font-black text-slate-400 px-1.5 py-0.5 bg-muted rounded-full border border-border">{dayItems.length}</span>}
+                                    {dayItems.length > 0 && <span className="text-[10px] font-black text-slate-400 px-1.5 py-0.5 bg-muted rounded-full border border-border dark:text-slate-500">{dayItems.length}</span>}
                                 </div>
 
-                                <div className="space-y-1.5 overflow-hidden">
-                                    {dayItems.slice(0, 3).map((item, idx) => (
+                                <div className="space-y-1">
+                                    {dayItems.slice(0, 5).map((item, idx) => (
                                         <div
                                             key={item.id}
-                                            onClick={() => navigate(`/plan/${item.workspace_id}`)}
-                                            className="group/item relative bg-white border-2 border-slate-100 rounded-lg p-1.5 shadow-sm hover:shadow-md hover:border-accent hover:-translate-y-0.5 transition-all cursor-pointer"
+                                            onClick={() => handleOpenDetail(item)}
+                                            className={`group/item relative border-[1.5px] rounded-lg p-1.5 shadow-sm transition-all cursor-pointer z-10 hover:z-20 hover:scale-[1.02] ${getPlatformCardStyle(item.platform)}`}
                                         >
                                             <div className="flex items-center gap-1.5 mb-1">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(item.status)} shadow-[0_0_8px_currentColor]`} />
-                                                <div className="text-slate-900 truncate font-black text-[9px] w-full" title={item.title}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(item.status)} shadow-[0_0_8px_currentColor] shrink-0`} />
+                                                <div className="font-black text-[10px] leading-tight line-clamp-1 w-full" title={item.title}>
                                                     {item.title}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between opacity-80">
                                                 <div className="flex items-center gap-1">
-                                                    <span className="text-amber-500 font-bold">{getPlatformIcon(item.platform)}</span>
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase truncate max-w-[50px]">{item.platform}</span>
+                                                    <span className="font-bold scale-75 origin-left">{getPlatformIcon(item.platform)}</span>
+                                                    <span className="text-[7px] font-black uppercase tracking-wider">{item.platform}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1 text-[8px] font-black text-slate-400">
-                                                    <Clock size={8} />
-                                                    {item.publish_time || '09:00'}
-                                                </div>
+                                                {item.type && (
+                                                    <div className="flex items-center gap-1 text-[7px] font-bold">
+                                                        <span className="scale-75 origin-right">{getTypeIcon(item.type)}</span>
+                                                        <span className="uppercase">{item.type}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
-                                    {dayItems.length > 3 && (
-                                        <div className="text-center text-[8px] font-black text-slate-400 py-1 cursor-pointer hover:text-accent">
-                                            + {dayItems.length - 3} more content
+                                    {dayItems.length > 5 && (
+                                        <div className="text-center text-[7px] font-black text-slate-400 py-0.5 cursor-pointer hover:text-accent">
+                                            + {dayItems.length - 5} more
                                         </div>
                                     )}
                                 </div>
@@ -330,10 +386,77 @@ export const CalendarPage: React.FC = () => {
 
                     {/* Empty slots for next month */}
                     {Array.from({ length: 35 - (daysInMonth + firstDayOfMonth) }).map((_, i) => (
-                        <div key={`next-${i}`} className="border-r border-b border-border bg-slate-50/50" />
+                        <div key={`next-${i}`} className="border-r border-b border-border bg-slate-100/30 dark:bg-slate-950/50" />
                     ))}
                 </div>
             </main>
+
+            {/* Content Detail Modal */}
+            <Modal
+                isOpen={isDetailOpen}
+                onClose={() => setIsDetailOpen(false)}
+                title="Content Details"
+            >
+                {selectedItem && (
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4 py-4 border-b border-border">
+                            <div className={`p-4 rounded-2xl border-4 border-slate-900 shadow-hard ${getPlatformCardStyle(selectedItem.platform)}`}>
+                                {getPlatformIcon(selectedItem.platform)}
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900">{selectedItem.title}</h3>
+                                <p className="text-slate-500 font-bold flex items-center gap-2">
+                                    <Layers size={14} className="text-accent" />
+                                    {selectedItem.workspaces?.name} · {selectedItem.platform}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Status Konten</label>
+                                <Select
+                                    value={selectedItem.status}
+                                    onChange={(e) => handleUpdateStatus(e.target.value)}
+                                    disabled={updating}
+                                >
+                                    <option value="Draft">Draft</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Review">Review</option>
+                                    <option value="Scheduled">Scheduled</option>
+                                    <option value="Published">Published</option>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tipe Konten</label>
+                                <div className="px-4 py-2.5 bg-muted rounded-xl border border-border font-bold text-slate-700 capitalize">
+                                    {selectedItem.type || 'Standard'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {selectedItem.script && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Script / Caption</label>
+                                <div className="p-4 bg-muted rounded-2xl border border-border text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                                    {selectedItem.script}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-6 border-t border-border">
+                            <Button
+                                variant="outline"
+                                color="slate"
+                                onClick={() => navigate(`/plan/${selectedItem.workspace_id}`)}
+                            >
+                                Pergi ke Workspace
+                            </Button>
+                            <Button onClick={() => setIsDetailOpen(false)}>Tutup</Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };
