@@ -428,7 +428,9 @@ export const ContentPlan: React.FC = () => {
     };
 
     const currentUserId = localStorage.getItem('user_id');
+    const tenantIdForEdit = localStorage.getItem('tenant_id');
     const isDeveloper = userRole === 'Developer';
+    const isAdmin = ['Admin', 'Owner'].includes(userRole);
 
     return (
         <div className="space-y-8 pb-12">
@@ -491,8 +493,8 @@ export const ContentPlan: React.FC = () => {
                                 />
                             )}
 
-                            {/* Menu Button (Absolute Top Right) - Only for Owner or Developer */}
-                            {(isDeveloper || currentUserId === ws.owner_id) && (
+                            {/* Menu Button (Absolute Top Right) - For Owner, Admin, or Developer */}
+                            {(isDeveloper || isAdmin || currentUserId === ws.owner_id || tenantIdForEdit === ws.owner_id) && (
                                 <div className="absolute top-4 right-4 z-30">
                                     <button
                                         className={`p-1.5 rounded-full transition-colors border-2 ${activeMenu === ws.id ? 'bg-slate-100 border-slate-200' : 'border-transparent hover:bg-slate-100'}`}
@@ -510,14 +512,18 @@ export const ContentPlan: React.FC = () => {
                                                 <Edit size={16} className="text-accent" />
                                                 Edit Info Workspace
                                             </button>
-                                            <div className="h-[2px] bg-border w-full"></div>
-                                            <button
-                                                onClick={(e) => handleDeleteWorkspace(e, ws.id)}
-                                                className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-500 font-bold flex items-center gap-3 transition-colors"
-                                            >
-                                                <Trash2 size={16} />
-                                                Hapus Permanen
-                                            </button>
+                                            {(isDeveloper || currentUserId === ws.owner_id) && (
+                                                <>
+                                                    <div className="h-[2px] bg-border w-full"></div>
+                                                    <button
+                                                        onClick={(e) => handleDeleteWorkspace(e, ws.id)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-red-500/10 text-red-500 font-bold flex items-center gap-3 transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                        Hapus Permanen
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </div>
