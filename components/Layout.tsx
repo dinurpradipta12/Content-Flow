@@ -310,390 +310,7 @@ interface LayoutProps {
     children: React.ReactNode;
 }
 
-// --- SQL TEMPLATE FOR USER CONVENIENCE ---
-const INITIAL_SQL_SCRIPT = `-- Script Update Database(Jalankan di Supabase SQL Editor)
-
---1. Table: Workspaces
-create table if not exists public.workspaces(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        name text not null,
-            role text null,
-                platforms text[] null,
-                    color text null,
-                        description text null,
-                            period text null,
-                                account_name text null,
-                                    logo_url text null,
-                                        members text[] null,
-                                            invite_code text null,
-                                            profile_links jsonb default '{}'::jsonb,
-                                            account_names jsonb default '{}'::jsonb,
-                                                constraint workspaces_pkey primary key(id)
-);
-
---2. Table: Content Items
-create table if not exists public.content_items(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        workspace_id uuid null,
-            title text not null,
-                pillar text null,
-                    type text null,
-                        platform text null,
-                            status text null,
-                                priority text null,
-                                    date date null,
-                                        script text null,
-                                            pic text null,
-                                                approval text null,
-                                                    content_link text null,
-                                                            metrics jsonb null,
-                                                            gcal_event_id text null,
-                                                                constraint content_items_pkey primary key(id),
-                                                                constraint content_items_workspace_id_fkey foreign key(workspace_id) references workspaces(id) on delete cascade
-);
-
---MIGRATION: Tambahkan kolom metrics jika tabel sudah ada
-alter table public.content_items add column if not exists metrics jsonb null;
-
---3. Table: App Users
-create table if not exists public.app_users(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        username text not null unique,
-            password text not null,
-                role text default 'Member',
-                    full_name text,
-                        avatar_url text,
-                            bio text,
-                                custom_status text,
-                                    job_title text,
-                                        email text,
-                                        gcal_access_token text,
-                                        gcal_refresh_token text,
-                                        gcal_token_expiry timestamptz,
-                                            constraint app_users_pkey primary key(id)
-);
-
---MIGRATION: Tambahkan kolom jika tabel sudah ada(Anti Error)
-alter table public.app_users add column if not exists job_title text;
-alter table public.app_users add column if not exists email text;
-alter table public.app_users add column if not exists is_active boolean default true;
-alter table public.app_users add column if not exists subscription_start timestamptz default current_timestamp;
-alter table public.app_users add column if not exists subscription_end timestamptz;
-alter table public.app_users add column if not exists subscription_code text;
-alter table public.app_users add column if not exists is_verified boolean default false;
-alter table public.app_users add column if not exists religion text;
-alter table public.app_users add column if not exists city text;
-alter table public.app_users add column if not exists timezone text;
-alter table public.app_users add column if not exists subscription_package text;
-alter table public.app_users add column if not exists last_activity_at timestamptz default null;
-
---Mengubah tipe kolom yang sudah ada jika masih bertipe "date"
-alter table public.app_users alter column subscription_start type timestamptz using subscription_start:: timestamptz;
-alter table public.app_users alter column subscription_end type timestamptz using subscription_end:: timestamptz;
-
--- Fix: Set last_activity_at to NULL for users who haven't logged in yet
-alter table public.app_users alter column last_activity_at drop default;
-update public.app_users set last_activity_at = null where last_activity_at = created_at;
-
---4. Table: App Config(Global Branding)
-create table if not exists public.app_config(
-    id int not null default 1,
-    app_name text,
-    app_logo text,
-    app_favicon text,
-    updated_at timestamp with time zone default now(),
-        app_version text default 'v1.0.0',
-            constraint app_config_pkey primary key(id),
-                constraint single_row check(id = 1)
-);
-
-alter table public.app_config add column if not exists app_version text default 'v1.0.0';
-
---5. Insert Default Data
---Superuser(Update jika sudah ada)
-insert into public.app_users(username, password, role, full_name, avatar_url, job_title, email)
-values('arunika', 'ar4925', 'Developer', 'Super Admin', 'https://picsum.photos/seed/arunika/200', 'Lead Developer', 'admin@arunika.app')
-on conflict(username) do update 
-set job_title = excluded.job_title, email = excluded.email;
-
---Default Config
-insert into public.app_config(id, app_name, app_logo, app_favicon)
-values(1, 'Arunika', '', '')
-on conflict(id) do nothing;
-
---6. Policies(RLS)
-alter table public.workspaces enable row level security;
-alter table public.content_items enable row level security;
-alter table public.app_users enable row level security;
-
---8. Table: Global Broadcasts
-create table if not exists public.global_broadcasts(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        sender_id uuid references app_users(id),
-            title text not null,
-                message text not null,
-                    type text default 'Announcement',
-                        is_active boolean default true,
-                            constraint global_broadcasts_pkey primary key(id)
-);
-
---9. Table: Activity Logs
-create table if not exists public.activity_logs(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-    user_id uuid references public.app_users(id) on delete set null,
-    workspace_id uuid references public.workspaces(id) on delete cascade,
-    action text not null,
-    entity_type text,
-    entity_id uuid,
-    details jsonb,
-    constraint activity_logs_pkey primary key(id)
-);
-
---Enable RLS & Realtime
-alter table public.global_broadcasts enable row level security;
-alter table public.activity_logs enable row level security;
-do $$
-begin
-  if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'global_broadcasts'
-  ) then
-    alter publication supabase_realtime add table public.global_broadcasts;
-  end if;
-
-  if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'activity_logs'
-  ) then
-    alter publication supabase_realtime add table public.activity_logs;
-  end if;
-end
-$$;
-
-alter table public.app_config enable row level security;
-
-drop policy if exists "Enable all access" on public.workspaces;
-drop policy if exists "Enable all access" on public.content_items;
-drop policy if exists "Enable all access" on public.app_users;
-drop policy if exists "Enable all access" on public.app_config;
-drop policy if exists "Enable all access" on public.global_broadcasts;
-drop policy if exists "Enable all access" on public.activity_logs;
-
-create policy "Enable all access" on public.workspaces for all using(true) with check(true);
-create policy "Enable all access" on public.content_items for all using(true) with check(true);
-create policy "Enable all access" on public.app_users for all using(true) with check(true);
-create policy "Enable all access" on public.app_config for all using(true) with check(true);
-create policy "Enable all access" on public.global_broadcasts for all using(true) with check(true);
-create policy "Enable all access" on public.activity_logs for all using(true) with check(true);
-
---7. Team KPI Board Tables
-create table if not exists public.team_members(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        user_id uuid null,
-            full_name text not null,
-                role text default 'Member',
-                    department text default '',
-                        avatar_url text default '',
-                            status text default 'active',
-                                constraint team_members_pkey primary key(id),
-                                    constraint team_members_user_id_fkey foreign key(user_id) references public.app_users(id) on delete set null
-);
-
-create table if not exists public.team_kpis(
-                                        id uuid not null default gen_random_uuid(),
-                                        created_at timestamp with time zone not null default now(),
-                                            member_id uuid not null,
-                                                metric_name text not null,
-                                                    category text default 'General',
-                                                        target_value numeric not null default 0,
-                                                            actual_value numeric not null default 0,
-                                                                unit text default '%',
-                                                                    period text not null default 'monthly',
-                                                                        period_date date not null default current_date,
-                                                                            notes text default '',
-                                                                                constraint team_kpis_pkey primary key(id),
-                                                                                    constraint team_kpis_member_id_fkey foreign key(member_id) references public.team_members(id) on delete cascade
-);
-
-alter table public.team_members enable row level security;
-alter table public.team_kpis enable row level security;
-
-drop policy if exists "Enable all access" on public.team_members;
-drop policy if exists "Enable all access" on public.team_kpis;
-
-create policy "Enable all access" on public.team_members for all using(true) with check(true);
-create policy "Enable all access" on public.team_kpis for all using(true) with check(true);
-
---Enable Realtime for live profile sync
-do $$
-begin
-  if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'app_users'
-) then
-    alter publication supabase_realtime add table public.app_users;
-  end if;
-
-if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'notifications'
-) then
-    alter publication supabase_realtime add table public.notifications;
-  end if;
-end
-$$;
-
---8. Notifications Table(Success feedback for users)
-create table if not exists public.notifications(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        recipient_id uuid not null,
-            actor_id uuid null,
-                workspace_id uuid null,
-                    type text not null,
-                        title text not null,
-                            content text not null,
-                                is_read boolean default false,
-                                    metadata jsonb null,
-                                        constraint notifications_pkey primary key(id),
-                                            constraint notifications_recipient_id_fkey foreign key(recipient_id) references public.app_users(id) on delete cascade
-);
-
---9. Developer Inbox(Registration & Renewal)
-create table if not exists public.developer_inbox(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-        user_id uuid null,
-            sender_name text,
-                sender_email text,
-                    sender_username text,
-                        subscription_code text,
-                            message text,
-                                is_read boolean default false,
-                                    is_resolved boolean default false,
-                                        --Additional columns for Renewal Workflow
-  type text default 'registration', -- 'registration' or 'renewal'
-  package_name text,
-    amount numeric,
-        proof_url text,
-            duration_days int,
-                constraint developer_inbox_pkey primary key(id)
-);
-
---MIGRATION: Tambahkan kolom baru jika tabel sudah ada(Anti Error)
-alter table public.developer_inbox add column if not exists type text default 'registration';
-alter table public.developer_inbox add column if not exists package_name text;
-alter table public.developer_inbox add column if not exists amount numeric;
-alter table public.developer_inbox add column if not exists proof_url text;
-alter table public.developer_inbox add column if not exists duration_days int;
-
---Fix Not-Null Constraint on subscription_code for renewals
-alter table public.developer_inbox alter column subscription_code drop not null;
-
-alter table public.notifications enable row level security;
-alter table public.developer_inbox enable row level security;
-
-drop policy if exists "Enable all access" on public.notifications;
-drop policy if exists "Enable all access" on public.developer_inbox;
-
-create policy "Enable all access" on public.notifications for all using(true) with check(true);
-create policy "Enable all access" on public.developer_inbox for all using(true) with check(true);
-
---Enable Realtime
-do $$
-begin
-  if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'developer_inbox'
-) then
-    alter publication supabase_realtime add table public.developer_inbox;
-  end if;
-end
-$$;
-
--- 10. Carousel Maker Addons
-create table if not exists public.custom_fonts(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-    user_id uuid not null,
-    name text not null,
-    font_data text not null, -- base64 or url
-    constraint custom_fonts_pkey primary key(id),
-    constraint custom_fonts_user_id_fkey foreign key(user_id) references public.app_users(id) on delete cascade,
-    constraint custom_fonts_user_name_unique unique(user_id, name)
-);
-
--- MIGRATION: Tambahkan constraint jika belum ada
-do $$
-begin
-  if not exists(
-    select 1 from pg_constraint where conname = 'custom_fonts_user_name_unique'
-  ) then
-    alter table public.custom_fonts add constraint custom_fonts_user_name_unique unique(user_id, name);
-  end if;
-end
-$$;
-
-create table if not exists public.carousel_presets(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-    user_id uuid not null,
-    name text not null,
-    data jsonb not null,
-    constraint carousel_presets_pkey primary key(id),
-    constraint carousel_presets_user_id_fkey foreign key(user_id) references public.app_users(id) on delete cascade
-);
-
-create table if not exists public.carousel_projects(
-    id uuid not null default gen_random_uuid(),
-    created_at timestamp with time zone not null default now(),
-    updated_at timestamp with time zone not null default now(),
-    user_id uuid not null,
-    name text not null,
-    data jsonb not null,
-    preview_url text,
-    constraint carousel_projects_pkey primary key(id),
-    constraint carousel_projects_user_id_fkey foreign key(user_id) references public.app_users(id) on delete cascade
-);
-
-alter table public.custom_fonts enable row level security;
-alter table public.carousel_presets enable row level security;
-alter table public.carousel_projects enable row level security;
-
-drop policy if exists "Enable all access" on public.custom_fonts;
-drop policy if exists "Enable all access" on public.carousel_presets;
-drop policy if exists "Enable all access" on public.carousel_projects;
-
-create policy "Enable all access" on public.custom_fonts for all using(true) with check(true);
-create policy "Enable all access" on public.carousel_presets for all using(true) with check(true);
-create policy "Enable all access" on public.carousel_projects for all using(true) with check(true);
-
--- Enable Realtime for Carousel
-do $$
-begin
-  if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'custom_fonts'
-  ) then
-    alter publication supabase_realtime add table public.custom_fonts;
-  end if;
-
-  if not exists(
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and tablename = 'carousel_projects'
-  ) then
-    alter publication supabase_realtime add table public.carousel_projects;
-  end if;
-end
-$$;
-
-`;
+// --- LAYOUT COMPONENT ---
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const navigate = useNavigate();
@@ -706,7 +323,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Settings State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'integration' | null>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'branding' | null>('profile');
 
     // Live Time for Header
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -784,12 +401,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         appLogo: localStorage.getItem('app_logo') || '',
         appLogoLight: localStorage.getItem('app_logo_light') || '',
         appFavicon: localStorage.getItem('app_favicon') || '',
-    });
-
-    // Integration State
-    const [sbConfig, setSbConfig] = useState({
-        url: localStorage.getItem('sb_url') || '',
-        key: localStorage.getItem('sb_key') || ''
     });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -983,7 +594,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             // Add current theme
             if (currentTheme !== 'light') {
-                root.classList.add(`theme-${currentTheme}`);
+                root.classList.add(`theme - ${currentTheme} `);
             }
         };
         syncTheme();
@@ -1048,8 +659,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         document.documentElement.classList.remove(...themeClasses);
 
         // Add current theme class
-        document.body.classList.add(`theme-${currentTheme}`);
-        document.documentElement.classList.add(`theme-${currentTheme}`);
+        document.body.classList.add(`theme - ${currentTheme} `);
+        document.documentElement.classList.add(`theme - ${currentTheme} `);
     }, [currentTheme]);
 
     // Listen for Role & Subscription Changes via Realtime + Local Poll
@@ -1063,7 +674,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             .channel('app_users_status_checker')
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${currentUserId}` },
+                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${currentUserId} ` },
                 async (payload: any) => {
                     const newRole = payload.new.role;
                     const oldRole = localStorage.getItem('user_role');
@@ -1110,7 +721,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 .channel('app_users_admin_checker')
                 .on(
                     'postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${tenantId}` },
+                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${tenantId} ` },
                     (payload: any) => {
                         if (payload.new.is_active === false) {
                             setStatusModal({
@@ -1148,7 +759,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     if (diffDays <= 5) {
                         setDaysToSubExp(diffDays < 0 ? 0 : diffDays);
-                        console.log(`[Subscription] Banner showing! Days left: ${diffDays}`);
+                        console.log(`[Subscription] Banner showing! Days left: ${diffDays} `);
                     } else {
                         setDaysToSubExp(null);
                         console.log(`[Subscription] Banner hidden.Days left: ${diffDays} (Target <= 5)`);
@@ -1280,14 +891,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
     };
 
-    const handleSaveIntegration = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!isDeveloper) return;
-        if (confirm("Menyimpan konfigurasi baru akan me-refresh aplikasi. Lanjutkan?")) {
-            updateSupabaseConfig(sbConfig.url, sbConfig.key);
-        }
-    };
-
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'user' | 'app' | 'favicon' | 'app_light') => {
         const file = e.target.files?.[0];
         if (file) {
@@ -1378,7 +981,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             const pkg = pkgs.find(p => p.id === selectedPackageId);
             if (pkg) {
                 amount = pkg.price;
-                packageName = `${selectedTier === 'personal' ? 'Personal' : 'Team'}: ${pkg.name}`;
+                packageName = `${selectedTier === 'personal' ? 'Personal' : 'Team'}: ${pkg.name} `;
                 durationDays = pkg.durationDays || 30;
 
                 // Adjust amount if team tier
@@ -1484,15 +1087,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     return (
-        <div className={`flex h-screen w-full overflow-hidden bg-background relative theme-${currentTheme}`}>
+        <div className={`flex h-screen w-full overflow-hidden bg-background relative theme - ${currentTheme} `}>
             <UserPresence />
             {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
             {/* Sidebar (Fixed position always) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] flex flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'}`}
+                className={`fixed inset-y - 0 left-0 z-40 bg-card border-r - 2 border-slate-200 transition-all duration-500 ease - [cubic-bezier(0.34, 1.56, 0.64, 1)] flex flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'} `}
             >
-                <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'}`}>
-                    <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'}`}>
+                <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
+                    <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'} `}>
                         {(() => {
                             const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
                             const activeLogo = isDarkTheme
@@ -1510,7 +1113,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             }
 
                             return (
-                                <div className={`bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard transition-all duration-500 ${isSidebarOpen ? 'w-14 h-14' : 'w-10 h-10'}`}>
+                                <div className={`bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard transition-all duration-500 ${isSidebarOpen ? 'w-14 h-14' : 'w-10 h-10'} `}>
                                     <Layers className="text-white" size={isSidebarOpen ? 28 : 20} />
                                 </div>
                             );
@@ -1605,13 +1208,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             <button
                                                 key={item.path}
                                                 onClick={() => navigate(item.path)}
-                                                className={`flex items-center transition-all duration-500 group overflow-hidden ${isSidebarOpen ? 'w-full justify-start px-4 py-3 rounded-xl' : 'w-12 h-12 justify-center rounded-xl'} ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'} ${isActive && isSidebarOpen ? 'translate-x-1' : ''}`}
+                                                className={`flex items-center transition-all duration-500 group overflow-hidden ${isSidebarOpen ? 'w-full justify-start px-4 py-3 rounded-xl' : 'w-12 h-12 justify-center rounded-xl'} ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'} ${isActive && isSidebarOpen ? 'translate-x-1' : ''} `}
                                                 title={!isSidebarOpen ? item.label : ''}
                                             >
-                                                <div className={`flex items-center ${isSidebarOpen ? 'gap-4 min-w-[200px]' : 'justify-center'}`}>
-                                                    <item.icon size={20} className={`shrink-0 transition-all duration-500 ${isActive ? 'text-white' : 'group-hover:text-accent'}`} />
+                                                <div className={`flex items-center ${isSidebarOpen ? 'gap-4 min-w-[200px]' : 'justify-center'} `}>
+                                                    <item.icon size={20} className={`shrink-0 transition-all duration-500 ${isActive ? 'text-white' : 'group-hover:text-accent'} `} />
                                                     {isSidebarOpen && (
-                                                        <span className={`font-bold text-sm tracking-tight whitespace-nowrap transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'}`}>
+                                                        <span className={`font-bold text-sm tracking-tight whitespace-nowrap transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'} `}>
                                                             {item.label}
                                                         </span>
                                                     )}
@@ -1631,14 +1234,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     })}
                 </div>
 
-                <div className={`p-4 mt-auto border-t-2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
-                    <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="UI Theme">
+                <div className={`p-4 mt-auto border-t - 2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
+                    <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover: bg-slate-500 / 10 hover: text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'} `} title="UI Theme">
                         <Palette size={20} className="shrink-0" />
                         {isSidebarOpen && (
                             <span className="transition-all duration-500 opacity-100 whitespace-nowrap">UI Theme</span>
                         )}
                     </button>
-                    <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="Sign Out">
+                    <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover: bg-red-500 / 10 hover: text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'} `} title="Sign Out">
                         <LogOut size={20} className="shrink-0" />
                         {isSidebarOpen && (
                             <span className="transition-all duration-500 opacity-100 whitespace-nowrap">Sign Out</span>
@@ -1651,7 +1254,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </aside>
 
             {/* Main Wrapper-Uses padding left instead of flex width sharing */}
-            <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
+            <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease - [cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w - 0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'} `}>
                 <PresenceToast />
                 <header className="mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
                     <div className="flex items-center gap-4">
@@ -1668,12 +1271,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     <div className="flex items-center gap-3 md:gap-6">
                         <div className="flex items-center gap-3 md:gap-4 py-1 relative">
-                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
+                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text - [10px] font-bold transition-colors ${getNetworkColor()} `}>
                                 <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
                                 <span className="hidden sm:inline">{getNetworkLabel()}</span>
                             </div>
                             <div className="flex items-center gap-1 relative" ref={notificationRef}>
-                                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'}`}>
+                                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
                                     <Bell size={18} />
                                     {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                                 </button>
@@ -1689,7 +1292,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             ) : (
                                                 <div className="divide-y divide-border">
                                                     {notifications.map((notif) => (
-                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover: bg-muted / 50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''} `} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
                                                             {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
                                                             <div className="shrink-0">
                                                                 {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover" /> : <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={18} /></div>}
@@ -1733,8 +1336,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* --- MODALS --- */}
             <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Pengaturan Aplikasi">
                 <div className="space-y-4">
-                    <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'}`}>
-                        <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-foreground'}`}>
+                    <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
+                        <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-foreground'} `}>
                             <div className="flex items-center gap-3"><User size={20} className={activeTab === 'profile' ? 'text-white' : 'text-accent'} /> Informasi Pengguna</div>
                             {activeTab === 'profile' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
@@ -1767,8 +1370,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     {isDeveloper && (
                         <>
-                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'}`}>
-                                <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-foreground'}`}>
+                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
+                                <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-foreground'} `}>
                                     <div className="flex items-center gap-3"><Palette size={20} className={activeTab === 'branding' ? 'text-white' : 'text-secondary'} /> Tampilan Aplikasi (Admin)</div>
                                     {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </button>
@@ -1795,46 +1398,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             <Input label="Nama Aplikasi" value={branding.appName} onChange={(e) => setBranding({ ...branding, appName: e.target.value })} />
                                             <div className="pt-2 flex justify-end"><Button type="submit" className="bg-secondary" icon={<CheckCircle size={16} />}>Simpan Global</Button></div>
                                         </form>
-                                    </div>
-                                )}
-                            </div>
-                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'integration' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'}`}>
-                                <button onClick={() => toggleTab('integration')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'integration' ? 'bg-tertiary text-slate-800' : 'text-foreground'}`}>
-                                    <div className="flex items-center gap-3"><Database size={20} className={activeTab === 'integration' ? 'text-slate-800' : 'text-tertiary'} /> Database & API (Admin)</div>
-                                    {activeTab === 'integration' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </button>
-                                {activeTab === 'integration' && (
-                                    <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
-                                        <form onSubmit={handleSaveIntegration} className="space-y-4">
-                                            <Input label="Supabase Project URL" value={sbConfig.url} onChange={(e) => setSbConfig({ ...sbConfig, url: e.target.value })} />
-                                            <Input label="Supabase Anon Key" value={sbConfig.key} onChange={(e) => setSbConfig({ ...sbConfig, key: e.target.value })} type="password" />
-                                            <div className="flex justify-end"><Button type="submit" className="bg-tertiary text-slate-800" icon={<CheckCircle size={16} />}>Update Koneksi</Button></div>
-                                        </form>
-                                        <div className="mt-8 pt-6 border-t border-slate-200">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <label className="font-bold text-xs text-mutedForeground uppercase tracking-widest">Database Schema Sync (SQL)</label>
-                                                <button
-                                                    onClick={() => {
-                                                        navigator.clipboard.writeText(INITIAL_SQL_SCRIPT);
-                                                        alert("SQL Script berhasil disalin!");
-                                                    }}
-                                                    className="text-[10px] font-black text-accent underline flex items-center gap-1"
-                                                >
-                                                    <Copy size={10} /> SALIN SQL
-                                                </button>
-                                            </div>
-                                            <div className="bg-slate-900 rounded-xl p-4 overflow-hidden relative">
-                                                <pre className="text-[10px] text-slate-300 font-mono overflow-auto max-h-[200px] custom-scrollbar selection:bg-accent/30 selection:text-white">
-                                                    {INITIAL_SQL_SCRIPT}
-                                                </pre>
-                                                <div className="absolute bottom-4 right-4 animate-pulse">
-                                                    <Database size={16} className="text-slate-700" />
-                                                </div>
-                                            </div>
-                                            <p className="text-[10px] text-slate-500 font-bold mt-2 leading-tight">
-                                                Gunakan script ini di Supabase SQL Editor jika fitur aplikasi tidak berjalan semestinya setelah update.
-                                            </p>
-                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -1868,13 +1431,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
                         <button
                             onClick={() => setSelectedTier('personal')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'personal' ? 'bg-white text-accent border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'personal' ? 'bg-white text-accent border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'} `}
                         >
                             <User size={16} /> Personal
                         </button>
                         <button
                             onClick={() => setSelectedTier('team')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'team' ? 'bg-white text-secondary border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'team' ? 'bg-white text-secondary border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'} `}
                         >
                             <Users size={16} /> Team
                         </button>
@@ -1927,7 +1490,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <label className="text-xs font-black text-secondary uppercase tracking-widest">Jumlah Anggota Tim</label>
                                 <div className="flex items-center bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
                                     <button
-                                        onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
+                                        onClick={() => setTeamSize(Math.max(2, teamSize-1))}
                                         className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-r-2 border-slate-900"
                                     >-</button>
                                     <input
@@ -1948,7 +1511,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     {(() => {
                                         const pkg = config?.payment_config?.teamPackages?.find(p => p.id === selectedPackageId);
                                         const rate = pkg ? pkg.price : (config?.payment_config?.teamPricePerPerson || 0);
-                                        return `Rp ${(rate * teamSize).toLocaleString('id-ID')}`;
+                                        return `Rp ${(rate * teamSize).toLocaleString('id-ID')} `;
                                     })()}
                                 </span>
                             </div>
@@ -2021,7 +1584,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
                 <div className="p-6 space-y-4 text-center">
                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-2 border-4 border-slate-900 shadow-hard-mini ${activeBroadcast?.type === 'Promo' ? 'bg-amber-400' : activeBroadcast?.type === 'Maintenance' ? 'bg-red-400' : 'bg-accent'
-                        }`}>
+                        } `}>
                         <Bell className="text-white" size={32} />
                     </div>
                     <div>
@@ -2047,7 +1610,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Status Modal */}
             <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} title={statusModal.title || (statusModal.type === 'success' ? 'Sukses' : statusModal.type === 'error' ? 'Gagal' : 'Konfirmasi')}>
                 <div className="p-8 text-center space-y-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'} `}>
                         {statusModal.type === 'success' ? <CheckCircle size={32} /> : statusModal.type === 'error' ? <XCircle size={32} /> : <AlertTriangle size={32} />}
                     </div>
                     <p className="text-slate-800 font-bold">{statusModal.message}</p>
@@ -2065,74 +1628,75 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Modal>
 
             {/* Theme Modal */}
-            {showThemeModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-card border-4 border-slate-900 rounded-3xl p-6 w-[700px] shadow-[8px_8px_0px_0px_#0f172a] relative animate-in zoom-in-95 duration-200">
-                        <button onClick={() => setShowThemeModal(false)} className="absolute top-4 right-4 hover:bg-slate-500/10 p-2 rounded-xl transition-colors">
-                            <X size={20} />
-                        </button>
-                        <h2 className="font-black text-2xl mb-6 flex items-center gap-2 text-foreground">
-                            <Palette className="text-accent" /> UI Theme Configuration
-                        </h2>
-                        <div className="grid grid-cols-3 gap-4">
-                            {[
-                                { id: 'light', name: 'Light (Default)', colors: ['#f8fafc', '#ffffff', '#0f172a'] },
-                                { id: 'dark', name: 'Dark Mode', colors: ['#0f172a', '#1e293b', '#f8fafc'] },
-                                { id: 'midnight', name: 'Midnight', colors: ['#0c1130', '#1e1b4b', '#e0e7ff'] },
-                                { id: 'pastel', name: 'Pastel Pink', colors: ['#fff1f2', '#ffe4e6', '#881337'] },
-                                { id: 'pastel-green', name: 'Pastel Green', colors: ['#f0fdf4', '#dcfce7', '#14532d'] },
-                                { id: 'pastel-yellow', name: 'Pastel Yellow', colors: ['#fefce8', '#fef9c3', '#713f12'] }
-                            ].map(theme => (
-                                <button
-                                    key={theme.id}
-                                    onClick={() => {
-                                        setCurrentTheme(theme.id);
-                                        localStorage.setItem('app_ui_theme', theme.id);
-                                    }}
-                                    className={`p-4 rounded-xl border-4 text-left transition-all hover: -translate-y-1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'}`}
-                                >
-                                    <div className="flex gap-2 mb-3">
-                                        {theme.colors.map((c, i) => (
-                                            <div key={i} className="w-5 h-5 rounded-full border-2 border-slate-800" style={{ backgroundColor: c }} />
-                                        ))}
-                                    </div>
-                                    <span className="font-bold text-xs block text-slate-800">{theme.name}</span>
-                                </button>
-                            ))}
+            {
+                showThemeModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div className="bg-card border-4 border-slate-900 rounded-3xl p-6 w-[700px] shadow-[8px_8px_0px_0px_#0f172a] relative animate-in zoom-in-95 duration-200">
+                            <button onClick={() => setShowThemeModal(false)} className="absolute top-4 right-4 hover:bg-slate-500/10 p-2 rounded-xl transition-colors">
+                                <X size={20} />
+                            </button>
+                            <h2 className="font-black text-2xl mb-6 flex items-center gap-2 text-foreground">
+                                <Palette className="text-accent" /> UI Theme Configuration
+                            </h2>
+                            <div className="grid grid-cols-3 gap-4">
+                                {[
+                                    { id: 'light', name: 'Light (Default)', colors: ['#f8fafc', '#ffffff', '#0f172a'] },
+                                    { id: 'dark', name: 'Dark Mode', colors: ['#0f172a', '#1e293b', '#f8fafc'] },
+                                    { id: 'midnight', name: 'Midnight', colors: ['#0c1130', '#1e1b4b', '#e0e7ff'] },
+                                    { id: 'pastel', name: 'Pastel Pink', colors: ['#fff1f2', '#ffe4e6', '#881337'] },
+                                    { id: 'pastel-green', name: 'Pastel Green', colors: ['#f0fdf4', '#dcfce7', '#14532d'] },
+                                    { id: 'pastel-yellow', name: 'Pastel Yellow', colors: ['#fefce8', '#fef9c3', '#713f12'] }
+                                ].map(theme => (
+                                    <button
+                                        key={theme.id}
+                                        onClick={() => {
+                                            setCurrentTheme(theme.id);
+                                            localStorage.setItem('app_ui_theme', theme.id);
+                                        }}
+                                        className={`p-4 rounded-xl border-4 text-left transition-all hover: -translate-y - 1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'} `}
+                                    >
+                                        <div className="flex gap-2 mb-3">
+                                            {theme.colors.map((c, i) => (
+                                                <div key={i} className="w-5 h-5 rounded-full border-2 border-slate-800" style={{ backgroundColor: c }} />
+                                            ))}
+                                        </div>
+                                        <span className="font-bold text-xs block text-slate-800">{theme.name}</span>
+                                    </button>
+                                ))}
 
-                            <div className={`p-4 rounded-xl border-4 text-left transition-all ${currentTheme === 'custom' ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 bg-slate-50'}`}>
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="w-8 h-8 rounded-full border-2 border-slate-800 flex items-center justify-center overflow-hidden cursor-pointer relative" style={{ backgroundColor: customColor }}>
-                                        <input
-                                            type="color"
-                                            value={customColor}
-                                            onChange={(e) => {
-                                                setCustomColor(e.target.value);
-                                                localStorage.setItem('app_custom_color', e.target.value);
-                                                setCurrentTheme('custom');
-                                                localStorage.setItem('app_ui_theme', 'custom');
-                                            }}
-                                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0"
-                                        />
+                                <div className={`p-4 rounded-xl border-4 text-left transition-all ${currentTheme === 'custom' ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 bg-slate-50'} `}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="w-8 h-8 rounded-full border-2 border-slate-800 flex items-center justify-center overflow-hidden cursor-pointer relative" style={{ backgroundColor: customColor }}>
+                                            <input
+                                                type="color"
+                                                value={customColor}
+                                                onChange={(e) => {
+                                                    setCustomColor(e.target.value);
+                                                    localStorage.setItem('app_custom_color', e.target.value);
+                                                    setCurrentTheme('custom');
+                                                    localStorage.setItem('app_ui_theme', 'custom');
+                                                }}
+                                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0"
+                                            />
+                                        </div>
+                                        {currentTheme !== 'custom' && (
+                                            <button
+                                                onClick={() => {
+                                                    setCurrentTheme('custom');
+                                                    localStorage.setItem('app_ui_theme', 'custom');
+                                                }}
+                                                className="text-[10px] font-black underline text-slate-500 hover:text-slate-900"
+                                            >
+                                                Pilih
+                                            </button>
+                                        )}
                                     </div>
-                                    {currentTheme !== 'custom' && (
-                                        <button
-                                            onClick={() => {
-                                                setCurrentTheme('custom');
-                                                localStorage.setItem('app_ui_theme', 'custom');
-                                            }}
-                                            className="text-[10px] font-black underline text-slate-500 hover:text-slate-900"
-                                        >
-                                            Pilih
-                                        </button>
-                                    )}
+                                    <span className="font-bold text-xs block text-slate-800">Warna Kustom</span>
                                 </div>
-                                <span className="font-bold text-xs block text-slate-800">Warna Kustom</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            )
+                )
             }
 
             <FirstLoginModal

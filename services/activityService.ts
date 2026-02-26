@@ -12,7 +12,8 @@ export type ActivityAction =
     | 'CHANGE_PASSWORD'
     | 'RENEWAL_REQUEST'
     | 'UPDATE_WORKSPACE'
-    | 'UPDATE_CONFIG';
+    | 'UPDATE_CONFIG'
+    | 'REGISTER';
 
 export interface ActivityLog {
     user_id?: string;

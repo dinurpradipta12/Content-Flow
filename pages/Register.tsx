@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { notifyDevelopers } from '../services/notificationService';
 import { supabase } from '../services/supabaseClient';
 import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info, Rocket } from 'lucide-react';
-import bcrypt from 'bcryptjs';
 import { logActivity } from '../services/activityService';
 
 export const Register: React.FC = () => {
@@ -54,13 +53,11 @@ export const Register: React.FC = () => {
             return;
         }
 
-        // Normalize inputs to prevent login mismatches
         const normalizedUsername = form.username.trim().toLowerCase();
         const normalizedEmail = form.email.trim().toLowerCase();
         const trimmedPassword = form.password.trim();
         const trimmedFullName = form.fullName.trim();
 
-        // Validate subscription code if premium
         if (selectedPackage && selectedPackage.price > 0 && !form.subscriptionCode) {
             setErrorStatus('Order ID Pembelian wajib diisi untuk paket ini.');
             return;
@@ -71,46 +68,40 @@ export const Register: React.FC = () => {
             return;
         }
 
-        // Email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(normalizedEmail)) {
-            setErrorStatus('Format email tidak valid.');
-            return;
-        }
-
         setLoading(true);
         try {
-            // Cek username/email duplicate
-            const { data: existingUser } = await supabase
-                .from('app_users')
-                .select('id')
-                .or(`username.ilike.${normalizedUsername},email.ilike.${normalizedEmail}`)
-                .maybeSingle();
+            // 1. Supabase Auth Sign Up
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: normalizedEmail,
+                password: trimmedPassword,
+                options: {
+                    data: {
+                        full_name: trimmedFullName,
+                        username: normalizedUsername,
+                    }
+                }
+            });
 
-            if (existingUser) {
-                setErrorStatus('Username atau Email sudah terdaftar.');
-                setLoading(false);
-                return;
+            if (authError) {
+                throw authError;
             }
 
-            // Insert new user into db mapping
+            const authUserId = authData.user?.id;
+            if (!authUserId) throw new Error("Gagal membuat akun di Supabase Auth.");
+
+            // 2. Prepare Profile Data
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(trimmedFullName)}`;
             const now = new Date();
-            const newUserId = crypto.randomUUID();
 
-            // Calculate subscription end
             let subscriptionEnd = null;
             let isVerified = false;
-            let memberLimit = 2; // Default limit
+            let memberLimit = 2;
 
             if (selectedPackage) {
                 const duration = selectedPackage.durationDays || 30;
-
-                // Set member limit based on package
                 if (selectedPackage.name.includes('Team 10')) memberLimit = 10;
                 else if (selectedPackage.name.includes('Team 5')) memberLimit = 5;
                 else if (selectedPackage.name.includes('Personal')) memberLimit = 1;
-                else memberLimit = 2; // Free / Default
 
                 if (selectedPackage.price === 0) {
                     const end = new Date();
@@ -120,14 +111,11 @@ export const Register: React.FC = () => {
                 }
             }
 
-            const hashedPassword = bcrypt.hashSync(trimmedPassword, 10);
-
             const insertData: any = {
-                id: newUserId,
+                id: authUserId,
                 full_name: trimmedFullName,
                 email: normalizedEmail,
                 username: normalizedUsername,
-                password: hashedPassword,
                 role: 'Admin',
                 avatar_url: avatarUrl,
                 is_active: true,
@@ -136,30 +124,28 @@ export const Register: React.FC = () => {
                 subscription_package: selectedPackage?.name || 'Free',
                 is_verified: isVerified,
                 member_limit: memberLimit,
-                last_activity_at: null // Set to null so FirstLoginModal triggers on first login
+                last_activity_at: null
             };
 
-            if (subscriptionEnd) {
-                insertData.subscription_end = subscriptionEnd;
-            }
+            if (subscriptionEnd) insertData.subscription_end = subscriptionEnd;
 
-            const { error } = await supabase.from('app_users').insert([insertData]);
+            // 3. Sync to public profile table
+            const { error: profileError } = await supabase.from('app_users').upsert([insertData]);
+            if (profileError) throw profileError;
 
-            if (error) { throw error; }
-
-            // Log activity
+            // 4. Log activity
             await logActivity({
-                user_id: newUserId,
-                action: 'VERIFY_USER', // or CREATE_ACCOUNT if I add that action
+                user_id: authUserId,
+                action: 'REGISTER',
                 details: { package: insertData.subscription_package, email: form.email }
             });
 
-            setRegisteredUserId(newUserId);
+            setRegisteredUserId(authUserId);
             setSuccess(true);
 
         } catch (err: any) {
             console.error(err);
-            setErrorStatus('Gagal melakukan registrasi, periksa koneksi atau coba lagi nanti.');
+            setErrorStatus(err.message || 'Gagal melakukan registrasi.');
         } finally {
             setLoading(false);
         }
@@ -182,7 +168,6 @@ export const Register: React.FC = () => {
 
             if (error) throw error;
 
-            // Notify Developers about new registration
             await notifyDevelopers({
                 title: 'User Baru Mendaftar!',
                 content: `${form.fullName} (@${form.username}) telah mendaftar dan menunggu verifikasi.`,
@@ -192,7 +177,6 @@ export const Register: React.FC = () => {
             setInboxSent(true);
         } catch (err) {
             console.error(err);
-            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengirim pesan ke Developer Inbox. Silakan hubungi via WhatsApp.' } }));
         } finally {
             setSendingInbox(false);
         }
@@ -220,7 +204,6 @@ export const Register: React.FC = () => {
                         Saat ini akun Anda sedang menunggu <strong>verifikasi dari Developer</strong>.
                     </p>
 
-                    {/* Subscription Code Display */}
                     {(form.subscriptionCode || (selectedPackage && selectedPackage.price > 0)) && (
                         <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-5 mb-6">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Kode Unik Langganan Anda</p>
@@ -234,7 +217,6 @@ export const Register: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Action Buttons: WhatsApp & Inbox */}
                     {(form.subscriptionCode || (selectedPackage && selectedPackage.price > 0)) && (
                         <div className="flex flex-col gap-3 mb-6">
                             <button
@@ -278,7 +260,7 @@ export const Register: React.FC = () => {
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 lg:p-10 relative">
             <div className="absolute top-4 left-4 z-10">
                 <button
-                    onClick={() => navigate('/terms')}
+                    onClick={() => navigate('/')}
                     className="px-4 py-2 bg-white text-slate-600 font-bold text-sm rounded-xl border-2 border-slate-300 hover:border-slate-800 hover:text-slate-900 shadow-sm transition-all flex items-center gap-2"
                 >
                     <ArrowLeft size={16} /> Kembali
@@ -304,7 +286,6 @@ export const Register: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 1. Nama Lengkap */}
                     <div>
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Nama Lengkap</label>
                         <div className="relative">
@@ -322,7 +303,6 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* 2. Email Aktif */}
                     <div>
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Email Aktif</label>
                         <div className="relative">
@@ -340,7 +320,6 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* 3. Username Login & 4. Password */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Username Login</label>
@@ -377,7 +356,6 @@ export const Register: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Pilih Paket */}
                     <div className="pt-2 border-t-2 border-dashed border-slate-200">
                         <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Rocket size={14} /> Pilih Paket Langganan</label>
                         <select
@@ -398,7 +376,6 @@ export const Register: React.FC = () => {
                         </select>
                     </div>
 
-                    {/* 5. Kode Unik Langganan */}
                     {selectedPackage && selectedPackage.price > 0 && (
                         <div className="pt-2 border-t-2 border-dashed border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
                             <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1"><Key size={14} /> Order ID Invoice (Kode Unik)</label>
