@@ -275,6 +275,7 @@ export const TeamManagement: React.FC = () => {
 
     const currentWorkspaceUsers = users.filter(u =>
         selectedWorkspace?.members?.some(m => {
+            if (m === u.id || m === u.username) return true;
             try {
                 return decodeURIComponent(u.avatar_url) === decodeURIComponent(m) || u.avatar_url === m;
             } catch {

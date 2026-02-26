@@ -41,6 +41,7 @@ interface AppUser {
 interface Workspace {
     id: string;
     name: string;
+    members?: string[];
 }
 
 export const UserManagement: React.FC = () => {
@@ -134,7 +135,7 @@ export const UserManagement: React.FC = () => {
             const userRole = localStorage.getItem('user_role');
             const avatar = localStorage.getItem('user_avatar') || '';
 
-            let query = supabase.from('workspaces').select('id, name');
+            let query = supabase.from('workspaces').select('id, name, members');
             // Strict visibility: only own or invited (Applies to ALL roles)
             query = query.or(`owner_id.eq.${userId},members.cs.{"${userId}"}`);
 
@@ -986,21 +987,62 @@ export const UserManagement: React.FC = () => {
                                             <Layers size={16} /> Keanggotaan Workspace
                                         </h4>
                                         <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
-                                            {workspaces.length > 0 ? (
-                                                <div className="space-y-3">
-                                                    {workspaces.slice(0, 3).map(ws => (
-                                                        <div key={ws.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-900">
-                                                            <Globe className="text-slate-400" size={16} />
-                                                            <div className="flex-1">
-                                                                <span className="text-sm font-bold text-slate-900">{ws.name}</span>
+                                            {(() => {
+                                                // Filter workspaces where selectedUser is actually a member
+                                                const userWs = workspaces.filter(ws => {
+                                                    const members = ws.members || [];
+                                                    return members.some(m =>
+                                                        m === selectedUser.id ||
+                                                        m === selectedUser.username ||
+                                                        m === selectedUser.avatar_url
+                                                    );
+                                                });
+
+                                                if (userWs.length === 0) {
+                                                    return <p className="text-sm text-slate-500 font-bold p-2">Belum ada workspace.</p>;
+                                                }
+
+                                                return (
+                                                    <div className="space-y-3">
+                                                        {userWs.map(ws => (
+                                                            <div key={ws.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-900">
+                                                                <Globe className="text-slate-400 shrink-0" size={16} />
+                                                                <div className="flex-1 min-w-0">
+                                                                    <span className="text-sm font-bold text-slate-900 line-clamp-1">{ws.name}</span>
+                                                                </div>
+                                                                <span className="px-2.5 py-1 text-xs font-bold bg-accent text-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded shrink-0">Member</span>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (!confirm(`Hapus ${selectedUser.username || selectedUser.full_name} dari workspace "${ws.name}"? Tindakan ini akan langsung menghapus keanggotaan.`)) return;
+                                                                        try {
+                                                                            const currentMembers: string[] = ws.members || [];
+                                                                            const updatedMembers = currentMembers.filter(m =>
+                                                                                m !== selectedUser.id &&
+                                                                                m !== selectedUser.username &&
+                                                                                m !== selectedUser.avatar_url
+                                                                            );
+                                                                            const { error } = await supabase
+                                                                                .from('workspaces')
+                                                                                .update({ members: updatedMembers })
+                                                                                .eq('id', ws.id);
+                                                                            if (error) throw error;
+                                                                            alert(`Berhasil menghapus ${selectedUser.username || selectedUser.full_name} dari workspace "${ws.name}".`);
+                                                                            fetchWorkspaces();
+                                                                        } catch (err) {
+                                                                            console.error(err);
+                                                                            alert('Gagal menghapus user dari workspace.');
+                                                                        }
+                                                                    }}
+                                                                    className="p-1.5 bg-red-100 border-2 border-red-300 rounded-lg text-red-500 hover:bg-red-500 hover:text-white hover:border-red-600 transition-all shrink-0"
+                                                                    title="Hapus dari workspace"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
                                                             </div>
-                                                            <span className="px-2.5 py-1 text-xs font-bold bg-accent text-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded">Member</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <p className="text-sm text-slate-500 font-bold p-2">Belum ada workspace.</p>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 
