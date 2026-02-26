@@ -1,37 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { User as UserIcon, Circle } from 'lucide-react';
+import { User as UserIcon } from 'lucide-react';
 
 export const PresenceToast = () => {
     const [presence, setPresence] = useState<{ name: string; status: string } | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const currentUserId = localStorage.getItem('user_id');
+    const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (!currentUserId) return;
 
-        let membersToTrackAvatars: string[] = [];
+        let membersToTrackIds: string[] = [];
         const statusCache = new Map<string, string>();
 
         const setupPresenceTracking = async () => {
-            // 0. Get current user's data
-            const { data: currentUser } = await supabase
-                .from('app_users')
-                .select('id, avatar_url, username')
-                .eq('id', currentUserId)
-                .single();
+            try {
+                // 0. Get current user's data
+                const { data: currentUser } = await supabase
+                    .from('app_users')
+                    .select('id, avatar_url')
+                    .eq('id', currentUserId)
+                    .single();
 
-            if (!currentUser) return;
-            const myAvatar = currentUser.avatar_url;
+                if (!currentUser) return;
+                const myAvatar = currentUser.avatar_url;
 
-            // 1. Get workspaces current user is in
-            // We fetch all and filter locally for robustness against encoding
-            const { data: workspaces } = await supabase
-                .from('workspaces')
-                .select('owner_id, admin_id, members');
+                // 1. Get all workspaces to find where user is a member
+                const { data: workspaces } = await supabase
+                    .from('workspaces')
+                    .select('owner_id, admin_id, members');
 
-            if (workspaces) {
-                // 2. Extract unique members' avatars (excluding self)
+                if (!workspaces) return;
+
+                // 2. Extract unique members' avatars of our workspaces
                 const avatarSet = new Set<string>();
                 workspaces.forEach(ws => {
                     const isMember = (ws.owner_id === currentUserId || ws.admin_id === currentUserId) ||
@@ -46,76 +48,83 @@ export const PresenceToast = () => {
                         });
                     }
                 });
-                membersToTrackAvatars = Array.from(avatarSet);
-                console.log(`Presence Tracking: Tracking ${membersToTrackAvatars.length} workspace peers.`);
 
-                // 2.5 Pre-populate statusCache with current statuses
+                const membersToTrackAvatars = Array.from(avatarSet);
+
+                // 3. Map avatars to User IDs for reliable tracking
                 if (membersToTrackAvatars.length > 0) {
-                    const { data: currentStatuses } = await supabase
+                    const { data: usersToTrack } = await supabase
                         .from('app_users')
                         .select('id, online_status')
                         .in('avatar_url', membersToTrackAvatars);
 
-                    if (currentStatuses) {
-                        currentStatuses.forEach(u => {
+                    if (usersToTrack) {
+                        usersToTrack.forEach(u => {
+                            membersToTrackIds.push(u.id);
                             if (u.online_status) statusCache.set(u.id, u.online_status);
                         });
                     }
                 }
-            }
 
-            // 3. Subscribe to updates
-            const channel = supabase
-                .channel('room_presence_toast')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'app_users'
-                    },
-                    (payload) => {
-                        const newUser = payload.new;
-                        const userId = newUser.id;
-                        const newStatus = newUser.online_status;
-                        const avatar = newUser.avatar_url;
+                console.log(`Presence System: Tracking ${membersToTrackIds.length} peers.`);
 
-                        // Skip self
-                        if (userId === currentUserId) return;
+                // 4. Realtime Subscription
+                const channel = supabase
+                    .channel('global_presence_toast')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'app_users'
+                        },
+                        (payload) => {
+                            const newUser = payload.new;
+                            const userId = newUser.id;
+                            const newStatus = newUser.online_status;
 
-                        // Only if member is in our workspaces (checked by avatar)
-                        if (avatar && membersToTrackAvatars.includes(avatar)) {
-                            const lastStatus = statusCache.get(userId);
+                            // Skip self
+                            if (userId === currentUserId) return;
 
-                            // Only if status actually changed
-                            if (newStatus && newStatus !== lastStatus) {
-                                statusCache.set(userId, newStatus);
+                            // Only if user is in our track list
+                            if (membersToTrackIds.includes(userId)) {
+                                const lastStatus = statusCache.get(userId);
 
-                                // Don't show toast on initial load (when cache is empty for this user)
-                                if (lastStatus !== undefined) {
-                                    setPresence({
-                                        name: newUser.full_name || newUser.username,
-                                        status: newStatus
-                                    });
-                                    setIsVisible(true);
+                                // Only if status actually changed
+                                if (newStatus && newStatus !== lastStatus) {
+                                    statusCache.set(userId, newStatus);
 
-                                    // Hide after 5 seconds
-                                    setTimeout(() => {
-                                        setIsVisible(false);
-                                    }, 5000);
+                                    // Trigger toast (except on initial state fill which shouldn't happen here)
+                                    if (lastStatus !== undefined) {
+                                        setPresence({
+                                            name: newUser.full_name || newUser.username || 'Seseorang',
+                                            status: newStatus
+                                        });
+                                        setIsVisible(true);
+
+                                        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                                        toastTimerRef.current = setTimeout(() => {
+                                            setIsVisible(false);
+                                        }, 10000); // 10 seconds visibility
+                                    }
                                 }
                             }
                         }
-                    }
-                )
-                .subscribe();
+                    )
+                    .subscribe((status) => {
+                        console.log('Presence Subscription Status:', status);
+                    });
 
-            return channel;
+                return channel;
+            } catch (err) {
+                console.error('Presence setup error:', err);
+            }
         };
 
         const channelPromise = setupPresenceTracking();
 
         return () => {
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
             channelPromise.then(channel => {
                 if (channel) supabase.removeChannel(channel);
             });
@@ -144,7 +153,7 @@ export const PresenceToast = () => {
 
     return (
         <div
-            className={`absolute top-0 right-full mr-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border-[2.5px] border-slate-900 shadow-hard-mini transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden scale-90 sm:scale-100 whitespace-nowrap z-50 ${isVisible ? 'translate-y-0.5 opacity-100' : '-translate-y-12 opacity-0 pointer-events-none'
+            className={`absolute top-0 right-full mr-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md border-[2.5px] border-slate-900 shadow-hard-mini transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] scale-90 sm:scale-100 whitespace-nowrap z-50 ${isVisible ? 'translate-y-0.5 opacity-100' : '-translate-y-12 opacity-0 pointer-events-none'
                 }`}
         >
             <div className="relative shrink-0">
@@ -153,7 +162,7 @@ export const PresenceToast = () => {
                 </div>
                 <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${getStatusColor(presence.status)} animate-pulse`}></div>
             </div>
-            <p className="text-[10px] font-bold text-slate-800 whitespace-nowrap pr-1">
+            <p className="text-[10px] font-bold text-slate-800 pr-1">
                 <span className="font-extrabold text-slate-900">{presence.name}</span> <span className="text-slate-500">{getStatusText(presence.status)}</span>
             </p>
         </div>
