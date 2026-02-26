@@ -125,25 +125,48 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const fetchNotifications = useCallback(async () => {
         if (!currentUserId) return;
 
-        const { data, error } = await supabase
-            .from('notifications')
-            .select('*, actor:app_users!notifications_actor_id_fkey(full_name, avatar_url)')
-            .eq('recipient_id', currentUserId)
-            .order('created_at', { ascending: false })
-            .limit(50);
+        try {
+            // Fetch notifications without FK join (avoids crash if FK is missing)
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('*')
+                .eq('recipient_id', currentUserId)
+                .order('created_at', { ascending: false })
+                .limit(50);
 
-        if (error) {
-            console.error('Error fetching notifications:', error);
-            return;
-        }
+            if (error) {
+                console.error('Error fetching notifications:', error);
+                return;
+            }
 
-        const notifs = data || [];
-        setNotifications(notifs);
+            // Enrich with actor data separately
+            const notifs = data || [];
+            const actorIds = [...new Set(notifs.map(n => n.actor_id).filter(Boolean))];
+            let actorMap: Record<string, any> = {};
+            if (actorIds.length > 0) {
+                const { data: actors } = await supabase
+                    .from('app_users')
+                    .select('id, full_name, avatar_url')
+                    .in('id', actorIds);
+                if (actors) {
+                    actorMap = Object.fromEntries(actors.map(a => [a.id, a]));
+                }
+            }
 
-        // Populate popup queue with unread popup-type notifications
-        const unreadPopups = notifs.filter(n => !n.is_read && n.metadata?.show_popup);
-        if (unreadPopups.length > 0) {
-            setPopupQueue(unreadPopups);
+            const enrichedNotifs = notifs.map(n => ({
+                ...n,
+                actor: n.actor_id ? actorMap[n.actor_id] || { full_name: 'Seseorang', avatar_url: null } : null
+            }));
+
+            setNotifications(enrichedNotifs);
+
+            // Populate popup queue with unread popup-type notifications
+            const unreadPopups = enrichedNotifs.filter(n => !n.is_read && n.metadata?.show_popup);
+            if (unreadPopups.length > 0) {
+                setPopupQueue(unreadPopups);
+            }
+        } catch (err) {
+            console.error('Error in fetchNotifications:', err);
         }
     }, [currentUserId]);
 

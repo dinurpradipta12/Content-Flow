@@ -594,7 +594,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             // Add current theme
             if (currentTheme !== 'light') {
-                root.classList.add(`theme - ${currentTheme} `);
+                root.classList.add(`theme-${currentTheme}`);
             }
         };
         syncTheme();
@@ -659,8 +659,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         document.documentElement.classList.remove(...themeClasses);
 
         // Add current theme class
-        document.body.classList.add(`theme - ${currentTheme} `);
-        document.documentElement.classList.add(`theme - ${currentTheme} `);
+        document.body.classList.add(`theme-${currentTheme}`);
+        document.documentElement.classList.add(`theme-${currentTheme}`);
     }, [currentTheme]);
 
     // Listen for Role & Subscription Changes via Realtime + Local Poll
@@ -674,7 +674,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             .channel('app_users_status_checker')
             .on(
                 'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${currentUserId} ` },
+                { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${currentUserId}` },
                 async (payload: any) => {
                     const newRole = payload.new.role;
                     const oldRole = localStorage.getItem('user_role');
@@ -721,7 +721,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 .channel('app_users_admin_checker')
                 .on(
                     'postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id = eq.${tenantId} ` },
+                    { event: 'UPDATE', schema: 'public', table: 'app_users', filter: `id=eq.${tenantId}` },
                     (payload: any) => {
                         if (payload.new.is_active === false) {
                             setStatusModal({
@@ -1087,12 +1087,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     return (
-        <div className={`flex h-screen w-full overflow-hidden bg-background relative theme - ${currentTheme} `}>
+        <div className={`flex h-screen w-full overflow-hidden bg-background relative theme-${currentTheme}`}>
             <UserPresence />
             {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
             {/* Sidebar (Fixed position always) */}
             <aside
-                className={`fixed inset-y - 0 left-0 z-40 bg-card border-r - 2 border-slate-200 transition-all duration-500 ease - [cubic-bezier(0.34, 1.56, 0.64, 1)] flex flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'} `}
+                className={`fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'}`}
             >
                 <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
                     <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'} `}>
@@ -1234,14 +1234,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     })}
                 </div>
 
-                <div className={`p-4 mt-auto border-t - 2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
-                    <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover: bg-slate-500 / 10 hover: text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'} `} title="UI Theme">
+                <div className={`p-4 mt-auto border-t-2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
+                    <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="UI Theme">
                         <Palette size={20} className="shrink-0" />
                         {isSidebarOpen && (
                             <span className="transition-all duration-500 opacity-100 whitespace-nowrap">UI Theme</span>
                         )}
                     </button>
-                    <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover: bg-red-500 / 10 hover: text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'} `} title="Sign Out">
+                    <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="Sign Out">
                         <LogOut size={20} className="shrink-0" />
                         {isSidebarOpen && (
                             <span className="transition-all duration-500 opacity-100 whitespace-nowrap">Sign Out</span>
@@ -1254,7 +1254,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </aside>
 
             {/* Main Wrapper-Uses padding left instead of flex width sharing */}
-            <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease - [cubic-bezier(0.34, 1.56, 0.64, 1)] w-full min-w - 0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'} `}>
+            <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
                 <PresenceToast />
                 <header className="mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
                     <div className="flex items-center gap-4">
@@ -1271,7 +1271,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     <div className="flex items-center gap-3 md:gap-6">
                         <div className="flex items-center gap-3 md:gap-4 py-1 relative">
-                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text - [10px] font-bold transition-colors ${getNetworkColor()} `}>
+                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
                                 <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
                                 <span className="hidden sm:inline">{getNetworkLabel()}</span>
                             </div>
@@ -1292,7 +1292,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             ) : (
                                                 <div className="divide-y divide-border">
                                                     {notifications.map((notif) => (
-                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover: bg-muted / 50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''} `} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
                                                             {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
                                                             <div className="shrink-0">
                                                                 {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover" /> : <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={18} /></div>}
@@ -1490,7 +1490,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <label className="text-xs font-black text-secondary uppercase tracking-widest">Jumlah Anggota Tim</label>
                                 <div className="flex items-center bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
                                     <button
-                                        onClick={() => setTeamSize(Math.max(2, teamSize-1))}
+                                        onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
                                         className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-r-2 border-slate-900"
                                     >-</button>
                                     <input
@@ -1653,7 +1653,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             setCurrentTheme(theme.id);
                                             localStorage.setItem('app_ui_theme', theme.id);
                                         }}
-                                        className={`p-4 rounded-xl border-4 text-left transition-all hover: -translate-y - 1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'} `}
+                                        className={`p-4 rounded-xl border-4 text-left transition-all hover:-translate-y-1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'}`}
                                     >
                                         <div className="flex gap-2 mb-3">
                                             {theme.colors.map((c, i) => (

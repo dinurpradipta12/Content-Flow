@@ -60,24 +60,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (currentSession?.user) {
       try {
-        // Security Check: Verify extra profile data from public.app_users
-        const { data, error } = await supabase
+        const authUser = currentSession.user;
+
+        // Try finding profile by ID first (for new users registered via Supabase Auth)
+        let { data, error } = await supabase
           .from('app_users')
           .select('*')
-          .eq('id', currentSession.user.id)
-          .single();
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        // Fallback: find by email (for migrated legacy users whose ID differs from auth ID)
+        if (!data && authUser.email) {
+          const result = await supabase
+            .from('app_users')
+            .select('*')
+            .ilike('email', authUser.email)
+            .maybeSingle();
+          data = result.data;
+          error = result.error;
+        }
 
         if (data && !error && data.is_active !== false) {
-          setUser({ ...currentSession.user, ...data });
+          setUser({ ...authUser, ...data });
           setRole(data.role || 'Member');
 
-          // Legacy Sync (Optional: helps older components still using localStorage)
+          // Legacy Sync
           localStorage.setItem('user_id', data.id);
           localStorage.setItem('user_role', data.role);
           localStorage.setItem('isAuthenticated', 'true');
         } else {
-          // Profile issue or inactive account
-          console.warn("User profile not found or inactive. Signing out.");
+          console.warn("User profile not found or inactive.");
           if (data?.is_active === false) {
             await supabase.auth.signOut();
           }

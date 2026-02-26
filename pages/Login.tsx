@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
 import { useAppConfig } from '../components/AppConfigProvider';
 import { logActivity } from '../services/activityService';
+import bcrypt from 'bcryptjs';
 
 export const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -47,49 +48,100 @@ export const Login: React.FC = () => {
         try {
             // 1. Identify Login Type (Email or Username)
             let loginEmail = trimmedUsername;
+            console.log("Attempting login for:", loginEmail);
+
             if (!trimmedUsername.includes('@')) {
-                // It's a username, fetch the associated email first from app_users
-                const { data: userData, error: fetchError } = await supabase
+                const { data: userData } = await supabase
                     .from('app_users')
                     .select('email')
                     .ilike('username', trimmedUsername)
                     .maybeSingle();
 
-                if (fetchError || !userData) {
-                    throw new Error("Username tidak ditemukan.");
+                if (userData) {
+                    loginEmail = userData.email;
+                    console.log("Found email for username:", loginEmail);
                 }
-                loginEmail = userData.email;
             }
 
-            // 2. Use Supabase Auth for real authentication
+            // 2. Try Standard Supabase Auth Login
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 email: loginEmail,
                 password: trimmedPassword
             });
 
+            // 3. FALLBACK: Migration logic for old users
             if (authError) {
-                console.error("Auth Error:", authError);
                 if (authError.message === 'Invalid login credentials') {
-                    throw new Error("Username/Email atau Password salah.");
+                    const { data: legacyUser } = await supabase
+                        .from('app_users')
+                        .select('*')
+                        .ilike('email', loginEmail)
+                        .maybeSingle();
+
+                    if (legacyUser && legacyUser.password) {
+                        const isHash = legacyUser.password.startsWith('$2');
+                        const isMatch = isHash
+                            ? bcrypt.compareSync(trimmedPassword, legacyUser.password)
+                            : (trimmedPassword === legacyUser.password);
+
+                        if (isMatch) {
+                            console.log("Legacy password match! Starting migration...");
+                            const { error: signUpError } = await supabase.auth.signUp({
+                                email: loginEmail,
+                                password: trimmedPassword,
+                                options: { data: { full_name: legacyUser.full_name, username: legacyUser.username } }
+                            });
+
+                            if (signUpError) {
+                                console.error("Migration Error:", signUpError);
+                                throw new Error(`Gagal migrasi: ${signUpError.message}`);
+                            }
+
+                            setError("Berhasil! Akun Anda telah ditingkatkan ke sistem keamanan baru. Silakan Masuk Kembali sekarang.");
+                            setLoading(false);
+                            return;
+                        } else {
+                            throw new Error("Login gagal: Password lama tidak cocok dengan data pendaftaran.");
+                        }
+                    } else {
+                        throw new Error("Login gagal: Akun tidak ditemukan di sistem baru maupun lama.");
+                    }
                 }
-                throw authError;
+
+                if (authError.message.toLowerCase().includes('confirm') || authError.message.toLowerCase().includes('verified')) {
+                    throw new Error("Email Anda belum dikonfirmasi. Silakan cek inbox email Anda.");
+                }
+
+                throw new Error(`Login gagal: ${authError.message}`);
             }
 
             const user = authData.user;
             if (!user) throw new Error("Gagal mendapatkan data user.");
 
-            // 3. Fetch Full Profile from app_users
-            const { data: profile, error: profileError } = await supabase
+            // 4. Fetch Full Profile from app_users (by ID first, fallback to email for migrated users)
+            let profile = null;
+            const { data: profileById } = await supabase
                 .from('app_users')
                 .select('*')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
-            if (profileError || !profile) {
+            if (profileById) {
+                profile = profileById;
+            } else if (user.email) {
+                const { data: profileByEmail } = await supabase
+                    .from('app_users')
+                    .select('*')
+                    .ilike('email', user.email)
+                    .maybeSingle();
+                profile = profileByEmail;
+            }
+
+            if (!profile) {
                 throw new Error("Profil pengguna tidak ditemukan di database.");
             }
 
-            // 4. Permission & Subscription Verification
+            // 5. Permission & Subscription Verification
             if (profile.is_active === false) {
                 await supabase.auth.signOut();
                 throw new Error("Akun Anda telah dinonaktifkan.");
