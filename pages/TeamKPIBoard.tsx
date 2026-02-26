@@ -143,11 +143,8 @@ export const TeamKPIBoard: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             let wsQuery = supabase.from('workspaces').select('id,name,members,admin_id,owner_id');
-
-            if (userRole !== 'Developer') {
-                // Strict visibility: only own or invited
-                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
-            }
+            // Strict visibility: only own or invited (Strictly all roles)
+            wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
 
             const [membersRes, kpisRes, wsRes] = await Promise.all([
                 supabase.from('team_members').select('*').eq('admin_id', tenantId).order('full_name'),
@@ -161,7 +158,6 @@ export const TeamKPIBoard: React.FC = () => {
             if (wsRes.data) {
                 // For members: only show workspaces they belong to or own (redundancy check)
                 let accessibleWorkspaces = (wsRes.data as WorkspaceItem[]).filter(ws =>
-                    userRole === 'Developer' ||
                     ws.owner_id === userId ||
                     (ws.members && ws.members.some((m: string) => {
                         try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }

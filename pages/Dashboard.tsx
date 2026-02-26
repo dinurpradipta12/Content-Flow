@@ -382,18 +382,13 @@ export const Dashboard: React.FC = () => {
             const userRole = localStorage.getItem('user_role');
 
             let query = supabase.from('workspaces').select('*');
-
-            if (userRole !== 'Developer') {
-                // Strict visibility: only own or invited
-                query = query.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
-            }
+            // Strict visibility: only own or invited (Applies strictly to ALL roles including Developer)
+            query = query.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
 
             const { data: wsData } = await query.order('name');
 
             // Optional secondary safety filter (already handled by DB query above but for absolute certainty)
             let myWorkspaces = (wsData || []).filter(ws => {
-                if (userRole === 'Developer') return true;
-
                 const isOwner = ws.owner_id === userId;
                 if (isOwner) return true;
 

@@ -167,11 +167,8 @@ export const Messages: React.FC = () => {
         const userRole = currentUser.role || 'Member';
 
         let query = supabase.from('workspaces').select('*');
-
-        if (userRole !== 'Developer') {
-            // Strict visibility: only own or invited
-            query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
-        }
+        // Strict visibility: only own or invited (Strictly all roles)
+        query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
 
         const { data, error } = await query.order('name');
 
@@ -184,7 +181,6 @@ export const Messages: React.FC = () => {
         if (data) {
             // Safety filtering
             const myWorkspaces = data.filter(ws => {
-                if (userRole === 'Developer') return true;
 
                 const isOwner = ws.owner_id === userId;
                 if (isOwner) return true;

@@ -134,11 +134,11 @@ export const UserManagement: React.FC = () => {
             const avatar = localStorage.getItem('user_avatar') || '';
 
             let query = supabase.from('workspaces').select('id, name');
-            if (userRole !== 'Developer') {
-                query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
-            }
+            // Strict visibility: only own or invited (Strictly all roles)
+            query = query.or(`owner_id.eq.${userId},members.cs.{"${avatar}"}`);
 
             const { data } = await query.order('name');
+
             if (data) setWorkspaces(data);
         } catch (err) {
             console.error(err);

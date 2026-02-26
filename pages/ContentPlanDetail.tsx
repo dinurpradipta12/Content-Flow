@@ -498,7 +498,7 @@ export const ContentPlanDetail: React.FC = () => {
 
             // Strict Access Control
             if (ws) {
-                const isOwner = ws.owner_id === userId || (ws.admin_id === userId && !ws.owner_id);
+                const isOwner = ws.owner_id === userId;
                 if (!isOwner) {
                     const wsMembers: string[] = ws.members || [];
                     const isMember = wsMembers.some(m => {

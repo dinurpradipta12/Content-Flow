@@ -36,7 +36,7 @@ export const PresenceToast = () => {
                 // 2. Extract unique members' avatars of our workspaces
                 const avatarSet = new Set<string>();
                 workspaces.forEach(ws => {
-                    const isMember = (ws.owner_id === currentUserId || ws.admin_id === currentUserId) ||
+                    const isMember = (ws.owner_id === currentUserId) ||
                         (ws.members || []).some((m: string) => {
                             try { return decodeURIComponent(m) === decodeURIComponent(myAvatar || '') || m === myAvatar; }
                             catch { return m === myAvatar; }

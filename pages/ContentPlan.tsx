@@ -99,11 +99,8 @@ export const ContentPlan: React.FC = () => {
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
 
             let wsQuery = supabase.from('workspaces').select('*');
-
-            if (userRole !== 'Developer') {
-                // Strict visibility: only own or invited
-                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
-            }
+            // Strict visibility: only own or invited (Strictly all roles)
+            wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
 
             const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, full_name').eq('id', userId || '').single(),
@@ -144,9 +141,6 @@ export const ContentPlan: React.FC = () => {
             // 4. Merge & Access Control
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
-                    // Strict filtering already mostly done by query, but as safety:
-                    if (userRole === 'Developer') return true;
-
                     const isOwner = ws.owner_id === userId;
                     if (isOwner) return true;
 

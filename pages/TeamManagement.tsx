@@ -146,15 +146,11 @@ export const TeamManagement: React.FC = () => {
 
             // 1. Fetch Workspaces
             let wsQuery = supabase.from('workspaces').select('*');
-
-            if (!isDeveloper) {
-                // Strict visibility: only own or invited
-                wsQuery = wsQuery.or(`owner_id.eq.${currentUserId},members.cs.{"${currentUserAvatar}"}`);
-            }
+            // Strict visibility: only own or invited (Strictly all roles)
+            wsQuery = wsQuery.or(`owner_id.eq.${currentUserId},members.cs.{"${currentUserAvatar}"}`);
 
             const { data: wsData } = await wsQuery.order('name');
             const myWorkspaces = (wsData || []).filter(w =>
-                isDeveloper ||
                 w.owner_id === currentUserId ||
                 (w.members || []).some((m: string) => {
                     try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }

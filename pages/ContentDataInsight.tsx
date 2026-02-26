@@ -101,11 +101,8 @@ export const ContentDataInsight: React.FC = () => {
             const shouldSkipAvatarFilter = isBase64Avatar && userAvatar.length > 500;
 
             let wsQuery = supabase.from('workspaces').select('id, account_name, members, owner_id');
-
-            if (userRole !== 'Developer') {
-                // Strict visibility: only own or invited
-                wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${userAvatar}"}`);
-            }
+            // Strict visibility: only own or invited (Strictly all roles)
+            wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${userAvatar}"}`);
 
             const { data: wsData, error: wsError } = await wsQuery;
             if (wsError) throw wsError;
@@ -113,7 +110,6 @@ export const ContentDataInsight: React.FC = () => {
             if (wsData) {
                 // For members: only show workspaces they belong to or own (redundancy check for security)
                 const accessibleWorkspaces = wsData.filter((w: any) =>
-                    userRole === 'Developer' ||
                     w.owner_id === userId ||
                     (w.members || []).some((m: string) => {
                         try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
