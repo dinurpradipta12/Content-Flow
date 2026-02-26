@@ -862,8 +862,8 @@ export const Dashboard: React.FC = () => {
                                         {/* Bottom Section */}
                                         <div className="flex items-center justify-between mt-auto">
                                             <div className="flex -space-x-2">
-                                                {(ws.members && ws.members.length > 0) ? (
-                                                    ws.members.slice(0, 3).map((url: string, i: number) => (
+                                                {(ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 0) ? (
+                                                    ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url: string, i: number) => (
                                                         <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover" />
                                                     ))
                                                 ) : (
@@ -872,9 +872,9 @@ export const Dashboard: React.FC = () => {
                                                         <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
                                                     </>
                                                 )}
-                                                {ws.members && ws.members.length > 3 && (
+                                                {ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 3 && (
                                                     <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm font-bold text-[10px] flex items-center justify-center bg-slate-100 text-slate-500 z-10 relative">
-                                                        +{ws.members.length - 3}
+                                                        +{ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length - 3}
                                                     </div>
                                                 )}
                                             </div>
