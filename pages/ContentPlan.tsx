@@ -494,7 +494,95 @@ export const ContentPlan: React.FC = () => {
     const isAdmin = ['Admin', 'Owner'].includes(userRole);
 
     return (
-        <div className="space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 pb-4 sm:pb-6 md:pb-8 lg:pb-12">
+        <>
+        {/* ═══ MOBILE VIEW ═══ */}
+        <div className="block md:hidden pb-24 animate-in fade-in duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+                <div>
+                    <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['plan']?.title || 'Content Plan'}</h2>
+                    <p className="text-[10px] text-mutedForeground">{workspaces.length} workspace</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={() => setIsJoinModalOpen(true)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-tertiary text-slate-900 rounded-xl text-xs font-bold border border-slate-900">
+                        <Users size={12} /> Gabung
+                    </button>
+                    {isAdminOrOwner && (
+                        <button onClick={handleOpenCreateModal}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-accent text-white rounded-xl text-xs font-bold">
+                            <Plus size={12} /> Buat
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center h-32">
+                    <Loader2 className="animate-spin w-6 h-6 text-accent" />
+                </div>
+            ) : workspaces.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
+                    <Layers size={32} className="text-accent/40 mx-auto mb-3" />
+                    <p className="text-sm font-bold text-foreground mb-1">Belum ada workspace</p>
+                    <p className="text-xs text-mutedForeground mb-4">Buat atau bergabung ke workspace</p>
+                    {isAdminOrOwner && (
+                        <button onClick={handleOpenCreateModal} className="px-4 py-2 bg-accent text-white rounded-xl text-xs font-bold">
+                            Buat Workspace
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {workspaces.map(ws => (
+                        <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
+                            className="w-full bg-card border border-border rounded-2xl p-3 flex items-center gap-3 text-left hover:border-accent transition-colors active:scale-[0.99]">
+                            {/* Logo */}
+                            <div className={`w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border border-border ${ws.color === 'violet' ? 'bg-accent/10' : ws.color === 'pink' ? 'bg-pink-50' : ws.color === 'yellow' ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+                                {ws.logoUrl ? (
+                                    <img src={ws.logoUrl} alt="" className="w-full h-full object-contain p-1" />
+                                ) : (
+                                    <Layers size={20} className={ws.color === 'violet' ? 'text-accent' : ws.color === 'pink' ? 'text-pink-500' : ws.color === 'yellow' ? 'text-amber-500' : 'text-emerald-500'} />
+                                )}
+                            </div>
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                    <p className="text-sm font-bold text-foreground truncate">{ws.name}</p>
+                                    {ws.workspace_type === 'personal' ? (
+                                        <span className="flex-shrink-0 text-[8px] font-bold text-purple-600 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                            <Lock size={7} /> Personal
+                                        </span>
+                                    ) : (
+                                        <span className="flex-shrink-0 text-[8px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                            <Globe size={7} /> Team
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${ws.color === 'violet' ? 'bg-accent' : ws.color === 'pink' ? 'bg-pink-500' : ws.color === 'yellow' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                            style={{ width: `${ws.totalContent > 0 ? (ws.publishedCount / ws.totalContent) * 100 : 0}%` }} />
+                                    </div>
+                                    <span className="text-[9px] font-bold text-mutedForeground flex-shrink-0">{ws.publishedCount}/{ws.totalContent}</span>
+                                </div>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                    {ws.platforms.slice(0, 4).map(p => (
+                                        <span key={p} className="text-[8px] font-bold text-mutedForeground bg-muted px-1 py-0.5 rounded">{p}</span>
+                                    ))}
+                                </div>
+                            </div>
+                            <ArrowRight size={16} className="text-accent flex-shrink-0" />
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Modals are shared between mobile and desktop */}
+        </div>
+
+        {/* ═══ DESKTOP VIEW ═══ */}
+        <div className="hidden md:block space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8 pb-4 sm:pb-6 md:pb-8 lg:pb-12">
             {/* Page Header - Compact on mobile */}
             <div className="flex flex-col gap-3 sm:gap-4 md:gap-6 border-b-2 border-slate-100 pb-3 sm:pb-4 md:pb-6">
                 {/* Title Section */}
@@ -943,5 +1031,6 @@ export const ContentPlan: React.FC = () => {
                 </form>
             </Modal>
         </div >
+        </>
     );
 };

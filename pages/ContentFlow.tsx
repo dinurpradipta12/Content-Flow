@@ -419,20 +419,20 @@ export const ContentFlow: React.FC = () => {
     return (
         <div className="flex flex-col h-full min-h-screen pb-10">
             {/* Page Header */}
-            <div className="flex flex-col gap-4 border-b-2 border-border pb-6 mb-6">
-                <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-2 md:gap-4 border-b-2 border-border pb-3 md:pb-6 mb-3 md:mb-6">
+                <div className="flex items-start justify-between gap-2 md:gap-4">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground font-heading tracking-tight">
+                        <h2 className="text-base md:text-2xl lg:text-4xl font-extrabold text-foreground font-heading tracking-tight">
                             {config?.page_titles?.['flow']?.title || 'Content Flow'}
                         </h2>
-                        <p className="text-sm text-mutedForeground font-medium mt-1">
+                        <p className="text-xs md:text-sm text-mutedForeground font-medium mt-0.5 md:mt-1 hidden md:block">
                             {config?.page_titles?.['flow']?.subtitle || 'Pantau alur konten dari semua workspace dalam satu tampilan.'}
                         </p>
                     </div>
                     <button
                         onClick={fetchData}
                         disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 bg-muted border-2 border-border rounded-xl text-xs font-bold text-mutedForeground hover:text-foreground hover:border-foreground transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-muted border-2 border-border rounded-xl text-xs font-bold text-mutedForeground hover:text-foreground hover:border-foreground transition-all disabled:opacity-50 flex-shrink-0"
                     >
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         <span className="hidden sm:inline">Refresh</span>

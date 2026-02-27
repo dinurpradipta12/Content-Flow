@@ -455,10 +455,10 @@ export const ContentDataInsight: React.FC = () => {
             {/* ... Header ... */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2">
                 <div>
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-2 sm:gap-3">
+                    <h2 className="text-base md:text-2xl lg:text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-2 sm:gap-3">
                         {config?.page_titles?.['insight']?.title || 'Content Data Insight'}
                     </h2>
-                    <p className="text-slate-500 font-medium mt-1 sm:mt-2 text-xs sm:text-sm">
+                    <p className="text-slate-500 font-medium mt-0.5 md:mt-2 text-xs sm:text-sm hidden md:block">
                         {config?.page_titles?.['insight']?.subtitle || 'Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.'}
                     </p>
                 </div>
