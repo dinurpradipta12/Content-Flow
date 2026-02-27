@@ -523,7 +523,7 @@ export const ContentPlan: React.FC = () => {
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+                <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 md:gap-5 lg:gap-6">
                     {/* Workspace Cards */}
                     {workspaces.map((ws) => (
                         <Card
@@ -582,15 +582,15 @@ export const ContentPlan: React.FC = () => {
                             )}
 
                             {/* Header Layout: Logo Left, Info Stack Right - Compact on mobile */}
-                            <div className="flex gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 items-start mb-2 sm:mb-3 md:mb-4 lg:mb-6 relative z-20 pr-2 sm:pr-3">
+                            <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-4 items-start mb-2 sm:mb-3 md:mb-4 lg:mb-6 relative z-20 pr-2 sm:pr-3">
                                 {/* Left: Logo (Responsive size) */}
                                 {ws.logoUrl ? (
-                                    <div className="ws-logo-box w-24 h-24 sm:w-28 md:w-32 lg:w-[160px] flex-shrink-0 bg-card rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border overflow-hidden p-1 sm:p-1.5 lg:p-2 shadow-sm">
+                                    <div className="ws-logo-box w-16 h-16 sm:w-24 md:w-32 lg:w-[160px] flex-shrink-0 bg-card rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border overflow-hidden p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm">
                                         <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
                                     </div>
                                 ) : (
-                                    <div className="ws-logo-box w-24 h-24 sm:w-28 md:w-32 lg:w-[160px] flex-shrink-0 bg-muted/50 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border flex items-center justify-center p-1 sm:p-1.5 lg:p-2 shadow-sm text-mutedForeground">
-                                        <Layers size={32} className="sm:w-8 sm:h-8 md:w-9 lg:w-10 lg:h-10" />
+                                    <div className="ws-logo-box w-16 h-16 sm:w-24 md:w-32 lg:w-[160px] flex-shrink-0 bg-muted/50 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border flex items-center justify-center p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm text-mutedForeground">
+                                        <Layers size={20} className="sm:w-8 sm:h-8 md:w-9 lg:w-10 lg:h-10" />
                                     </div>
                                 )}
 
