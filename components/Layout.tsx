@@ -1895,29 +1895,35 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Mobile Nav & Menu (Only visible on small screens) */}
             {
-                !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
+                !isSidebarOpen && (
                     <>
-                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-2 pb-safe pt-2 h-[84px]">
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-colors ${location.pathname === '/' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <LayoutDashboard size={24} className={location.pathname === '/' ? 'fill-accent/20' : ''} />
-                                <span className="text-[10px] font-bold">Dasbor</span>
+                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-1 pb-safe pt-1 h-[72px]">
+                            {/* Left: Content Plan */}
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <Layers size={22} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Plan</span>
                             </button>
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <Layers size={24} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
-                                <span className="text-[10px] font-bold">Plan</span>
+                            {/* Left: Calendar */}
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/calendar' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <CalendarDays size={22} className={location.pathname === '/calendar' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Kalender</span>
                             </button>
-                            <div className="relative -top-8">
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className="flex items-center justify-center w-16 h-16 bg-accent text-white rounded-full shadow-[0_8px_16px_rgba(var(--accent),0.4)] border-4 border-background transition-transform active:scale-95">
-                                    <CalendarDays size={26} className="fill-white/20" />
+                            {/* Center: Dashboard (elevated) */}
+                            <div className="relative -top-5 flex-shrink-0">
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-full border-4 border-background shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform active:scale-95 ${location.pathname === '/' ? 'bg-accent text-white' : 'bg-slate-800 text-white'}`}>
+                                    <LayoutDashboard size={24} />
                                 </button>
+                                <span className={`text-[9px] font-bold text-center block mt-1 ${location.pathname === '/' ? 'text-accent' : 'text-slate-400'}`}>Dasbor</span>
                             </div>
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 relative transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <CheckCircle size={24} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
-                                <span className="text-[10px] font-bold">Approve</span>
+                            {/* Right: Approval */}
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <CheckCircle size={22} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Approval</span>
                             </button>
-                            <button onClick={() => setShowMobileMenu(!showMobileMenu)} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-colors ${showMobileMenu ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <Menu size={24} />
-                                <span className="text-[10px] font-bold">Menu</span>
+                            {/* Right: Carousel */}
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/carousel'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/carousel' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <ImageIcon size={22} className={location.pathname === '/carousel' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Design</span>
                             </button>
                         </nav>
 

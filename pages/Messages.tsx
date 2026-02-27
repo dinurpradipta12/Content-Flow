@@ -171,6 +171,8 @@ export const Messages: React.FC = () => {
     const [isLoaded, setIsLoaded] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarTab, setSidebarTab] = useState<'groups' | 'dm' | 'members'>('groups');
+    // Mobile: 'list' shows sidebar, 'chat' shows chat area
+    const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
     // DM State
     const [dmConversations, setDmConversations] = useState<DMConversation[]>([]);
@@ -902,7 +904,7 @@ export const Messages: React.FC = () => {
             )}
 
             {/* ── Stats Cards ── */}
-            <div className="grid grid-cols-3 gap-3 mb-4 flex-shrink-0">
+            <div className={`${mobileView === 'chat' ? 'hidden' : 'grid'} grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 flex-shrink-0`}>
                 <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
                     <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
                         <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
@@ -936,7 +938,7 @@ export const Messages: React.FC = () => {
             <div className="flex flex-1 bg-card border-2 border-border rounded-2xl overflow-hidden min-h-0">
 
                 {/* ── Workspace Selector (Left) ── */}
-                <div className="w-16 bg-muted/30 border-r-2 border-border flex flex-col items-center py-4 gap-2 flex-shrink-0 overflow-y-auto">
+                <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-12 md:w-16 bg-muted/30 border-r-2 border-border flex-col items-center py-4 gap-2 flex-shrink-0 overflow-y-auto`}>
                     {workspaces.map(ws => {
                         const isSelected = selectedWorkspace?.id === ws.id;
                         const wsUnread = unreadCounts[ws.id] || 0;
@@ -965,7 +967,7 @@ export const Messages: React.FC = () => {
                 </div>
 
                 {/* ── Channel/DM List ── */}
-                <div className="w-64 border-r-2 border-border flex flex-col flex-shrink-0">
+                <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-64 border-r-2 border-border flex-col flex-shrink-0`}>
                     {/* Workspace name + status */}
                     <div className="p-3 border-b-2 border-border flex-shrink-0">
                         <div className="flex items-center justify-between">
@@ -1050,7 +1052,7 @@ export const Messages: React.FC = () => {
                                     return (
                                         <div key={g.id} className="relative group/item">
                                             <button
-                                                onClick={() => { setActiveGroup(g); setChatMode('workspace'); }}
+                                                onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
                                                 className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
                                             >
                                                 <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -1116,7 +1118,7 @@ export const Messages: React.FC = () => {
                                 return (
                                     <button
                                         key={dm.userId}
-                                        onClick={() => { setActiveDM(dm); setChatMode('dm'); }}
+                                        onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
                                         className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}
                                     >
                                         <div className="relative flex-shrink-0">
@@ -1140,7 +1142,7 @@ export const Messages: React.FC = () => {
                                     onClick={() => {
                                         if (u.id === currentUser.id) return; // Don't DM yourself
                                         const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
-                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm');
+                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
                                     }}
                                     className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 hover:bg-muted transition-all text-left"
                                 >
@@ -1163,12 +1165,19 @@ export const Messages: React.FC = () => {
                 </div>
 
                 {/* ── Chat Area ── */}
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
                     {(activeGroup && chatMode === 'workspace') || (activeDM && chatMode === 'dm') ? (
                         <>
                             {/* Chat Header */}
-                            <div className="h-14 border-b-2 border-border flex items-center justify-between px-5 flex-shrink-0 bg-card">
-                                <div className="flex items-center gap-3">
+                            <div className="h-14 border-b-2 border-border flex items-center justify-between px-3 md:px-5 flex-shrink-0 bg-card">
+                                <div className="flex items-center gap-2 md:gap-3">
+                                    {/* Mobile back button */}
+                                    <button
+                                        onClick={() => setMobileView('list')}
+                                        className="md:hidden p-1.5 rounded-lg hover:bg-muted text-mutedForeground hover:text-foreground transition-colors flex-shrink-0"
+                                    >
+                                        <X size={18} />
+                                    </button>
                                     {chatMode === 'dm' && activeDM ? (
                                         <>
                                             <div className="relative">

@@ -92,6 +92,30 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
+    /* Remove zoom on mobile for better usability */
+    @media (max-width: 767px) {
+      body {
+        zoom: 1;
+      }
+    }
+
+    /* Mobile safe area support */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+
+    /* Mobile touch improvements */
+    @media (max-width: 767px) {
+      * {
+        -webkit-tap-highlight-color: transparent;
+      }
+      button, a {
+        touch-action: manipulation;
+      }
+    }
+
     /* Override min-h-screen and h-screen to use percentages for zoom compatibility */
     .min-h-screen {
       min-height: 100% !important;
