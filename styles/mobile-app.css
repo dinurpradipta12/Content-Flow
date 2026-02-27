@@ -1,210 +1,302 @@
 /*
- * Mobile App Styles
- * Applied only on screens < 768px (md breakpoint)
+ * Mobile App Styles - Full Mobile Redesign
+ * Applied ONLY on screens < 768px (md breakpoint)
  * Does NOT affect desktop or tablet layouts
+ * 
+ * Strategy: Override specific desktop styles for mobile
+ * to create a native app-like experience
  */
 
-/* ─── Global Mobile Fixes ─────────────────────────────────────────────────── */
+/* ─── Base Mobile Reset ───────────────────────────────────────────────────── */
 @media (max-width: 767px) {
   /* Prevent horizontal overflow */
-  body, #root {
-    overflow-x: hidden;
-  }
+  body, #root { overflow-x: hidden; }
+
+  /* Prevent iOS zoom on input focus */
+  input, textarea, select { font-size: 16px !important; }
+
+  /* Hide scrollbars for cleaner look */
+  ::-webkit-scrollbar { display: none !important; }
+  * { scrollbar-width: none !important; }
 
   /* Better touch targets */
-  button, a, [role="button"] {
-    min-height: 36px;
-  }
+  button { min-height: 36px; }
 
-  /* Compact spacing for mobile */
-  .space-y-8 { --tw-space-y-reverse: 0; margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1.5rem * var(--tw-space-y-reverse)); }
-  .space-y-6 { --tw-space-y-reverse: 0; margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1rem * var(--tw-space-y-reverse)); }
-
-  /* Compact padding for page containers */
-  .px-10 { padding-left: 0.75rem; padding-right: 0.75rem; }
-  .px-8 { padding-left: 0.75rem; padding-right: 0.75rem; }
-  .px-6 { padding-left: 0.5rem; padding-right: 0.5rem; }
-
-  /* Compact text sizes */
-  .text-4xl { font-size: 1.5rem; line-height: 2rem; }
-  .text-3xl { font-size: 1.25rem; line-height: 1.75rem; }
-  .text-2xl { font-size: 1.125rem; line-height: 1.5rem; }
-
-  /* Scrollable horizontal containers */
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .overflow-x-auto::-webkit-scrollbar { display: none; }
+  /* Smooth horizontal scroll */
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
 }
 
 /* ─── Dashboard Mobile ────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Dashboard grid: single column */
-  .dashboard-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  /* Main container: remove large padding */
+  .dashboard-container {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
   }
 
-  /* Analytics cards: 2 columns on mobile */
-  .analytics-cards-grid {
+  /* Welcome text: compact */
+  .dashboard-welcome h1 {
+    font-size: 1.25rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* Analytics cards: 2 columns */
+  .analytics-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.5rem !important;
   }
 
-  /* Chart height on mobile */
-  .chart-container {
+  /* Analytics card: compact height */
+  .analytics-card {
+    height: 80px !important;
+  }
+
+  /* Chart: smaller height */
+  .chart-area {
     height: 150px !important;
   }
 
-  /* Prayer times: compact */
-  .prayer-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.375rem !important;
+  /* Pie charts: smaller */
+  .pie-chart-area {
+    height: 160px !important;
   }
+
+  /* Workspace gallery: 2 columns */
+  .workspace-gallery-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Workspace card: compact */
+  .workspace-gallery-card {
+    min-height: 120px !important;
+    padding: 0.75rem !important;
+  }
+
+  /* Cards with large border-radius: reduce on mobile */
+  .rounded-\[32px\] {
+    border-radius: 1rem !important;
+  }
+
+  /* Large shadows: reduce on mobile */
+  .shadow-\[0px_8px_0px_\#0f172a\] {
+    box-shadow: 2px 2px 0px #0f172a !important;
+  }
+
+  /* Large borders: reduce on mobile */
+  .border-\[3px\] {
+    border-width: 2px !important;
+  }
+
+  /* Large padding: reduce on mobile */
+  .p-6 { padding: 0.75rem !important; }
+  .p-8 { padding: 1rem !important; }
+  .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .px-8 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .px-10 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .py-8 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+
+  /* Large gaps: reduce on mobile */
+  .gap-8 { gap: 0.75rem !important; }
+  .gap-6 { gap: 0.5rem !important; }
+
+  /* Large margins: reduce on mobile */
+  .mb-8 { margin-bottom: 0.75rem !important; }
+  .mb-6 { margin-bottom: 0.5rem !important; }
+  .mt-8 { margin-top: 0.75rem !important; }
+  .mt-6 { margin-top: 0.5rem !important; }
+
+  /* Large text: reduce on mobile */
+  .text-5xl { font-size: 1.75rem !important; line-height: 2rem !important; }
+  .text-4xl { font-size: 1.5rem !important; line-height: 1.75rem !important; }
+  .text-3xl { font-size: 1.25rem !important; line-height: 1.5rem !important; }
+  .text-2xl { font-size: 1.125rem !important; line-height: 1.375rem !important; }
+  .text-xl { font-size: 1rem !important; line-height: 1.25rem !important; }
+
+  /* Min heights: reduce on mobile */
+  .min-h-\[300px\] { min-height: 150px !important; }
+  .min-h-\[220px\] { min-height: 120px !important; }
+  .min-h-\[240px\] { min-height: 140px !important; }
+  .min-h-\[180px\] { min-height: 100px !important; }
+
+  /* Fixed heights: reduce on mobile */
+  .h-\[300px\] { height: 160px !important; }
+  .h-\[250px\] { height: 140px !important; }
+  .h-\[200px\] { height: 120px !important; }
+  .h-\[180px\] { height: 120px !important; }
 }
 
 /* ─── Content Plan Mobile ─────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Workspace cards: single column, compact */
-  .workspace-card {
-    padding: 0.75rem !important;
-  }
-
-  /* Card header: smaller logo */
-  .ws-logo-box {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
+  /* Workspace cards: single column with compact layout */
+  .workspace-card-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
   }
 }
 
 /* ─── Calendar Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Calendar day cells: smaller */
-  .calendar-cell {
-    min-height: 60px !important;
-    padding: 0.25rem !important;
+  /* Calendar grid: smaller cells */
+  .calendar-grid {
+    grid-auto-rows: minmax(55px, 1fr) !important;
   }
 
-  /* Day number: smaller */
-  .calendar-day-number {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-    font-size: 0.625rem !important;
-  }
-
-  /* Content items in calendar: very compact */
-  .calendar-item {
+  /* Day header: smaller text */
+  .calendar-day-header {
     font-size: 0.5rem !important;
-    padding: 0.125rem 0.25rem !important;
+    padding: 0.25rem !important;
   }
 }
 
 /* ─── Approval Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Approval cards: 1 column */
-  .approval-grid {
+  /* Approval cards: single column */
+  .approval-cards-grid {
     grid-template-columns: 1fr !important;
-  }
-
-  /* Approval card: compact */
-  .approval-card {
-    padding: 0.75rem !important;
-  }
-}
-
-/* ─── Messages Mobile ─────────────────────────────────────────────────────── */
-@media (max-width: 767px) {
-  /* Messages: full height */
-  .messages-container {
-    height: calc(100vh - 180px) !important;
-  }
-
-  /* Chat input: larger touch target */
-  .chat-input {
-    font-size: 16px !important; /* Prevent iOS zoom */
   }
 }
 
 /* ─── Content Flow Mobile ─────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Kanban columns: narrower */
-  .kanban-column {
-    min-width: 240px !important;
+  /* Kanban columns: narrower for horizontal scroll */
+  .kanban-col {
+    min-width: 220px !important;
+    max-width: 260px !important;
   }
+}
 
-  /* Flow stats: 2 columns */
-  .flow-stats-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+/* ─── Messages Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Chat input: prevent iOS zoom */
+  .chat-input-field {
+    font-size: 16px !important;
   }
 }
 
 /* ─── Content Data Insight Mobile ────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Insight charts: full width */
-  .insight-chart {
-    width: 100% !important;
-    height: 200px !important;
-  }
-
-  /* Insight filters: scrollable */
-  .insight-filters {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap !important;
+  /* Metric cards: 2 columns */
+  .metric-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
-/* ─── Team KPI Board Mobile ───────────────────────────────────────────────── */
+/* ─── Team KPI Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* KPI cards: 1 column */
-  .kpi-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* KPI member card: compact */
-  .kpi-member-card {
-    padding: 0.75rem !important;
+  /* KPI member cards: 2 columns */
+  .kpi-members-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
 /* ─── Modal Mobile ────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Modals: full screen on mobile */
-  .modal-content {
+  /* Modals: bottom sheet style */
+  .modal-overlay {
+    align-items: flex-end !important;
+  }
+
+  .modal-box {
+    border-radius: 1.5rem 1.5rem 0 0 !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
-    border-radius: 1rem 1rem 0 0 !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    margin: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
+    margin: 0 !important;
   }
 }
 
-/* ─── Form Inputs Mobile ──────────────────────────────────────────────────── */
+/* ─── Table Mobile ────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Prevent iOS zoom on input focus */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="search"],
-  textarea,
-  select {
-    font-size: 16px !important;
+  /* Tables: horizontal scroll */
+  table {
+    min-width: 500px;
+  }
+
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* ─── Scrollbar Hide on Mobile ────────────────────────────────────────────── */
+/* ─── Filter Buttons Mobile ───────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  ::-webkit-scrollbar {
-    display: none;
+  /* Filter rows: horizontal scroll */
+  .filter-row {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
   }
-  * {
-    scrollbar-width: none;
+
+  .filter-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ─── Page Headers Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Page headers: compact */
+  .page-header {
+    padding-bottom: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .page-title {
+    font-size: 1.125rem !important;
+    line-height: 1.375rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+}
+
+/* ─── Card Shadows Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Reduce heavy shadows on mobile */
+  .shadow-hard {
+    box-shadow: 2px 2px 0px 0px #1E293B !important;
+  }
+
+  .shadow-\[4px_4px_0px_0px_\#0f172a\] {
+    box-shadow: 2px 2px 0px 0px #0f172a !important;
+  }
+
+  .shadow-\[8px_8px_0px_0px_\#0f172a\] {
+    box-shadow: 2px 2px 0px 0px #0f172a !important;
+  }
+
+  .shadow-\[12px_12px_0px_0px_\#0f172a\] {
+    box-shadow: 2px 2px 0px 0px #0f172a !important;
+  }
+}
+
+/* ─── Hover Effects Mobile ────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Disable hover translate on mobile (touch devices) */
+  .hover\:-translate-y-2:hover { transform: none !important; }
+  .hover\:-translate-y-1:hover { transform: none !important; }
+  .hover\:shadow-hard:hover { box-shadow: 2px 2px 0px 0px #1E293B !important; }
+}
+
+/* ─── Sticky Headers Mobile ───────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Sticky headers: reduce padding */
+  .sticky-header {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+}
+
+/* ─── Bottom Safe Area ────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Add bottom padding for bottom nav */
+  .main-content {
+    padding-bottom: 5rem !important;
   }
 }
