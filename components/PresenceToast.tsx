@@ -7,13 +7,14 @@ export const PresenceToast = () => {
     const [isVisible, setIsVisible] = useState(false);
     const currentUserId = localStorage.getItem('user_id');
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const membersToTrackRef = useRef<Set<string>>(new Set());
+    const statusCacheRef = useRef<Map<string, string>>(new Map());
+    const channelRef = useRef<any>(null);
 
     useEffect(() => {
         if (!currentUserId) return;
 
-        let membersToTrackIds: string[] = [];
-        const statusCache = new Map<string, string>();
-        let channelRef: any = null;
+        let isMounted = true;
 
         const setupPresenceTracking = async () => {
             try {
@@ -24,18 +25,18 @@ export const PresenceToast = () => {
                     .eq('id', currentUserId)
                     .single();
 
-                if (!currentUser) return;
+                if (!currentUser || !isMounted) return;
                 const myAvatar = currentUser.avatar_url;
 
                 // 1. Get all workspaces to find where user is a member
                 const { data: workspaces } = await supabase
                     .from('workspaces')
-                    .select('owner_id, admin_id, members');
+                    .select('owner_id, members');
 
-                if (!workspaces) return;
+                if (!workspaces || !isMounted) return;
 
-                // 2. Extract unique members' avatars of our workspaces
-                const avatarSet = new Set<string>();
+                // 2. Extract unique members of our workspaces
+                const memberAvatarSet = new Set<string>();
                 workspaces.forEach(ws => {
                     const isMember = (ws.owner_id === currentUserId) ||
                         (ws.members || []).some((m: string) => {
@@ -45,70 +46,68 @@ export const PresenceToast = () => {
 
                     if (isMember && ws.members) {
                         ws.members.forEach((m: string) => {
-                            if (m !== myAvatar) avatarSet.add(m);
+                            if (m !== myAvatar) memberAvatarSet.add(m);
                         });
                     }
                 });
 
-                const membersToTrackAvatars = Array.from(avatarSet);
+                const membersToTrackAvatars = Array.from(memberAvatarSet);
+                console.log(`Found ${membersToTrackAvatars.length} workspace members to track`);
 
                 // 3. Map avatars to User IDs for reliable tracking
                 if (membersToTrackAvatars.length > 0) {
                     const { data: usersToTrack } = await supabase
                         .from('app_users')
-                        .select('id, online_status')
+                        .select('id, online_status, full_name, username')
                         .in('avatar_url', membersToTrackAvatars);
 
-                    if (usersToTrack) {
-                        membersToTrackIds = []; // Reset array
+                    if (usersToTrack && isMounted) {
+                        membersToTrackRef.current.clear();
+                        statusCacheRef.current.clear();
+                        
                         usersToTrack.forEach(u => {
-                            membersToTrackIds.push(u.id);
-                            if (u.online_status) statusCache.set(u.id, u.online_status);
+                            membersToTrackRef.current.add(u.id);
+                            if (u.online_status) {
+                                statusCacheRef.current.set(u.id, u.online_status);
+                            }
                         });
-                    }
-                }
 
-                console.log(`Presence System: Tracking ${membersToTrackIds.length} peers.`);
+                        console.log(`Presence System: Tracking ${membersToTrackRef.current.size} peers`);
 
-                // 4. Realtime Subscription dengan filter untuk user IDs yang di-track
-                if (membersToTrackIds.length === 0) {
-                    console.log('No peers to track');
-                    return null;
-                }
-
-                // Subscribe ke perubahan online_status dari user yang di-track
-                const channel = supabase
-                    .channel(`presence_toast_${currentUserId}`, {
-                        config: {
-                            broadcast: { self: false }
+                        // 4. Setup Realtime Subscription
+                        // Remove old channel if exists
+                        if (channelRef.current) {
+                            supabase.removeChannel(channelRef.current);
                         }
-                    })
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'UPDATE',
-                            schema: 'public',
-                            table: 'app_users',
-                            filter: `id=in.(${membersToTrackIds.join(',')})`
-                        },
-                        (payload) => {
-                            const newUser = payload.new;
-                            const userId = newUser.id;
-                            const newStatus = newUser.online_status;
 
-                            // Skip self
-                            if (userId === currentUserId) return;
+                        // Subscribe to ALL app_users updates, filter in callback
+                        const channel = supabase
+                            .channel(`presence_toast_${currentUserId}_${Date.now()}`)
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: 'UPDATE',
+                                    schema: 'public',
+                                    table: 'app_users'
+                                },
+                                (payload) => {
+                                    const newUser = payload.new;
+                                    const userId = newUser.id;
+                                    const newStatus = newUser.online_status;
 
-                            // Verify user is still in our track list (in case workspace changed)
-                            if (membersToTrackIds.includes(userId)) {
-                                const lastStatus = statusCache.get(userId);
+                                    // Only process if it's a user we're tracking
+                                    if (!membersToTrackRef.current.has(userId)) return;
 
-                                // Only if status actually changed
-                                if (newStatus && newStatus !== lastStatus) {
-                                    statusCache.set(userId, newStatus);
+                                    // Skip self
+                                    if (userId === currentUserId) return;
 
-                                    // Trigger toast (except on initial state fill which shouldn't happen here)
-                                    if (lastStatus !== undefined) {
+                                    const lastStatus = statusCacheRef.current.get(userId);
+
+                                    // Show toast if status changed
+                                    if (newStatus && newStatus !== lastStatus) {
+                                        statusCacheRef.current.set(userId, newStatus);
+
+                                        // Show toast even on first status update
                                         setPresence({
                                             name: newUser.full_name || newUser.username || 'Seseorang',
                                             status: newStatus,
@@ -116,45 +115,45 @@ export const PresenceToast = () => {
                                         });
                                         setIsVisible(true);
 
+                                        console.log(`[Presence] ${newUser.full_name || newUser.username} is now ${newStatus}`);
+
                                         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
                                         toastTimerRef.current = setTimeout(() => {
                                             setIsVisible(false);
-                                        }, 10000); // 10 seconds visibility
+                                        }, 8000);
                                     }
                                 }
-                            }
-                        }
-                    )
-                    .subscribe((status, error) => {
-                        console.log('Presence Subscription Status:', status);
-                        if (error) {
-                            console.error('Presence subscription error:', error);
-                        }
-                    });
+                            )
+                            .subscribe((status, error) => {
+                                console.log(`[Presence] Subscription status: ${status}`, error);
+                            });
 
-                channelRef = channel;
-                return channel;
+                        channelRef.current = channel;
+                    }
+                } else {
+                    console.log('No workspace members to track');
+                }
             } catch (err) {
                 console.error('Presence setup error:', err);
             }
         };
 
-        const channelPromise = setupPresenceTracking();
+        setupPresenceTracking();
 
-        // Re-setup tracking every 5 minutes to catch workspace membership changes
+        // Re-setup tracking every 3 minutes to catch workspace membership changes
         const intervalId = setInterval(() => {
-            if (channelRef) {
-                supabase.removeChannel(channelRef);
+            if (isMounted) {
+                setupPresenceTracking();
             }
-            setupPresenceTracking();
-        }, 5 * 60 * 1000);
+        }, 3 * 60 * 1000);
 
         return () => {
+            isMounted = false;
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-            clearInterval(intervalId);
-            channelPromise.then(channel => {
-                if (channel) supabase.removeChannel(channel);
-            });
+            if (intervalId) clearInterval(intervalId);
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+            }
         };
     }, [currentUserId]);
 

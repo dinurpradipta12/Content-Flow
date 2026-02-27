@@ -112,20 +112,66 @@ export const getTemplates = async (): Promise<ApprovalTemplate[]> => {
 };
 
 export const getRequests = async (): Promise<ApprovalRequest[]> => {
-    const tenantId = localStorage.getItem('tenant_id') || localStorage.getItem('user_id');
-    const { data, error } = await supabase
-        .from('approval_requests')
-        .select(`*, template:approval_templates(*)`)
-        .eq('admin_id', tenantId)
-        .order('created_at', { ascending: false });
+    const userId = localStorage.getItem('user_id');
+    const tenantId = localStorage.getItem('tenant_id') || userId;
+    const userAvatar = localStorage.getItem('user_avatar') || '';
 
-    if (error) throw error;
+    try {
+        // Step 1: Get all workspaces where user is member or owner
+        const { data: wsData, error: wsError } = await supabase
+            .from('workspaces')
+            .select('id, owner_id, members');
 
-    // Map template relation manually if needed, but Supabase handles simple joins well
-    return data.map((req: any) => ({
-        ...req,
-        template: req.template // Ensure template is nested
-    }));
+        if (wsError) throw wsError;
+
+        // Filter workspaces where user is member or owner
+        const userWorkspaceOwnerIds = new Set<string>();
+        (wsData || []).forEach(ws => {
+            const isOwner = ws.owner_id === userId;
+            if (isOwner) {
+                userWorkspaceOwnerIds.add(ws.owner_id);
+                return;
+            }
+
+            // Check membership
+            const members: string[] = ws.members || [];
+            if (members.includes(userId || '')) {
+                userWorkspaceOwnerIds.add(ws.owner_id);
+                return;
+            }
+            if (userAvatar && members.some(m => {
+                try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
+                catch { return m === userAvatar; }
+            })) {
+                userWorkspaceOwnerIds.add(ws.owner_id);
+            }
+        });
+
+        // Step 2: Fetch approval_requests where admin_id matches user or workspace owners
+        // Build an OR condition with user ID, tenant ID, and all workspace owner IDs
+        let adminIds = Array.from(userWorkspaceOwnerIds);
+        adminIds.push(userId!);
+        if (tenantId && tenantId !== userId) {
+            adminIds.push(tenantId);
+        }
+        adminIds = [...new Set(adminIds)]; // Deduplicate
+
+        const { data, error } = await supabase
+            .from('approval_requests')
+            .select(`*, template:approval_templates(*)`)
+            .in('admin_id', adminIds)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map((req: any) => ({
+            ...req,
+            template: req.template
+        }));
+    } catch (error) {
+        console.error('Error in getRequests:', error);
+        throw error;
+    }
 };
 
 export const getLogs = async (requestId: string): Promise<ApprovalLog[]> => {
