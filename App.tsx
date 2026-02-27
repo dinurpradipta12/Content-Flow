@@ -218,7 +218,7 @@ const App: React.FC = () => {
                 <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
 
                 {/* Superuser / Developer Infrastructure */}
-                <Route path="messages" element={<RequireDeveloper><Messages /></RequireDeveloper>} />
+                <Route path="messages" element={<Messages />} />
                 <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
                 <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
                 <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />
