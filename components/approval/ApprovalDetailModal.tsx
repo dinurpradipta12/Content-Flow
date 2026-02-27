@@ -183,14 +183,31 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
         try {
             await processApproval(request, activeAction, comment, currentUser);
 
-            // 1. Notify Requester
+            // 1. Notify Requester with personalized message
             if (request.requester_id !== currentUser.id) {
+                const formTitle = request.form_data.judul_konten || request.template?.name || 'Untitled';
+                const approverName = currentUser.name || currentUser.full_name || 'Seseorang';
+
+                let notifTitle = '';
+                let notifContent = '';
+
+                if (activeAction === 'Approve') {
+                    notifTitle = '🎉 Pengajuan Disetujui!';
+                    notifContent = `Yeay, pengajuan "${formTitle}" kamu sudah di approve sama ${approverName}, nih!`;
+                } else if (activeAction === 'Reject') {
+                    notifTitle = '❌ Pengajuan Ditolak';
+                    notifContent = `Yah, pengajuan "${formTitle}" kamu ditolak sama ${approverName}. Cek catatannya ya!`;
+                } else if (activeAction === 'Return') {
+                    notifTitle = '🔄 Pengajuan Dikembalikan';
+                    notifContent = `Pengajuan "${formTitle}" kamu dikembalikan oleh ${approverName} untuk diperbaiki.`;
+                }
+
                 await sendNotification({
-                    recipientId: request.requester_id, // Notify the requester
+                    recipientId: request.requester_id,
                     type: activeAction === 'Approve' ? 'CONTENT_APPROVED' : 'CONTENT_REVISION',
-                    title: `Status Approval: ${activeAction}`,
-                    content: `telah melakukan aksi "${activeAction}" pada pengajuan: ${request.form_data.judul_konten || 'Untitled'}`,
-                    metadata: { request_id: request.id }
+                    title: notifTitle,
+                    content: notifContent,
+                    metadata: { request_id: request.id, show_popup: true, hide_actor_name: true }
                 });
             }
 

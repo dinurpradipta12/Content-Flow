@@ -57,9 +57,13 @@ export const Login: React.FC = () => {
                     .ilike('username', trimmedUsername)
                     .maybeSingle();
 
-                if (userData) {
+                if (userData && userData.email && userData.email.includes('@')) {
                     loginEmail = userData.email;
                     console.log("Found email for username:", loginEmail);
+                } else if (userData) {
+                    // User exists but has no email — use synthetic email format
+                    loginEmail = `${trimmedUsername.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
+                    console.log("Using synthetic email:", loginEmail);
                 }
             }
 
@@ -72,11 +76,27 @@ export const Login: React.FC = () => {
             // 3. FALLBACK: Migration logic for old users
             if (authError) {
                 if (authError.message === 'Invalid login credentials') {
-                    const { data: legacyUser } = await supabase
-                        .from('app_users')
-                        .select('*')
-                        .ilike('email', loginEmail)
-                        .maybeSingle();
+                    // Try finding legacy user by email OR username
+                    let legacyUser = null;
+
+                    if (loginEmail && loginEmail.includes('@')) {
+                        const { data } = await supabase
+                            .from('app_users')
+                            .select('*')
+                            .ilike('email', loginEmail)
+                            .maybeSingle();
+                        legacyUser = data;
+                    }
+
+                    // If not found by email, try by username directly (for invited users without email)
+                    if (!legacyUser) {
+                        const { data } = await supabase
+                            .from('app_users')
+                            .select('*')
+                            .ilike('username', trimmedUsername)
+                            .maybeSingle();
+                        legacyUser = data;
+                    }
 
                     if (legacyUser && legacyUser.password) {
                         const isHash = legacyUser.password.startsWith('$2');
@@ -86,22 +106,50 @@ export const Login: React.FC = () => {
 
                         if (isMatch) {
                             console.log("Legacy password match! Starting migration...");
-                            const { error: signUpError } = await supabase.auth.signUp({
-                                email: loginEmail,
+
+                            // Generate a synthetic email for users without one
+                            const migrationEmail = legacyUser.email && legacyUser.email.includes('@')
+                                ? legacyUser.email
+                                : `${legacyUser.username.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
+
+                            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                                email: migrationEmail,
                                 password: trimmedPassword,
                                 options: { data: { full_name: legacyUser.full_name, username: legacyUser.username } }
                             });
 
                             if (signUpError) {
+                                // If email already exists in auth, try signing in directly
+                                if (signUpError.message.includes('already registered')) {
+                                    const { error: retryError } = await supabase.auth.signInWithPassword({
+                                        email: migrationEmail,
+                                        password: trimmedPassword
+                                    });
+                                    if (retryError) {
+                                        throw new Error(`Login gagal: ${retryError.message}`);
+                                    }
+                                    navigate('/');
+                                    return;
+                                }
                                 console.error("Migration Error:", signUpError);
                                 throw new Error(`Gagal migrasi: ${signUpError.message}`);
                             }
 
-                            setError("Berhasil! Akun Anda telah ditingkatkan ke sistem keamanan baru. Silakan Masuk Kembali sekarang.");
+                            // Update app_users with email so future login works seamlessly
+                            if (!legacyUser.email || !legacyUser.email.includes('@')) {
+                                await supabase.from('app_users').update({ email: migrationEmail }).eq('id', legacyUser.id);
+                            }
+
+                            // Update app_users ID to match auth user ID if they differ
+                            if (signUpData?.user && signUpData.user.id !== legacyUser.id) {
+                                await supabase.from('app_users').update({ email: migrationEmail }).eq('id', legacyUser.id);
+                            }
+
+                            setError("✅ Berhasil! Akun Anda telah ditingkatkan ke sistem keamanan baru. Silakan Masuk Kembali sekarang.");
                             setLoading(false);
                             return;
                         } else {
-                            throw new Error("Login gagal: Password lama tidak cocok dengan data pendaftaran.");
+                            throw new Error("Login gagal: Password tidak cocok.");
                         }
                     } else {
                         throw new Error("Login gagal: Akun tidak ditemukan di sistem baru maupun lama.");
@@ -164,6 +212,13 @@ export const Login: React.FC = () => {
 
             // Success: Activity log
             await logActivity({ user_id: profile.id, action: 'LOGIN' });
+
+            // Mark email setup status
+            if (profile.email && profile.email.includes('@') && !profile.email.endsWith('@team.contentflow.app')) {
+                localStorage.setItem('email_setup_complete', 'true');
+            } else {
+                localStorage.removeItem('email_setup_complete');
+            }
 
             // Navigation will be handled by AuthProvider's state change
             navigate('/');

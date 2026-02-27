@@ -44,6 +44,7 @@ import { X } from 'lucide-react';
 import { UserPresence } from './UserPresence';
 import { PresenceToast } from './PresenceToast';
 import { FirstLoginModal } from './FirstLoginModal';
+import { EmailSetupModal } from './EmailSetupModal';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -364,6 +365,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [activeBroadcast, setActiveBroadcast] = useState<{ id: string, title: string, message: string, type: string } | null>(null);
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
     const [showFirstLoginModal, setShowFirstLoginModal] = useState(false);
+    const [showEmailSetupModal, setShowEmailSetupModal] = useState(false);
+    const [userEmail, setUserEmail] = useState('');
 
 
     // Status Modal State
@@ -495,6 +498,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (localStorage.getItem('is_first_login') === 'true') {
             setShowFirstLoginModal(true);
         }
+
+        // Check if user needs to set up real email
+        const checkEmailSetup = async () => {
+            const userId = localStorage.getItem('user_id');
+            if (!userId) return;
+            if (localStorage.getItem('email_setup_complete') === 'true') return;
+
+            // Check if skip was recent (wait 24h before showing again)
+            const skippedAt = localStorage.getItem('email_setup_skipped');
+            if (skippedAt) {
+                const hoursSinceSkip = (Date.now() - new Date(skippedAt).getTime()) / (1000 * 60 * 60);
+                if (hoursSinceSkip < 24) return;
+            }
+
+            const { data } = await supabase.from('app_users').select('email').eq('id', userId).single();
+            if (data?.email?.endsWith('@team.contentflow.app') || !data?.email) {
+                setUserEmail(data?.email || '');
+                setShowEmailSetupModal(true);
+            }
+        };
+        checkEmailSetup();
 
 
         // 4. Listen for User Updates (Sync between Profile page and Layout)
@@ -1299,7 +1323,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
-                                                                <p className="text-xs font-bold text-slate-600 leading-snug"><span className="text-slate-900">{notif.actor?.full_name}</span> {notif.content}</p>
+                                                                <p className="text-xs font-bold text-slate-600 leading-snug">
+                                                                    {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
+                                                                        <span className="text-slate-900">{notif.actor.full_name} </span>
+                                                                    )}
+                                                                    {notif.content}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -1711,6 +1740,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         message: 'Profil Anda telah berhasil diperbarui. Selamat menggunakan Aruneeka!'
                     });
                 }}
+            />
+
+            <EmailSetupModal
+                isOpen={showEmailSetupModal}
+                currentEmail={userEmail}
+                userId={localStorage.getItem('user_id') || ''}
+                onComplete={() => {
+                    setShowEmailSetupModal(false);
+                    setStatusModal({
+                        isOpen: true,
+                        type: 'success',
+                        message: 'Email berhasil diperbarui! Login berikutnya bisa menggunakan email baru Anda.'
+                    });
+                }}
+                onSkip={() => setShowEmailSetupModal(false)}
             />
         </div >
     );

@@ -424,7 +424,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         <div className="flex-1 min-w-0 pr-4">
                             <p className="font-black text-[10px] text-accent uppercase tracking-widest mb-1">{toast.title}</p>
                             <p className="text-sm font-bold text-slate-700 leading-tight">
-                                <span className="text-slate-900 font-extrabold">{toast.actor?.full_name}</span> {toast.content}
+                                {toast.actor?.full_name && !toast.metadata?.hide_actor_name && (
+                                    <span className="text-slate-900 font-extrabold">{toast.actor.full_name} </span>
+                                )}
+                                {toast.content}
                             </p>
                         </div>
                         <button
@@ -482,7 +485,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         {/* Content Body */}
                         <div className="p-5 bg-card">
                             <p className="text-slate-600 font-bold leading-relaxed text-sm">
-                                {currentPopup.actor?.full_name && (
+                                {currentPopup.actor?.full_name && !currentPopup.metadata?.hide_actor_name && (
                                     <span className="text-slate-900 font-black">{currentPopup.actor.full_name} </span>
                                 )}
                                 {currentPopup.content}
