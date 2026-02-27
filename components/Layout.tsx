@@ -1195,7 +1195,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },
             { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
-            { id: 'messages', path: '/messages', label: 'Messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : null },
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
