@@ -365,10 +365,10 @@ export const TeamKPIBoard: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 flex items-center gap-2">
+                    <h1 className="text-base md:text-2xl lg:text-4xl font-bold text-slate-900 flex items-center gap-2">
                         {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
                     </h1>
-                    <p className="text-slate-500 text-xs sm:text-sm mt-1">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
+                    <p className="text-slate-500 text-xs sm:text-sm mt-0.5 hidden md:block">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3">
                     <select
