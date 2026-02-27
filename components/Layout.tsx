@@ -33,7 +33,8 @@ import {
     Inbox,
     AlertTriangle,
     BarChart3,
-    Copy
+    Copy,
+    GitBranch
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -242,79 +243,106 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
     pastel: () => `
         body.theme-pastel, .theme-pastel, .theme-pastel main, .theme-pastel .bg-background, .theme-pastel.bg-background { background-color: #fff1f2 !important; }
         .theme-pastel .bg-dot-grid { background-image: radial-gradient(#fda4af 1px, transparent 1px) !important; }
-        .theme-pastel header, .theme-pastel aside, .theme-pastel .bg-white, .theme-pastel .bg-card, .theme-pastel [class*="bg-[#F"] { background-color: #ffe4e6 !important; border-color: #fda4af !important; color: #881337 !important; }
-        .theme-pastel .bg-slate-50, .theme-pastel .bg-slate-100, .theme-pastel .bg-slate-200 { background-color: #fff1f2 !important; border-color: #fecdd3 !important; }
-        .theme-pastel .text-slate-900, .theme-pastel .text-slate-800, .theme-pastel .text-slate-700 { color: #9f1239 !important; }
-        .theme-pastel .text-slate-500, .theme-pastel .text-slate-400 { color: #e11d48 !important; }
-        .theme-pastel .border-slate-900, .theme-pastel .border-slate-800, .theme-pastel .border-slate-200 { border-color: #fb7185 !important; }
+        .theme-pastel header, .theme-pastel aside, .theme-pastel .bg-white, .theme-pastel .bg-card { background-color: #ffe4e6 !important; border-color: #fda4af !important; }
+        .theme-pastel .bg-slate-50, .theme-pastel .bg-slate-100, .theme-pastel .bg-slate-200, .theme-pastel .bg-muted { background-color: #fff1f2 !important; border-color: #fecdd3 !important; }
+        .theme-pastel .text-slate-900, .theme-pastel .text-slate-800, .theme-pastel .text-slate-700, .theme-pastel .text-foreground { color: #9f1239 !important; }
+        .theme-pastel .text-slate-500, .theme-pastel .text-slate-400, .theme-pastel .text-mutedForeground { color: #be185d !important; }
+        .theme-pastel .border-slate-900, .theme-pastel .border-slate-800, .theme-pastel .border-slate-200, .theme-pastel .border-border { border-color: #fb7185 !important; }
         .theme-pastel .shadow-hard { box-shadow: 4px 4px 0px 0px #fb7185 !important; }
         .theme-pastel .bg-slate-900 { background-color: #fb7185 !important; color: #fff !important; }
+        .theme-pastel .bg-slate-900 * { color: #fff !important; }
         .theme-pastel input, .theme-pastel select, .theme-pastel textarea { background-color: #fff1f2 !important; color: #881337 !important; border-color: #fb7185 !important; }
         .theme-pastel .bg-red-50 { background-color: #fce7f3 !important; border-color: #fbcfe8 !important; color: #be185d !important; }
         .theme-pastel .bg-yellow-400 { background-color: #fb7185 !important; color: #fff !important; }
         .theme-pastel .bg-slate-900 .text-red-500 { color: #ffe4e6 !important; }
         .theme-pastel .bg-slate-900 .hover\\:bg-red-50:hover { background-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+        .theme-pastel .bg-accent { background-color: #fb7185 !important; color: #fff !important; }
+        .theme-pastel .bg-accent * { color: #fff !important; }
+        .theme-pastel .ws-logo-box { background-color: #ffffff !important; }
    `,
     'pastel-green': () => `
         body.theme-pastel-green, .theme-pastel-green, .theme-pastel-green main, .theme-pastel-green .bg-background, .theme-pastel-green.bg-background { background-color: #f0fdf4 !important; }
         .theme-pastel-green .bg-dot-grid { background-image: radial-gradient(#86efac 1px, transparent 1px) !important; }
-        .theme-pastel-green header, .theme-pastel-green aside, .theme-pastel-green .bg-white, .theme-pastel-green .bg-card, .theme-pastel-green [class*="bg-[#F"] { background-color: #dcfce7 !important; border-color: #86efac !important; color: #14532d !important; }
-        .theme-pastel-green .bg-slate-50, .theme-pastel-green .bg-slate-100, .theme-pastel-green .bg-slate-200 { background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; }
-        .theme-pastel-green .text-slate-900, .theme-pastel-green .text-slate-800, .theme-pastel-green .text-slate-700 { color: #166534 !important; }
-        .theme-pastel-green .text-slate-500, .theme-pastel-green .text-slate-400 { color: #22c55e !important; }
-        .theme-pastel-green .border-slate-900, .theme-pastel-green .border-slate-800, .theme-pastel-green .border-slate-200 { border-color: #4ade80 !important; }
+        .theme-pastel-green header, .theme-pastel-green aside, .theme-pastel-green .bg-white, .theme-pastel-green .bg-card { background-color: #dcfce7 !important; border-color: #86efac !important; }
+        .theme-pastel-green .bg-slate-50, .theme-pastel-green .bg-slate-100, .theme-pastel-green .bg-slate-200, .theme-pastel-green .bg-muted { background-color: #f0fdf4 !important; border-color: #bbf7d0 !important; }
+        .theme-pastel-green .text-slate-900, .theme-pastel-green .text-slate-800, .theme-pastel-green .text-slate-700, .theme-pastel-green .text-foreground { color: #166534 !important; }
+        .theme-pastel-green .text-slate-500, .theme-pastel-green .text-slate-400, .theme-pastel-green .text-mutedForeground { color: #15803d !important; }
+        .theme-pastel-green .border-slate-900, .theme-pastel-green .border-slate-800, .theme-pastel-green .border-slate-200, .theme-pastel-green .border-border { border-color: #4ade80 !important; }
         .theme-pastel-green .shadow-hard { box-shadow: 4px 4px 0px 0px #4ade80 !important; }
-        .theme-pastel-green .bg-slate-900 { background-color: #4ade80 !important; color: #14532d !important; }
+        .theme-pastel-green .bg-slate-900 { background-color: #16a34a !important; color: #fff !important; }
+        .theme-pastel-green .bg-slate-900 * { color: #fff !important; }
         .theme-pastel-green input, .theme-pastel-green select, .theme-pastel-green textarea { background-color: #f0fdf4 !important; color: #14532d !important; border-color: #4ade80 !important; }
         .theme-pastel-green .bg-red-50 { background-color: #dcfce7 !important; border-color: #bbf7d0 !important; color: #166534 !important; }
         .theme-pastel-green .bg-yellow-400 { background-color: #4ade80 !important; color: #14532d !important; }
         .theme-pastel-green .bg-slate-900 .text-red-500 { color: #dcfce7 !important; }
         .theme-pastel-green .bg-slate-900 .hover\\:bg-red-50:hover { background-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+        .theme-pastel-green .bg-accent { background-color: #16a34a !important; color: #fff !important; }
+        .theme-pastel-green .bg-accent * { color: #fff !important; }
+        .theme-pastel-green .ws-logo-box { background-color: #ffffff !important; }
    `,
     'pastel-yellow': () => `
         body.theme-pastel-yellow, .theme-pastel-yellow, .theme-pastel-yellow main, .theme-pastel-yellow .bg-background, .theme-pastel-yellow.bg-background { background-color: #fefce8 !important; }
         .theme-pastel-yellow .bg-dot-grid { background-image: radial-gradient(#fde047 1px, transparent 1px) !important; }
-        .theme-pastel-yellow header, .theme-pastel-yellow aside, .theme-pastel-yellow .bg-white, .theme-pastel-yellow .bg-card, .theme-pastel-yellow [class*="bg-[#F"] { background-color: #fef9c3 !important; border-color: #fde047 !important; color: #713f12 !important; }
-        .theme-pastel-yellow .bg-slate-50, .theme-pastel-yellow .bg-slate-100, .theme-pastel-yellow .bg-slate-200 { background-color: #fefce8 !important; border-color: #fef08a !important; }
-        .theme-pastel-yellow .text-slate-900, .theme-pastel-yellow .text-slate-800, .theme-pastel-yellow .text-slate-700 { color: #854d0e !important; }
-        .theme-pastel-yellow .text-slate-500, .theme-pastel-yellow .text-slate-400 { color: #eab308 !important; }
-        .theme-pastel-yellow .border-slate-900, .theme-pastel-yellow .border-slate-800, .theme-pastel-yellow .border-slate-200 { border-color: #facc15 !important; }
+        .theme-pastel-yellow header, .theme-pastel-yellow aside, .theme-pastel-yellow .bg-white, .theme-pastel-yellow .bg-card { background-color: #fef9c3 !important; border-color: #fde047 !important; }
+        .theme-pastel-yellow .bg-slate-50, .theme-pastel-yellow .bg-slate-100, .theme-pastel-yellow .bg-slate-200, .theme-pastel-yellow .bg-muted { background-color: #fefce8 !important; border-color: #fef08a !important; }
+        .theme-pastel-yellow .text-slate-900, .theme-pastel-yellow .text-slate-800, .theme-pastel-yellow .text-slate-700, .theme-pastel-yellow .text-foreground { color: #854d0e !important; }
+        .theme-pastel-yellow .text-slate-500, .theme-pastel-yellow .text-slate-400, .theme-pastel-yellow .text-mutedForeground { color: #92400e !important; }
+        .theme-pastel-yellow .border-slate-900, .theme-pastel-yellow .border-slate-800, .theme-pastel-yellow .border-slate-200, .theme-pastel-yellow .border-border { border-color: #facc15 !important; }
         .theme-pastel-yellow .shadow-hard { box-shadow: 4px 4px 0px 0px #facc15 !important; }
-        .theme-pastel-yellow .bg-slate-900 { background-color: #facc15 !important; color: #713f12 !important; }
+        .theme-pastel-yellow .bg-slate-900 { background-color: #ca8a04 !important; color: #fff !important; }
+        .theme-pastel-yellow .bg-slate-900 * { color: #fff !important; }
         .theme-pastel-yellow input, .theme-pastel-yellow select, .theme-pastel-yellow textarea { background-color: #fefce8 !important; color: #713f12 !important; border-color: #facc15 !important; }
         .theme-pastel-yellow .bg-red-50 { background-color: #fef9c3 !important; border-color: #fef08a !important; color: #854d0e !important; }
         .theme-pastel-yellow .bg-yellow-400 { background-color: #facc15 !important; color: #713f12 !important; }
         .theme-pastel-yellow .bg-slate-900 .text-red-500 { color: #fef9c3 !important; }
         .theme-pastel-yellow .bg-slate-900 .hover\\:bg-red-50:hover { background-color: rgba(255,255,255,0.2) !important; color: #fff !important; }
+        .theme-pastel-yellow .bg-accent { background-color: #ca8a04 !important; color: #fff !important; }
+        .theme-pastel-yellow .bg-accent * { color: #fff !important; }
+        .theme-pastel-yellow .ws-logo-box { background-color: #ffffff !important; }
    `,
     custom: (color) => `
         body.theme-custom, .theme-custom, .theme-custom main { background-color: ${color}15 !important; }
         .theme-custom .bg-background { background-color: ${color}10 !important; }
         .theme-custom .bg-dot-grid { background-image: radial-gradient(${color}33 1px, transparent 1px) !important; }
-        .theme-custom header, .theme-custom aside, .theme-custom .bg-card:not([class*="bg-"]):not([class*="from-"]), .theme-custom .bg-white:not([class*="bg-"]):not([class*="from-"]) { background-color: #ffffff !important; border-color: ${color} !important; }
-        .theme-custom .bg-slate-50, .theme-custom .bg-slate-100 { background-color: ${color}05 !important; border-color: ${color}22 !important; }
-        .theme-custom .text-slate-900, .theme-custom .text-slate-800, .theme-custom .text-slate-700 { color: #1e293b !important; }
-        .theme-custom .text-slate-500, .theme-custom .text-slate-400 { color: #64748b !important; }
-        .theme-custom h1, .theme-custom h2, .theme-custom h3 { color: ${color} !important; }
-        .theme-custom .border-slate-900, .theme-custom .border-slate-200 { border-color: ${color}66 !important; }
+        .theme-custom header, .theme-custom aside, .theme-custom .bg-card, .theme-custom .bg-white { background-color: #ffffff !important; border-color: ${color}66 !important; }
+        .theme-custom .bg-slate-50, .theme-custom .bg-slate-100, .theme-custom .bg-muted { background-color: ${color}08 !important; border-color: ${color}22 !important; }
+        /* Text colors - always dark for readability on light custom backgrounds */
+        .theme-custom .text-slate-900, .theme-custom .text-slate-800, .theme-custom .text-slate-700,
+        .theme-custom .text-foreground { color: #1e293b !important; }
+        .theme-custom .text-slate-500, .theme-custom .text-slate-400,
+        .theme-custom .text-mutedForeground { color: #64748b !important; }
+        /* Headings use custom color only if it's dark enough (handled by contrast) */
+        .theme-custom h1.text-foreground, .theme-custom h2.text-foreground, .theme-custom h3.text-foreground { color: #1e293b !important; }
+        .theme-custom .border-slate-900, .theme-custom .border-slate-200, .theme-custom .border-border { border-color: ${color}44 !important; }
         .theme-custom .shadow-hard { box-shadow: 4px 4px 0px 0px ${color} !important; }
-        /* Interactive Elements */
+        /* Interactive Elements - buttons/badges with custom color */
         .theme-custom .bg-slate-900, .theme-custom .bg-slate-800, .theme-custom .bg-slate-700 { background-color: ${color} !important; color: #fff !important; }
-        .theme-custom .bg-slate-900 *, .theme-custom .bg-slate-800 *, .theme-custom .bg-slate-700 * { color: #fff !important; }
-        .theme-custom input, .theme-custom select, .theme-custom textarea { border-color: ${color} !important; color: #1e293b !important; }
+        .theme-custom .bg-slate-900 *, .theme-custom .bg-slate-800 *, .theme-custom .bg-slate-700 * { color: #fff !important; stroke: #fff !important; }
+        .theme-custom input, .theme-custom select, .theme-custom textarea { background-color: #fff !important; border-color: ${color}88 !important; color: #1e293b !important; }
         .theme-custom .bg-accent { background-color: ${color} !important; color: #fff !important; }
-        .theme-custom .bg-accent * { color: #fff !important; }
+        .theme-custom .bg-accent * { color: #fff !important; stroke: #fff !important; }
+        /* Sidebar nav active state */
+        .theme-custom aside .bg-accent, .theme-custom aside [class*="bg-accent"] { background-color: ${color} !important; }
+        .theme-custom aside .bg-accent *, .theme-custom aside [class*="bg-accent"] * { color: #fff !important; }
         /* Chart & Metric Fixes */
         .theme-custom .recharts-text, .theme-custom .recharts-legend-item-text { fill: #1e293b !important; color: #1e293b !important; font-weight: 700 !important; }
         .theme-custom .recharts-cartesian-grid-horizontal line, .theme-custom .recharts-cartesian-grid-vertical line { stroke: ${color}22 !important; }
         /* Maintain accessibility on colored sections */
-        .theme-custom [class*="bg-"][class*="-500"] *, 
-        .theme-custom [class*="bg-"][class*="-600"] *, 
-        .theme-custom [class*="bg-"][class*="-700"] *, 
+        .theme-custom [class*="bg-"][class*="-500"] *,
+        .theme-custom [class*="bg-"][class*="-600"] *,
+        .theme-custom [class*="bg-"][class*="-700"] *,
         .theme-custom [class*="bg-"][class*="-800"] *,
         .theme-custom [class*="bg-"][class*="-900"] *,
         .theme-custom [class*="bg-accent"] * { color: #fff !important; }
         .theme-custom .bg-yellow-400, .theme-custom .bg-yellow-400 * { color: #1e293b !important; }
+        /* Card badges - keep readable */
+        .theme-custom .bg-yellow-100, .theme-custom .bg-green-100, .theme-custom .bg-blue-100,
+        .theme-custom .bg-purple-100, .theme-custom .bg-red-100, .theme-custom .bg-amber-100,
+        .theme-custom .bg-emerald-100, .theme-custom .bg-pink-100, .theme-custom .bg-orange-100 { background-color: inherit; }
+        /* Ensure text in muted/card areas is always readable */
+        .theme-custom .bg-card p, .theme-custom .bg-card span, .theme-custom .bg-card div:not([class*="bg-"]) { color: inherit; }
+        /* Workspace logo box stays white */
+        .theme-custom .ws-logo-box { background-color: #ffffff !important; border-color: ${color}44 !important; }
    `
 };
 import { useNavigate } from 'react-router-dom';
@@ -1108,7 +1136,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
-            { id: 'flow', path: '/flow', label: 'Content Flow', icon: Globe },
+            { id: 'flow', path: '/flow', label: 'Content Flow', icon: GitBranch },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
             { id: 'approval', path: '/approval', label: 'Approval Area', icon: CheckCircle },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },

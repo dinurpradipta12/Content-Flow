@@ -592,48 +592,47 @@ export const ContentPlan: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Header Layout: Logo Left, Info Stack Right - Compact on mobile */}
-                            <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-4 items-start mb-2 sm:mb-3 md:mb-4 lg:mb-6 relative z-20 pr-2 sm:pr-3">
-                                {/* Left: Logo (Responsive size) */}
+                            {/* Header Layout: Logo Left, Info Stack Right */}
+                            <div className="flex gap-3 items-start mb-3 relative z-20 pr-2">
+                                {/* Left: Logo */}
                                 {ws.logoUrl ? (
-                                    <div className="ws-logo-box w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-[160px] lg:h-[160px] flex-shrink-0 bg-card rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border overflow-hidden p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm">
+                                    <div className="ws-logo-box w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-card rounded-xl border-2 border-border overflow-hidden p-1 shadow-sm">
                                         <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
                                     </div>
                                 ) : (
-                                    <div className="ws-logo-box w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-[160px] lg:h-[160px] flex-shrink-0 bg-muted/50 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border flex items-center justify-center p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm text-mutedForeground">
-                                        <Layers size={20} className="sm:w-8 sm:h-8 md:w-9 lg:w-10 lg:h-10" />
+                                    <div className="ws-logo-box w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-muted/50 rounded-xl border-2 border-border flex items-center justify-center shadow-sm text-mutedForeground">
+                                        <Layers size={22} />
                                     </div>
                                 )}
 
                                 {/* Right: Stacked Info */}
-                                <div className="flex flex-col flex-1 min-w-0 gap-1">
-                                    {/* 1. Logos Sosmed - Hide some on mobile */}
-                                    <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
-                                        {ws.platforms.slice(0, 3).map((p, idx) => renderPlatformLink(p, ws.profile_links))}
-                                        {ws.platforms.length > 3 && (
-                                            <span className="text-[8px] sm:text-[9px] font-bold text-mutedForeground">+{ws.platforms.length - 3}</span>
+                                <div className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    {/* Platform icons */}
+                                    <div className="flex items-center gap-0.5 flex-wrap">
+                                        {ws.platforms.slice(0, 4).map((p) => renderPlatformLink(p, ws.profile_links))}
+                                        {ws.platforms.length > 4 && (
+                                            <span className="text-[9px] font-bold text-mutedForeground">+{ws.platforms.length - 4}</span>
                                         )}
                                     </div>
 
-                                    {/* 2. Workspace Name - Compact on mobile */}
-                                    <h3 className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold font-heading text-foreground leading-tight line-clamp-2 drop-shadow-sm" title={ws.name}>
+                                    {/* Workspace Name */}
+                                    <h3 className="text-base sm:text-lg font-bold font-heading text-foreground leading-tight line-clamp-2" title={ws.name}>
                                         {ws.name}
                                     </h3>
 
-                                    {/* 3. Status Badge - Smaller on mobile */}
+                                    {/* Badges row */}
                                     <div className="flex items-center gap-1 flex-wrap">
-                                        <span className="inline-block px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] lg:text-[11px] font-bold text-mutedForeground bg-muted border-2 border-border shadow-sm">
+                                        <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold text-mutedForeground bg-muted border border-border">
                                             {ws.role}
                                         </span>
-                                        {/* Workspace Type Badge */}
                                         {ws.workspace_type === 'personal' ? (
-                                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] lg:text-[11px] font-bold text-purple-600 bg-purple-50 border-2 border-purple-200 shadow-sm">
-                                                <Lock size={8} className="sm:w-2.5 sm:h-2.5" />
+                                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-purple-600 bg-purple-50 border border-purple-200">
+                                                <Lock size={8} />
                                                 Personal
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] lg:text-[11px] font-bold text-blue-600 bg-blue-50 border-2 border-blue-200 shadow-sm">
-                                                <Globe size={8} className="sm:w-2.5 sm:h-2.5" />
+                                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-200">
+                                                <Globe size={8} />
                                                 Team
                                             </span>
                                         )}
@@ -641,39 +640,50 @@ export const ContentPlan: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* 4. Stats Row: Progress Bar - Compact */}
-                            <div className="space-y-1 sm:space-y-1.5 mb-2 sm:mb-3 relative z-10">
-                                <div className="flex justify-between text-[9px] sm:text-xs font-bold text-mutedForeground">
-                                    <span>Published</span>
+                            {/* Stats Row: Progress Bar */}
+                            <div className="space-y-1 mb-3 relative z-10">
+                                <div className="flex justify-between text-[10px] font-bold text-mutedForeground">
+                                    <span>{ws.publishedCount} Published</span>
                                     <span className="text-accent">{ws.totalContent > 0 ? Math.round((ws.publishedCount / ws.totalContent) * 100) : 0}%</span>
                                 </div>
-                                <div className="w-full bg-muted h-1.5 sm:h-2 rounded-full overflow-hidden border border-border">
+                                <div className="w-full bg-muted h-2 rounded-full overflow-hidden border border-border">
                                     <div
-                                        className={`h-full rounded-full ${ws.color === 'violet' ? 'bg-accent' : ws.color === 'pink' ? 'bg-secondary' : 'bg-tertiary'} border-r-2 border-slate-900/10 transition-all duration-500`}
+                                        className={`h-full rounded-full ${ws.color === 'violet' ? 'bg-accent' : ws.color === 'pink' ? 'bg-secondary' : 'bg-tertiary'} transition-all duration-500`}
                                         style={{ width: `${ws.totalContent > 0 ? (ws.publishedCount / ws.totalContent) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <div className="flex justify-between text-[7px] sm:text-[8px] font-medium text-mutedForeground/70">
-                                    <span className="truncate">{ws.totalContent - ws.publishedCount} Draft</span>
-                                    <span className="flex-shrink-0 ml-1">{ws.totalContent} Total</span>
+                                <div className="text-[9px] font-medium text-mutedForeground/70 text-right">
+                                    {ws.totalContent} konten total
                                 </div>
                             </div>
 
-                            {/* 5. Footer Row: Members & Action - Compact */}
-                            <div className="mt-auto pt-2 sm:pt-2.5 border-t-2 border-border border-dashed flex items-center justify-between gap-1.5 sm:gap-2 relative z-10">
-                                <div className="flex -space-x-1 sm:-space-x-1.5 overflow-hidden flex-shrink-0 items-center">
-                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).slice(0, 2).map((url, i) => (
-                                        <img key={i} src={url} className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 lg:w-7 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted object-cover z-20" alt="Member" />
+                            {/* Footer Row: Members & Action */}
+                            <div className="mt-auto pt-2.5 border-t-2 border-border border-dashed flex items-center justify-between gap-2 relative z-10">
+                                {/* Member photo stack - larger */}
+                                <div className="flex -space-x-2 overflow-hidden flex-shrink-0 items-center">
+                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).slice(0, 4).map((url, i) => (
+                                        <img
+                                            key={i}
+                                            src={url}
+                                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted object-cover"
+                                            style={{ zIndex: 20 - i }}
+                                            alt="Member"
+                                        />
                                     ))}
-                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length > 2 && (
-                                        <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 lg:w-7 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted flex items-center justify-center text-[7px] font-bold text-mutedForeground z-10 relative">
-                                            +{(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length - 2}
+                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length > 4 && (
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted flex items-center justify-center text-[9px] font-bold text-mutedForeground" style={{ zIndex: 10 }}>
+                                            +{(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length - 4}
+                                        </div>
+                                    )}
+                                    {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length === 0 && (
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dashed border-border flex items-center justify-center text-mutedForeground/40">
+                                            <Users size={12} />
                                         </div>
                                     )}
                                 </div>
-                                <div className="text-accent font-bold text-[9px] sm:text-xs md:text-sm flex items-center gap-1 whitespace-nowrap min-w-0">
-                                    <span className="hidden sm:inline text-[9px] sm:text-xs">Buka</span>
-                                    <ArrowRight size={10} className="sm:w-3 sm:h-3 flex-shrink-0" />
+                                <div className="text-accent font-bold text-xs flex items-center gap-1.5 whitespace-nowrap">
+                                    <span>Buka</span>
+                                    <ArrowRight size={12} className="flex-shrink-0" />
                                 </div>
                             </div>
                         </Card>
