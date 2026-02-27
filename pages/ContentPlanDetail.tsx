@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
-import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
@@ -487,6 +487,26 @@ export const ContentPlanDetail: React.FC = () => {
         }
     }, [isPdfPreviewOpen]);
 
+    // Drive Preview States
+    const [isDrivePreviewOpen, setIsDrivePreviewOpen] = useState(false);
+    const [drivePreviewUrl, setDrivePreviewUrl] = useState<string | null>(null);
+    const [driveMounted, setDriveMounted] = useState(false);
+
+    useEffect(() => {
+        if (isDrivePreviewOpen) {
+            setDriveMounted(true);
+        } else {
+            const timer = setTimeout(() => setDriveMounted(false), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [isDrivePreviewOpen]);
+
+    // Asset upload ref
+    const assetInputRef = useRef<HTMLInputElement>(null);
+    const [savingAsset, setSavingAsset] = useState(false);
+    const [savingDriveUrl, setSavingDriveUrl] = useState(false);
+    const [driveUrlInput, setDriveUrlInput] = useState('');
+
     // Invite Code
     const [copied, setCopied] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
@@ -782,6 +802,70 @@ export const ContentPlanDetail: React.FC = () => {
         } catch (err) {
             console.error("Failed to sync link:", err);
         }
+    };
+
+    // Handle asset image upload (JPG/PNG → base64)
+    const handleAssetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!selectedTask) return;
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Ukuran file terlalu besar (Max 5MB)' } }));
+            return;
+        }
+
+        setSavingAsset(true);
+        try {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64 = reader.result as string;
+                await supabase.from('content_items').update({ asset_url: base64 }).eq('id', selectedTask.id);
+                setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, asset_url: base64 } : t));
+                setSelectedTask(prev => prev ? { ...prev, asset_url: base64 } : null);
+                setSavingAsset(false);
+                window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Asset berhasil diupload!' } }));
+            };
+            reader.readAsDataURL(file);
+        } catch (err) {
+            console.error('Asset upload error:', err);
+            setSavingAsset(false);
+        }
+    };
+
+    // Handle save Google Drive folder URL
+    const handleSaveDriveUrl = async () => {
+        if (!selectedTask || !driveUrlInput.trim()) return;
+        setSavingDriveUrl(true);
+        try {
+            const url = driveUrlInput.trim();
+            await supabase.from('content_items').update({ drive_folder_url: url }).eq('id', selectedTask.id);
+            setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, drive_folder_url: url } : t));
+            setSelectedTask(prev => prev ? { ...prev, drive_folder_url: url } : null);
+            setDriveUrlInput('');
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Link Google Drive disimpan!' } }));
+        } catch (err) {
+            console.error('Drive URL save error:', err);
+        } finally {
+            setSavingDriveUrl(false);
+        }
+    };
+
+    // Convert Google Drive folder URL to embeddable preview URL
+    const getDriveEmbedUrl = (url: string): string => {
+        // Handle various Google Drive URL formats
+        // Folder: https://drive.google.com/drive/folders/FOLDER_ID
+        // File: https://drive.google.com/file/d/FILE_ID/view
+        if (url.includes('/drive/folders/')) {
+            const folderId = url.split('/drive/folders/')[1]?.split('?')[0]?.split('/')[0];
+            if (folderId) return `https://drive.google.com/embeddedfolderview?id=${folderId}#list`;
+        }
+        if (url.includes('/file/d/')) {
+            const fileId = url.split('/file/d/')[1]?.split('/')[0];
+            if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
+        }
+        // Fallback: try to use as-is with Google Docs viewer
+        return `https://drive.google.com/embeddedfolderview?id=${url}#list`;
     };
 
     const handleSaveContent = async (e: React.FormEvent) => {
@@ -1599,6 +1683,148 @@ export const ContentPlanDetail: React.FC = () => {
                             )}
                         </div>
 
+                        {/* ── Asset Upload Section ── */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2 mb-1">
+                                <HardDrive size={16} className="text-accent" />
+                                <h4 className="font-black text-sm text-foreground">Aset Konten</h4>
+                            </div>
+
+                            {/* Hidden file input */}
+                            <input
+                                ref={assetInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={handleAssetUpload}
+                            />
+
+                            {/* Determine content type for guidance */}
+                            {(() => {
+                                const isVideo = (selectedTask.type || '').toLowerCase().includes('video') || (selectedTask.type || '').toLowerCase().includes('reels');
+                                return (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {/* Left: Image Upload (for carousel/static) */}
+                                        <div className={`border-2 rounded-xl p-4 transition-all ${isVideo ? 'border-dashed border-border opacity-60' : 'border-border hover:border-accent'}`}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <ImageIcon size={14} className="text-accent" />
+                                                <span className="text-xs font-black text-foreground">Upload Gambar</span>
+                                                {isVideo && <span className="text-[9px] text-mutedForeground">(untuk video, gunakan Drive)</span>}
+                                            </div>
+
+                                            {(selectedTask as any).asset_url ? (
+                                                <div className="relative group">
+                                                    <img
+                                                        src={(selectedTask as any).asset_url}
+                                                        alt="Asset"
+                                                        className="w-full h-32 object-cover rounded-lg border border-border"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                                                        <button
+                                                            onClick={() => assetInputRef.current?.click()}
+                                                            className="px-3 py-1.5 bg-white text-slate-900 font-bold text-xs rounded-lg hover:bg-slate-100 transition-colors"
+                                                        >
+                                                            Ganti
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                await supabase.from('content_items').update({ asset_url: null }).eq('id', selectedTask.id);
+                                                                setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, asset_url: undefined } : t));
+                                                                setSelectedTask(prev => prev ? { ...prev, asset_url: undefined } : null);
+                                                            }}
+                                                            className="px-3 py-1.5 bg-red-500 text-white font-bold text-xs rounded-lg hover:bg-red-600 transition-colors"
+                                                        >
+                                                            Hapus
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => !isVideo && assetInputRef.current?.click()}
+                                                    disabled={isVideo || savingAsset}
+                                                    className={`w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 transition-all ${isVideo ? 'border-border cursor-not-allowed' : 'border-accent/40 hover:border-accent hover:bg-accent/5 cursor-pointer'}`}
+                                                >
+                                                    {savingAsset ? (
+                                                        <Loader2 size={20} className="animate-spin text-accent" />
+                                                    ) : (
+                                                        <>
+                                                            <Upload size={20} className={isVideo ? 'text-mutedForeground' : 'text-accent'} />
+                                                            <span className="text-[10px] font-bold text-mutedForeground">JPG / PNG (Max 5MB)</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Right: Google Drive Folder Link */}
+                                        <div className="border-2 border-border rounded-xl p-4 hover:border-accent transition-all">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <FolderOpen size={14} className="text-emerald-600" />
+                                                <span className="text-xs font-black text-foreground">Google Drive Folder</span>
+                                            </div>
+
+                                            {(selectedTask as any).drive_folder_url ? (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                                        <FolderOpen size={14} className="text-emerald-600 flex-shrink-0" />
+                                                        <span className="text-xs font-bold text-emerald-700 truncate flex-1">{(selectedTask as any).drive_folder_url}</span>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const embedUrl = getDriveEmbedUrl((selectedTask as any).drive_folder_url);
+                                                                setDrivePreviewUrl(embedUrl);
+                                                                setIsDrivePreviewOpen(true);
+                                                            }}
+                                                            className="flex-1 px-3 py-1.5 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                                                        >
+                                                            <FolderOpen size={12} /> Preview
+                                                        </button>
+                                                        <a
+                                                            href={(selectedTask as any).drive_folder_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex-1 px-3 py-1.5 bg-muted border border-border text-foreground font-bold text-xs rounded-lg hover:border-accent transition-colors flex items-center justify-center gap-1"
+                                                        >
+                                                            <ExternalLink size={12} /> Buka
+                                                        </a>
+                                                        <button
+                                                            onClick={async () => {
+                                                                await supabase.from('content_items').update({ drive_folder_url: null }).eq('id', selectedTask.id);
+                                                                setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, drive_folder_url: undefined } : t));
+                                                                setSelectedTask(prev => prev ? { ...prev, drive_folder_url: undefined } : null);
+                                                            }}
+                                                            className="px-2 py-1.5 bg-red-50 border border-red-200 text-red-500 font-bold text-xs rounded-lg hover:bg-red-100 transition-colors"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    <input
+                                                        type="url"
+                                                        placeholder="https://drive.google.com/drive/folders/..."
+                                                        value={driveUrlInput}
+                                                        onChange={e => setDriveUrlInput(e.target.value)}
+                                                        className="w-full px-3 py-2 bg-muted border-2 border-border rounded-lg text-xs font-medium text-foreground placeholder:text-mutedForeground focus:border-emerald-400 outline-none transition-colors"
+                                                    />
+                                                    <button
+                                                        onClick={handleSaveDriveUrl}
+                                                        disabled={!driveUrlInput.trim() || savingDriveUrl}
+                                                        className="w-full px-3 py-2 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                                                    >
+                                                        {savingDriveUrl ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                                                        Simpan Link Drive
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+
                         {/* Script / Notes Area */}
                         <div className="bg-muted p-5 rounded-2xl border-2 border-border relative shadow-hard">
                             <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 w-40 h-8 bg-tertiary -rotate-1 rounded-sm border-2 border-border flex items-center justify-center shadow-sm z-10">
@@ -1680,6 +1906,48 @@ export const ContentPlanDetail: React.FC = () => {
                                 src={pdfUrl}
                                 className="w-full h-full border-none"
                                 title="PDF Content"
+                            />
+                        )}
+                    </div>
+                </Modal>
+            )}
+
+            {/* --- DRIVE PREVIEW MODAL (Side-by-side with Detail) --- */}
+            {driveMounted && drivePreviewUrl && (
+                <Modal
+                    isOpen={isDrivePreviewOpen}
+                    onClose={() => setIsDrivePreviewOpen(false)}
+                    title={
+                        <div className="flex items-center gap-2">
+                            <div className="p-1 bg-white/20 rounded">
+                                <FolderOpen size={18} />
+                            </div>
+                            <span>Google Drive Preview</span>
+                        </div>
+                    }
+                    maxWidth="max-w-[47vw]"
+                    duration={1000}
+                    zIndex={10000}
+                    overlayClassName="bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
+                    className={`pointer-events-auto shadow-2xl overflow-hidden ${isDrivePreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                >
+                    <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
+                        <div className="absolute top-2 right-2 z-10 flex gap-2">
+                            <a
+                                href={selectedTask?.drive_folder_url || ''}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1.5 bg-white/90 text-slate-800 font-bold text-xs rounded-lg shadow-sm hover:bg-white transition-colors flex items-center gap-1.5 border border-slate-200"
+                            >
+                                <ExternalLink size={12} /> Buka di Drive
+                            </a>
+                        </div>
+                        {drivePreviewUrl && (
+                            <iframe
+                                src={drivePreviewUrl}
+                                className="w-full h-full border-none"
+                                title="Google Drive Preview"
+                                allow="autoplay"
                             />
                         )}
                     </div>
