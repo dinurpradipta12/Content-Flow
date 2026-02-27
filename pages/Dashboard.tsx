@@ -598,7 +598,7 @@ export const Dashboard: React.FC = () => {
                             <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                             {/* Total Views Card */}
                             <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
                                 <div className="h-8 sm:h-10 md:h-14 bg-accent px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
@@ -705,14 +705,14 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Distribution Pie Charts */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                         {/* Status Distribution */}
-                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8 flex flex-col items-center">
-                            <div className="flex items-center gap-3 mb-8 self-start">
-                                <CheckCircle size={24} className="text-foreground" />
-                                <h3 className="text-xl font-bold font-heading text-foreground">Status Distribution</h3>
+                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
+                            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
+                                <CheckCircle size={18} className="md:w-6 md:h-6 text-foreground" />
+                                <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Status Distribution</h3>
                             </div>
-                            <div className="h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                            <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <PieChart>
                                         <Pie
@@ -737,12 +737,12 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Pillar Distribution */}
-                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8 flex flex-col items-center">
-                            <div className="flex items-center gap-3 mb-8 self-start">
-                                <Layers size={24} className="text-foreground" />
-                                <h3 className="text-xl font-bold font-heading text-foreground">Content Pillars</h3>
+                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
+                            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
+                                <Layers size={18} className="md:w-6 md:h-6 text-foreground" />
+                                <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Content Pillars</h3>
                             </div>
-                            <div className="h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                            <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <PieChart>
                                         <Pie
@@ -775,7 +775,7 @@ export const Dashboard: React.FC = () => {
                             <Layers size={20} className="sm:w-7 sm:h-7 text-foreground" strokeWidth={2.5} />
                             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
                             {workspaces.length === 0 ? (
                                 <p className="text-xs sm:text-sm text-slate-500 font-bold col-span-full">Belum ada workspace yang tersedia.</p>
                             ) : (
@@ -1027,7 +1027,7 @@ export const Dashboard: React.FC = () => {
                             <CheckCircle size={22} className="text-slate-800" strokeWidth={2.5} />
                             <h2 className="text-lg font-bold font-heading text-slate-800">Checklist</h2>
                         </div>
-                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
+                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
                             <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
                                 {checklists.length === 0 ? (
                                     <div className="text-center py-10">
@@ -1070,7 +1070,7 @@ export const Dashboard: React.FC = () => {
                             <Bell size={22} className="text-slate-800" strokeWidth={2.5} />
                             <h2 className="text-lg font-bold font-heading text-slate-800">Notifikasi</h2>
                         </div>
-                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[300px]">
+                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
                             <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                                 {notifications.length === 0 ? (
                                     <div className="text-center py-10">
