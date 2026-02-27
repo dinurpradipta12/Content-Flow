@@ -580,7 +580,7 @@ export const Dashboard: React.FC = () => {
             MOBILE VIEW (< md) - Native App Style
             ═══════════════════════════════════════════════════════════════════ */}
         <div className="block md:hidden w-full pb-24 animate-in fade-in duration-300">
-            {/* Welcome Section */}
+            {/* 1. Banner Welcome */}
             <div className={`bg-gradient-to-br ${timeInfo.theme} rounded-2xl p-4 mb-3 text-white relative overflow-hidden`}>
                 <div className="absolute -right-4 -top-4 opacity-20">{timeInfo.icon}</div>
                 <p className="text-xs font-bold text-white/80 mb-0.5">{timeInfo.text}</p>
@@ -588,78 +588,7 @@ export const Dashboard: React.FC = () => {
                 <p className="text-xs text-white/80 mt-1 line-clamp-1">{timeInfo.quote}</p>
             </div>
 
-            {/* Quick Stats Row */}
-            <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Views</p>
-                    <p className="text-lg font-black text-foreground">{formatShortNumber(metricsCurrent.views)}</p>
-                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.views, metricsPrev.views)}</div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">ER</p>
-                    <p className="text-lg font-black text-foreground">{metricsCurrent.er.toFixed(1)}%</p>
-                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.er, metricsPrev.er)}</div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Post</p>
-                    <p className="text-lg font-black text-foreground">{metricsCurrent.published}</p>
-                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.published, metricsPrev.published)}</div>
-                </div>
-            </div>
-
-            {/* Chart */}
-            <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-black text-foreground">Performance Trend</h3>
-                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                        {['views', 'likes', 'interactions'].map(m => (
-                            <button key={m} onClick={() => setSelectedMetric(m)}
-                                className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border transition-all flex-shrink-0 ${selectedMetric === m ? 'bg-slate-900 border-slate-900 text-white' : 'bg-card border-slate-200 text-mutedForeground'}`}>
-                                {m === 'interactions' ? 'Eng' : m}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="h-[120px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData}>
-                            <defs>
-                                <linearGradient id="mobileColorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#94a3b8' }} minTickGap={40} />
-                            <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 1 }} />
-                            <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={2} fillOpacity={1} fill="url(#mobileColorValue)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* Workspaces */}
-            {workspaces.length > 0 && (
-                <div className="mb-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs font-black text-foreground uppercase tracking-wider">Workspaces</h3>
-                        <button onClick={() => navigate('/plan')} className="text-[10px] font-bold text-accent">Lihat Semua →</button>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                        {workspaces.slice(0, 5).map(ws => (
-                            <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
-                                className="flex-shrink-0 bg-card border border-border rounded-xl p-3 w-32 text-left hover:border-accent transition-colors">
-                                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center mb-2 overflow-hidden">
-                                    <Layers size={16} className="text-accent" />
-                                </div>
-                                <p className="text-xs font-bold text-foreground truncate">{ws.name}</p>
-                                <p className="text-[9px] text-mutedForeground">Workspace</p>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Religion/Quote Card */}
+            {/* 2. Religion/Quote Card */}
             {religion && !isSelectingReligion && (
                 <div className={`bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-800' : getReligionStyles(religion)} rounded-2xl p-4 mb-3 text-white`}>
                     {religion === 'Islam' && prayerData ? (
@@ -688,7 +617,7 @@ export const Dashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Daily Checklist */}
+            {/* 3. Daily Checklist */}
             <div className="bg-card border border-border rounded-2xl p-3 mb-3">
                 <div className="flex items-center gap-2 mb-2">
                     <CheckCircle size={14} className="text-accent" />
@@ -715,7 +644,35 @@ export const Dashboard: React.FC = () => {
                 </form>
             </div>
 
-            {/* KPI Preview */}
+            {/* 4. Notifications */}
+            {notifications.length > 0 && (
+                <div className="bg-card border border-border rounded-2xl p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <Bell size={14} className="text-accent" />
+                            <h3 className="text-xs font-black text-foreground">Notifikasi</h3>
+                            {unreadCount > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{unreadCount}</span>}
+                        </div>
+                        <button onClick={() => setShowNotifSidebar(true)} className="text-[10px] font-bold text-accent">Lihat →</button>
+                    </div>
+                    <div className="space-y-1.5">
+                        {notifications.slice(0, 3).map(n => (
+                            <div key={n.id} onClick={() => handleNotificationClick(n)}
+                                className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${n.is_read ? 'border-border opacity-60' : 'border-accent/30 bg-accent/5'}`}>
+                                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    {n.actor?.avatar_url ? <img src={n.actor.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : <Bell size={10} className="text-accent" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[9px] font-black text-accent uppercase tracking-wider truncate">{n.title}</p>
+                                    <p className="text-[10px] font-bold text-foreground line-clamp-1">{n.content}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 5. KPI Preview */}
             {kpis.length > 0 && (
                 <div className="bg-card border border-border rounded-2xl p-3 mb-3">
                     <div className="flex items-center justify-between mb-2">
@@ -746,29 +703,72 @@ export const Dashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Notifications */}
-            {notifications.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <Bell size={14} className="text-accent" />
-                            <h3 className="text-xs font-black text-foreground">Notifikasi</h3>
-                            {unreadCount > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{unreadCount}</span>}
-                        </div>
-                        <button onClick={() => setShowNotifSidebar(true)} className="text-[10px] font-bold text-accent">Lihat →</button>
+            {/* 6. Metrics Cards */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
+                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Views</p>
+                    <p className="text-lg font-black text-foreground">{formatShortNumber(metricsCurrent.views)}</p>
+                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.views, metricsPrev.views)}</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
+                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">ER</p>
+                    <p className="text-lg font-black text-foreground">{metricsCurrent.er.toFixed(1)}%</p>
+                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.er, metricsPrev.er)}</div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
+                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Post</p>
+                    <p className="text-lg font-black text-foreground">{metricsCurrent.published}</p>
+                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.published, metricsPrev.published)}</div>
+                </div>
+            </div>
+
+            {/* 7. Performance Trend Chart */}
+            <div className="bg-card border border-border rounded-2xl p-3 mb-3">
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-black text-foreground">Performance Trend</h3>
+                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                        {['views', 'likes', 'interactions'].map(m => (
+                            <button key={m} onClick={() => setSelectedMetric(m)}
+                                className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border transition-all flex-shrink-0 ${selectedMetric === m ? 'bg-slate-900 border-slate-900 text-white' : 'bg-card border-slate-200 text-mutedForeground'}`}>
+                                {m === 'interactions' ? 'Eng' : m}
+                            </button>
+                        ))}
                     </div>
-                    <div className="space-y-1.5">
-                        {notifications.slice(0, 3).map(n => (
-                            <div key={n.id} onClick={() => handleNotificationClick(n)}
-                                className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${n.is_read ? 'border-border opacity-60' : 'border-accent/30 bg-accent/5'}`}>
-                                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    {n.actor?.avatar_url ? <img src={n.actor.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : <Bell size={10} className="text-accent" />}
+                </div>
+                <div className="h-[120px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                            <defs>
+                                <linearGradient id="mobileColorValue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#94a3b8' }} minTickGap={40} />
+                            <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 1 }} />
+                            <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={2} fillOpacity={1} fill="url(#mobileColorValue)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* 8. Workspaces */}
+            {workspaces.length > 0 && (
+                <div className="mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xs font-black text-foreground uppercase tracking-wider">Workspaces</h3>
+                        <button onClick={() => navigate('/plan')} className="text-[10px] font-bold text-accent">Lihat Semua →</button>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        {workspaces.slice(0, 5).map(ws => (
+                            <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
+                                className="flex-shrink-0 bg-card border border-border rounded-xl p-3 w-32 text-left hover:border-accent transition-colors">
+                                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center mb-2 overflow-hidden">
+                                    <Layers size={16} className="text-accent" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[9px] font-black text-accent uppercase tracking-wider truncate">{n.title}</p>
-                                    <p className="text-[10px] font-bold text-foreground line-clamp-1">{n.content}</p>
-                                </div>
-                            </div>
+                                <p className="text-xs font-bold text-foreground truncate">{ws.name}</p>
+                                <p className="text-[9px] text-mutedForeground">Workspace</p>
+                            </button>
                         ))}
                     </div>
                 </div>
