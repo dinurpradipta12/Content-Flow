@@ -772,16 +772,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
     }, [config]);
 
-    const mainNavItems = [
-        { id: 'dashboard', path: '/', defaultLabel: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        { id: 'messages', path: '/messages', defaultLabel: 'Messages', icon: <MessageSquare size={20} /> },
-        { id: 'plan', path: '/plan', defaultLabel: 'Content Plan', icon: <CalendarDays size={20} /> },
-        { id: 'approval', path: '/approval', defaultLabel: 'Approval', icon: <CheckCircle size={20} /> },
-        { id: 'insight', path: '/insight', defaultLabel: 'Content Data Insight', icon: <Presentation size={20} /> },
-        { id: 'carousel', path: '/carousel', defaultLabel: 'Carousel Maker', icon: <ImageIcon size={20} /> },
-        { id: 'kpi', path: '/script', defaultLabel: 'Team KPI Board', icon: <BarChart2 size={20} /> },
-    ];
-
     // --- THEME SYNC WITH BODY & HTML ---
     useEffect(() => {
         // Remove all possible theme classes from body and html (root)
