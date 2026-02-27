@@ -494,39 +494,39 @@ export const UserManagement: React.FC = () => {
     }, [users]);
 
     return (
-        <div className="space-y-6 flex-1 flex flex-col min-h-0">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6 flex-1 flex flex-col min-h-0">
             {/* Access guard: Member = no access */}
             {!isAdmin && !isDeveloper && (
-                <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50">
-                    <Shield className="text-slate-300" size={48} />
-                    <h2 className="text-2xl font-bold text-slate-400">Akses Ditolak</h2>
-                    <p className="text-slate-500">Halaman ini hanya untuk Developer dan Admin.</p>
+                <div className="flex flex-col items-center justify-center h-[40vh] sm:h-[50vh] text-center space-y-3 sm:space-y-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-2xl bg-slate-50 p-4 sm:p-6">
+                    <Shield className="text-slate-300 w-10 h-10 sm:w-12 sm:h-12" />
+                    <h2 className="text-lg sm:text-2xl font-bold text-slate-400">Akses Ditolak</h2>
+                    <p className="text-xs sm:text-sm text-slate-500">Halaman ini hanya untuk Developer dan Admin.</p>
                 </div>
             )}
 
             {(isAdmin || isDeveloper) && (
                 <>
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center border-4 border-slate-900 shadow-hard rotate-3">
-                                <Users size={28} className="text-white" />
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-accent rounded-lg sm:rounded-2xl flex items-center justify-center border-3 sm:border-4 border-slate-900 shadow-hard rotate-3 flex-shrink-0">
+                                <Users size={20} className="sm:w-7 sm:h-7 text-white" />
                             </div>
-                            <div>
-                                <h2 className="text-3xl font-heading font-black text-slate-900 leading-tight Lowercase ">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
-                                <p className="text-slate-500 font-bold">Total {users.length} pengguna terdaftar.</p>
+                            <div className="min-w-0">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-black text-slate-900 leading-tight truncate">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
+                                <p className="text-slate-500 font-bold text-xs sm:text-sm">Total {users.length} pengguna terdaftar.</p>
                             </div>
                         </div>
-                        <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={18} className={loading ? 'animate-spin' : ''} />} className="shadow-hard border-2 border-slate-900">
+                        <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={14} className={`${loading ? 'animate-spin' : ''} sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px]`} />} className="shadow-hard border-2 border-slate-900 text-xs sm:text-sm w-full md:w-auto">
                             Refresh Data
                         </Button>
                     </div>
 
                     {/* Summary Strategy Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                         {/* Card 1: Total Users */}
                         <div onClick={() => setIsGrowthModalOpen(true)}
-                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            className="bg-white p-3 sm:p-4 md:p-5 rounded-lg sm:rounded-2xl border-3 sm:border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
                                     <Users className="text-blue-600" size={20} />

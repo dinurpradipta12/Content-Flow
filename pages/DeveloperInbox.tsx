@@ -231,51 +231,51 @@ export const DeveloperInbox: React.FC = () => {
     const renewalCount = messages.filter(m => m.type === 'renewal').length;
 
     return (
-        <div className="space-y-6 flex-1">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6 flex-1">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                        <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center relative shadow-hard-mini">
-                            <Inbox size={24} />
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2 sm:gap-3">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 text-white rounded-lg sm:rounded-xl flex items-center justify-center relative shadow-hard-mini flex-shrink-0">
+                            <Inbox size={20} className="sm:w-6 sm:h-6" />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] sm:text-[9px] font-black w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-white">
                                     {unreadCount}
                                 </span>
                             )}
                         </div>
                         Developer Inbox
                     </h1>
-                    <p className="text-slate-500 font-bold text-sm mt-1">Kelola verifikasi registrasi dan perpanjangan langganan user.</p>
+                    <p className="text-slate-500 font-bold text-xs sm:text-sm mt-0.5 sm:mt-1">Kelola verifikasi registrasi dan perpanjangan langganan user.</p>
                 </div>
 
                 <button
                     onClick={fetchMessages}
-                    className="self-start px-4 py-2 bg-white border-2 border-slate-900 rounded-xl font-bold text-sm text-slate-900 shadow-hard-mini hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                    className="self-start px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm text-slate-900 shadow-hard-mini hover:-translate-y-0.5 transition-all flex items-center gap-1.5 sm:gap-2"
                 >
-                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+                    <RefreshCw size={14} className={`${loading ? 'animate-spin' : ''} sm:w-4 sm:h-4`} /> Refresh
                 </button>
             </div>
 
             {/* Tabs & Filters */}
-            <div className="flex flex-col gap-4">
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200 self-start">
+            <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
+                <div className="flex bg-slate-100 p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 border-slate-200 self-start gap-1 sm:gap-0">
                     <button
                         onClick={() => setTypeFilter('registration')}
-                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'registration' ? 'bg-white text-slate-900 shadow-md border-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[7px] sm:text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'registration' ? 'bg-white text-slate-900 shadow-md border-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                         Registrasi ({regCount})
                     </button>
                     <button
                         onClick={() => setTypeFilter('renewal')}
-                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'renewal' ? 'bg-white text-slate-900 shadow-md border-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[7px] sm:text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'renewal' ? 'bg-white text-slate-900 shadow-md border-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                         Perpanjangan ({renewalCount})
                     </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <div className="flex bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl overflow-hidden shadow-hard-mini">
                         {(['all', 'unread', 'resolved'] as const).map(f => (
                             <button
                                 key={f}

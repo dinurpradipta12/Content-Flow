@@ -1298,9 +1298,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Main Wrapper-Uses padding left instead of flex width sharing */}
                 <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
                     <PresenceToast />
-                    <header className={`mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
+                    <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-12 sm:h-14 md:h-16 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-2 sm:px-3 md:px-4 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={18} /></button>
 
                             {/* Mobile Logo replacing Date/Time */}
                             <div className="md:hidden flex items-center">
@@ -1310,42 +1310,42 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
                                         : (config?.app_logo || branding.appLogo);
                                     if (activeLogo) {
-                                        return <img src={activeLogo} className="max-h-8 max-w-[140px] object-contain" alt="Logo" />;
+                                        return <img src={activeLogo} className="max-h-6 sm:max-h-7 max-w-[100px] sm:max-w-[120px] object-contain" alt="Logo" />;
                                     }
-                                    return <div className="font-heading font-black text-lg text-accent tracking-tighter">ContentFlow</div>;
+                                    return <div className="font-heading font-black text-sm sm:text-base text-accent tracking-tighter">ContentFlow</div>;
                                 })()}
                             </div>
 
                             <div className="hidden md:flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                <span className="text-[8px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
                                     {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </span>
-                                <span className="text-sm font-black text-slate-900 font-heading tracking-tight leading-none">
+                                <span className="text-xs lg:text-sm font-black text-slate-900 font-heading tracking-tight leading-none">
                                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 md:gap-6">
-                            <div className="flex items-center gap-3 md:gap-4 py-1 relative">
-                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
-                                    <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
+                        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 py-1 relative">
+                                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border text-[8px] sm:text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
+                                    <Wifi size={12} className="sm:w-3.5 sm:h-3.5 md:w-3.5 md:h-3.5" />
                                     <span className="hidden sm:inline">{getNetworkLabel()}</span>
                                 </div>
                                 <div className="flex items-center gap-1 relative" ref={notificationRef}>
-                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
-                                        <Bell size={18} />
-                                        {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-1.5 sm:p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
+                                        <Bell size={16} className="sm:w-4.5 sm:h-4.5 md:w-4.5 md:h-4.5" />
+                                        {unreadCount > 0 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full border-2 border-white text-[7px] sm:text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                                     </button>
                                     {isNotificationOpen && (
-                                        <div className="absolute top-full right-0 mt-3 w-[400px] bg-card border-2 border-border shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <div className="px-6 py-4 border-b-2 border-border flex items-center justify-between bg-muted/50">
-                                                <div className="flex items-center gap-2"><Bell size={16} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-lg">Notifikasi</span></div>
-                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg">Tandai Semua Dibaca</button>}
+                                        <div className="absolute top-full right-0 mt-2 sm:mt-3 w-[90vw] max-w-sm md:max-w-md lg:w-[400px] bg-card border-2 border-border shadow-hard rounded-lg sm:rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 border-b-2 border-border flex items-center justify-between bg-muted/50">
+                                                <div className="flex items-center gap-1.5 sm:gap-2"><Bell size={14} className="sm:w-4 sm:h-4 text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-sm md:text-lg">Notifikasi</span></div>
+                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[8px] sm:text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">Tandai</button>}
                                             </div>
-                                            <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
+                                            <div className="max-h-[280px] sm:max-h-[320px] overflow-y-auto custom-scrollbar">
                                                 {notifications.length === 0 ? (
-                                                    <div className="py-12 flex flex-col items-center justify-center text-slate-400"><Bell size={40} className="opacity-10 mb-3" /><p className="font-bold text-sm">Tidak ada notifikasi</p></div>
+                                                    <div className="py-8 sm:py-12 flex flex-col items-center justify-center text-slate-400"><Bell size={32} className="sm:w-10 sm:h-10 opacity-10 mb-2" /><p className="font-bold text-xs sm:text-sm">Tidak ada notifikasi</p></div>
                                                 ) : (
                                                     <div className="divide-y divide-border">
                                                         {notifications.map((notif) => (
@@ -1388,7 +1388,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </div>
                     </header>
 
-                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-0 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-4 md:px-6 md:py-8 md:pb-8 pb-20'}`}>
+                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-2 sm:p-3 md:px-6 md:py-8 md:pb-8 pb-20'}`}>
                         <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
                             {children}
                         </div>
@@ -1405,26 +1405,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </button>
                             {activeTab === 'profile' && (
                                 <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
-                                    <form onSubmit={handleSaveProfile} className="space-y-5">
-                                        <div className="flex items-center gap-6">
-                                            <div className="relative group cursor-pointer w-20 h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-muted shadow-sm">
+                                    <form onSubmit={handleSaveProfile} className="space-y-4 sm:space-y-5">
+                                        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 md:gap-6">
+                                            <div className="relative group cursor-pointer w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-muted shadow-sm flex-shrink-0">
                                                 <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={20} /></div>
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={16} className="sm:w-5 sm:h-5" /></div>
                                                 <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'user')} />
                                             </div>
-                                            <div className="flex-1"><h4 className="font-bold text-lg text-foreground">Foto Profil</h4><p className="text-sm text-mutedForeground">Klik avatar untuk mengganti.</p></div>
+                                            <div className="flex-1 text-center sm:text-left"><h4 className="font-bold text-sm sm:text-lg text-foreground">Foto Profil</h4><p className="text-xs sm:text-sm text-mutedForeground">Klik avatar untuk mengganti.</p></div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                             <Input label="Nama Lengkap" value={userProfile.name} onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })} />
                                             <Input label="Jabatan" value={userProfile.jobTitle} onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })} />
                                         </div>
                                         <div className="flex flex-col gap-1 w-full">
-                                            <label className="font-bold text-xs text-mutedForeground ml-1">Role Aplikasi</label>
-                                            <select className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
+                                            <label className="font-bold text-[10px] sm:text-xs text-mutedForeground ml-1">Role Aplikasi</label>
+                                            <select className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-sm outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
                                                 <option value="Member">Member</option><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Developer">Developer</option>
                                             </select>
                                         </div>
-                                        <div className="pt-2 flex justify-end"><Button type="submit" className="bg-accent" icon={<CheckCircle size={16} />}>Simpan Profil</Button></div>
+                                        <div className="pt-2 flex justify-center sm:justify-end"><Button type="submit" className="bg-accent w-full sm:w-auto" icon={<CheckCircle size={16} />}>Simpan Profil</Button></div>
                                     </form>
                                 </div>
                             )}
@@ -1438,27 +1438,28 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                     </button>
                                     {activeTab === 'branding' && (
-                                        <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
-                                            <form onSubmit={handleSaveBranding} className="space-y-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="p-4 sm:p-5 md:p-6 bg-card animate-in slide-in-from-top-2 duration-300">
+                                            <form onSubmit={handleSaveBranding} className="space-y-4 sm:space-y-5 md:space-y-6">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                                                     <div className="flex flex-col gap-2">
-                                                        <label className="font-bold text-sm text-mutedForeground">Logo Sidebar (Standard)</label>
-                                                        <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/5 hover:bg-card transition-colors relative cursor-pointer group">
-                                                            <div className="w-14 h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}</div>
-                                                            <div><p className="font-bold text-foreground text-sm">Upload PNG</p></div>
+                                                        <label className="font-bold text-[10px] sm:text-xs md:text-sm text-mutedForeground">Logo Sidebar (Standard)</label>
+                                                        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-xl bg-slate-500/5 hover:bg-card transition-colors relative cursor-pointer group">
+                                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2 flex-shrink-0">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={20} className="sm:w-6 sm:h-6" />}</div>
+                                                            <div><p className="font-bold text-foreground text-[10px] sm:text-xs md:text-sm text-center">Upload PNG</p></div>
                                                             <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col gap-2">
-                                                        <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-colors relative cursor-pointer group">
-                                                            <div className="w-14 h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers className="text-slate-600" size={24} />}</div>
-                                                            <div><p className="font-bold text-foreground text-sm">Upload PNG Putih</p></div>
+                                                        <label className="font-bold text-[10px] sm:text-xs md:text-sm text-mutedForeground">&nbsp;</label>
+                                                        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-colors relative cursor-pointer group">
+                                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2 flex-shrink-0">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers className="text-slate-600" size={20} className="sm:w-6 sm:h-6" />}</div>
+                                                            <div><p className="font-bold text-foreground text-[10px] sm:text-xs md:text-sm text-center">Upload PNG Putih</p></div>
                                                             <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app_light')} />
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <Input label="Nama Aplikasi" value={branding.appName} onChange={(e) => setBranding({ ...branding, appName: e.target.value })} />
-                                                <div className="pt-2 flex justify-end"><Button type="submit" className="bg-secondary" icon={<CheckCircle size={16} />}>Simpan Global</Button></div>
+                                                <div className="pt-2 flex justify-center sm:justify-end"><Button type="submit" className="bg-secondary w-full sm:w-auto" icon={<CheckCircle size={16} />}>Simpan Global</Button></div>
                                             </form>
                                         </div>
                                     )}
@@ -1469,19 +1470,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Modal>
 
                 <Modal isOpen={showRoleChangeModal} onClose={() => { }} title="Pemberitahuan Sistem">
-                    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                        <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2"><Shield className="w-8 h-8" /></div>
-                        <h3 className="text-xl font-bold text-slate-800">Perubahan Akses</h3>
-                        <p className="text-slate-500 text-sm">Role Anda telah berubah. Silakan login ulang.</p>
-                        <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard">Login Ulang</button>
+                    <div className="flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 text-center space-y-3 sm:space-y-4">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2"><Shield className="w-6 h-6 sm:w-8 sm:h-8" /></div>
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-800">Perubahan Akses</h3>
+                        <p className="text-xs sm:text-sm text-slate-500">Role Anda telah berubah. Silakan login ulang.</p>
+                        <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-4 sm:px-6 py-2 sm:py-3 bg-slate-800 text-white font-bold rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-hard text-sm sm:text-base">Login Ulang</button>
                     </div>
                 </Modal>
 
                 <Modal isOpen={showSubExpiredModal} onClose={() => { }} title="Akses Ditangguhkan">
-                    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><Power className="w-8 h-8" /></div>
-                        <h3 className="text-xl font-bold text-slate-800">Akses Terhenti</h3>
-                        <p className="text-slate-500 text-sm">Masa aktif subscription habis.</p>
+                    <div className="flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 text-center space-y-3 sm:space-y-4">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><Power className="w-6 h-6 sm:w-8 sm:h-8" /></div>
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-800">Akses Terhenti</h3>
+                        <p className="text-xs sm:text-sm text-slate-500">Masa aktif subscription habis.</p>
                         <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
                     </div>
                 </Modal>

@@ -577,29 +577,29 @@ export const Dashboard: React.FC = () => {
     return (
         <div className="w-full px-6 md:px-10 space-y-8 animate-in fade-in duration-500 pb-20">
             {/* GRID LAYOUT */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
 
                 {/* --- LEFT DESKTOP COLUMN (8 of 12) --- */}
-                <div className="lg:col-span-8 space-y-8">
+                <div className="lg:col-span-8 space-y-4 sm:space-y-6 lg:space-y-8">
 
                     {/* Welcome Banner */}
-                    <div className="mb-2 pt-8">
-                        <h1 className="text-4xl md:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-tight">
+                    <div className="mb-1 sm:mb-2 pt-4 sm:pt-6 lg:pt-8">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-tight">
                             {timeInfo.text}, {userName}!
                         </h1>
-                        <p className="text-slate-500 font-bold text-lg md:text-xl mt-2 max-w-2xl">
+                        <p className="text-xs sm:text-sm md:text-base lg:text-lg text-slate-500 font-bold mt-1 sm:mt-2 max-w-2xl leading-relaxed">
                             {timeInfo.quote} Konsistensi adalah kunci kesuksesan. Mari buat karya luar biasa hari ini! ✨
                         </p>
                     </div>
 
                     {/* Analytics Filtering & Cards */}
                     <div>
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-                            <h2 className="text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
 
-                            <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto">
                                 <select
-                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                     value={filterPlatform}
                                     onChange={(e) => setFilterPlatform(e.target.value)}
                                 >
@@ -609,7 +609,7 @@ export const Dashboard: React.FC = () => {
                                     ))}
                                 </select>
                                 <select
-                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                     value={filterWs}
                                     onChange={(e) => setFilterWs(e.target.value)}
                                 >
@@ -618,9 +618,9 @@ export const Dashboard: React.FC = () => {
                                         <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>
                                     ))}
                                 </select>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                     <select
-                                        className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                        className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                         value={filterMonth}
                                         onChange={(e) => setFilterMonth(parseInt(e.target.value))}
                                     >
@@ -629,7 +629,7 @@ export const Dashboard: React.FC = () => {
                                         ))}
                                     </select>
                                     <select
-                                        className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                        className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                         value={filterYear}
                                         onChange={(e) => setFilterYear(parseInt(e.target.value))}
                                     >
@@ -641,45 +641,45 @@ export const Dashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                             {/* Total Views Card */}
-                            <div className="bg-card rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-14 bg-accent px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
-                                    <div className="w-8 h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <Eye size={18} className="text-foreground" strokeWidth={2.5} />
+                            <div className="bg-card rounded-2xl sm:rounded-[16px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[120px] sm:h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-10 sm:h-14 bg-accent px-3 sm:px-4 flex items-center gap-2 sm:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <Eye size={14} className="sm:w-4.5 sm:h-4.5 text-foreground" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-white text-sm uppercase tracking-wider mt-1">Total Views</span>
+                                    <span className="font-black text-white text-[9px] sm:text-sm uppercase tracking-wider">Total Views</span>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-3xl font-black text-foreground mb-2 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
+                                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-xl sm:text-3xl font-black text-foreground mb-1 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
                                     {renderMetricCompare(metricsCurrent.views, metricsPrev.views)}
                                 </div>
                             </div>
 
                             {/* Engagement Card */}
-                            <div className="bg-card rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-14 bg-tertiary px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
-                                    <div className="w-8 h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <MousePointerClick size={18} className="text-slate-900" strokeWidth={2.5} />
+                            <div className="bg-card rounded-2xl sm:rounded-[16px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[120px] sm:h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-10 sm:h-14 bg-tertiary px-3 sm:px-4 flex items-center gap-2 sm:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <MousePointerClick size={14} className="sm:w-4.5 sm:h-4.5 text-slate-900" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-slate-900 text-sm uppercase tracking-wider mt-1">Engagement</span>
+                                    <span className="font-black text-slate-900 text-[9px] sm:text-sm uppercase tracking-wider">Engagement</span>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-3xl font-black text-foreground mb-2 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
+                                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-xl sm:text-3xl font-black text-foreground mb-1 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
                                     {renderMetricCompare(metricsCurrent.er, metricsPrev.er)}
                                 </div>
                             </div>
 
                             {/* Published Card */}
-                            <div className="bg-card rounded-[16px] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-14 bg-quaternary px-4 flex items-center gap-3 border-b-[3px] border-slate-900">
-                                    <div className="w-8 h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <CalendarCheck size={18} className="text-slate-900" strokeWidth={2.5} />
+                            <div className="bg-card rounded-2xl sm:rounded-[16px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[120px] sm:h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-10 sm:h-14 bg-quaternary px-3 sm:px-4 flex items-center gap-2 sm:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <CalendarCheck size={14} className="sm:w-4.5 sm:h-4.5 text-slate-900" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-slate-900 text-sm uppercase tracking-wider mt-1">Published</span>
+                                    <span className="font-black text-slate-900 text-[9px] sm:text-sm uppercase tracking-wider">Published</span>
                                 </div>
-                                <div className="p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-3xl font-black text-foreground mb-2 leading-none">{metricsCurrent.published}</h3>
+                                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-xl sm:text-3xl font-black text-foreground mb-1 leading-none">{metricsCurrent.published}</h3>
                                     {renderMetricCompare(metricsCurrent.published, metricsPrev.published)}
                                 </div>
                             </div>
@@ -687,29 +687,29 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Minimalist Analytics Chart */}
-                    <div className="bg-white rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6 lg:p-8">
-                        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-6 mb-8">
-                            <div className="flex items-center gap-3 shrink-0">
-                                <TrendingUp size={24} className="text-slate-800" />
-                                <h3 className="text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
+                    <div className="bg-white rounded-2xl sm:rounded-[32px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] p-3 sm:p-4 lg:p-6 lg:p-8">
+                        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                <TrendingUp size={18} className="sm:w-6 sm:h-6 text-slate-800" />
+                                <h3 className="text-base sm:text-lg lg:text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                 {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
                                     <button
                                         key={metric}
                                         onClick={() => setSelectedMetric(metric)}
-                                        className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border-2 transition-all ${selectedMetric === metric
+                                        className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[7px] sm:text-xs font-black uppercase tracking-wider border-2 transition-all ${selectedMetric === metric
                                             ? 'bg-slate-900 border-slate-900 text-white shadow-md'
                                             : 'bg-card border-slate-200 text-mutedForeground hover:border-slate-400'
                                             }`}
                                     >
-                                        {metric === 'interactions' ? 'Total Eng' : metric}
+                                        {metric === 'interactions' ? 'Eng' : metric}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="h-[250px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                        <div className="h-[200px] sm:h-[250px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                 <AreaChart data={chartData}>
                                     <defs>
@@ -813,73 +813,73 @@ export const Dashboard: React.FC = () => {
 
 
                     {/* Workspace Gallery */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Layers size={28} className="text-foreground" strokeWidth={2.5} />
-                            <h2 className="text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
+                    <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                            <Layers size={20} className="sm:w-7 sm:h-7 text-foreground" strokeWidth={2.5} />
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                             {workspaces.length === 0 ? (
-                                <p className="text-slate-500 font-bold col-span-full">Belum ada workspace yang tersedia.</p>
+                                <p className="text-xs sm:text-sm text-slate-500 font-bold col-span-full">Belum ada workspace yang tersedia.</p>
                             ) : (
                                 workspaces.map(ws => (
                                     <div
                                         key={ws.id}
                                         onClick={() => navigate(`/plan/${ws.id}`)}
-                                        className="group cursor-pointer bg-card rounded-[32px] border-[3px] border-slate-900 p-6 shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[220px]"
+                                        className="group cursor-pointer bg-card rounded-2xl sm:rounded-[32px] border-2 sm:border-[3px] border-slate-900 p-4 sm:p-5 lg:p-6 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[2px_4px_0px_#0f172a] sm:hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[180px] sm:min-h-[220px]"
                                     >
                                         {/* Top Section */}
-                                        <div className="flex justify-between items-start gap-4 mb-3">
+                                        <div className="flex justify-between items-start gap-2 sm:gap-3 lg:gap-4 mb-2 sm:mb-3">
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-xl md:text-2xl font-black text-slate-900 font-heading leading-tight truncate w-full mb-3" title={ws.name}>
+                                                <h3 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 font-heading leading-tight truncate w-full mb-1.5 sm:mb-2 lg:mb-3" title={ws.name}>
                                                     {ws.name}
                                                 </h3>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-black bg-slate-900 text-white border-2 border-slate-900 uppercase tracking-widest leading-none">
+                                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                    <span className="inline-block px-1.5 sm:px-2 py-0.5 rounded text-[8px] sm:text-[10px] font-black bg-slate-900 text-white border-2 border-slate-900 uppercase tracking-widest leading-none">
                                                         {ws.role || 'OWNER'}
                                                     </span>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                    <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">
                                                         GENERAL • {ws.period || 'PERSONAL'}
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="w-14 h-14 rounded-2xl border-2 border-slate-900 bg-background flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
-                                                {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers size={24} className="text-slate-400" />}
+                                            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl border-2 border-slate-900 bg-background flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
+                                                {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers size={18} className="sm:w-6 sm:h-6 text-slate-400" />}
                                             </div>
                                         </div>
 
                                         {/* Middle Section */}
-                                        <p className="text-sm font-bold text-slate-500 mb-6 line-clamp-2 leading-relaxed flex-1">
+                                        <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6 line-clamp-2 leading-relaxed flex-1">
                                             {ws.description || "Workspace ini diperuntukan untuk mencatat semua kegiatan atau event yang ada pada task"}
                                         </p>
 
                                         {/* Divider */}
-                                        <div className="w-full h-[1px] bg-slate-100 mb-5 relative overflow-hidden">
+                                        <div className="w-full h-[1px] bg-slate-100 mb-3 sm:mb-4 lg:mb-5 relative overflow-hidden">
                                             {/* decorative dashed effect */}
                                             <div className="absolute top-0 left-0 w-full border-t-2 border-dashed border-slate-200"></div>
                                         </div>
 
                                         {/* Bottom Section */}
                                         <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex -space-x-2">
+                                            <div className="flex -space-x-1 sm:-space-x-2">
                                                 {(ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 0) ? (
                                                     ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url: string, i: number) => (
-                                                        <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover" />
+                                                        <img key={i} src={url} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover" />
                                                     ))
                                                 ) : (
                                                     <>
-                                                        <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
-                                                        <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
+                                                        <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
+                                                        <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
                                                     </>
                                                 )}
                                                 {ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 3 && (
-                                                    <div className="w-8 h-8 rounded-full border-2 border-white shadow-sm font-bold text-[10px] flex items-center justify-center bg-slate-100 text-slate-500 z-10 relative">
+                                                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm font-bold text-[7px] sm:text-[10px] flex items-center justify-center bg-slate-100 text-slate-500 z-10 relative">
                                                         +{ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length - 3}
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-900 text-white flex items-center justify-center group-hover:bg-slate-800 transition-all group-hover:-translate-y-1">
-                                                <ArrowUpRight strokeWidth={2.5} size={20} />
+                                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-900 bg-slate-900 text-white flex items-center justify-center group-hover:bg-slate-800 transition-all group-hover:-translate-y-1">
+                                                <ArrowUpRight strokeWidth={2.5} size={16} className="sm:w-5 sm:h-5" />
                                             </div>
                                         </div>
                                     </div>
@@ -891,22 +891,22 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* --- RIGHT DESKTOP COLUMN (4 of 12) --- */}
-                <div className="lg:col-span-4 space-y-3 lg:pt-[220px]">
+                <div className="lg:col-span-4 space-y-2 sm:space-y-3 lg:pt-[220px]">
 
                     {/* Religious Card */}
-                    <div className="space-y-2">
-                        <div className="bg-slate-900 rounded-[32px] overflow-hidden border-4 border-slate-900 shadow-[0px_8px_0px_#0f172a] relative">
+                    <div className="space-y-1.5 sm:space-y-2">
+                        <div className="bg-slate-900 rounded-2xl sm:rounded-[32px] overflow-hidden border-2 sm:border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] relative">
                             {isSelectingReligion ? (
-                                <div className="p-6 bg-slate-50 h-full flex flex-col justify-center overflow-y-auto custom-scrollbar">
-                                    <Book size={32} className="text-accent mb-4" />
-                                    <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter mb-2">Quote Harian</h3>
-                                    <p className="text-sm font-bold text-slate-500 mb-6">Pilih preferensi Anda untuk menyesuaikan motivasi harian.</p>
-                                    <div className="grid grid-cols-2 gap-3 mb-6">
+                                <div className="p-3 sm:p-4 lg:p-6 bg-slate-50 h-full flex flex-col justify-center overflow-y-auto custom-scrollbar">
+                                    <Book size={24} className="sm:w-8 sm:h-8 text-accent mb-3 sm:mb-4" />
+                                    <h3 className="text-base sm:text-lg lg:text-xl font-black text-slate-900 uppercase tracking-tighter mb-1 sm:mb-2">Quote Harian</h3>
+                                    <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6">Pilih preferensi Anda untuk menyesuaikan motivasi harian.</p>
+                                    <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
                                         {Object.keys(RELIGION_CONTENT).map(rel => (
                                             <button
                                                 key={rel}
                                                 onClick={() => handleSetReligion(rel)}
-                                                className={`px-4 py-3 border-2 rounded-xl font-bold transition-colors ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
+                                                className={`px-2 sm:px-4 py-1.5 sm:py-3 border-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs transition-colors ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
                                             >
                                                 {rel}
                                             </button>
@@ -914,10 +914,10 @@ export const Dashboard: React.FC = () => {
                                     </div>
 
                                     {religion === 'Islam' && (
-                                        <div className="bg-background p-4 rounded-xl border-2 border-slate-200 mt-2">
-                                            <h4 className="font-bold text-sm text-slate-800 mb-2">Lokasi Jadwal Sholat (Opsi Manual)</h4>
-                                            <p className="text-xs text-slate-500 mb-3 block">Bila kosong, sistem akan menggunakan lokasi otomatis GPS device Anda.</p>
-                                            <div className="space-y-3">
+                                        <div className="bg-background p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-slate-200 mt-2">
+                                            <h4 className="font-bold text-[10px] sm:text-sm text-slate-800 mb-1.5 sm:mb-2">Lokasi Jadwal Sholat (Opsi Manual)</h4>
+                                            <p className="text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 block">Bila kosong, sistem akan menggunakan lokasi otomatis GPS device Anda.</p>
+                                            <div className="space-y-2 sm:space-y-3">
                                                 <input
                                                     className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
                                                     placeholder="Contoh: Banjarmasin"

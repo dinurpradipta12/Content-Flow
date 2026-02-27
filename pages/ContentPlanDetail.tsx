@@ -326,25 +326,25 @@ const KanbanColumn: React.FC<{
 
     return (
         <div
-            className="flex-1 min-w-[300px] flex flex-col pb-0"
+            className="flex-shrink-0 min-w-[280px] sm:min-w-[320px] flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             {/* Column Header */}
-            <div className="flex-shrink-0 mb-6 pt-1">
-                <div className="flex items-center justify-between pb-4 border-b-2 border-border">
-                    <h3 className={`font-heading font-black text-sm tracking-widest uppercase ${textColor}`}>
+            <div className="flex-shrink-0 mb-4 sm:mb-6 pt-1">
+                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b-2 border-border">
+                    <h3 className={`font-heading font-black text-xs sm:text-sm tracking-widest uppercase ${textColor}`}>
                         {status}
                     </h3>
-                    <span className="bg-accent text-white w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shadow-sm">
+                    <span className="bg-accent text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center justify-center shadow-sm">
                         {items.length}
                     </span>
                 </div>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 px-0 pb-0 flex flex-col gap-4">
+            <div className="flex-1 px-0 pb-0 flex flex-col gap-3 sm:gap-4">
                 {items.length > 0 ? (
                     items.map(item => (
                         <KanbanCard
@@ -975,57 +975,57 @@ export const ContentPlanDetail: React.FC = () => {
         <>
             <div className="flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
                 {/* Header Section Updated */}
-                <div className={`flex flex-col lg:flex-row justify-between items-end gap-6 border-b-2 border-border pb-6 flex-shrink-0 w-full max-w-full pl-2 md:pl-4 pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
+                <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 sm:gap-4 lg:gap-6 border-b-2 border-border pb-3 sm:pb-4 lg:pb-6 flex-shrink-0 w-full max-w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-2 sm:py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
                     {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
-                    <div className="flex flex-col items-start gap-4 transition-all duration-300">
-                        <div className={`flex items-center gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                    <div className="flex flex-col items-start gap-2 sm:gap-3 lg:gap-4 transition-all duration-300 w-full lg:w-auto">
+                        <div className={`flex items-center gap-2 sm:gap-3 lg:gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                             <button
                                 onClick={() => navigate('/plan')}
-                                className="p-2 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground"
+                                className="p-1.5 sm:p-2 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground"
                             >
-                                <ArrowLeft size={18} />
+                                <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
                             </button>
 
                             <div className="relative group">
                                 {workspaceData.logo_url ? (
-                                    <img src={workspaceData.logo_url} alt="Logo" className="h-24 w-auto md:h-32 object-contain" />
+                                    <img src={workspaceData.logo_url} alt="Logo" className="h-16 sm:h-20 md:h-24 lg:h-32 w-auto object-contain" />
                                 ) : (
-                                    <div className="h-24 w-24 md:h-32 md:w-32 bg-accent/20 rounded-3xl border-2 border-slate-200 shadow-hard flex items-center justify-center">
-                                        <Layers size={48} className="text-accent" />
+                                    <div className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-32 lg:w-32 bg-accent/20 rounded-2xl sm:rounded-3xl border-2 border-slate-200 shadow-hard flex items-center justify-center">
+                                        <Layers size={32} className="sm:w-10 sm:h-10 md:w-12 md:h-12 text-accent" />
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        <div className={`flex flex-wrap gap-2 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                        <div className={`flex flex-wrap gap-1.5 sm:gap-2 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
                             {workspaceData.platforms.map(p => (
-                                <span key={p} className="px-3 py-1 bg-pink-100 border-2 border-pink-200 text-pink-700 font-black font-heading rounded-lg text-xs transform -rotate-2 shadow-sm inline-block">
+                                <span key={p} className="px-2 sm:px-3 py-0.5 sm:py-1 bg-pink-100 border-2 border-pink-200 text-pink-700 font-black font-heading rounded-lg text-[10px] sm:text-xs transform -rotate-2 shadow-sm inline-block">
                                     {p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p}
                                 </span>
                             ))}
                             {workspaceData.period && (
-                                <span className="px-3 py-1 bg-yellow-100 border-2 border-yellow-200 text-yellow-700 font-black font-heading rounded-lg text-xs transform rotate-2 shadow-sm inline-block">
-                                    {new Date(workspaceData.period).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-yellow-100 border-2 border-yellow-200 text-yellow-700 font-black font-heading rounded-lg text-[10px] sm:text-xs transform rotate-2 shadow-sm inline-block">
+                                    {new Date(workspaceData.period).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
                                 </span>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             {isScrolled && (
                                 <button
                                     onClick={() => navigate('/plan')}
-                                    className="p-1.5 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground mr-2"
+                                    className="p-1 sm:p-1.5 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground"
                                 >
-                                    <ArrowLeft size={16} />
+                                    <ArrowLeft size={14} className="sm:w-4 sm:h-4" />
                                 </button>
                             )}
-                            <h2 className={`font-extrabold text-slate-800 font-heading tracking-tight drop-shadow-sm leading-tight max-w-3xl transition-all duration-300 ${isScrolled ? 'text-2xl md:text-3xl' : 'text-5xl md:text-7xl'}`}>
+                            <h2 className={`font-extrabold text-slate-800 font-heading tracking-tight drop-shadow-sm leading-tight max-w-full sm:max-w-2xl lg:max-w-3xl transition-all duration-300 ${isScrolled ? 'text-base sm:text-xl md:text-2xl lg:text-3xl' : 'text-2xl sm:text-3xl md:text-5xl lg:text-6xl'}`}>
                                 {workspaceData.name}
                             </h2>
                         </div>
 
-                        <div className={`flex items-center gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                            <div className="flex -space-x-3">
+                        <div className={`flex items-center gap-2 sm:gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                            <div className="flex -space-x-2 sm:-space-x-3">
                                 {teamMembers.length > 0 ? (
                                     <>
                                         {teamMembers
@@ -1217,8 +1217,8 @@ export const ContentPlanDetail: React.FC = () => {
 
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
-                    <div className="flex-1 w-full overflow-x-auto pb-4 no-scrollbar">
-                        <div className="flex gap-6 items-start pl-2 pr-8">
+                    <div className="flex-1 w-full overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
+                        <div className="flex gap-3 sm:gap-4 md:gap-6 items-start min-w-min pl-0 sm:pl-2 pr-2 sm:pr-8">
                             {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                                 <KanbanColumn
                                     key={status}

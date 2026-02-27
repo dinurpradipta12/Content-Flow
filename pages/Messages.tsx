@@ -545,12 +545,12 @@ export const Messages: React.FC = () => {
         setSelectedMembers(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
     };
 
-    if (!isLoaded) return <div className="p-20 text-center font-black animate-pulse text-slate-400">Loading...</div>;
+    if (!isLoaded) return <div className="p-8 sm:p-12 md:p-20 text-center font-black animate-pulse text-slate-400 text-xs sm:text-sm md:text-base">Loading...</div>;
 
     return (
-        <div className="flex bg-card rounded-[40px] border-2 border-border shadow-hard flex-1 min-h-0 overflow-hidden relative">
+        <div className="flex bg-card rounded-2xl sm:rounded-3xl md:rounded-[40px] border-2 border-border shadow-hard flex-1 min-h-0 overflow-hidden relative">
             {/* Workspace Bar (Thin & Modern) */}
-            <div className={`bg-slate-900 flex flex-col items-center py-8 gap-6 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shrink-0 overflow-y-auto no-scrollbar ${showWsSidebar ? 'w-20' : 'w-0 opacity-0 -translate-x-full'}`}>
+            <div className={`bg-slate-900 flex flex-col items-center py-4 sm:py-6 md:py-8 gap-3 sm:gap-4 md:gap-6 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shrink-0 overflow-y-auto no-scrollbar ${showWsSidebar ? 'w-16 sm:w-20' : 'w-0 opacity-0 -translate-x-full'}`}>
                 {workspaces.map(ws => (
                     <button
                         key={ws.id}
@@ -580,33 +580,33 @@ export const Messages: React.FC = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex min-w-0">
+            <div className="flex-1 flex min-w-0 flex-col md:flex-row">
                 {/* Thread Sidebar */}
-                <div className="w-96 border-r-2 border-border flex flex-col bg-card shrink-0">
-                    <div className="p-8 pb-4">
-                        <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-4">
+                <div className="w-full md:w-80 lg:w-96 border-b-2 md:border-b-0 md:border-r-2 border-border flex flex-col bg-card shrink-0 min-h-0 max-h-96 md:max-h-full">
+                    <div className="p-3 sm:p-4 md:p-8 pb-2 sm:pb-3 md:pb-4">
+                        <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-8">
+                            <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
                                 <button
                                     onClick={() => setShowWsSidebar(!showWsSidebar)}
-                                    className={`p-2 rounded-xl transition-all ${showWsSidebar ? 'bg-slate-900 text-white' : 'bg-muted text-mutedForeground hover:bg-accent hover:text-white shadow-sm'}`}
+                                    className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all ${showWsSidebar ? 'bg-slate-900 text-white' : 'bg-muted text-mutedForeground hover:bg-accent hover:text-white shadow-sm'}`}
                                 >
-                                    <SidebarIcon size={18} />
+                                    <SidebarIcon size={16} className="sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px]" />
                                 </button>
-                                <h2 className="text-3xl font-black text-foreground font-heading">Messages</h2>
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-foreground font-heading">Messages</h2>
                             </div>
-                            <button className="p-2.5 rounded-xl hover:bg-muted text-mutedForeground transition-all">
-                                <Search size={22} />
+                            <button className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-muted text-mutedForeground transition-all">
+                                <Search size={16} className="sm:w-5 sm:h-5 md:w-[22px] md:h-[22px]" />
                             </button>
                         </div>
 
-                        <div className="relative mb-6">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-mutedForeground" size={18} />
+                        <div className="relative mb-3 sm:mb-4 md:mb-6">
+                            <Search className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 -translate-y-1/2 text-mutedForeground" size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" />
                             <input
                                 type="text"
                                 placeholder={sidebarTab === 'groups' ? "Search groups..." : "Search members..."}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-muted/50 border-2 border-transparent focus:border-accent/30 rounded-2xl py-3 pl-12 pr-4 text-sm font-bold outline-none transition-all"
+                                className="w-full bg-muted/50 border-2 border-transparent focus:border-accent/30 rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-2.5 md:py-3 pl-8 sm:pl-10 md:pl-12 pr-3 sm:pr-4 text-xs sm:text-sm font-bold outline-none transition-all"
                             />
                         </div>
 
@@ -738,26 +738,26 @@ export const Messages: React.FC = () => {
                     {activeGroup ? (
                         <>
                             {/* Header */}
-                            <div className="h-28 border-b-2 border-border flex items-center justify-between px-10 bg-white shrink-0 relative z-10">
-                                <div className="flex items-center gap-5">
+                            <div className="h-20 sm:h-24 md:h-28 border-b-2 border-border flex items-center justify-between px-3 sm:px-5 md:px-10 bg-white shrink-0 relative z-10 gap-2 sm:gap-3 md:gap-5">
+                                <div className="flex items-center gap-2 sm:gap-3 md:gap-5 min-w-0">
                                     <div className="relative shrink-0">
-                                        <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center border-2 border-border overflow-hidden">
+                                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-muted rounded-lg sm:rounded-xl md:rounded-2xl flex items-center justify-center border-2 border-border overflow-hidden">
                                             {activeGroup.icon?.startsWith('data:') ? (
                                                 <img src={activeGroup.icon} className="w-full h-full object-cover" />
                                             ) : (
-                                                <Users size={28} className="text-accent" />
+                                                <Users size={20} className="sm:w-6 sm:h-6 md:w-7 md:h-7 text-accent" />
                                             )}
                                         </div>
-                                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full"></div>
+                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-emerald-500 border-2 border-white rounded-full"></div>
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h2 className="font-extrabold text-2xl text-slate-900 font-heading leading-none">
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                                            <h2 className="font-extrabold text-base sm:text-xl md:text-2xl text-slate-900 font-heading leading-none truncate">
                                                 {activeGroup.name}
                                             </h2>
-                                            {activeGroup.name.toLowerCase().includes('car') && <BadgeCheck size={20} className="text-blue-500" />}
+                                            {activeGroup.name.toLowerCase().includes('car') && <BadgeCheck size={16} className="sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />}
                                         </div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none flex items-center gap-2">
+                                        <p className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none flex items-center gap-1.5 sm:gap-2 truncate">
                                             <CheckCircle2 size={12} className="text-emerald-500" /> Authorised Dealer
                                         </p>
                                     </div>

@@ -209,23 +209,23 @@ export const Profile: React.FC = () => {
     }
   };
 
-  if (loading || !user) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-slate-300" size={32} /></div>;
+  if (loading || !user) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-slate-300" size={24} className="sm:w-8 sm:h-8 md:w-8 md:h-8" /></div>;
 
   return (
-    <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-20 pt-10 px-4 md:px-8 max-w-7xl mx-auto">
+    <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-12 sm:pb-16 md:pb-20 pt-4 sm:pt-6 md:pt-10 px-2 sm:px-4 md:px-8 max-w-7xl mx-auto">
 
       {/* Header Profile */}
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-10">
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 md:mb-10">
         <div className="relative group shrink-0 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-          <div className="w-44 h-44 rounded-full border-4 border-slate-800 shadow-[8px_8px_0px_0px_#1E293B] overflow-hidden bg-white relative">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-44 md:h-44 rounded-full border-3 sm:border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1E293B] sm:shadow-[8px_8px_0px_0px_#1E293B] overflow-hidden bg-white relative">
             <img src={user.avatar_url} className="w-full h-full object-cover" alt="User Avatar" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
-              <Upload className="text-white" size={32} />
+              <Upload className="text-white" size={24} className="sm:w-8 sm:h-8 md:w-8 md:h-8" />
             </div>
           </div>
-          <div className="absolute bottom-3 right-3 w-10 h-10 bg-quaternary border-4 border-slate-800 rounded-full flex items-center justify-center pointer-events-none">
+          <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 bg-quaternary border-3 sm:border-4 border-slate-800 rounded-full flex items-center justify-center pointer-events-none">
             <div className="w-full h-full rounded-full bg-quaternary animate-ping opacity-75 absolute" />
-            <div className="w-3.5 h-3.5 bg-white rounded-full relative z-10" />
+            <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 bg-white rounded-full relative z-10" />
           </div>
           <input
             type="file"
@@ -237,17 +237,17 @@ export const Profile: React.FC = () => {
         </div>
 
         <div className="flex-1 min-w-0 text-center md:text-left w-full">
-          <div className="flex flex-col gap-1 mb-3">
-            <h2 className="text-5xl font-heading text-slate-900 leading-none tracking-tight">{user.full_name || user.username}</h2>
+          <div className="flex flex-col gap-0.5 sm:gap-1 mb-2 sm:mb-3">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading text-slate-900 leading-none tracking-tight">{user.full_name || user.username}</h2>
             {user.job_title && (
-              <p className="text-xl font-bold text-slate-500">{user.job_title}</p>
+              <p className="text-sm sm:text-base md:text-xl font-bold text-slate-500">{user.job_title}</p>
             )}
 
             {/* Unified Row: Role + Status + Joined (Sejajar) */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 sm:gap-2 md:gap-3 mt-2 sm:mt-3 md:mt-4">
               {/* 1. Role Badge */}
               {isSuperUser ? (
-                <span className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-black uppercase rounded-full border-2 border-slate-800 shadow-sm flex items-center gap-1">
+                <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[7px] sm:text-xs font-black uppercase rounded-full border-2 border-slate-800 shadow-sm flex items-center gap-0.5 sm:gap-1">
                   <Star size={12} fill="currentColor" /> Superuser
                 </span>
               ) : (

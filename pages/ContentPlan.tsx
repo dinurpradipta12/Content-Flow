@@ -478,28 +478,28 @@ export const ContentPlan: React.FC = () => {
     const isAdmin = ['Admin', 'Owner'].includes(userRole);
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8 pb-8 sm:pb-10 lg:pb-12">
             {/* Page Header */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b-2 border-slate-100 pb-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 sm:gap-4 lg:gap-6 border-b-2 border-slate-100 pb-4 sm:pb-5 lg:pb-6">
                 <div>
-                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight">{config?.page_titles?.['plan']?.title || 'Content Plan Workspace'}</h2>
-                    <p className="text-slate-500 font-medium mt-2">{config?.page_titles?.['plan']?.subtitle || 'Pilih workspace untuk mulai mengelola konten.'}</p>
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-800 font-heading tracking-tight">{config?.page_titles?.['plan']?.title || 'Content Plan Workspace'}</h2>
+                    <p className="text-sm sm:text-base text-slate-500 font-medium mt-1 sm:mt-2">{config?.page_titles?.['plan']?.subtitle || 'Pilih workspace untuk mulai mengelola konten.'}</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     <Button
-                        className="bg-tertiary text-slate-900 hover:bg-[#FCD34D] whitespace-nowrap"
-                        icon={<Users size={18} />}
+                        className="bg-tertiary text-slate-900 hover:bg-[#FCD34D] whitespace-nowrap text-xs sm:text-sm w-full sm:w-auto"
+                        icon={<Users size={16} className="sm:w-4.5 sm:h-4.5" />}
                         onClick={() => setIsJoinModalOpen(true)}
                     >
-                        Gabung Workspace
+                        Gabung
                     </Button>
 
                     {/* Only admins can create new workspaces */}
                     {isAdminOrOwner && (
                         <Button
-                            icon={<Plus size={18} />}
-                            className="whitespace-nowrap"
+                            icon={<Plus size={16} className="sm:w-4.5 sm:h-4.5" />}
+                            className="whitespace-nowrap text-xs sm:text-sm w-full sm:w-auto"
                             onClick={handleOpenCreateModal}
                         >
                             Buat Workspace
@@ -509,19 +509,19 @@ export const ContentPlan: React.FC = () => {
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center h-64 text-slate-400">
-                    <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="animate-spin" size={32} />
-                        <span className="font-bold">Memuat data ...</span>
+                <div className="flex items-center justify-center h-40 sm:h-48 lg:h-64 text-slate-400">
+                    <div className="flex flex-col items-center gap-2 sm:gap-3">
+                        <Loader2 className="animate-spin w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" />
+                        <span className="text-xs sm:text-sm font-bold">Memuat data ...</span>
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                     {/* Workspace Cards */}
                     {workspaces.map((ws) => (
                         <Card
                             key={ws.id}
-                            className={`h-[320px] flex flex-col cursor-pointer hover:-translate-y-2 overflow-hidden relative`}
+                            className={`h-auto sm:h-[300px] lg:h-[320px] flex flex-col cursor-pointer hover:-translate-y-2 overflow-hidden relative`}
                             headerColor={ws.color}
                             onClick={() => navigate(`/plan/${ws.id}`)}
                         >
@@ -575,33 +575,33 @@ export const ContentPlan: React.FC = () => {
                             )}
 
                             {/* Header Layout: Logo Left, Info Stack Right */}
-                            <div className="flex gap-4 items-start mb-6 relative z-20 pr-8">
+                            <div className="flex gap-2 sm:gap-3 lg:gap-4 items-start mb-3 sm:mb-4 lg:mb-6 relative z-20 pr-2 sm:pr-4 lg:pr-8">
                                 {/* Left: Logo (Enlarged) */}
                                 {ws.logoUrl ? (
-                                    <div className="ws-logo-box w-[120px] h-[120px] flex-shrink-0 bg-card rounded-2xl border-2 border-border overflow-hidden p-1.5 shadow-sm">
+                                    <div className="ws-logo-box w-12 h-12 sm:w-20 sm:h-20 lg:w-[120px] lg:h-[120px] flex-shrink-0 bg-card rounded-lg sm:rounded-xl lg:rounded-2xl border-2 border-border overflow-hidden p-1 lg:p-1.5 shadow-sm">
                                         <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
                                     </div>
                                 ) : (
-                                    <div className="ws-logo-box w-[120px] h-[120px] flex-shrink-0 bg-muted/50 rounded-2xl border-2 border-border flex items-center justify-center p-1.5 shadow-sm text-mutedForeground">
-                                        <Layers size={36} />
+                                    <div className="ws-logo-box w-12 h-12 sm:w-20 sm:h-20 lg:w-[120px] lg:h-[120px] flex-shrink-0 bg-muted/50 rounded-lg sm:rounded-xl lg:rounded-2xl border-2 border-border flex items-center justify-center p-1 lg:p-1.5 shadow-sm text-mutedForeground">
+                                        <Layers size={20} className="sm:w-7 sm:h-7 lg:w-9 lg:h-9" />
                                     </div>
                                 )}
 
                                 {/* Right: Stacked Info */}
                                 <div className="flex flex-col flex-1 min-w-0">
                                     {/* 1. Logos Sosmed */}
-                                    <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                                    <div className="flex items-center gap-1 flex-wrap mb-1 sm:mb-2">
                                         {ws.platforms.map((p, idx) => renderPlatformLink(p, ws.profile_links))}
                                     </div>
 
                                     {/* 2. Nama Content Plan Workspace */}
-                                    <h3 className="text-xl md:text-3xl font-bold font-heading text-foreground leading-tight truncate drop-shadow-sm mb-2" title={ws.name}>
+                                    <h3 className="text-sm sm:text-lg lg:text-2xl xl:text-3xl font-bold font-heading text-foreground leading-tight truncate drop-shadow-sm mb-1 sm:mb-2" title={ws.name}>
                                         {ws.name}
                                     </h3>
 
                                     {/* 3. Status Workspace (Owner/Member) */}
                                     <div>
-                                        <span className="inline-block px-4 py-1 rounded-full text-[11px] font-bold text-mutedForeground bg-muted border-2 border-border shadow-sm">
+                                        <span className="inline-block px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] lg:text-[11px] font-bold text-mutedForeground bg-muted border-2 border-border shadow-sm">
                                             {ws.role}
                                         </span>
                                     </div>
@@ -609,44 +609,45 @@ export const ContentPlan: React.FC = () => {
                             </div>
 
                             {/* 4. Stats Row: Progress Bar */}
-                            <div className="space-y-2 mb-4 relative z-10">
-                                <div className="flex justify-between text-xs font-bold text-mutedForeground">
+                            <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 relative z-10">
+                                <div className="flex justify-between text-[10px] sm:text-xs font-bold text-mutedForeground">
                                     <span>Published</span>
                                     <span>{ws.totalContent > 0 ? Math.round((ws.publishedCount / ws.totalContent) * 100) : 0}%</span>
                                 </div>
-                                <div className="w-full bg-muted h-3 rounded-full overflow-hidden border border-border">
+                                <div className="w-full bg-muted h-2 sm:h-3 rounded-full overflow-hidden border border-border">
                                     <div
                                         className={`h-full rounded-full ${ws.color === 'violet' ? 'bg-accent' : ws.color === 'pink' ? 'bg-secondary' : 'bg-tertiary'} border-r-2 border-slate-900/10 transition-all duration-500`}
                                         style={{ width: `${ws.totalContent > 0 ? (ws.publishedCount / ws.totalContent) * 100 : 0}%` }}
                                     ></div>
                                 </div>
-                                <div className="flex justify-between text-xs font-medium text-mutedForeground/80 mt-1">
-                                    <span>{ws.totalContent - ws.publishedCount} Pending / Draft</span>
-                                    <span>{ws.totalContent} Total Konten</span>
+                                <div className="flex justify-between text-[8px] sm:text-xs font-medium text-mutedForeground/80 mt-1">
+                                    <span className="truncate">{ws.totalContent - ws.publishedCount} Draft</span>
+                                    <span className="flex-shrink-0 ml-1">{ws.totalContent} Total</span>
                                 </div>
                             </div>
 
                             {/* 5. Footer Row: Members & Action (Pushed to bottom) */}
-                            <div className="mt-auto pt-4 border-t-2 border-border border-dashed flex items-center justify-between gap-3 relative z-10">
-                                <div className="flex -space-x-2 overflow-hidden flex-shrink-0 items-center">
+                            <div className="mt-auto pt-2 sm:pt-3 lg:pt-4 border-t-2 border-border border-dashed flex items-center justify-between gap-2 sm:gap-3 relative z-10">
+                                <div className="flex -space-x-1 sm:-space-x-2 overflow-hidden flex-shrink-0 items-center">
                                     {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url, i) => (
-                                        <img key={i} src={url} className="w-8 h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted object-cover z-20" alt="Member" />
+                                        <img key={i} src={url} className="w-5 h-5 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted object-cover z-20" alt="Member" />
                                     ))}
                                     {(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length > 3 && (
-                                        <div className="w-8 h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted flex items-center justify-center text-[10px] font-bold text-mutedForeground z-10 relative">
+                                        <div className="w-5 h-5 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full border-2 border-card shadow-sm flex-shrink-0 bg-muted flex items-center justify-center text-[7px] sm:text-[9px] font-bold text-mutedForeground z-10 relative">
                                             +{(ws.members || []).filter(m => m.includes('/') || m.startsWith('data:')).length - 3}
                                         </div>
                                     )}
                                 </div>
-                                <div className="text-accent font-bold text-sm flex items-center gap-1 group-hover:gap-2 transition-all whitespace-nowrap min-w-0">
-                                    <span>Buka Content Plan</span>
-                                    <ArrowRight size={16} className="flex-shrink-0" />
+                                <div className="text-accent font-bold text-[10px] sm:text-xs lg:text-sm flex items-center gap-1 group-hover:gap-2 transition-all whitespace-nowrap min-w-0">
+                                    <span className="hidden sm:inline">Buka Content Plan</span>
+                                    <span className="sm:hidden">Buka</span>
+                                    <ArrowRight size={12} className="sm:w-4 sm:h-4 lg:w-4 lg:h-4 flex-shrink-0" />
                                 </div>
                             </div>
                         </Card>
                     ))}
                     {workspaces.length === 0 && (
-                        <div className="col-span-full py-16 text-center border-2 border-dashed border-border rounded-2xl bg-muted">
+                        <div className="col-span-full py-8 sm:py-12 lg:py-16 text-center border-2 border-dashed border-border rounded-xl sm:rounded-2xl bg-muted">
                             {isAdminOrOwner ? (
                                 // Admin: no workspaces yet
                                 <>

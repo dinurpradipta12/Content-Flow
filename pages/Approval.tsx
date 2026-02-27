@@ -78,22 +78,22 @@ export const Approval: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6 flex-1 flex flex-col min-h-0">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6 flex-1 flex flex-col min-h-0">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2 shrink-0">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2 shrink-0">
                 <div>
-                    <h2 className="text-4xl font-extrabold text-foreground font-heading tracking-tight flex items-center gap-3">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground font-heading tracking-tight flex items-center gap-2 sm:gap-3">
                         {config?.page_titles?.['approval']?.title || 'Team Approval Section'}
                     </h2>
-                    <p className="text-slate-500 font-medium mt-2">
+                    <p className="text-slate-500 font-medium mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-base">
                         {config?.page_titles?.['approval']?.subtitle || 'Kelola pengajuan dan persetujuan dengan alur kerja dinamis.'}
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3 w-full md:w-auto">
                     <Button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="bg-accent text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:shadow-[6px_6px_0px_0px_#0f172a] hover:-translate-y-1 transition-all"
-                        icon={<Plus size={18} />}
+                        className="bg-accent text-white border-4 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] hover:shadow-[6px_6px_0px_0px_#0f172a] hover:-translate-y-1 transition-all flex-1 md:flex-none text-xs sm:text-sm md:text-base"
+                        icon={<Plus size={14} className="sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px]" />}
                     >
                         Buat Pengajuan
                     </Button>

@@ -279,34 +279,34 @@ export const WorkspaceSettings: React.FC = () => {
     }
 
     return (
-        <div className="space-y-8 pb-20 animate-in fade-in duration-500">
+        <div className="space-y-4 sm:space-y-6 md:space-y-8 pb-12 sm:pb-16 md:pb-20 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 sm:gap-4 md:gap-6">
                 <div>
-                    <h2 className="text-4xl md:text-6xl font-heading font-black text-foreground tracking-tighter uppercase italic">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-heading font-black text-foreground tracking-tighter uppercase italic">
                         Workspace Settings
                     </h2>
-                    <p className="text-mutedForeground font-bold mt-2 pl-1 border-l-4 border-accent">Configurasi Global & Pusat Kendali Developer.</p>
+                    <p className="text-mutedForeground font-bold mt-1 sm:mt-2 pl-1 border-l-4 border-accent text-xs sm:text-sm md:text-base">Configurasi Global & Pusat Kendali Developer.</p>
                 </div>
 
-                <div className="flex bg-muted p-1.5 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a]">
+                <div className="flex bg-muted p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] gap-0.5 sm:gap-1 w-full md:w-auto overflow-x-auto">
                     <button
                         onClick={() => setActiveTab('interface')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'interface' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[8px] sm:text-xs uppercase tracking-widest transition-all flex-shrink-0 ${activeTab === 'interface' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                     >
-                        <Monitor size={16} /> Interface
+                        <Monitor size={12} className="sm:w-4 sm:h-4" /> Interface
                     </button>
                     <button
                         onClick={() => setActiveTab('database')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'database' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[8px] sm:text-xs uppercase tracking-widest transition-all flex-shrink-0 ${activeTab === 'database' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                     >
-                        <Database size={16} /> Database
+                        <Database size={12} className="sm:w-4 sm:h-4" /> Database
                     </button>
                     <button
                         onClick={() => setActiveTab('payment')}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === 'payment' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
+                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[8px] sm:text-xs uppercase tracking-widest transition-all flex-shrink-0 ${activeTab === 'payment' ? 'bg-card text-foreground border-2 border-slate-900 shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
                     >
-                        <CreditCard size={16} /> Payment
+                        <CreditCard size={12} className="sm:w-4 sm:h-4" /> Payment
                     </button>
                 </div>
             </div>

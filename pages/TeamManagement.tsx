@@ -649,34 +649,34 @@ export const TeamManagement: React.FC = () => {
     const isLimitReached = !isDeveloper && subUsersCount >= (currentAdmin?.member_limit || 2);
 
     return (
-        <div className="space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
+        <div className="space-y-4 sm:space-y-5 md:space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 sm:gap-4 md:gap-6 pb-1 sm:pb-2">
                 <div>
-                    <h2 className="text-4xl md:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-3">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-2 sm:gap-3">
                         {config?.page_titles?.['team']?.title || 'Team Management'}
                     </h2>
-                    <p className="text-slate-500 font-bold mt-2">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
+                    <p className="text-slate-500 font-bold mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-base">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
                 </div>
-                <div className="flex z-10 items-center gap-3">
+                <div className="flex z-10 items-center gap-2 sm:gap-3 w-full md:w-auto">
                     {currentAdmin && (
-                        <div className="hidden md:flex flex-col items-end mr-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kapasitas Tim</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="hidden md:flex flex-col items-end mr-1 sm:mr-2">
+                            <span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Kapasitas Tim</span>
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                <div className="w-16 sm:w-20 md:w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full transition-all duration-500 ${isLimitReached ? 'bg-red-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${Math.min((subUsersCount / (currentAdmin.member_limit || 2)) * 100, 100)}%` }}
                                     />
                                 </div>
-                                <span className={`text-xs font-black ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
+                                <span className={`text-[9px] sm:text-xs font-black ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
                                     {isDeveloper ? 'Unlimited' : `${subUsersCount}/${currentAdmin.member_limit || 2}`}
                                 </span>
                             </div>
                         </div>
                     )}
                     <Button
-                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all`}
+                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-xs sm:text-sm`}
                         onClick={() => {
                             if (isLimitReached) {
                                 setIsUpgradeModalOpen(true);
@@ -694,9 +694,9 @@ export const TeamManagement: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 min-h-0">
                 {/* LEFT: WORKSPACES LIST */}
-                <div className="w-full lg:w-1/3 flex flex-col gap-4 min-h-0">
+                <div className="w-full lg:w-1/3 flex flex-col gap-3 sm:gap-4 min-h-0">
                     <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="p-4 bg-primary flex items-center gap-3">
                             <Layers className="text-white" size={24} />
@@ -737,29 +737,29 @@ export const TeamManagement: React.FC = () => {
                 {/* RIGHT: USERS LIST IN WORKSPACE */}
                 <div className="w-full lg:w-2/3 flex flex-col min-h-0">
                     <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col h-full">
-                        <div className="px-6 py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-4">
+                        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-2 sm:gap-3 md:gap-4">
                             {/* Geometric detail */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 blur-3xl rounded-full pointer-events-none"></div>
+                            <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/20 blur-3xl rounded-full pointer-events-none"></div>
 
-                            <div className="flex items-center gap-3 relative z-10">
-                                <div className="bg-white p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
-                                    <Users className="text-slate-800" size={20} />
+                            <div className="flex items-center gap-2 sm:gap-3 relative z-10">
+                                <div className="bg-white p-1.5 sm:p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
+                                    <Users className="text-slate-800" size={16} className="sm:w-5 sm:h-5" />
                                 </div>
-                                <h3 className="font-heading font-black text-white text-xl">
+                                <h3 className="font-heading font-black text-white text-xs sm:text-lg md:text-xl">
                                     Anggota di Workspace {selectedWorkspace ? selectedWorkspace.name : '...'}
                                 </h3>
                             </div>
 
                             {/* SEARCH BAR (Button moved out) */}
-                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto z-10">
-                                <div className="relative w-full sm:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto z-10">
+                                <div className="relative w-full sm:w-48 md:w-64">
+                                    <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} className="sm:w-4 sm:h-4" />
                                     <input
                                         type="text"
                                         placeholder="Cari anggota tim..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[2px_2px_0px_#0f172a]"
+                                        className="w-full bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[2px_2px_0px_#0f172a]"
                                     />
                                 </div>
                             </div>
@@ -767,7 +767,7 @@ export const TeamManagement: React.FC = () => {
 
                         {/* Invite Form inline dropdown */}
                         {isInviteOpen && selectedWorkspace && (
-                            <div className="bg-emerald-500/10 border-b-4 border-slate-900 border-dashed p-6 animate-in fade-in slide-in-from-top-4">
+                            <div className="bg-emerald-500/10 border-b-4 border-slate-900 border-dashed p-3 sm:p-4 md:p-6 animate-in fade-in slide-in-from-top-4">
                                 {inviteSuccess ? (
                                     /* Success Panel with Login Link */
                                     <div className="space-y-4">
