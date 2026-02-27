@@ -141,6 +141,22 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
 
         .theme-dark .text-mutedForeground, .theme-dark .text-slate-400 { color: #94a3b8 !important; }
         .theme-dark .text-mutedForeground svg, .theme-dark .text-slate-400 svg { color: #94a3b8 !important; stroke: #94a3b8 !important; }
+
+        /* Calendar Cards - Dark Mode */
+        .theme-dark .cal-instagram { background-color: rgba(236, 72, 153, 0.25) !important; border-color: rgba(236, 72, 153, 0.5) !important; color: #f9a8d4 !important; }
+        .theme-dark .cal-instagram * { color: #f9a8d4 !important; }
+        .theme-dark .cal-tiktok { background-color: #1e293b !important; border-color: #475569 !important; color: #f1f5f9 !important; }
+        .theme-dark .cal-tiktok * { color: #f1f5f9 !important; }
+        .theme-dark .cal-linkedin { background-color: rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.5) !important; color: #93c5fd !important; }
+        .theme-dark .cal-linkedin * { color: #93c5fd !important; }
+        .theme-dark .cal-youtube { background-color: rgba(239, 68, 68, 0.2) !important; border-color: rgba(239, 68, 68, 0.5) !important; color: #fca5a5 !important; }
+        .theme-dark .cal-youtube * { color: #fca5a5 !important; }
+        .theme-dark .cal-facebook { background-color: rgba(99, 102, 241, 0.2) !important; border-color: rgba(99, 102, 241, 0.5) !important; color: #a5b4fc !important; }
+        .theme-dark .cal-facebook * { color: #a5b4fc !important; }
+        .theme-dark .cal-threads { background-color: rgba(148, 163, 184, 0.15) !important; border-color: rgba(148, 163, 184, 0.4) !important; color: #cbd5e1 !important; }
+        .theme-dark .cal-threads * { color: #cbd5e1 !important; }
+        .theme-dark .cal-default { background-color: #1e293b !important; border-color: #475569 !important; color: #e2e8f0 !important; }
+        .theme-dark .cal-default * { color: #e2e8f0 !important; }
     `,
     midnight: () => `
         body.theme-midnight, .theme-midnight, .theme-midnight main, .theme-midnight .bg-background, .theme-midnight.bg-background { background-color: #0c1130 !important; }
@@ -316,7 +332,8 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const navigate = useNavigate();
     const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>({ id: '1', name: 'Arunika Personal', role: 'Owner' });
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
     const location = useLocation();
 
     // Global Config
@@ -1111,651 +1128,764 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     return (
-        <div className={`flex h-screen w-full overflow-hidden bg-background relative theme-${currentTheme}`}>
-            <UserPresence />
-            {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
-            {/* Sidebar (Fixed position always) */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'}`}
-            >
-                <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
-                    <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'} `}>
-                        {(() => {
-                            const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
-                            const activeLogo = isDarkTheme
-                                ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
-                                : (config?.app_logo || branding.appLogo);
+        <>
+            <div className={`flex h-screen w-full overflow-hidden bg-background relative theme-${currentTheme}`}>
+                <UserPresence />
+                {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
+                {/* Sidebar (Fixed position always - Hidden on Mobile) */}
+                <aside
+                    className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 translate-x-0'}`}
+                >
+                    <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
+                        <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'} `}>
+                            {(() => {
+                                const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
+                                const activeLogo = isDarkTheme
+                                    ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
+                                    : (config?.app_logo || branding.appLogo);
 
-                            const favicon = config?.app_favicon || branding.appFavicon;
+                                const favicon = config?.app_favicon || branding.appFavicon;
 
-                            if (isSidebarOpen && activeLogo) {
-                                return <img src={activeLogo} className="max-w-[300px] max-h-20 object-contain animate-in fade-in duration-500" alt="Logo" />;
-                            }
+                                if (isSidebarOpen && activeLogo) {
+                                    return <img src={activeLogo} className="max-w-[300px] max-h-20 object-contain animate-in fade-in duration-500" alt="Logo" />;
+                                }
 
-                            if (!isSidebarOpen && favicon) {
-                                return <img src={favicon} className="w-10 h-10 object-contain animate-in fade-in zoom-in duration-500 rounded-lg" alt="Favicon" />;
-                            }
+                                if (!isSidebarOpen && favicon) {
+                                    return <img src={favicon} className="w-10 h-10 object-contain animate-in fade-in zoom-in duration-500 rounded-lg" alt="Favicon" />;
+                                }
 
-                            return (
-                                <div className={`bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard transition-all duration-500 ${isSidebarOpen ? 'w-14 h-14' : 'w-10 h-10'} `}>
-                                    <Layers className="text-white" size={isSidebarOpen ? 28 : 20} />
-                                </div>
-                            );
-                        })()}
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
-                    {daysToSubExp !== null && daysToSubExp <= 5 && (
-                        <div
-                            onClick={() => setShowPaymentModal(true)}
-                            className="w-full bg-red-500 border-4 border-slate-900 rounded-[24px] p-6 cursor-pointer hover:bg-red-600 transition-all shadow-[8px_8px_0px_#000] mb-8 relative group overflow-hidden"
-                        >
-                            <div className="relative z-10 text-white">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
-                                        <AlertTriangle size={20} className="text-red-600" />
+                                return (
+                                    <div className={`bg-accent rounded-xl border-2 border-slate-800 flex items-center justify-center shadow-hard transition-all duration-500 ${isSidebarOpen ? 'w-14 h-14' : 'w-10 h-10'} `}>
+                                        <Layers className="text-white" size={isSidebarOpen ? 28 : 20} />
                                     </div>
-                                    <span className="text-xs font-black uppercase tracking-[0.2em]">Peringatan</span>
-                                </div>
-                                <h3 className="text-xl font-black leading-tight mb-2">
-                                    {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} Hari Lagi`} Langganan Habis!
-                                </h3>
-                                <p className="text-sm font-bold text-white/90 leading-relaxed mb-6">
-                                    Segera perpanjang akun Anda agar akses tidak terhenti.
-                                </p>
-                                <button className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl Lowercase tracking-widest hover:bg-slate-800 transition-all border-2 border-slate-900 shadow-[4px_4px_0px_#fff] active:translate-y-1 active:shadow-none">
-                                    Perpanjang Layanan
-                                </button>
-                            </div>
+                                );
+                            })()}
                         </div>
-                    )}
-                    {Object.entries(NAV_ITEMS).map(([section, items]) => {
-                        const filteredItems = items.filter(item => {
-                            if (item.adminOnly && !isAdmin) return false;
-                            if (item.developerOnly && !isDeveloper) return false;
+                    </div>
 
-                            // Developer bypasses all visual hiding logic to see everything
-                            if (isDeveloper) return true;
+                    <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
+                        {daysToSubExp !== null && daysToSubExp <= 5 && (
+                            <div
+                                onClick={() => setShowPaymentModal(true)}
+                                className="w-full bg-red-500 border-4 border-slate-900 rounded-[24px] p-6 cursor-pointer hover:bg-red-600 transition-all shadow-[8px_8px_0px_#000] mb-8 relative group overflow-hidden"
+                            >
+                                <div className="relative z-10 text-white">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
+                                            <AlertTriangle size={20} className="text-red-600" />
+                                        </div>
+                                        <span className="text-xs font-black uppercase tracking-[0.2em]">Peringatan</span>
+                                    </div>
+                                    <h3 className="text-xl font-black leading-tight mb-2">
+                                        {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} Hari Lagi`} Langganan Habis!
+                                    </h3>
+                                    <p className="text-sm font-bold text-white/90 leading-relaxed mb-6">
+                                        Segera perpanjang akun Anda agar akses tidak terhenti.
+                                    </p>
+                                    <button className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl Lowercase tracking-widest hover:bg-slate-800 transition-all border-2 border-slate-900 shadow-[4px_4px_0px_#fff] active:translate-y-1 active:shadow-none">
+                                        Perpanjang Layanan
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {Object.entries(NAV_ITEMS).map(([section, items]) => {
+                            const filteredItems = items.filter(item => {
+                                if (item.adminOnly && !isAdmin) return false;
+                                if (item.developerOnly && !isDeveloper) return false;
 
-                            // Package-based visibility restrictions & Role Access
-                            if (item.id === 'team') {
-                                // Developer bypasses
+                                // Developer bypasses all visual hiding logic to see everything
                                 if (isDeveloper) return true;
 
-                                // Must be Admin/Owner AND Self-Registered (no parent)
-                                const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
-                                if (!isSelfRegisteredAdmin) return false;
+                                // Package-based visibility restrictions & Role Access
+                                if (item.id === 'team') {
+                                    // Developer bypasses
+                                    if (isDeveloper) return true;
 
-                                // Allow self-registered admins to see Team Mgmt regardless of package 
-                                // so they can manage/upgrade their team.
+                                    // Must be Admin/Owner AND Self-Registered (no parent)
+                                    const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
+                                    if (!isSelfRegisteredAdmin) return false;
+
+                                    // Allow self-registered admins to see Team Mgmt regardless of package 
+                                    // so they can manage/upgrade their team.
+                                    return true;
+                                }
+
+                                // Known core pages that are visible by default unless explicitly hidden
+                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+
+                                const isHidden = config?.hidden_pages?.includes(item.id);
+
+                                // Safety: While loading for the first time (no cache), 
+                                // assume hidden for everything except dashboard to prevent flickering.
+                                if (!config && configLoading && item.id !== 'dashboard') return false;
+
+                                if (CORE_PAGES.includes(item.id)) {
+                                    if (isHidden) return false;
+                                } else {
+                                    // For completely new pages added to NAV_ITEMS later: 
+                                    // they are HIDDEN by default from non-developers.
+                                    // The developer must explicitly 'unhide' them in Workspace Settings.
+                                    // If a new page is NOT in hidden_pages, what does it mean?
+                                    // Let's consider a new page visible ONLY if it is explicitly NOT hidden
+                                    // Wait, if it's hidden by default, and`hidden_pages` means hidden, 
+                                    // then we can't unhide it using`hidden_pages`. 
+                                    // As a workaround, we treat`hidden_pages` for non-core pages as a WHITELIST if we invert logic,
+                                    // but the UI uses`includes(id)` as hidden. 
+                                    // If it's fully new (not in CORE_PAGES) and not explicitly set up in config.page_titles, hide it.
+                                    if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false;
+                                }
+
                                 return true;
-                            }
-
-                            // Known core pages that are visible by default unless explicitly hidden
-                            const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
-
-                            const isHidden = config?.hidden_pages?.includes(item.id);
-
-                            // Safety: While loading for the first time (no cache), 
-                            // assume hidden for everything except dashboard to prevent flickering.
-                            if (!config && configLoading && item.id !== 'dashboard') return false;
-
-                            if (CORE_PAGES.includes(item.id)) {
-                                if (isHidden) return false;
-                            } else {
-                                // For completely new pages added to NAV_ITEMS later: 
-                                // they are HIDDEN by default from non-developers.
-                                // The developer must explicitly 'unhide' them in Workspace Settings.
-                                // If a new page is NOT in hidden_pages, what does it mean?
-                                // Let's consider a new page visible ONLY if it is explicitly NOT hidden
-                                // Wait, if it's hidden by default, and`hidden_pages` means hidden, 
-                                // then we can't unhide it using`hidden_pages`. 
-                                // As a workaround, we treat`hidden_pages` for non-core pages as a WHITELIST if we invert logic,
-                                // but the UI uses`includes(id)` as hidden. 
-                                // If it's fully new (not in CORE_PAGES) and not explicitly set up in config.page_titles, hide it.
-                                if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false;
-                            }
-
-                            return true;
-                        });
-                        if (filteredItems.length === 0) return null;
-                        return (
-                            <div key={section} className="mb-8 font-heading">
-                                {isSidebarOpen && (
-                                    <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 animate-in fade-in slide-in-from-left-2">{section}</h3>
-                                )}
-                                <div className="space-y-1 flex flex-col items-center w-full">
-                                    {filteredItems.map((item) => {
-                                        const isActive = location.pathname === item.path;
-                                        return (
-                                            <button
-                                                key={item.path}
-                                                onClick={() => navigate(item.path)}
-                                                className={`flex items-center transition-all duration-500 group overflow-hidden ${isSidebarOpen ? 'w-full justify-start px-4 py-3 rounded-xl' : 'w-12 h-12 justify-center rounded-xl'} ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'} ${isActive && isSidebarOpen ? 'translate-x-1' : ''} `}
-                                                title={!isSidebarOpen ? item.label : ''}
-                                            >
-                                                <div className={`flex items-center ${isSidebarOpen ? 'gap-4 min-w-[200px]' : 'justify-center'} `}>
-                                                    <item.icon size={20} className={`shrink-0 transition-all duration-500 ${isActive ? 'text-white' : 'group-hover:text-accent'} `} />
-                                                    {isSidebarOpen && (
-                                                        <span className={`font-bold text-sm tracking-tight whitespace-nowrap transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'} `}>
-                                                            {item.label}
-                                                        </span>
+                            });
+                            if (filteredItems.length === 0) return null;
+                            return (
+                                <div key={section} className="mb-8 font-heading">
+                                    {isSidebarOpen && (
+                                        <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 animate-in fade-in slide-in-from-left-2">{section}</h3>
+                                    )}
+                                    <div className="space-y-1 flex flex-col items-center w-full">
+                                        {filteredItems.map((item) => {
+                                            const isActive = location.pathname === item.path;
+                                            return (
+                                                <button
+                                                    key={item.path}
+                                                    onClick={() => navigate(item.path)}
+                                                    className={`flex items-center transition-all duration-500 group overflow-hidden ${isSidebarOpen ? 'w-full justify-start px-4 py-3 rounded-xl' : 'w-12 h-12 justify-center rounded-xl'} ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-500 hover:bg-slate-500/10 hover:text-accent'} ${isActive && isSidebarOpen ? 'translate-x-1' : ''} `}
+                                                    title={!isSidebarOpen ? item.label : ''}
+                                                >
+                                                    <div className={`flex items-center ${isSidebarOpen ? 'gap-4 min-w-[200px]' : 'justify-center'} `}>
+                                                        <item.icon size={20} className={`shrink-0 transition-all duration-500 ${isActive ? 'text-white' : 'group-hover:text-accent'} `} />
+                                                        {isSidebarOpen && (
+                                                            <span className={`font-bold text-sm tracking-tight whitespace-nowrap transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'} `}>
+                                                                {item.label}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {item.badge && isSidebarOpen && (
+                                                        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-accent animate-in zoom-in">{item.badge}</span>
                                                     )}
-                                                </div>
-                                                {item.badge && isSidebarOpen && (
-                                                    <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-white text-accent animate-in zoom-in">{item.badge}</span>
-                                                )}
-                                                {item.badge && !isSidebarOpen && (
-                                                    <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
+                                                    {item.badge && !isSidebarOpen && (
+                                                        <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
 
-                <div className={`p-4 mt-auto border-t-2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
-                    <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="UI Theme">
-                        <Palette size={20} className="shrink-0" />
+                    <div className={`p-4 mt-auto border-t-2 border-slate-50 shrink-0 flex flex-col transition-all duration-500 items-center`}>
+                        <button onClick={() => setShowThemeModal(true)} className={`flex items-center rounded-xl text-slate-500 hover:bg-slate-500/10 hover:text-accent transition-all font-bold text-sm mb-1 py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="UI Theme">
+                            <Palette size={20} className="shrink-0" />
+                            {isSidebarOpen && (
+                                <span className="transition-all duration-500 opacity-100 whitespace-nowrap">UI Theme</span>
+                            )}
+                        </button>
+                        <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="Sign Out">
+                            <LogOut size={20} className="shrink-0" />
+                            {isSidebarOpen && (
+                                <span className="transition-all duration-500 opacity-100 whitespace-nowrap">Sign Out</span>
+                            )}
+                        </button>
                         {isSidebarOpen && (
-                            <span className="transition-all duration-500 opacity-100 whitespace-nowrap">UI Theme</span>
-                        )}
-                    </button>
-                    <button onClick={handleLogout} className={`flex items-center rounded-xl text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-bold text-sm py-3 ${isSidebarOpen ? 'w-full px-4 gap-4' : 'w-12 h-12 justify-center'}`} title="Sign Out">
-                        <LogOut size={20} className="shrink-0" />
-                        {isSidebarOpen && (
-                            <span className="transition-all duration-500 opacity-100 whitespace-nowrap">Sign Out</span>
-                        )}
-                    </button>
-                    {isSidebarOpen && (
-                        <p className="text-[10px] text-slate-400 font-bold text-left px-4 mt-4 opacity-70 italic animate-in fade-in">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
-                    )}
-                </div>
-            </aside>
-
-            {/* Main Wrapper-Uses padding left instead of flex width sharing */}
-            <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
-                <PresenceToast />
-                <header className="mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard flex items-center justify-between px-4 transition-all max-w-full">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
-                        <div className="flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                            </span>
-                            <span className="text-sm font-black text-slate-900 font-heading tracking-tight leading-none">
-                                {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 md:gap-6">
-                        <div className="flex items-center gap-3 md:gap-4 py-1 relative">
-                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
-                                <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
-                                <span className="hidden sm:inline">{getNetworkLabel()}</span>
-                            </div>
-                            <div className="flex items-center gap-1 relative" ref={notificationRef}>
-                                <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
-                                    <Bell size={18} />
-                                    {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-                                </button>
-                                {isNotificationOpen && (
-                                    <div className="absolute top-full right-0 mt-3 w-[400px] bg-card border-2 border-border shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <div className="px-6 py-4 border-b-2 border-border flex items-center justify-between bg-muted/50">
-                                            <div className="flex items-center gap-2"><Bell size={16} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-lg">Notifikasi</span></div>
-                                            {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg">Tandai Semua Dibaca</button>}
-                                        </div>
-                                        <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
-                                            {notifications.length === 0 ? (
-                                                <div className="py-12 flex flex-col items-center justify-center text-slate-400"><Bell size={40} className="opacity-10 mb-3" /><p className="font-bold text-sm">Tidak ada notifikasi</p></div>
-                                            ) : (
-                                                <div className="divide-y divide-border">
-                                                    {notifications.map((notif) => (
-                                                        <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
-                                                            {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
-                                                            <div className="shrink-0">
-                                                                {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover" /> : <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={18} /></div>}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
-                                                                <p className="text-xs font-bold text-slate-600 leading-snug">
-                                                                    {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
-                                                                        <span className="text-slate-900">{notif.actor.full_name} </span>
-                                                                    )}
-                                                                    {notif.content}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-accent hover:bg-slate-500/10 rounded-full transition-all"><Settings size={18} /></button>
-                        </div>
-
-                        <div className="h-6 w-[2px] bg-slate-100"></div>
-                        <div className="flex items-center gap-3 pl-1 cursor-pointer group" onClick={() => navigate('/profile')}>
-                            <div className="text-right hidden md:block">
-                                <p className="font-bold text-xs text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
-                                <p className="text-[10px] text-slate-500 font-medium">{userProfile.jobTitle || userProfile.role}</p>
-                            </div>
-                            <div className="relative">
-                                <img src={userProfile.avatar} alt="User" className="w-9 h-9 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
-                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                <main className="flex-1 flex flex-col p-4 md:px-6 md:py-8 md:pb-8 pb-20 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full">
-                    <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
-                        {children}
-                    </div>
-                </main>
-            </div>
-
-            {/* --- MODALS --- */}
-            <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Pengaturan Aplikasi">
-                <div className="space-y-4">
-                    <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
-                        <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-foreground'} `}>
-                            <div className="flex items-center gap-3"><User size={20} className={activeTab === 'profile' ? 'text-white' : 'text-accent'} /> Informasi Pengguna</div>
-                            {activeTab === 'profile' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </button>
-                        {activeTab === 'profile' && (
-                            <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
-                                <form onSubmit={handleSaveProfile} className="space-y-5">
-                                    <div className="flex items-center gap-6">
-                                        <div className="relative group cursor-pointer w-20 h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-muted shadow-sm">
-                                            <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={20} /></div>
-                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'user')} />
-                                        </div>
-                                        <div className="flex-1"><h4 className="font-bold text-lg text-foreground">Foto Profil</h4><p className="text-sm text-mutedForeground">Klik avatar untuk mengganti.</p></div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Input label="Nama Lengkap" value={userProfile.name} onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })} />
-                                        <Input label="Jabatan" value={userProfile.jobTitle} onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })} />
-                                    </div>
-                                    <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-mutedForeground ml-1">Role Aplikasi</label>
-                                        <select className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
-                                            <option value="Member">Member</option><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Developer">Developer</option>
-                                        </select>
-                                    </div>
-                                    <div className="pt-2 flex justify-end"><Button type="submit" className="bg-accent" icon={<CheckCircle size={16} />}>Simpan Profil</Button></div>
-                                </form>
-                            </div>
+                            <p className="text-[10px] text-slate-400 font-bold text-left px-4 mt-4 opacity-70 italic animate-in fade-in">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
                         )}
                     </div>
+                </aside>
 
-                    {isDeveloper && (
-                        <>
-                            <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
-                                <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-foreground'} `}>
-                                    <div className="flex items-center gap-3"><Palette size={20} className={activeTab === 'branding' ? 'text-white' : 'text-secondary'} /> Tampilan Aplikasi (Admin)</div>
-                                    {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </button>
-                                {activeTab === 'branding' && (
-                                    <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
-                                        <form onSubmit={handleSaveBranding} className="space-y-6">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="flex flex-col gap-2">
-                                                    <label className="font-bold text-sm text-mutedForeground">Logo Sidebar (Standard)</label>
-                                                    <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/5 hover:bg-card transition-colors relative cursor-pointer group">
-                                                        <div className="w-14 h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}</div>
-                                                        <div><p className="font-bold text-foreground text-sm">Upload PNG</p></div>
-                                                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-2">
-                                                    <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-colors relative cursor-pointer group">
-                                                        <div className="w-14 h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers className="text-slate-600" size={24} />}</div>
-                                                        <div><p className="font-bold text-foreground text-sm">Upload PNG Putih</p></div>
-                                                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app_light')} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Input label="Nama Aplikasi" value={branding.appName} onChange={(e) => setBranding({ ...branding, appName: e.target.value })} />
-                                            <div className="pt-2 flex justify-end"><Button type="submit" className="bg-secondary" icon={<CheckCircle size={16} />}>Simpan Global</Button></div>
-                                        </form>
-                                    </div>
-                                )}
+                {/* Main Wrapper-Uses padding left instead of flex width sharing */}
+                <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
+                    <PresenceToast />
+                    <header className={`mt-4 shrink-0 z-50 mx-4 md:mx-6 mb-2 h-16 bg-card rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} /></button>
+
+                            {/* Mobile Logo replacing Date/Time */}
+                            <div className="md:hidden flex items-center">
+                                {(() => {
+                                    const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
+                                    const activeLogo = isDarkTheme
+                                        ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
+                                        : (config?.app_logo || branding.appLogo);
+                                    if (activeLogo) {
+                                        return <img src={activeLogo} className="max-h-8 max-w-[140px] object-contain" alt="Logo" />;
+                                    }
+                                    return <div className="font-heading font-black text-lg text-accent tracking-tighter">ContentFlow</div>;
+                                })()}
                             </div>
-                        </>
-                    )}
-                </div>
-            </Modal>
 
-            <Modal isOpen={showRoleChangeModal} onClose={() => { }} title="Pemberitahuan Sistem">
-                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                    <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2"><Shield className="w-8 h-8" /></div>
-                    <h3 className="text-xl font-bold text-slate-800">Perubahan Akses</h3>
-                    <p className="text-slate-500 text-sm">Role Anda telah berubah. Silakan login ulang.</p>
-                    <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard">Login Ulang</button>
-                </div>
-            </Modal>
-
-            <Modal isOpen={showSubExpiredModal} onClose={() => { }} title="Akses Ditangguhkan">
-                <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
-                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><Power className="w-8 h-8" /></div>
-                    <h3 className="text-xl font-bold text-slate-800">Akses Terhenti</h3>
-                    <p className="text-slate-500 text-sm">Masa aktif subscription habis.</p>
-                    <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
-                </div>
-            </Modal>
-
-            <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Perpanjang Masa Langganan">
-                <div className="p-4 space-y-5">
-                    <p className="text-sm text-slate-600 font-bold">Harap lengkapi detail perpanjangan di bawah ini.</p>
-
-                    <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
-                        <button
-                            onClick={() => setSelectedTier('personal')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'personal' ? 'bg-white text-accent border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'} `}
-                        >
-                            <User size={16} /> Personal
-                        </button>
-                        <button
-                            onClick={() => setSelectedTier('team')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'team' ? 'bg-white text-secondary border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'} `}
-                        >
-                            <Users size={16} /> Team
-                        </button>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Pilih Paket {selectedTier === 'personal' ? 'Personal' : 'Team'}</label>
-                        <select
-                            className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:border-accent transition-colors"
-                            value={selectedPackageId}
-                            onChange={(e) => setSelectedPackageId(e.target.value)}
-                        >
-                            {(() => {
-                                const pkgs = selectedTier === 'personal'
-                                    ? (config?.payment_config?.personalPackages?.length ? config.payment_config.personalPackages : (config?.payment_config?.packages || []))
-                                    : (config?.payment_config?.teamPackages || []);
-
-                                if (pkgs.length > 0) {
-                                    return pkgs.map(pkg => (
-                                        <option key={pkg.id} value={pkg.id}>
-                                            {pkg.name} (Rp {pkg.price.toLocaleString('id-ID')}{selectedTier === 'team' ? ' / orang' : ''})
-                                        </option>
-                                    ));
-                                }
-
-                                // Fallback for personal
-                                if (selectedTier === 'personal') {
-                                    return (
-                                        <>
-                                            <option value="1-month">1 Bulan (Rp 150.000)</option>
-                                            <option value="3-month">3 Bulan (Rp 400.000)</option>
-                                            <option value="lifetime">Lifetime (Rp 1.500.000)</option>
-                                        </>
-                                    );
-                                }
-
-                                return <option value="">Belum ada paket team tersedia</option>;
-                            })()}
-                        </select>
-                        {selectedTier === 'team' && (config?.payment_config?.teamPackages?.length || 0) === 0 && (
-                            <p className="text-[10px] font-bold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-200">
-                                Saat ini belum ada paket khusus tim. Silakan hubungi admin untuk penawaran khusus.
-                            </p>
-                        )}
-                    </div>
-
-                    {selectedTier === 'team' && (
-                        <div className="space-y-3 bg-secondary/5 border-2 border-secondary/20 rounded-2xl p-4 animate-in zoom-in-95 duration-200">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-black text-secondary uppercase tracking-widest">Jumlah Anggota Tim</label>
-                                <div className="flex items-center bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
-                                    <button
-                                        onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
-                                        className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-r-2 border-slate-900"
-                                    >-</button>
-                                    <input
-                                        type="number"
-                                        value={teamSize}
-                                        onChange={(e) => setTeamSize(Math.max(2, parseInt(e.target.value) || 2))}
-                                        className="w-12 h-10 text-center font-black text-slate-800 focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={() => setTeamSize(teamSize + 1)}
-                                        className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-l-2 border-slate-900"
-                                    >+</button>
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center pt-2 border-t border-secondary/20">
-                                <span className="text-[10px] font-black text-slate-400 uppercase">Estimasi Total</span>
-                                <span className="font-black text-secondary">
-                                    {(() => {
-                                        const pkg = config?.payment_config?.teamPackages?.find(p => p.id === selectedPackageId);
-                                        const rate = pkg ? pkg.price : (config?.payment_config?.teamPricePerPerson || 0);
-                                        return `Rp ${(rate * teamSize).toLocaleString('id-ID')} `;
-                                    })()}
+                            <div className="hidden md:flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                    {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                </span>
+                                <span className="text-sm font-black text-slate-900 font-heading tracking-tight leading-none">
+                                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                                 </span>
                             </div>
                         </div>
-                    )}
 
-                    <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-5 space-y-3">
-                        <div>
-                            <h4 className="font-black text-sm text-slate-800">Instruksi Pembayaran</h4>
-                            <p className="text-xs font-bold text-slate-500">Kirim pembayaran sesuai paket The Content Flow Anda.</p>
-                        </div>
-                        <div className="bg-white border-2 border-slate-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{config?.payment_config?.bankName || 'Bank BCA'}</p>
-                            <p className="text-2xl font-black text-slate-800 font-mono tracking-wider mt-1 mb-1">{config?.payment_config?.accountNumber || '291 102 3456'}</p>
-                            <p className="text-xs font-bold text-slate-500">A.N. {config?.payment_config?.accountName || 'PT Arunika Media Integra'}</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Bukti Transfer (Screenshot/Foto)</label>
-                        <div className="relative group cursor-pointer border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white transition-colors overflow-hidden">
-                            {paymentProof ? (
-                                <img src={paymentProof} alt="Bukti" className="w-full h-40 object-cover" />
-                            ) : (
-                                <div className="p-6 text-center">
-                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-200 mb-3"><Upload className="text-slate-400" size={20} /></div>
-                                    <p className="text-xs font-bold text-slate-500">Pilih file gambar atau foto.</p>
+                        <div className="flex items-center gap-3 md:gap-6">
+                            <div className="flex items-center gap-3 md:gap-4 py-1 relative">
+                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
+                                    <Wifi size={14} className={networkStatus === 'unstable' ? 'animate-pulse' : ''} />
+                                    <span className="hidden sm:inline">{getNetworkLabel()}</span>
                                 </div>
-                            )}
-                            <input type="file" accept="image/*" onChange={handlePaymentProofUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                        </div>
-                    </div>
-
-                    <Button
-                        onClick={submitPaymentConfirmation}
-                        className="w-full h-14 bg-accent mt-6 shadow-hard-mini"
-                        icon={<CheckCircle size={18} />}
-                        disabled={!paymentProof}
-                    >
-                        Konfirmasi Pembayaran
-                    </Button>
-                </div>
-            </Modal>
-
-            <Modal isOpen={showRenewalSuccessModal} onClose={() => setShowRenewalSuccessModal(false)} title="Pembayaran Berhasil">
-                <div className="p-8 text-center space-y-4">
-                    <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-emerald-200">
-                        <CheckCircle size={40} />
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-900">Selamat!</h2>
-                    <p className="text-slate-500 font-bold leading-relaxed">
-                        Subscription Anda sudah diperpanjang. Terima kasih telah melakukan pembayaran dan tetap berlangganan layanan kami.
-                    </p>
-                    <Button onClick={() => setShowRenewalSuccessModal(false)} className="w-full bg-slate-900 mt-4">
-                        Tutup
-                    </Button>
-                </div>
-            </Modal>
-
-            <Modal
-                isOpen={showBroadcastModal}
-                onClose={() => {
-                    if (activeBroadcast) {
-                        localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
-                    }
-                    setShowBroadcastModal(false);
-                }}
-                title={activeBroadcast?.type || 'Pengumuman'}
-            >
-                <div className="p-6 space-y-4 text-center">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-2 border-4 border-slate-900 shadow-hard-mini ${activeBroadcast?.type === 'Promo' ? 'bg-amber-400' : activeBroadcast?.type === 'Maintenance' ? 'bg-red-400' : 'bg-accent'
-                        } `}>
-                        <Bell className="text-white" size={32} />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-black text-slate-900 font-heading leading-tight uppercase italic">{activeBroadcast?.title}</h3>
-                        <p className="text-slate-500 font-bold mt-2 leading-relaxed">
-                            {activeBroadcast?.message}
-                        </p>
-                    </div>
-                    <Button
-                        onClick={() => {
-                            if (activeBroadcast) {
-                                localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
-                            }
-                            setShowBroadcastModal(false);
-                        }}
-                        className="w-full h-12 mt-4"
-                    >
-                        MENGERTI
-                    </Button>
-                </div>
-            </Modal>
-
-            {/* Status Modal */}
-            <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} title={statusModal.title || (statusModal.type === 'success' ? 'Sukses' : statusModal.type === 'error' ? 'Gagal' : 'Konfirmasi')}>
-                <div className="p-8 text-center space-y-4">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'} `}>
-                        {statusModal.type === 'success' ? <CheckCircle size={32} /> : statusModal.type === 'error' ? <XCircle size={32} /> : <AlertTriangle size={32} />}
-                    </div>
-                    <p className="text-slate-800 font-bold">{statusModal.message}</p>
-                    <div className="flex gap-3 pt-4">
-                        {statusModal.type === 'confirm' ? (
-                            <>
-                                <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} variant="outline" className="flex-1">Batal</Button>
-                                <Button onClick={() => { statusModal.onConfirm?.(); setStatusModal({ ...statusModal, isOpen: false }); }} className="flex-1 bg-slate-900 text-white">Ya, Lanjutkan</Button>
-                            </>
-                        ) : (
-                            <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} className="w-full bg-slate-900 text-white mt-4">Tutup</Button>
-                        )}
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Theme Modal */}
-            {
-                showThemeModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <div className="bg-card border-4 border-slate-900 rounded-3xl p-6 w-[700px] shadow-[8px_8px_0px_0px_#0f172a] relative animate-in zoom-in-95 duration-200">
-                            <button onClick={() => setShowThemeModal(false)} className="absolute top-4 right-4 hover:bg-slate-500/10 p-2 rounded-xl transition-colors">
-                                <X size={20} />
-                            </button>
-                            <h2 className="font-black text-2xl mb-6 flex items-center gap-2 text-foreground">
-                                <Palette className="text-accent" /> UI Theme Configuration
-                            </h2>
-                            <div className="grid grid-cols-3 gap-4">
-                                {[
-                                    { id: 'light', name: 'Light (Default)', colors: ['#f8fafc', '#ffffff', '#0f172a'] },
-                                    { id: 'dark', name: 'Dark Mode', colors: ['#0f172a', '#1e293b', '#f8fafc'] },
-                                    { id: 'midnight', name: 'Midnight', colors: ['#0c1130', '#1e1b4b', '#e0e7ff'] },
-                                    { id: 'pastel', name: 'Pastel Pink', colors: ['#fff1f2', '#ffe4e6', '#881337'] },
-                                    { id: 'pastel-green', name: 'Pastel Green', colors: ['#f0fdf4', '#dcfce7', '#14532d'] },
-                                    { id: 'pastel-yellow', name: 'Pastel Yellow', colors: ['#fefce8', '#fef9c3', '#713f12'] }
-                                ].map(theme => (
-                                    <button
-                                        key={theme.id}
-                                        onClick={() => {
-                                            setCurrentTheme(theme.id);
-                                            localStorage.setItem('app_ui_theme', theme.id);
-                                        }}
-                                        className={`p-4 rounded-xl border-4 text-left transition-all hover:-translate-y-1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'}`}
-                                    >
-                                        <div className="flex gap-2 mb-3">
-                                            {theme.colors.map((c, i) => (
-                                                <div key={i} className="w-5 h-5 rounded-full border-2 border-slate-800" style={{ backgroundColor: c }} />
-                                            ))}
-                                        </div>
-                                        <span className="font-bold text-xs block text-slate-800">{theme.name}</span>
+                                <div className="flex items-center gap-1 relative" ref={notificationRef}>
+                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
+                                        <Bell size={18} />
+                                        {unreadCount > 0 && <span className="absolute top-1.5 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                                     </button>
-                                ))}
-
-                                <div className={`p-4 rounded-xl border-4 text-left transition-all ${currentTheme === 'custom' ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 bg-slate-50'} `}>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="w-8 h-8 rounded-full border-2 border-slate-800 flex items-center justify-center overflow-hidden cursor-pointer relative" style={{ backgroundColor: customColor }}>
-                                            <input
-                                                type="color"
-                                                value={customColor}
-                                                onChange={(e) => {
-                                                    setCustomColor(e.target.value);
-                                                    localStorage.setItem('app_custom_color', e.target.value);
-                                                    setCurrentTheme('custom');
-                                                    localStorage.setItem('app_ui_theme', 'custom');
-                                                }}
-                                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0"
-                                            />
+                                    {isNotificationOpen && (
+                                        <div className="absolute top-full right-0 mt-3 w-[400px] bg-card border-2 border-border shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="px-6 py-4 border-b-2 border-border flex items-center justify-between bg-muted/50">
+                                                <div className="flex items-center gap-2"><Bell size={16} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-lg">Notifikasi</span></div>
+                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-3 py-1.5 rounded-lg">Tandai Semua Dibaca</button>}
+                                            </div>
+                                            <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
+                                                {notifications.length === 0 ? (
+                                                    <div className="py-12 flex flex-col items-center justify-center text-slate-400"><Bell size={40} className="opacity-10 mb-3" /><p className="font-bold text-sm">Tidak ada notifikasi</p></div>
+                                                ) : (
+                                                    <div className="divide-y divide-border">
+                                                        {notifications.map((notif) => (
+                                                            <div key={notif.id} className={`p-4 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                                {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
+                                                                <div className="shrink-0">
+                                                                    {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover" /> : <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={18} /></div>}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                                                                    <p className="text-xs font-bold text-slate-600 leading-snug">
+                                                                        {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
+                                                                            <span className="text-slate-900">{notif.actor.full_name} </span>
+                                                                        )}
+                                                                        {notif.content}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        {currentTheme !== 'custom' && (
-                                            <button
-                                                onClick={() => {
-                                                    setCurrentTheme('custom');
-                                                    localStorage.setItem('app_ui_theme', 'custom');
-                                                }}
-                                                className="text-[10px] font-black underline text-slate-500 hover:text-slate-900"
-                                            >
-                                                Pilih
-                                            </button>
-                                        )}
-                                    </div>
-                                    <span className="font-bold text-xs block text-slate-800">Warna Kustom</span>
+                                    )}
+                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-accent hover:bg-slate-500/10 rounded-full transition-all"><Settings size={18} /></button>
+                            </div>
+
+                            <div className="h-6 w-[2px] bg-slate-100"></div>
+                            <div className="flex items-center gap-3 pl-1 cursor-pointer group" onClick={() => navigate('/profile')}>
+                                <div className="text-right hidden md:block">
+                                    <p className="font-bold text-xs text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
+                                    <p className="text-[10px] text-slate-500 font-medium">{userProfile.jobTitle || userProfile.role}</p>
+                                </div>
+                                <div className="relative">
+                                    <img src={userProfile.avatar} alt="User" className="w-9 h-9 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
+                                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
                                 </div>
                             </div>
                         </div>
+                    </header>
+
+                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-0 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-4 md:px-6 md:py-8 md:pb-8 pb-20'}`}>
+                        <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
+                            {children}
+                        </div>
+                    </main>
+                </div>
+
+                {/* --- MODALS --- */}
+                <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="Pengaturan Aplikasi">
+                    <div className="space-y-4">
+                        <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'profile' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
+                            <button onClick={() => toggleTab('profile')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'profile' ? 'bg-accent text-white' : 'text-foreground'} `}>
+                                <div className="flex items-center gap-3"><User size={20} className={activeTab === 'profile' ? 'text-white' : 'text-accent'} /> Informasi Pengguna</div>
+                                {activeTab === 'profile' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            {activeTab === 'profile' && (
+                                <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
+                                    <form onSubmit={handleSaveProfile} className="space-y-5">
+                                        <div className="flex items-center gap-6">
+                                            <div className="relative group cursor-pointer w-20 h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-muted shadow-sm">
+                                                <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={20} /></div>
+                                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'user')} />
+                                            </div>
+                                            <div className="flex-1"><h4 className="font-bold text-lg text-foreground">Foto Profil</h4><p className="text-sm text-mutedForeground">Klik avatar untuk mengganti.</p></div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input label="Nama Lengkap" value={userProfile.name} onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })} />
+                                            <Input label="Jabatan" value={userProfile.jobTitle} onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })} />
+                                        </div>
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <label className="font-bold text-xs text-mutedForeground ml-1">Role Aplikasi</label>
+                                            <select className="w-full bg-card border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all focus:border-accent" value={userProfile.role} onChange={(e) => setUserProfile({ ...userProfile, role: e.target.value })} disabled={!isAdmin && userProfile.role !== 'Developer'}>
+                                                <option value="Member">Member</option><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Developer">Developer</option>
+                                            </select>
+                                        </div>
+                                        <div className="pt-2 flex justify-end"><Button type="submit" className="bg-accent" icon={<CheckCircle size={16} />}>Simpan Profil</Button></div>
+                                    </form>
+                                </div>
+                            )}
+                        </div>
+
+                        {isDeveloper && (
+                            <>
+                                <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'branding' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
+                                    <button onClick={() => toggleTab('branding')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'branding' ? 'bg-secondary text-white' : 'text-foreground'} `}>
+                                        <div className="flex items-center gap-3"><Palette size={20} className={activeTab === 'branding' ? 'text-white' : 'text-secondary'} /> Tampilan Aplikasi (Admin)</div>
+                                        {activeTab === 'branding' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </button>
+                                    {activeTab === 'branding' && (
+                                        <div className="p-6 bg-card animate-in slide-in-from-top-2 duration-300">
+                                            <form onSubmit={handleSaveBranding} className="space-y-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="flex flex-col gap-2">
+                                                        <label className="font-bold text-sm text-mutedForeground">Logo Sidebar (Standard)</label>
+                                                        <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/5 hover:bg-card transition-colors relative cursor-pointer group">
+                                                            <div className="w-14 h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}</div>
+                                                            <div><p className="font-bold text-foreground text-sm">Upload PNG</p></div>
+                                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center gap-4 p-4 border-2 border-dashed border-slate-300 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-colors relative cursor-pointer group">
+                                                            <div className="w-14 h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers className="text-slate-600" size={24} />}</div>
+                                                            <div><p className="font-bold text-foreground text-sm">Upload PNG Putih</p></div>
+                                                            <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app_light')} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Input label="Nama Aplikasi" value={branding.appName} onChange={(e) => setBranding({ ...branding, appName: e.target.value })} />
+                                                <div className="pt-2 flex justify-end"><Button type="submit" className="bg-secondary" icon={<CheckCircle size={16} />}>Simpan Global</Button></div>
+                                            </form>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
-                )
-            }
+                </Modal>
 
-            <FirstLoginModal
-                isOpen={showFirstLoginModal}
-                onComplete={() => {
-                    setShowFirstLoginModal(false);
-                    fetchUserProfile();
-                    // Optional: show a success toast or alert
-                    setStatusModal({
-                        isOpen: true,
-                        type: 'success',
-                        message: 'Profil Anda telah berhasil diperbarui. Selamat menggunakan Aruneeka!'
-                    });
-                }}
-            />
+                <Modal isOpen={showRoleChangeModal} onClose={() => { }} title="Pemberitahuan Sistem">
+                    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                        <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mb-2"><Shield className="w-8 h-8" /></div>
+                        <h3 className="text-xl font-bold text-slate-800">Perubahan Akses</h3>
+                        <p className="text-slate-500 text-sm">Role Anda telah berubah. Silakan login ulang.</p>
+                        <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-slate-800 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard">Login Ulang</button>
+                    </div>
+                </Modal>
 
-            <EmailSetupModal
-                isOpen={showEmailSetupModal}
-                currentEmail={userEmail}
-                userId={localStorage.getItem('user_id') || ''}
-                onComplete={() => {
-                    setShowEmailSetupModal(false);
-                    setStatusModal({
-                        isOpen: true,
-                        type: 'success',
-                        message: 'Email berhasil diperbarui! Login berikutnya bisa menggunakan email baru Anda.'
-                    });
-                }}
-                onSkip={() => setShowEmailSetupModal(false)}
-            />
-        </div >
+                <Modal isOpen={showSubExpiredModal} onClose={() => { }} title="Akses Ditangguhkan">
+                    <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+                        <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2"><Power className="w-8 h-8" /></div>
+                        <h3 className="text-xl font-bold text-slate-800">Akses Terhenti</h3>
+                        <p className="text-slate-500 text-sm">Masa aktif subscription habis.</p>
+                        <button onClick={() => { clearSessionPreserveTheme(); navigate('/login'); }} className="w-full px-6 py-3 bg-red-500 text-white font-bold rounded-xl border-2 border-red-700 shadow-hard">Keluar</button>
+                    </div>
+                </Modal>
+
+                <Modal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} title="Perpanjang Masa Langganan">
+                    <div className="p-4 space-y-5">
+                        <p className="text-sm text-slate-600 font-bold">Harap lengkapi detail perpanjangan di bawah ini.</p>
+
+                        <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-200">
+                            <button
+                                onClick={() => setSelectedTier('personal')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'personal' ? 'bg-white text-accent border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'} `}
+                            >
+                                <User size={16} /> Personal
+                            </button>
+                            <button
+                                onClick={() => setSelectedTier('team')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${selectedTier === 'team' ? 'bg-white text-secondary border-2 border-slate-900 shadow-hard-mini' : 'text-slate-500'} `}
+                            >
+                                <Users size={16} /> Team
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Pilih Paket {selectedTier === 'personal' ? 'Personal' : 'Team'}</label>
+                            <select
+                                className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 font-bold text-slate-800 outline-none focus:border-accent transition-colors"
+                                value={selectedPackageId}
+                                onChange={(e) => setSelectedPackageId(e.target.value)}
+                            >
+                                {(() => {
+                                    const pkgs = selectedTier === 'personal'
+                                        ? (config?.payment_config?.personalPackages?.length ? config.payment_config.personalPackages : (config?.payment_config?.packages || []))
+                                        : (config?.payment_config?.teamPackages || []);
+
+                                    if (pkgs.length > 0) {
+                                        return pkgs.map(pkg => (
+                                            <option key={pkg.id} value={pkg.id}>
+                                                {pkg.name} (Rp {pkg.price.toLocaleString('id-ID')}{selectedTier === 'team' ? ' / orang' : ''})
+                                            </option>
+                                        ));
+                                    }
+
+                                    // Fallback for personal
+                                    if (selectedTier === 'personal') {
+                                        return (
+                                            <>
+                                                <option value="1-month">1 Bulan (Rp 150.000)</option>
+                                                <option value="3-month">3 Bulan (Rp 400.000)</option>
+                                                <option value="lifetime">Lifetime (Rp 1.500.000)</option>
+                                            </>
+                                        );
+                                    }
+
+                                    return <option value="">Belum ada paket team tersedia</option>;
+                                })()}
+                            </select>
+                            {selectedTier === 'team' && (config?.payment_config?.teamPackages?.length || 0) === 0 && (
+                                <p className="text-[10px] font-bold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                                    Saat ini belum ada paket khusus tim. Silakan hubungi admin untuk penawaran khusus.
+                                </p>
+                            )}
+                        </div>
+
+                        {selectedTier === 'team' && (
+                            <div className="space-y-3 bg-secondary/5 border-2 border-secondary/20 rounded-2xl p-4 animate-in zoom-in-95 duration-200">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-black text-secondary uppercase tracking-widest">Jumlah Anggota Tim</label>
+                                    <div className="flex items-center bg-white border-2 border-slate-900 rounded-xl overflow-hidden shadow-hard-mini">
+                                        <button
+                                            onClick={() => setTeamSize(Math.max(2, teamSize - 1))}
+                                            className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-r-2 border-slate-900"
+                                        >-</button>
+                                        <input
+                                            type="number"
+                                            value={teamSize}
+                                            onChange={(e) => setTeamSize(Math.max(2, parseInt(e.target.value) || 2))}
+                                            className="w-12 h-10 text-center font-black text-slate-800 focus:outline-none"
+                                        />
+                                        <button
+                                            onClick={() => setTeamSize(teamSize + 1)}
+                                            className="w-10 h-10 flex items-center justify-center font-black text-slate-800 hover:bg-slate-100 border-l-2 border-slate-900"
+                                        >+</button>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t border-secondary/20">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase">Estimasi Total</span>
+                                    <span className="font-black text-secondary">
+                                        {(() => {
+                                            const pkg = config?.payment_config?.teamPackages?.find(p => p.id === selectedPackageId);
+                                            const rate = pkg ? pkg.price : (config?.payment_config?.teamPricePerPerson || 0);
+                                            return `Rp ${(rate * teamSize).toLocaleString('id-ID')} `;
+                                        })()}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-5 space-y-3">
+                            <div>
+                                <h4 className="font-black text-sm text-slate-800">Instruksi Pembayaran</h4>
+                                <p className="text-xs font-bold text-slate-500">Kirim pembayaran sesuai paket The Content Flow Anda.</p>
+                            </div>
+                            <div className="bg-white border-2 border-slate-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{config?.payment_config?.bankName || 'Bank BCA'}</p>
+                                <p className="text-2xl font-black text-slate-800 font-mono tracking-wider mt-1 mb-1">{config?.payment_config?.accountNumber || '291 102 3456'}</p>
+                                <p className="text-xs font-bold text-slate-500">A.N. {config?.payment_config?.accountName || 'PT Arunika Media Integra'}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Bukti Transfer (Screenshot/Foto)</label>
+                            <div className="relative group cursor-pointer border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-white transition-colors overflow-hidden">
+                                {paymentProof ? (
+                                    <img src={paymentProof} alt="Bukti" className="w-full h-40 object-cover" />
+                                ) : (
+                                    <div className="p-6 text-center">
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-slate-200 mb-3"><Upload className="text-slate-400" size={20} /></div>
+                                        <p className="text-xs font-bold text-slate-500">Pilih file gambar atau foto.</p>
+                                    </div>
+                                )}
+                                <input type="file" accept="image/*" onChange={handlePaymentProofUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={submitPaymentConfirmation}
+                            className="w-full h-14 bg-accent mt-6 shadow-hard-mini"
+                            icon={<CheckCircle size={18} />}
+                            disabled={!paymentProof}
+                        >
+                            Konfirmasi Pembayaran
+                        </Button>
+                    </div>
+                </Modal>
+
+                <Modal isOpen={showRenewalSuccessModal} onClose={() => setShowRenewalSuccessModal(false)} title="Pembayaran Berhasil">
+                    <div className="p-8 text-center space-y-4">
+                        <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-emerald-200">
+                            <CheckCircle size={40} />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900">Selamat!</h2>
+                        <p className="text-slate-500 font-bold leading-relaxed">
+                            Subscription Anda sudah diperpanjang. Terima kasih telah melakukan pembayaran dan tetap berlangganan layanan kami.
+                        </p>
+                        <Button onClick={() => setShowRenewalSuccessModal(false)} className="w-full bg-slate-900 mt-4">
+                            Tutup
+                        </Button>
+                    </div>
+                </Modal>
+
+                <Modal
+                    isOpen={showBroadcastModal}
+                    onClose={() => {
+                        if (activeBroadcast) {
+                            localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
+                        }
+                        setShowBroadcastModal(false);
+                    }}
+                    title={activeBroadcast?.type || 'Pengumuman'}
+                >
+                    <div className="p-6 space-y-4 text-center">
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-2 border-4 border-slate-900 shadow-hard-mini ${activeBroadcast?.type === 'Promo' ? 'bg-amber-400' : activeBroadcast?.type === 'Maintenance' ? 'bg-red-400' : 'bg-accent'
+                            } `}>
+                            <Bell className="text-white" size={32} />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-slate-900 font-heading leading-tight uppercase italic">{activeBroadcast?.title}</h3>
+                            <p className="text-slate-500 font-bold mt-2 leading-relaxed">
+                                {activeBroadcast?.message}
+                            </p>
+                        </div>
+                        <Button
+                            onClick={() => {
+                                if (activeBroadcast) {
+                                    localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
+                                }
+                                setShowBroadcastModal(false);
+                            }}
+                            className="w-full h-12 mt-4"
+                        >
+                            MENGERTI
+                        </Button>
+                    </div>
+                </Modal>
+
+                {/* Status Modal */}
+                <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} title={statusModal.title || (statusModal.type === 'success' ? 'Sukses' : statusModal.type === 'error' ? 'Gagal' : 'Konfirmasi')}>
+                    <div className="p-8 text-center space-y-4">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'} `}>
+                            {statusModal.type === 'success' ? <CheckCircle size={32} /> : statusModal.type === 'error' ? <XCircle size={32} /> : <AlertTriangle size={32} />}
+                        </div>
+                        <p className="text-slate-800 font-bold">{statusModal.message}</p>
+                        <div className="flex gap-3 pt-4">
+                            {statusModal.type === 'confirm' ? (
+                                <>
+                                    <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} variant="outline" className="flex-1">Batal</Button>
+                                    <Button onClick={() => { statusModal.onConfirm?.(); setStatusModal({ ...statusModal, isOpen: false }); }} className="flex-1 bg-slate-900 text-white">Ya, Lanjutkan</Button>
+                                </>
+                            ) : (
+                                <Button onClick={() => setStatusModal({ ...statusModal, isOpen: false })} className="w-full bg-slate-900 text-white mt-4">Tutup</Button>
+                            )}
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Theme Modal */}
+                {
+                    showThemeModal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                            <div className="bg-card border-4 border-slate-900 rounded-3xl p-6 w-[700px] shadow-[8px_8px_0px_0px_#0f172a] relative animate-in zoom-in-95 duration-200">
+                                <button onClick={() => setShowThemeModal(false)} className="absolute top-4 right-4 hover:bg-slate-500/10 p-2 rounded-xl transition-colors">
+                                    <X size={20} />
+                                </button>
+                                <h2 className="font-black text-2xl mb-6 flex items-center gap-2 text-foreground">
+                                    <Palette className="text-accent" /> UI Theme Configuration
+                                </h2>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {[
+                                        { id: 'light', name: 'Light (Default)', colors: ['#f8fafc', '#ffffff', '#0f172a'] },
+                                        { id: 'dark', name: 'Dark Mode', colors: ['#0f172a', '#1e293b', '#f8fafc'] },
+                                        { id: 'midnight', name: 'Midnight', colors: ['#0c1130', '#1e1b4b', '#e0e7ff'] },
+                                        { id: 'pastel', name: 'Pastel Pink', colors: ['#fff1f2', '#ffe4e6', '#881337'] },
+                                        { id: 'pastel-green', name: 'Pastel Green', colors: ['#f0fdf4', '#dcfce7', '#14532d'] },
+                                        { id: 'pastel-yellow', name: 'Pastel Yellow', colors: ['#fefce8', '#fef9c3', '#713f12'] }
+                                    ].map(theme => (
+                                        <button
+                                            key={theme.id}
+                                            onClick={() => {
+                                                setCurrentTheme(theme.id);
+                                                localStorage.setItem('app_ui_theme', theme.id);
+                                            }}
+                                            className={`p-4 rounded-xl border-4 text-left transition-all hover:-translate-y-1 ${currentTheme === theme.id ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 hover:border-slate-900 bg-slate-50'}`}
+                                        >
+                                            <div className="flex gap-2 mb-3">
+                                                {theme.colors.map((c, i) => (
+                                                    <div key={i} className="w-5 h-5 rounded-full border-2 border-slate-800" style={{ backgroundColor: c }} />
+                                                ))}
+                                            </div>
+                                            <span className="font-bold text-xs block text-slate-800">{theme.name}</span>
+                                        </button>
+                                    ))}
+
+                                    <div className={`p-4 rounded-xl border-4 text-left transition-all ${currentTheme === 'custom' ? 'border-accent shadow-hard-mini shadow-accent' : 'border-slate-100 bg-slate-50'} `}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="w-8 h-8 rounded-full border-2 border-slate-800 flex items-center justify-center overflow-hidden cursor-pointer relative" style={{ backgroundColor: customColor }}>
+                                                <input
+                                                    type="color"
+                                                    value={customColor}
+                                                    onChange={(e) => {
+                                                        setCustomColor(e.target.value);
+                                                        localStorage.setItem('app_custom_color', e.target.value);
+                                                        setCurrentTheme('custom');
+                                                        localStorage.setItem('app_ui_theme', 'custom');
+                                                    }}
+                                                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0"
+                                                />
+                                            </div>
+                                            {currentTheme !== 'custom' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setCurrentTheme('custom');
+                                                        localStorage.setItem('app_ui_theme', 'custom');
+                                                    }}
+                                                    className="text-[10px] font-black underline text-slate-500 hover:text-slate-900"
+                                                >
+                                                    Pilih
+                                                </button>
+                                            )}
+                                        </div>
+                                        <span className="font-bold text-xs block text-slate-800">Warna Kustom</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
+                <FirstLoginModal
+                    isOpen={showFirstLoginModal}
+                    onComplete={() => {
+                        setShowFirstLoginModal(false);
+                        fetchUserProfile();
+                        // Optional: show a success toast or alert
+                        setStatusModal({
+                            isOpen: true,
+                            type: 'success',
+                            message: 'Profil Anda telah berhasil diperbarui. Selamat menggunakan Aruneeka!'
+                        });
+                    }}
+                />
+
+                <EmailSetupModal
+                    isOpen={showEmailSetupModal}
+                    currentEmail={userEmail}
+                    userId={localStorage.getItem('user_id') || ''}
+                    onComplete={() => {
+                        setShowEmailSetupModal(false);
+                        setStatusModal({
+                            isOpen: true,
+                            type: 'success',
+                            message: 'Email berhasil diperbarui! Login berikutnya bisa menggunakan email baru Anda.'
+                        });
+                    }}
+                    onSkip={() => setShowEmailSetupModal(false)}
+                />
+            </div >
+
+            {/* Mobile Nav & Menu (Only visible on small screens) */}
+            {
+                !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
+                    <>
+                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-2 pb-safe pt-2 h-[72px]">
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${location.pathname === '/' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <LayoutDashboard size={20} className={location.pathname === '/' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Dasbor</span>
+                            </button>
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <Layers size={20} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Plan</span>
+                            </button>
+                            <div className="relative -top-6">
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className="flex items-center justify-center w-14 h-14 bg-accent text-white rounded-full shadow-[0_8px_16px_rgba(var(--accent),0.4)] border-4 border-background transition-transform active:scale-95">
+                                    <CalendarDays size={22} className="fill-white/20" />
+                                </button>
+                            </div>
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1 relative transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <CheckCircle size={20} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
+                                <span className="text-[9px] font-bold">Approve</span>
+                            </button>
+                            <button onClick={() => setShowMobileMenu(!showMobileMenu)} className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${showMobileMenu ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <Menu size={20} />
+                                <span className="text-[9px] font-bold">Menu</span>
+                            </button>
+                        </nav>
+
+                        {/* Mobile Full Screen Menu Drawer */}
+                        {showMobileMenu && (
+                            <div className="md:hidden fixed inset-0 z-[45] bg-background flex flex-col pt-20 pb-[72px] animate-in fade-in slide-in-from-bottom duration-300">
+                                <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
+                                    <div className="flex items-center gap-4 mb-8">
+                                        <img src={userProfile.avatar} alt="User" className="w-14 h-14 rounded-full border-2 border-slate-200 object-cover" />
+                                        <div>
+                                            <h3 className="font-heading font-black text-xl text-foreground">{userProfile.name}</h3>
+                                            <p className="text-sm text-mutedForeground">{userProfile.jobTitle || userProfile.role}</p>
+                                        </div>
+                                    </div>
+
+                                    {Object.entries(NAV_ITEMS).map(([section, items]) => {
+                                        const filteredItems = items.filter(item => {
+                                            if (item.adminOnly && !isAdmin) return false;
+                                            if (item.developerOnly && !isDeveloper) return false;
+                                            if (isDeveloper) return true;
+                                            if (item.id === 'team') {
+                                                const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
+                                                if (!isSelfRegisteredAdmin) return false;
+                                                return true;
+                                            }
+                                            const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+                                            const isHidden = config?.hidden_pages?.includes(item.id);
+                                            if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
+                                            else { if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false; }
+                                            return true;
+                                        });
+
+                                        if (filteredItems.length === 0) return null;
+                                        return (
+                                            <div key={section} className="mb-8 font-heading animate-in slide-in-from-left delay-100 fill-mode-both">
+                                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{section}</h3>
+                                                <div className="space-y-2 flex flex-col w-full">
+                                                    {filteredItems.map((item) => {
+                                                        const isActive = location.pathname === item.path;
+                                                        return (
+                                                            <button
+                                                                key={item.path}
+                                                                onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
+                                                                className={`flex items-center w-full px-4 py-3.5 rounded-xl transition-all font-bold ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-600 hover:bg-slate-500/10'}`}
+                                                            >
+                                                                <item.icon size={20} className="shrink-0 mr-4" />
+                                                                <span className="text-base tracking-tight">{item.label}</span>
+                                                                {item.badge && <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-black bg-red-500 text-white">{item.badge}</span>}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    <div className="pt-4 border-t-2 border-border mb-10">
+                                        <button onClick={() => { setShowMobileMenu(false); setShowThemeModal(true); }} className="flex items-center w-full px-4 py-3.5 rounded-xl text-slate-600 font-bold hover:bg-slate-500/10 transition-all">
+                                            <Palette size={20} className="shrink-0 mr-4" /> UI Theme
+                                        </button>
+                                        <button onClick={() => { setShowMobileMenu(false); handleLogout(); }} className="flex items-center w-full px-4 py-3.5 rounded-xl text-red-500 font-bold hover:bg-red-500/10 transition-all mt-2">
+                                            <LogOut size={20} className="shrink-0 mr-4" /> Sign Out
+                                        </button>
+                                        <p className="text-[10px] text-slate-400 font-bold px-4 mt-6 opacity-70 italic text-center">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+        </>
     );
 };

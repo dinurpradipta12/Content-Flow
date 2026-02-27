@@ -162,15 +162,16 @@ export const CalendarPage: React.FC = () => {
         }
     };
 
-    const getPlatformCardStyle = (platform: string) => {
+    const getPlatformCardStyle = (platform: string): string => {
+        // Use data attribute for calendar-specific styling that won't conflict with theme-dark globals
         switch (platform) {
-            case 'Instagram': return 'bg-pink-50 border-pink-200 text-pink-700 hover:border-pink-400 dark:bg-pink-900/20 dark:border-pink-800 dark:text-pink-300';
-            case 'TikTok': return 'bg-slate-900 border-slate-800 text-white hover:border-slate-600 shadow-hard-mini dark:bg-slate-800 dark:border-slate-700';
-            case 'LinkedIn': return 'bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300';
-            case 'YouTube': return 'bg-red-50 border-red-200 text-red-700 hover:border-red-400 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
-            case 'Facebook': return 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:border-indigo-400 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-300';
-            case 'Threads': return 'bg-slate-50 border-slate-300 text-slate-800 hover:border-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
-            default: return 'bg-white border-slate-200 text-slate-700 hover:border-accent dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300';
+            case 'Instagram': return 'cal-card cal-instagram';
+            case 'TikTok': return 'cal-card cal-tiktok';
+            case 'LinkedIn': return 'cal-card cal-linkedin';
+            case 'YouTube': return 'cal-card cal-youtube';
+            case 'Facebook': return 'cal-card cal-facebook';
+            case 'Threads': return 'cal-card cal-threads';
+            default: return 'cal-card cal-default';
         }
     };
 
