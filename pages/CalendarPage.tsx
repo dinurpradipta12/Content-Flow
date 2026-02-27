@@ -212,34 +212,34 @@ export const CalendarPage: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] gap-3 sm:gap-4 md:gap-6 overflow-hidden">
-            {/* Sidebar Filters */}
-            <aside className="w-full md:w-60 lg:w-72 flex flex-col gap-3 sm:gap-4 md:gap-6 shrink-0 overflow-y-auto pr-1 md:pr-2 pb-4 sm:pb-6 scrollbar-hide border-b md:border-b-0 md:border-r border-border max-h-48 md:max-h-none">
-                <div className="bg-card border-2 border-border p-3 sm:p-4 md:p-5 rounded-lg sm:rounded-2xl shadow-sm">
-                    <h3 className="font-black text-slate-800 mb-2 sm:mb-3 md:mb-4 flex items-center gap-2 text-xs sm:text-sm md:text-base">
-                        <Filter size={14} className="sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px] text-secondary" />
+        <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] gap-2 sm:gap-3 md:gap-6 overflow-hidden">
+            {/* Sidebar Filters - Collapsible on Mobile */}
+            <aside className="w-full md:w-60 lg:w-72 flex flex-col gap-2 sm:gap-3 md:gap-6 shrink-0 overflow-y-auto pr-1 md:pr-2 pb-2 sm:pb-3 md:pb-6 scrollbar-hide border-b md:border-b-0 md:border-r border-border max-h-36 md:max-h-none">
+                <div className="bg-card border-2 border-border p-2 sm:p-3 md:p-5 rounded-lg sm:rounded-2xl shadow-sm">
+                    <h3 className="font-black text-slate-800 mb-1.5 sm:mb-2 md:mb-4 flex items-center gap-2 text-[10px] sm:text-xs md:text-base">
+                        <Filter size={12} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] text-secondary" />
                         Filters
                     </h3>
 
-                    <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                    <div className="space-y-2 sm:space-y-3 md:space-y-6">
                         {/* Workspaces */}
                         <div>
-                            <label className="text-[7px] sm:text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2 sm:mb-3">Workspaces</label>
-                            <div className="space-y-1.5 sm:space-y-2">
+                            <label className="text-[6px] sm:text-[7px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1 sm:mb-2">Workspaces</label>
+                            <div className="space-y-1 sm:space-y-1.5 max-h-20 md:max-h-none overflow-y-auto md:overflow-y-visible">
                                 {workspaces.map(ws => (
                                     <button
                                         key={ws.id}
                                         onClick={() => toggleWorkspace(ws.id)}
-                                        className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl border-2 transition-all font-bold text-[10px] sm:text-xs md:text-sm ${selectedWorkspaces.includes(ws.id)
+                                        className={`w-full flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-1 sm:py-2.5 rounded-lg sm:rounded-xl border-2 transition-all font-bold text-[8px] sm:text-xs md:text-sm ${selectedWorkspaces.includes(ws.id)
                                             ? 'bg-slate-100/50 border-slate-200 text-slate-900 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white'
                                             : 'bg-transparent border-transparent text-slate-400 opacity-60'
                                             }`}
                                     >
-                                        <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${ws.color === 'violet' ? 'bg-accent' :
+                                        <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0 ${ws.color === 'violet' ? 'bg-accent' :
                                             ws.color === 'pink' ? 'bg-secondary' :
                                                 ws.color === 'yellow' ? 'bg-tertiary' : 'bg-emerald-400'
                                             }`} />
-                                        <span className="truncate">{ws.name}</span>
+                                        <span className="truncate hidden sm:inline">{ws.name}</span>
                                     </button>
                                 ))}
                             </div>
@@ -247,7 +247,7 @@ export const CalendarPage: React.FC = () => {
 
                         {/* Platforms */}
                         <div>
-                            <label className="text-[7px] sm:text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2 sm:mb-3">Platforms</label>
+                            <label className="text-[6px] sm:text-[7px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1 sm:mb-2">Platforms</label>
                             <div className="grid grid-cols-2 gap-2">
                                 {['Instagram', 'TikTok', 'LinkedIn', 'YouTube', 'Facebook', 'Threads'].map(p => (
                                     <button

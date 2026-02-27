@@ -326,7 +326,7 @@ const KanbanColumn: React.FC<{
 
     return (
         <div
-            className="flex-shrink-0 min-w-[280px] sm:min-w-[320px] flex flex-col pb-0"
+            className="flex-shrink-0 min-w-[200px] sm:min-w-[260px] md:min-w-[300px] lg:min-w-[320px] flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -974,8 +974,8 @@ export const ContentPlanDetail: React.FC = () => {
     return (
         <>
             <div className="flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
-                {/* Header Section Updated */}
-                <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 sm:gap-4 lg:gap-6 border-b-2 border-border pb-3 sm:pb-4 lg:pb-6 flex-shrink-0 w-full max-w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-2 sm:py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
+                {/* Mobile Header Section - Collapsible */}
+                <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-end gap-2 sm:gap-3 lg:gap-6 border-b-2 border-border pb-2 sm:pb-3 lg:pb-6 flex-shrink-0 w-full max-w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-2 sm:py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
                     {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
                     <div className="flex flex-col items-start gap-2 sm:gap-3 lg:gap-4 transition-all duration-300 w-full lg:w-auto">
                         <div className={`flex items-center gap-2 sm:gap-3 lg:gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
@@ -1218,7 +1218,7 @@ export const ContentPlanDetail: React.FC = () => {
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
                     <div className="flex-1 w-full overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
-                        <div className="flex gap-3 sm:gap-4 md:gap-6 items-start min-w-min pl-0 sm:pl-2 pr-2 sm:pr-8">
+                        <div className="flex gap-2 sm:gap-3 md:gap-4 lg:gap-6 items-start min-w-min pl-0 sm:pl-2 pr-2 sm:pr-8">
                             {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                                 <KanbanColumn
                                     key={status}

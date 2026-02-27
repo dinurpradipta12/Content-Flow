@@ -25,10 +25,35 @@ export const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const [resendLoading, setResendLoading] = useState(false);
+    const [showResend, setShowResend] = useState(false);
+
+    const handleResendEmail = async () => {
+        if (!username.includes('@')) {
+            setError("Gagal mengirim ulang: Masukkan alamat email lengkap untuk verifikasi.");
+            return;
+        }
+        setResendLoading(true);
+        try {
+            const { error: resendError } = await supabase.auth.resend({
+                type: 'signup',
+                email: username.trim(),
+            });
+            if (resendError) throw resendError;
+            setError("✅ Email konfirmasi telah dikirim ulang. Silakan cek inbox (atau folder spam) Anda.");
+            setShowResend(false);
+        } catch (err: any) {
+            setError(`Gagal mengirim ulang: ${err.message}`);
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setShowResend(false);
 
         const trimmedUsername = username.trim();
         const trimmedPassword = password.trim();
@@ -75,6 +100,12 @@ export const Login: React.FC = () => {
 
             // 3. FALLBACK: Migration logic for old users
             if (authError) {
+                // Specific Check for Email Not Confirmed
+                if (authError.message.toLowerCase().includes('email not confirmed') || authError.message.toLowerCase().includes('confirm your email')) {
+                    setShowResend(true);
+                    throw new Error("⚠️ Email Anda belum dikonfirmasi. Periksa inbox email Anda untuk memverifikasi akun.");
+                }
+
                 if (authError.message === 'Invalid login credentials') {
                     // Try finding legacy user by email OR username
                     let legacyUser = null;
@@ -127,10 +158,16 @@ export const Login: React.FC = () => {
                                         password: trimmedPassword
                                     });
                                     if (retryError) {
+                                        // Specific Check for Email Not Confirmed during migration
+                                        if (retryError.message.toLowerCase().includes('email not confirmed')) {
+                                            setShowResend(true);
+                                            throw new Error("⚠️ Email migrasi Anda belum dikonfirmasi. Silakan cek inbox email Anda.");
+                                        }
+
                                         // If direct signin fails, update app_users email and show success
                                         // This handles case where auth already exists but app_users doesn't have email
                                         try {
-                                            await supabase.from('app_users').update({ 
+                                            await supabase.from('app_users').update({
                                                 email: migrationEmail,
                                                 subscription_package: legacyUser.subscription_package || 'Free'
                                             }).eq('id', legacyUser.id);
@@ -148,7 +185,7 @@ export const Login: React.FC = () => {
 
                             // Update app_users with email and ensure subscription_package is set
                             if (!legacyUser.email || !legacyUser.email.includes('@') || !legacyUser.subscription_package) {
-                                await supabase.from('app_users').update({ 
+                                await supabase.from('app_users').update({
                                     email: migrationEmail,
                                     subscription_package: legacyUser.subscription_package || 'Free'
                                 }).eq('id', legacyUser.id);
@@ -156,7 +193,7 @@ export const Login: React.FC = () => {
 
                             // Update app_users ID to match auth user ID if they differ
                             if (signUpData?.user && signUpData.user.id !== legacyUser.id) {
-                                await supabase.from('app_users').update({ 
+                                await supabase.from('app_users').update({
                                     email: migrationEmail,
                                     subscription_package: legacyUser.subscription_package || 'Free'
                                 }).eq('id', legacyUser.id);
@@ -166,15 +203,11 @@ export const Login: React.FC = () => {
                             setLoading(false);
                             return;
                         } else {
-                            throw new Error("Login gagal: Password tidak cocok.");
+                            throw new Error("username atau Password Salah.");
                         }
                     } else {
-                        throw new Error("Login gagal: Akun tidak ditemukan di sistem baru maupun lama.");
+                        throw new Error("Akun tidak ditemukan. Silakan hubungi admin.");
                     }
-                }
-
-                if (authError.message.toLowerCase().includes('confirm') || authError.message.toLowerCase().includes('verified')) {
-                    throw new Error("Email Anda belum dikonfirmasi. Silakan cek inbox email Anda.");
                 }
 
                 throw new Error(`Login gagal: ${authError.message}`);
@@ -283,9 +316,23 @@ export const Login: React.FC = () => {
                         />
 
                         {error && (
-                            <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg flex items-start gap-2">
-                                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                                <span>{error}</span>
+                            <div className="space-y-3">
+                                <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg flex items-start gap-2">
+                                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                    <span>{error}</span>
+                                </div>
+
+                                {showResend && (
+                                    <button
+                                        type="button"
+                                        onClick={handleResendEmail}
+                                        disabled={resendLoading}
+                                        className="w-full py-2 px-4 bg-white border-2 border-slate-200 hover:border-accent hover:text-accent text-slate-600 text-xs font-black rounded-lg transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {resendLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                                        Kirim Ulang Email Konfirmasi
+                                    </button>
+                                )}
                             </div>
                         )}
 

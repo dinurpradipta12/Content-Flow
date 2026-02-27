@@ -258,47 +258,47 @@ export const CarouselMaker: React.FC = () => {
             )}
 
             {/* Header */}
-            <header className="h-auto md:h-16 py-3 md:py-0 bg-white border-b-4 border-slate-900 flex flex-wrap md:flex-nowrap items-center justify-between px-4 md:px-6 shrink-0 z-20 gap-3">
-                <div className="flex items-center gap-2 md:gap-3 max-w-full md:max-w-[50%] w-full md:w-auto">
-                    <button onClick={() => navigate(-1)} className="md:hidden flex items-center justify-center p-2 bg-slate-100 rounded-xl hover:bg-slate-200 border-2 border-slate-900 shrink-0 shadow-[2px_2px_0px_0px_#0f172a]">
-                        <ArrowLeft size={16} className="text-slate-900" />
+            <header className="h-auto sm:h-14 lg:h-16 py-2 sm:py-0 bg-white border-b-2 sm:border-b-4 border-slate-900 flex flex-wrap sm:flex-nowrap items-center justify-between px-2 sm:px-4 lg:px-6 shrink-0 z-20 gap-2 sm:gap-3">
+                <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 max-w-full sm:max-w-[50%] w-full sm:w-auto">
+                    <button onClick={() => navigate(-1)} className="sm:hidden flex items-center justify-center p-1.5 bg-slate-100 rounded-lg hover:bg-slate-200 border-2 border-slate-900 shrink-0 shadow-[2px_2px_0px_0px_#0f172a]">
+                        <ArrowLeft size={14} className="text-slate-900" />
                     </button>
                     {brandLogo ? (
-                        <img src={brandLogo} alt="Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain shrink-0" />
+                        <img src={brandLogo} alt="Logo" className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 object-contain shrink-0" />
                     ) : (
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-accent rounded-xl border-2 border-slate-900 flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
-                            <Sparkles size={16} className="text-white md:w-5 md:h-5" />
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-accent rounded-lg sm:rounded-xl border-2 border-slate-900 flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                            <Sparkles size={12} className="text-white sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                         </div>
                     )}
-                    <h1 className="font-black text-lg md:text-xl tracking-tighter leading-tight break-words truncate">{config?.page_titles?.['carousel']?.title || 'Arunika Carousel'}</h1>
+                    <h1 className="font-black text-sm sm:text-base lg:text-xl tracking-tighter leading-tight break-words truncate">{config?.page_titles?.['carousel']?.title || 'Carousel'}</h1>
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-end overflow-x-auto pb-1 md:pb-0 custom-scrollbar hide-scrollbar">
+                <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 w-full sm:w-auto justify-end overflow-x-auto pb-1 sm:pb-0 custom-scrollbar hide-scrollbar">
                     <button
                         onClick={handleQuickSave}
                         disabled={isSaving}
-                        className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-accent text-white font-black text-[10px] md:text-xs tracking-widest hover:brightness-110 rounded-lg transition-all border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] disabled:opacity-50 shrink-0"
+                        className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-accent text-white font-black text-[9px] sm:text-[10px] lg:text-xs tracking-widest hover:brightness-110 rounded-lg transition-all border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] disabled:opacity-50 shrink-0"
                     >
-                        {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        {currentProjectId ? 'Update' : 'Save'}
+                        {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                        <span className="hidden sm:inline">{currentProjectId ? 'Update' : 'Save'}</span>
                     </button>
-                    <button onClick={() => setShowThemeModal(true)} className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-slate-100 text-slate-900 font-black text-[10px] md:text-xs tracking-widest hover:bg-slate-200 rounded-lg transition-colors border-2 border-slate-300 shrink-0">
-                        <Palette size={14} /> Theme
+                    <button onClick={() => setShowThemeModal(true)} className="hidden sm:flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-slate-100 text-slate-900 font-black text-[10px] lg:text-xs tracking-widest hover:bg-slate-200 rounded-lg transition-colors border-2 border-slate-300 shrink-0">
+                        <Palette size={12} /> <span className="hidden lg:inline">Theme</span>
                     </button>
-                    <button onClick={handleNewCanvas} className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white text-slate-900 font-black text-[10px] md:text-xs tracking-widest hover:bg-slate-50 rounded-lg transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
-                        <Plus size={14} /> Canvas
+                    <button onClick={handleNewCanvas} className="hidden sm:flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-white text-slate-900 font-black text-[10px] lg:text-xs tracking-widest hover:bg-slate-50 rounded-lg transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                        <Plus size={12} /> <span className="hidden lg:inline">Canvas</span>
                     </button>
                 </div>
             </header>
 
             {/* Main Content */}
             <div className="flex-1 flex overflow-hidden min-h-0">
-                <div className={`${showMobileSidebar ? 'flex absolute inset-y-16 left-0 z-40 bg-white shadow-2xl h-[calc(100vh-64px)]' : 'hidden'} md:flex min-w-0 max-w-full relative transition-all duration-300`}>
+                <div className={`${showMobileSidebar ? 'flex absolute inset-y-14 sm:inset-y-16 left-0 z-40 bg-white shadow-2xl h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)]' : 'hidden'} sm:flex min-w-0 max-w-full relative transition-all duration-300`}>
                     <Sidebar />
                     {/* Mobile Sidebar Close Button */}
                     {showMobileSidebar && (
-                        <button onClick={() => setShowMobileSidebar(false)} className="md:hidden absolute top-4 -right-12 p-2 bg-white rounded-r-xl border-y-2 border-r-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
-                            <X size={20} />
+                        <button onClick={() => setShowMobileSidebar(false)} className="sm:hidden absolute top-2 -right-10 p-1.5 bg-white rounded-r-lg border-y-2 border-r-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
+                            <X size={16} />
                         </button>
                     )}
                 </div>
@@ -306,30 +306,32 @@ export const CarouselMaker: React.FC = () => {
                     <div className="flex-1 flex flex-col overflow-hidden relative transition-all duration-300 min-h-0 w-full">
                         <Editor />
 
-                        <div className={`${showMobileBottomBar ? 'block absolute bottom-0 left-0 right-0 z-30 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.1)]' : 'hidden'} md:block transition-all duration-300`}>
+                        <div className={`${showMobileBottomBar ? 'block absolute bottom-0 left-0 right-0 z-30 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.1)]' : 'hidden'} sm:block transition-all duration-300 max-h-[40vh]`}>
                             {/* Mobile Bottom Bar Header/Close */}
                             {showMobileBottomBar && (
-                                <div className="md:hidden flex justify-between items-center bg-slate-100 border-t-2 border-b-2 border-slate-900 px-4 py-2">
-                                    <span className="font-bold text-xs uppercase tracking-widest text-slate-500">Editor Tools</span>
-                                    <button onClick={() => setShowMobileBottomBar(false)} className="p-1 hover:bg-slate-200 rounded-lg"><X size={16} /></button>
+                                <div className="sm:hidden flex justify-between items-center bg-slate-100 border-t-2 border-b-2 border-slate-900 px-3 py-1.5">
+                                    <span className="font-bold text-[10px] uppercase tracking-widest text-slate-500">Tools</span>
+                                    <button onClick={() => setShowMobileBottomBar(false)} className="p-1 hover:bg-slate-200 rounded-lg"><X size={14} /></button>
                                 </div>
                             )}
-                            <BottomBar />
+                            <div className="overflow-y-auto max-h-[calc(40vh-40px)] sm:max-h-none">
+                                <BottomBar />
+                            </div>
                         </div>
                     </div>
 
                     {/* Mobile Floating Toggle Buttons */}
-                    <div className="md:hidden absolute bottom-6 right-4 flex flex-col gap-3 z-20">
+                    <div className="sm:hidden absolute bottom-4 right-3 flex flex-col gap-2 z-20">
                         {/* Sidebar Toggle FAB */}
                         {!showMobileSidebar && (
-                            <button onClick={() => setShowMobileSidebar(true)} className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-all">
-                                <Menu size={20} />
+                            <button onClick={() => setShowMobileSidebar(true)} className="w-10 h-10 rounded-xl bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-all flex-shrink-0">
+                                <Menu size={16} />
                             </button>
                         )}
                         {/* Bottom Bar Toggle FAB */}
                         {!showMobileBottomBar && (
-                            <button onClick={() => setShowMobileBottomBar(true)} className="w-12 h-12 rounded-2xl bg-accent border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] flex items-center justify-center text-white hover:brightness-110 transition-all">
-                                <Wrench size={20} />
+                            <button onClick={() => setShowMobileBottomBar(true)} className="w-10 h-10 rounded-xl bg-accent border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] flex items-center justify-center text-white hover:brightness-110 transition-all flex-shrink-0">
+                                <Wrench size={16} />
                             </button>
                         )}
                     </div>
@@ -337,15 +339,15 @@ export const CarouselMaker: React.FC = () => {
                     {/* Toggle Button for Notes */}
                     <button
                         onClick={() => setIsNotesOpen(!isNotesOpen)}
-                        className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-white border-2 border-slate-900 rounded-l-xl p-1.5 shadow-[-4px_4px_0px_0px_#0f172a] hover:bg-amber-100 transition-all duration-300 ${isNotesOpen ? 'right-[336px]' : 'right-0'
+                        className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-white border-2 border-slate-900 rounded-l-lg sm:rounded-l-xl p-1 sm:p-1.5 shadow-[-4px_4px_0px_0px_#0f172a] hover:bg-amber-100 transition-all duration-300 ${isNotesOpen ? 'right-[calc(min(336px,50vw))]' : 'right-0'
                             }`}
                         title="Toggle Script Notes"
                     >
-                        {isNotesOpen ? <ChevronRight size={20} className="text-slate-700" /> : <ChevronLeft size={20} className="text-slate-700" />}
+                        {isNotesOpen ? <ChevronRight size={16} className="text-slate-700 sm:w-5 sm:h-5" /> : <ChevronLeft size={16} className="text-slate-700 sm:w-5 sm:h-5" />}
                     </button>
 
                     {/* Right Notes Panel */}
-                    <div className="py-2.5 pr-2.5 flex shrink-0 h-full relative z-10 transition-all duration-300">
+                    <div className="py-1 sm:py-2.5 pr-1 sm:pr-2.5 flex shrink-0 h-full relative z-10 transition-all duration-300 max-w-[50vw]">
                         <NotesPanel isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} />
                     </div>
                 </div>

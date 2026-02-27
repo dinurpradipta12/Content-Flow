@@ -53,18 +53,18 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0">
-            {/* Left Sidebar: Folders */}
-            <div className="w-full md:w-64 shrink-0 flex flex-col gap-4">
-                <div className="bg-card border-4 border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#0f172a] h-full overflow-y-auto custom-scrollbar">
-                    <h3 className="font-black text-lg text-foreground uppercase tracking-tight mb-4 border-b-4 border-slate-900 pb-2">Account List</h3>
-                    <div className="space-y-2">
+        <div className="flex flex-col md:flex-row gap-2 sm:gap-3 md:gap-6 flex-1 min-h-0">
+            {/* Left Sidebar: Folders - Collapsible on mobile */}
+            <div className="w-full md:w-56 lg:w-64 shrink-0 flex flex-col gap-2 sm:gap-3 md:gap-4 max-h-40 md:max-h-none overflow-y-auto md:overflow-y-visible border-b md:border-b-0 md:border-r border-border pb-2 md:pb-0">
+                <div className="bg-card border-3 sm:border-4 border-slate-900 rounded-lg sm:rounded-2xl p-2 sm:p-4 shadow-[4px_4px_0px_0px_#0f172a]">
+                    <h3 className="font-black text-xs sm:text-sm md:text-lg text-foreground uppercase tracking-tight mb-2 sm:mb-4 border-b-3 sm:border-b-4 border-slate-900 pb-1 sm:pb-2">Account List</h3>
+                    <div className="space-y-1 sm:space-y-2">
                         {workspaces.map(ws => {
                             const isSelected = selectedWorkspace === ws;
                             const isExpanded = expandedFolders[ws];
                             return (
-                                <div key={ws} className="space-y-1">
-                                    <div className={`w-full flex items-center justify-between p-1 rounded-xl border-2 font-bold transition-all ${isSelected
+                                <div key={ws} className="space-y-0.5 sm:space-y-1">
+                                    <div className={`w-full flex items-center justify-between p-0.5 sm:p-1 rounded-lg sm:rounded-xl border-2 font-bold text-[9px] sm:text-xs md:text-sm transition-all ${isSelected
                                         ? 'bg-accent text-white border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] translate-x-1'
                                         : 'bg-card text-mutedForeground border-transparent hover:border-slate-300 hover:bg-slate-500/10'
                                         }`}>
@@ -73,27 +73,27 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                                                 setSelectedWorkspace(ws as string);
                                                 setSelectedStatus('All');
                                             }}
-                                            className="flex items-center gap-2 truncate flex-1 p-1 text-left"
+                                            className="flex items-center gap-1 sm:gap-2 truncate flex-1 p-0.5 sm:p-1 text-left"
                                         >
-                                            {isSelected ? <FolderOpen size={18} /> : <Folder size={18} className={isSelected ? 'text-white' : 'text-accent'} />}
-                                            <span className="truncate">{ws as string}</span>
+                                            {isSelected ? <FolderOpen size={12} className="sm:w-4 sm:h-4" /> : <Folder size={12} className={`sm:w-4 sm:h-4 ${isSelected ? 'text-white' : 'text-accent'}`} />}
+                                            <span className="truncate hidden sm:inline text-[8px] sm:text-xs md:text-sm">{ws as string}</span>
                                         </button>
                                         <button
                                             onClick={() => toggleFolder(ws as string)}
-                                            className={`p-1.5 rounded-lg transition-colors ${isSelected ? 'hover:bg-white/20' : 'hover:bg-slate-200'}`}
+                                            className={`p-0.5 sm:p-1.5 rounded-lg transition-colors ${isSelected ? 'hover:bg-white/20' : 'hover:bg-slate-200'}`}
                                         >
-                                            <ChevronRight size={16} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                                            <ChevronRight size={12} className={`sm:w-4 sm:h-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                                         </button>
                                     </div>
 
                                     {/* Sub-folders (Statuses) */}
                                     {isExpanded && (
-                                        <div className="pl-6 space-y-1 mt-1 border-l-2 border-slate-200 ml-4 animate-in slide-in-from-top-2 duration-200">
+                                        <div className="pl-3 sm:pl-6 space-y-0.5 sm:space-y-1 mt-0.5 sm:mt-1 border-l-2 border-slate-200 ml-2 sm:ml-4 animate-in slide-in-from-top-2 duration-200">
                                             {statuses.map(status => (
                                                 <button
                                                     key={status}
                                                     onClick={() => setSelectedStatus(status)}
-                                                    className={`w-full flex items-center justify-between p-1.5 rounded-lg text-xs font-bold transition-all ${selectedStatus === status
+                                                    className={`w-full flex items-center justify-between p-1 sm:p-1.5 rounded-lg text-[8px] sm:text-xs font-bold transition-all ${selectedStatus === status
                                                         ? 'bg-yellow-400 text-slate-900 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]'
                                                         : 'text-mutedForeground hover:text-foreground hover:bg-slate-500/10 border-2 border-transparent'
                                                         }`}
@@ -112,27 +112,27 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
             </div>
 
             {/* Right: Approval List (Cards) */}
-            <div className="flex-1 bg-card border-4 border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] flex flex-col overflow-hidden">
+            <div className="flex-1 bg-card border-3 sm:border-4 border-slate-900 rounded-lg sm:rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] flex flex-col overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-4 border-b-4 border-slate-900 bg-background flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h3 className="font-black text-xl text-foreground uppercase tracking-tight">Daftar Pengajuan</h3>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="p-2 sm:p-4 border-b-2 sm:border-b-4 border-slate-900 bg-background flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                    <h3 className="font-black text-xs sm:text-lg md:text-xl text-foreground uppercase tracking-tight">Daftar Pengajuan</h3>
+                    <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-3 w-full sm:w-auto">
                         <select
-                            className="px-4 py-2 rounded-xl border-4 border-slate-900 focus:outline-none focus:bg-slate-500/10 font-bold text-foreground transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-card"
+                            className="px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl border-2 sm:border-4 border-slate-900 focus:outline-none focus:bg-slate-500/10 font-bold text-foreground text-xs sm:text-sm transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-card"
                             value={selectedTemplate}
                             onChange={(e) => setSelectedTemplate(e.target.value)}
                         >
-                            <option value="All" className="bg-card">Filter Section</option>
+                            <option value="All" className="bg-card">Filter</option>
                             {templates.filter(t => t !== 'All').map(t => (
                                 <option key={t} value={t} className="bg-card">{t}</option>
                             ))}
                         </select>
-                        <div className="relative w-full sm:w-64">
-                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
+                        <div className="relative w-full sm:w-48 md:w-64">
+                            <Search size={14} className="sm:w-[18px] sm:h-[18px] absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
                             <input
                                 type="text"
-                                placeholder="Cari judul / PIC..."
-                                className="w-full pl-10 pr-4 py-2 rounded-xl border-4 border-slate-900 focus:outline-none focus:bg-slate-500/10 font-bold text-foreground transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-card"
+                                placeholder="Cari..."
+                                className="w-full pl-7 sm:pl-10 pr-2 sm:pr-4 py-1 sm:py-2 rounded-lg sm:rounded-xl border-2 sm:border-4 border-slate-900 focus:outline-none focus:bg-slate-500/10 font-bold text-foreground text-xs sm:text-sm transition-colors shadow-[2px_2px_0px_0px_#0f172a] bg-card"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -141,43 +141,43 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
                 </div>
 
                 {/* Card List */}
-                <div className="flex-1 overflow-auto custom-scrollbar bg-card/50 p-6">
+                <div className="flex-1 overflow-auto custom-scrollbar bg-card/50 p-2 sm:p-4 md:p-6">
                     {loading && requests.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-slate-900 gap-4">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-slate-900"></div>
-                            <p className="font-black uppercase tracking-widest">Memuat Data...</p>
+                            <div className="animate-spin rounded-full h-8 sm:h-12 w-8 sm:w-12 border-b-4 border-slate-900"></div>
+                            <p className="font-black text-xs sm:text-sm uppercase tracking-widest">Memuat Data...</p>
                         </div>
                     ) : filteredRequests.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                            <div className="w-24 h-24 bg-slate-100 border-4 border-slate-900 rounded-full flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_#0f172a]">
-                                <FileText size={40} className="text-slate-400" />
+                        <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
+                            <div className="w-16 sm:w-24 h-16 sm:h-24 bg-slate-100 border-2 sm:border-4 border-slate-900 rounded-full flex items-center justify-center mb-3 sm:mb-6 shadow-[4px_4px_0px_0px_#0f172a]">
+                                <FileText size={20} className="sm:w-10 sm:h-10 text-slate-400" />
                             </div>
-                            <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Kosong</h3>
-                            <p className="text-slate-500 font-bold">Tidak ada pengajuan di folder ini.</p>
+                            <h3 className="text-base sm:text-2xl font-black text-slate-900 uppercase tracking-tight mb-1 sm:mb-2">Kosong</h3>
+                            <p className="text-slate-500 font-bold text-xs sm:text-sm">Tidak ada pengajuan di folder ini.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                             {filteredRequests.map((req) => (
                                 <div
                                     key={req.id}
                                     onClick={() => onSelectRequest(req)}
-                                    className="bg-card border-4 border-slate-900 rounded-2xl p-5 flex flex-col gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f172a] shadow-[4px_4px_0px_0px_#0f172a] transition-all group"
+                                    className="bg-card border-2 sm:border-4 border-slate-900 rounded-lg sm:rounded-2xl p-3 sm:p-5 flex flex-col gap-2 sm:gap-4 cursor-pointer hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f172a] shadow-[4px_4px_0px_0px_#0f172a] transition-all group"
                                 >
-                                    <div className="flex justify-between items-start gap-2">
-                                        <h4 className="font-black text-foreground text-lg leading-tight group-hover:text-accent transition-colors line-clamp-2">
+                                    <div className="flex justify-between items-start gap-1.5 sm:gap-2">
+                                        <h4 className="font-black text-foreground text-xs sm:text-lg leading-tight group-hover:text-accent transition-colors line-clamp-2">
                                             {req.template?.name || 'Approval'}
                                         </h4>
-                                        <span className={`shrink-0 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full border-2 ${getStatusColor(req.status)}`}>
+                                        <span className={`shrink-0 text-[8px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border-2 ${getStatusColor(req.status)}`}>
                                             {req.status}
                                         </span>
                                     </div>
-                                    <div className="space-y-2 text-sm font-bold text-mutedForeground">
-                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">Judul Konten</span> <span className="text-foreground">{req.form_data.judul_konten || '-'}</span></p>
-                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">PIC Script</span> <span className="text-foreground">{req.form_data.pic_script || '-'}</span></p>
-                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">Content Value</span> <span className="text-foreground">{req.form_data.pillar || '-'}</span></p>
+                                    <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm font-bold text-mutedForeground">
+                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[7px] sm:text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">Judul</span> <span className="text-foreground">{req.form_data.judul_konten || '-'}</span></p>
+                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[7px] sm:text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">PIC</span> <span className="text-foreground">{req.form_data.pic_script || '-'}</span></p>
+                                        <p className="truncate"><span className="text-mutedForeground uppercase text-[7px] sm:text-[10px] tracking-wider block leading-none mb-0.5 opacity-60">Value</span> <span className="text-foreground">{req.form_data.pillar || '-'}</span></p>
                                     </div>
 
-                                    <div className="mt-auto pt-4 border-t-2 border-border/20 flex justify-between items-end">
+                                    <div className="mt-auto pt-2 sm:pt-4 border-t-2 border-border/20 flex justify-between items-end gap-1">
                                         <div className="flex items-center gap-2">
                                             {req.requester_avatar ? (
                                                 <img src={req.requester_avatar} alt="PIC" className="w-8 h-8 rounded-full border-2 border-slate-900 object-cover" />

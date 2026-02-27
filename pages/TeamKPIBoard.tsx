@@ -361,20 +361,20 @@ export const TeamKPIBoard: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-2 sm:space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-4xl font-bold text-slate-900 flex items-center gap-2">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 flex items-center gap-2">
                         {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
+                    <p className="text-slate-500 text-xs sm:text-sm mt-1">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     <select
                         value={periodFilter}
                         onChange={e => setPeriodFilter(e.target.value)}
-                        className="bg-transparent border-2 border-slate-200 text-foreground rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                        className="bg-transparent border-2 border-slate-200 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
                     >
                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
@@ -383,52 +383,52 @@ export const TeamKPIBoard: React.FC = () => {
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-card rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-violet-100/10 rounded-xl flex items-center justify-center">
-                        <Users className="text-violet-500" size={22} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+                <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-violet-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Users className="text-violet-500" size={18} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
-                        <p className="text-xs text-slate-500 font-medium">Team Members</p>
+                        <p className="text-xl sm:text-2xl font-bold text-foreground">{totalMembers}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Members</p>
                     </div>
                 </div>
-                <div className="bg-card rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100/10 rounded-xl flex items-center justify-center">
-                        <Target className="text-blue-500" size={22} />
+                <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Target className="text-blue-500" size={18} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-foreground">{avgCompletion}%</p>
-                        <p className="text-xs text-slate-500 font-medium">Avg. Completion</p>
+                        <p className="text-xl sm:text-2xl font-bold text-foreground">{avgCompletion}%</p>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Completion</p>
                     </div>
                 </div>
-                <div className="bg-card rounded-2xl border-2 border-slate-200 p-5 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-100/10 rounded-xl flex items-center justify-center">
-                        <TrendingUp className="text-emerald-500" size={22} />
+                <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-emerald-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="text-emerald-500" size={18} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-foreground">{onTrackCount}/{totalMembers}</p>
-                        <p className="text-xs text-slate-500 font-medium">On Track</p>
+                        <p className="text-xl sm:text-2xl font-bold text-foreground">{onTrackCount}/{totalMembers}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">On Track</p>
                     </div>
                 </div>
             </div>
 
             {/* Workspace Folder + Member Grid */}
-            <div className="flex gap-5">
+            <div className="flex gap-2 sm:gap-3 md:gap-5">
                 {/* Left: Workspace Folders — only show workspaces accessible to current user */}
                 {myWorkspaces.length > 1 && (
-                    <div className="w-52 shrink-0">
-                        <div className="bg-card border-2 border-slate-900 rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
-                            <div className="p-3 border-b-2 border-slate-900 bg-violet-600">
-                                <p className="text-white font-black text-xs uppercase tracking-widest">Workspace</p>
+                    <div className="w-40 sm:w-48 md:w-52 shrink-0 hidden sm:block">
+                        <div className="bg-card border-2 border-slate-900 rounded-lg sm:rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
+                            <div className="p-2 sm:p-3 border-b-2 border-slate-900 bg-violet-600">
+                                <p className="text-white font-black text-[10px] sm:text-xs uppercase tracking-widest">Workspace</p>
                             </div>
-                            <div className="p-2 space-y-1">
+                            <div className="p-1 sm:p-2 space-y-0.5 sm:space-y-1">
                                 <button
                                     onClick={() => setSelectedWorkspaceId('all')}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
+                                    className={`w-full flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
                                 >
-                                    <Users size={13} /> Semua Workspace
-                                    <span className="ml-auto text-[10px] opacity-70">{filteredMembers.length}</span>
+                                    <Users size={12} /> <span className="hidden md:inline">Semua</span>
+                                    <span className="ml-auto text-[9px] opacity-70">{filteredMembers.length}</span>
                                 </button>
                                 {myWorkspaces.map(ws => {
                                     const wsAvatars = new Set(ws.members || []);
@@ -437,10 +437,10 @@ export const TeamKPIBoard: React.FC = () => {
                                         <button
                                             key={ws.id}
                                             onClick={() => setSelectedWorkspaceId(ws.id)}
-                                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${selectedWorkspaceId === ws.id ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
+                                            className={`w-full flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all ${selectedWorkspaceId === ws.id ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
                                         >
-                                            <span className="truncate flex-1 text-left">{ws.name}</span>
-                                            <span className="text-[10px] opacity-70">{count}</span>
+                                            <span className="truncate flex-1 text-left text-[9px] sm:text-xs">{ws.name}</span>
+                                            <span className="text-[9px] opacity-70">{count}</span>
                                         </button>
                                     );
                                 })}
@@ -452,26 +452,26 @@ export const TeamKPIBoard: React.FC = () => {
                 {/* Right: Member Cards */}
                 <div className="flex-1">
                     {filteredMembers.length === 0 ? (
-                        <div className="text-center py-20 bg-card rounded-2xl border-2 border-dashed border-border">
-                            <Users className="mx-auto text-mutedForeground mb-4" size={48} />
+                        <div className="text-center py-12 sm:py-20 bg-card rounded-lg sm:rounded-2xl border-2 border-dashed border-border">
+                            <Users className="mx-auto text-mutedForeground mb-2 sm:mb-4" size={32} sm:size={48} />
                             {!isAdmin && myWorkspaces.length === 0 ? (
                                 // Member with no workspace access
                                 <>
-                                    <h3 className="text-lg font-bold text-mutedForeground">Belum Bergabung ke Workspace</h3>
-                                    <p className="text-sm text-mutedForeground/80 mt-1 max-w-xs mx-auto">
+                                    <h3 className="text-sm sm:text-lg font-bold text-mutedForeground">Belum Bergabung ke Workspace</h3>
+                                    <p className="text-[10px] sm:text-sm text-mutedForeground/80 mt-1 max-w-xs mx-auto">
                                         Anda belum tergabung dalam workspace apapun. Hubungi admin untuk mendapatkan undangan.
                                     </p>
                                 </>
                             ) : (
                                 // Admin or member in workspace but no members yet
                                 <>
-                                    <h3 className="text-lg font-bold text-mutedForeground">Belum ada anggota tim</h3>
-                                    <p className="text-sm text-mutedForeground/80 mt-1">Tidak ada anggota di workspace ini.</p>
+                                    <h3 className="text-sm sm:text-lg font-bold text-mutedForeground">Belum ada anggota tim</h3>
+                                    <p className="text-[10px] sm:text-sm text-mutedForeground/80 mt-1">Tidak ada anggota di workspace ini.</p>
                                 </>
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                             {filteredMembers.map(member => {
                                 const rate = getCompletionRate(member.id);
                                 const color = getCompletionColor(rate);
@@ -482,28 +482,28 @@ export const TeamKPIBoard: React.FC = () => {
                                     <div
                                         key={member.id}
                                         onClick={() => openDetail(member)}
-                                        className="bg-card rounded-2xl border-2 border-border hover:border-accent hover:shadow-lg p-5 cursor-pointer transition-all duration-200 group"
+                                        className="bg-card rounded-lg sm:rounded-2xl border-2 border-border hover:border-accent hover:shadow-lg p-3 sm:p-5 cursor-pointer transition-all duration-200 group"
                                     >
                                         {/* Avatar + Info */}
-                                        <div className="flex items-center gap-3 mb-4">
+                                        <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
                                             <img
                                                 src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
                                                 alt={member.full_name}
-                                                className="w-12 h-12 rounded-full border-2 border-border object-cover group-hover:border-violet-300 transition-colors"
+                                                className="w-10 sm:w-12 h-10 sm:h-12 rounded-full border-2 border-border object-cover group-hover:border-violet-300 transition-colors flex-shrink-0"
                                             />
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-foreground truncate">{member.full_name}</h3>
-                                                <p className="text-xs text-mutedForeground truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
+                                                <h3 className="font-bold text-foreground truncate text-xs sm:text-base">{member.full_name}</h3>
+                                                <p className="text-[8px] sm:text-xs text-mutedForeground truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
                                             </div>
                                         </div>
 
                                         {/* Progress Bar */}
-                                        <div className="mb-3">
-                                            <div className="flex justify-between items-center mb-1.5">
-                                                <span className="text-xs font-medium text-mutedForeground">KPI Completion</span>
-                                                <span className={`text-sm font-bold ${color.text}`}>{rate}%</span>
+                                        <div className="mb-2 sm:mb-3">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[8px] sm:text-xs font-medium text-mutedForeground">Completion</span>
+                                                <span className={`text-xs sm:text-sm font-bold ${color.text}`}>{rate}%</span>
                                             </div>
-                                            <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                                            <div className="h-2 sm:h-2.5 bg-muted rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full ${color.bg} rounded-full transition-all duration-700 ease-out`}
                                                     style={{ width: `${rate}%` }}
@@ -513,10 +513,10 @@ export const TeamKPIBoard: React.FC = () => {
 
                                         {/* Footer */}
                                         <div className="flex items-center justify-between">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border ${badge.cls}`}>
-                                                {badge.icon} {badge.label}
+                                            <span className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[9px] sm:text-[11px] font-medium border ${badge.cls}`}>
+                                                {badge.icon} <span className="hidden sm:inline">{badge.label}</span>
                                             </span>
-                                            <span className="text-[11px] text-mutedForeground/80">{memberKPIs.length} metrics</span>
+                                            <span className="text-[9px] sm:text-[11px] text-mutedForeground/80">{memberKPIs.length} metrics</span>
                                         </div>
                                     </div>
                                 );
@@ -537,66 +537,66 @@ export const TeamKPIBoard: React.FC = () => {
                     return (
                         <div className="flex gap-0 overflow-hidden transition-all duration-300" style={{ minHeight: 420 }}>
                             {/* ====== LEFT CARD: Member Profile + KPI List ====== */}
-                            <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto ${showMemberInput ? 'w-1/2 pr-4' : 'w-full'}`}>
+                            <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto ${showMemberInput ? 'w-1/2 pr-3 sm:pr-4' : 'w-full'}`}>
                                 {/* Member Header */}
-                                <div className="flex items-center gap-3 p-4 bg-muted border-2 border-border mb-4 shrink-0 rounded-2xl">
+                                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-4 bg-muted border-2 border-border mb-2 sm:mb-4 shrink-0 rounded-lg sm:rounded-2xl">
                                     <img
                                         src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
                                         alt={selectedMember.full_name}
-                                        className="w-14 h-14 rounded-2xl border-2 border-border object-cover shadow"
+                                        className="w-12 sm:w-14 h-12 sm:h-14 rounded-lg sm:rounded-2xl border-2 border-border object-cover shadow flex-shrink-0"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <h2 className="text-base font-black text-foreground truncate">{selectedMember.full_name}</h2>
-                                        <p className="text-xs text-mutedForeground truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
-                                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${badge.cls}`}>
-                                                {badge.icon} {badge.label}
+                                        <h2 className="text-sm sm:text-base font-black text-foreground truncate">{selectedMember.full_name}</h2>
+                                        <p className="text-[10px] sm:text-xs text-mutedForeground truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                            <span className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-bold border ${badge.cls}`}>
+                                                {badge.icon} <span className="hidden sm:inline">{badge.label}</span>
                                             </span>
-                                            <span className={`text-sm font-black ${color.text}`}>{rate}%</span>
+                                            <span className={`text-xs sm:text-sm font-black ${color.text}`}>{rate}%</span>
                                         </div>
                                     </div>
                                     {isAdmin && (
-                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 hover:bg-red-500/10 text-red-500 hover:text-red-400 rounded-xl transition-colors shrink-0" title="Hapus anggota">
-                                            <Trash2 size={16} />
+                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-500 hover:text-red-400 rounded-lg sm:rounded-xl transition-colors shrink-0" title="Hapus anggota">
+                                            <Trash2 size={14} />
                                         </button>
                                     )}
                                 </div>
 
                                 {/* Period Filter + Action Button */}
-                                <div className="flex items-center justify-between mb-3 shrink-0">
+                                <div className="flex items-center justify-between mb-2 sm:mb-3 shrink-0 gap-1 sm:gap-2">
                                     <select
                                         value={periodFilter}
                                         onChange={e => setPeriodFilter(e.target.value)}
-                                        className="bg-card border-2 border-border text-foreground rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-violet-400 transition-colors"
+                                        className="bg-card border-2 border-border text-foreground rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium focus:outline-none focus:border-violet-400 transition-colors"
                                     >
                                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
                                     {isAdmin ? (
                                         <button
                                             onClick={() => setIsAddKPIOpen(true)}
-                                            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors"
+                                            className="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs transition-colors whitespace-nowrap"
                                         >
-                                            <Plus size={13} /> Tambah KPI
+                                            <Plus size={12} /> <span className="hidden sm:inline">Tambah KPI</span>
                                         </button>
                                     ) : (
                                         <button
                                             onClick={() => openMemberInputPanel(memberKPIs)}
                                             disabled={memberKPIs.length === 0 || showMemberInput}
-                                            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors"
+                                            className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs transition-colors whitespace-nowrap"
                                         >
-                                            <Edit3 size={13} /> Input Pencapaian
+                                            <Edit3 size={12} /> <span className="hidden sm:inline">Input</span>
                                         </button>
                                     )}
                                 </div>
 
                                 {/* KPI List */}
                                 {memberKPIs.length === 0 ? (
-                                    <div className="text-center py-10 bg-muted rounded-xl border border-dashed border-border">
-                                        <Target className="mx-auto text-mutedForeground mb-2" size={28} />
-                                        <p className="text-sm text-mutedForeground/80 font-medium">Belum ada KPI untuk periode ini</p>
+                                    <div className="text-center py-8 sm:py-10 bg-muted rounded-lg sm:rounded-xl border border-dashed border-border">
+                                        <Target className="mx-auto text-mutedForeground mb-1 sm:mb-2" size={24} />
+                                        <p className="text-xs sm:text-sm text-mutedForeground/80 font-medium">Belum ada KPI untuk periode ini</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-2 overflow-y-auto flex-1 pr-0.5" style={{ maxHeight: 300 }}>
+                                    <div className="space-y-1 sm:space-y-2 overflow-y-auto flex-1 pr-0.5" style={{ maxHeight: 300 }}>
                                         {memberKPIs.map(kpi => {
                                             const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
                                             const kpiColor = getCompletionColor(kpiRate);

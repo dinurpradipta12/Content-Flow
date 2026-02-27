@@ -445,45 +445,45 @@ export const ContentDataInsight: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6 flex-1 flex flex-col min-h-0">
+        <div className="space-y-2 sm:space-y-4 md:space-y-6 flex-1 flex flex-col min-h-0">
             {/* ... Header ... */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2">
                 <div>
-                    <h2 className="text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-3">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-2 sm:gap-3">
                         {config?.page_titles?.['insight']?.title || 'Content Data Insight'}
                     </h2>
-                    <p className="text-slate-500 font-medium mt-2">
+                    <p className="text-slate-500 font-medium mt-1 sm:mt-2 text-xs sm:text-sm">
                         {config?.page_titles?.['insight']?.subtitle || 'Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.'}
                     </p>
                 </div>
 
                 {/* Period Indicator Badge */}
-                <div className="bg-white border-2 border-slate-800 px-4 py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default">
-                    <span className="font-heading font-black text-slate-800 text-sm uppercase tracking-wide flex items-center gap-2">
-                        <Calendar size={16} className="text-accent" />
-                        {getPeriodLabel()}
+                <div className="bg-white border-2 border-slate-800 px-2 sm:px-4 py-1 sm:py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default text-[10px] sm:text-sm">
+                    <span className="font-heading font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                        <Calendar size={14} sm:size={16} className="text-accent" />
+                        <span className="hidden sm:inline">{getPeriodLabel()}</span>
                     </span>
                 </div>
             </div>
 
             {/* Summary Cards - Colorful & Solid */}
-            <div className={`grid gap-4 ${filterPlatform === Platform.TIKTOK ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4'}`}>
+            <div className={`grid gap-2 sm:gap-3 md:gap-4 ${filterPlatform === Platform.TIKTOK ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'}`}>
 
                 {/* Reach Card */}
                 {filterPlatform !== Platform.TIKTOK && (
                     <div
                         onClick={() => setSelectedMetric('reach')}
-                        className="bg-blue-500 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                        className="bg-blue-500 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                     >
-                        <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                            <BarChart2 size={80} className="text-white" />
+                        <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                            <BarChart2 size={60} className="text-white" />
                         </div>
                         <div className="relative z-10 text-white">
-                            <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Reach</p>
-                            <h3 className="text-3xl font-black">{summaryStats.reach.toLocaleString()}</h3>
+                            <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Reach</p>
+                            <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.reach.toLocaleString()}</h3>
                         </div>
                         <div className="relative z-10 mt-auto pt-2">
-                            <span className="inline-block bg-black/20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                            <span className="inline-block bg-black/20 text-white text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -493,17 +493,17 @@ export const ContentDataInsight: React.FC = () => {
                 {/* Engagement Rate */}
                 <div
                     onClick={() => setSelectedMetric('er')}
-                    className="bg-pink-500 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                    className="bg-pink-500 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                 >
                     <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
                         <TrendingUp size={80} className="text-white" />
                     </div>
                     <div className="relative z-10 text-white">
-                        <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-90">Engagement Rate</p>
-                        <h3 className="text-3xl font-black">{summaryStats.er.toFixed(2)}%</h3>
+                        <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-90">Engagement Rate</p>
+                        <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.er.toFixed(2)}%</h3>
                     </div>
                     <div className="relative z-10 mt-auto pt-2">
-                        <span className="inline-block bg-black/20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                        <span className="inline-block bg-black/20 text-white text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
                             {getCardFooterText()}
                         </span>
                     </div>
@@ -512,17 +512,17 @@ export const ContentDataInsight: React.FC = () => {
                 {/* Interactions */}
                 <div
                     onClick={() => setSelectedMetric('interactions')}
-                    className="bg-purple-600 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                    className="bg-purple-600 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                 >
-                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                        <Zap size={80} className="text-white" />
+                    <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <Zap size={60} className="text-white" />
                     </div>
                     <div className="relative z-10 text-white">
-                        <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Interaksi</p>
-                        <h3 className="text-3xl font-black">{summaryStats.interactions.toLocaleString()}</h3>
+                        <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Interaksi</p>
+                        <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.interactions.toLocaleString()}</h3>
                     </div>
                     <div className="relative z-10 mt-auto pt-2">
-                        <span className="inline-block bg-black/20 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                        <span className="inline-block bg-black/20 text-white text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
                             {getCardFooterText()}
                         </span>
                     </div>
@@ -531,17 +531,17 @@ export const ContentDataInsight: React.FC = () => {
                 {/* Views */}
                 <div
                     onClick={() => setSelectedMetric('views')}
-                    className="bg-yellow-400 p-5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                    className="bg-yellow-400 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
                 >
-                    <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                        <Eye size={80} className="text-black" />
+                    <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
+                        <Eye size={60} className="text-black" />
                     </div>
                     <div className="relative z-10 text-slate-900">
-                        <p className="text-xs font-black uppercase tracking-wider mb-1 opacity-80">Content Views</p>
-                        <h3 className="text-3xl font-black">{summaryStats.views.toLocaleString()}</h3>
+                        <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-80">Content Views</p>
+                        <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.views.toLocaleString()}</h3>
                     </div>
                     <div className="relative z-10 mt-auto pt-2">
-                        <span className="inline-block bg-black/10 text-slate-900 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                        <span className="inline-block bg-black/10 text-slate-900 text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
                             {getCardFooterText()}
                         </span>
                     </div>
@@ -632,15 +632,15 @@ export const ContentDataInsight: React.FC = () => {
                 </Modal>
             )}
 
-            <div className="bg-card rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="bg-card rounded-lg sm:rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
                 {/* Toolbar */}
-                <div className="border-b-2 border-slate-200 p-3 flex flex-col xl:flex-row gap-3 items-center justify-between">
-                    <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-                        <div className="flex items-center gap-2 px-3 py-2 border rounded-lg font-bold text-xs">
-                            <Filter size={14} />
+                <div className="border-b-2 border-slate-200 p-2 sm:p-3 md:p-4 flex flex-col xl:flex-row gap-2 sm:gap-3 items-center justify-between">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 w-full xl:w-auto">
+                        <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 border rounded-lg font-bold text-[8px] sm:text-xs">
+                            <Filter size={12} />
                             <span className="hidden sm:inline">Filter:</span>
                         </div>
-                        <div className="w-36 md:w-40">
+                        <div className="w-28 sm:w-36 md:w-40">
                             <Select
                                 value={filterPlatform}
                                 onChange={(e) => setFilterPlatform(e.target.value)}
@@ -652,60 +652,60 @@ export const ContentDataInsight: React.FC = () => {
                                     { label: 'YouTube', value: Platform.YOUTUBE },
                                     { label: 'Facebook', value: Platform.FACEBOOK },
                                 ]}
-                                className="!py-2 !text-xs h-9"
+                                className="!py-1 sm:!py-2 !text-[8px] sm:!text-xs h-8 sm:h-9"
                             />
                         </div>
-                        <div className="w-36 md:w-40">
+                        <div className="w-28 sm:w-36 md:w-40">
                             <Select
                                 value={filterAccount}
                                 onChange={(e) => setFilterAccount(e.target.value)}
                                 options={[{ label: 'Semua Akun', value: 'all' }, ...accounts.map(acc => ({ label: acc, value: acc }))]}
-                                className="!py-2 !text-xs h-9"
+                                className="!py-1 sm:!py-2 !text-[8px] sm:!text-xs h-8 sm:h-9"
                             />
                         </div>
-                        <div className="flex items-center gap-2 border rounded-lg px-2 h-9">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Periode</span>
-                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-24" />
-                            <span className="text-slate-300">-</span>
-                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-24" />
+                        <div className="flex items-center gap-1 sm:gap-2 border rounded-lg px-1 sm:px-2 h-8 sm:h-9">
+                            <span className="text-[7px] sm:text-[10px] font-bold text-slate-400 uppercase">Periode</span>
+                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-[7px] sm:text-xs font-bold outline-none bg-transparent w-20 sm:w-24" />
+                            <span className="text-slate-300 text-xs">-</span>
+                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-[7px] sm:text-xs font-bold outline-none bg-transparent w-20 sm:w-24" />
                         </div>
                         {(filterPlatform !== 'all' || filterAccount !== 'all' || startDate || endDate) && (
-                            <button onClick={resetFilters} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <X size={16} />
+                            <button onClick={resetFilters} className="p-1 sm:p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                <X size={14} />
                             </button>
                         )}
                     </div>
                     <div className="flex-shrink-0 w-full xl:w-auto flex justify-end">
-                        <Button variant="secondary" size="sm" onClick={fetchData} icon={<RefreshCw size={14} />} className="h-9 text-xs">Refresh Data</Button>
+                        <Button variant="secondary" size="sm" onClick={fetchData} icon={<RefreshCw size={12} />} className="h-8 sm:h-9 text-[8px] sm:text-xs">Refresh</Button>
                     </div>
                 </div>
 
                 {/* Data Table */}
                 <div className="flex-1 overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="border-b-2 border-slate-100 sticky top-0 z-10 shadow-sm">
+                    <table className="w-full text-left border-collapse text-[10px] sm:text-sm">
+                        <thead className="border-b-2 border-slate-100 sticky top-0 z-10 shadow-sm bg-white">
                             <tr>
-                                <th className="p-4 w-10"></th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tanggal Posting</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Judul Konten</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Link Postingan</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center min-w-[280px]">Result Metrics</th>
-                                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Action</th>
+                                <th className="p-2 sm:p-3 md:p-4 w-8 sm:w-10"></th>
+                                <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                                <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[120px] sm:min-w-[200px]">Judul</th>
+                                <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Link</th>
+                                <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center min-w-[180px] sm:min-w-[280px]">Metrics</th>
+                                <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="p-12 text-center text-slate-400">
+                                    <td colSpan={6} className="p-8 sm:p-12 text-center text-slate-400">
                                         <div className="flex flex-col items-center gap-2">
-                                            <Loader2 className="animate-spin text-accent" size={32} />
-                                            <span>Mengambil data...</span>
+                                            <Loader2 className="animate-spin text-accent" size={24} sm:size={32} />
+                                            <span className="text-xs sm:text-sm">Mengambil data...</span>
                                         </div>
                                     </td>
                                 </tr>
                             ) : filteredData.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="p-12 text-center text-slate-400 italic bg-slate-50/50">
+                                    <td colSpan={6} className="p-8 sm:p-12 text-center text-slate-400 italic bg-slate-50/50 text-xs sm:text-sm">
                                         Tidak ada konten published yang ditemukan.
                                     </td>
                                 </tr>
@@ -713,82 +713,89 @@ export const ContentDataInsight: React.FC = () => {
                                 filteredData.map((item) => (
                                     <React.Fragment key={item.id}>
                                         <tr
-                                            className={`transition-colors cursor-pointer ${expandedRowId === item.id ? 'bg-purple-500/10' : 'hover:bg-slate-500/5'}`}
+                                            className={`transition-colors cursor-pointer text-[9px] sm:text-sm ${expandedRowId === item.id ? 'bg-purple-500/10' : 'hover:bg-slate-500/5'}`}
                                             onClick={() => toggleRow(item.id)}
                                         >
-                                            <td className="p-4 text-center">
-                                                {expandedRowId === item.id ? <ChevronUp size={16} className="text-accent" /> : <ChevronDown size={16} className="text-slate-400" />}
+                                            <td className="p-2 sm:p-3 md:p-4 text-center">
+                                                {expandedRowId === item.id ? <ChevronUp size={14} className="text-accent" /> : <ChevronDown size={14} className="text-slate-400" />}
                                             </td>
-                                            <td className="p-4 align-middle">
-                                                <div className="flex items-center gap-2 text-sm font-bold text-slate-600">
-                                                    <Calendar size={16} className="text-slate-400" />
-                                                    {item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                            <td className="p-2 sm:p-3 md:p-4 align-middle">
+                                                <div className="flex items-center gap-1 sm:gap-2 font-bold text-slate-600">
+                                                    <Calendar size={12} sm:size={16} className="text-slate-400 flex-shrink-0" />
+                                                    <span className="text-[7px] sm:text-sm whitespace-nowrap">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
                                                 </div>
                                             </td>
-                                            <td className="p-4 align-middle max-w-xs">
-                                                <p className="font-bold text-slate-800 text-sm line-clamp-1 mb-1" title={item.title}>{item.title}</p>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
-                                                    <div className="flex items-center gap-1 text-slate-500">
-                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={12} /> :
+                                            <td className="p-2 sm:p-3 md:p-4 align-middle max-w-[120px] sm:max-w-xs">
+                                                <p className="font-bold text-slate-800 text-[8px] sm:text-sm line-clamp-1 mb-0.5 sm:mb-1" title={item.title}>{item.title}</p>
+                                                <div className="flex items-center gap-1 sm:gap-2">
+                                                    <span className="text-[6px] sm:text-[10px] px-1 sm:px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
+                                                    <div className="flex items-center gap-0.5 sm:gap-1 text-slate-500">
+                                                        {item.platform === Platform.INSTAGRAM ? <Instagram size={10} /> :
                                                             item.platform === Platform.TIKTOK ? (
-                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                                                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                                                                 </svg>
-                                                            ) : <Globe size={12} />}
-                                                        <span className="text-[10px] font-bold">@{item.workspaces?.account_name || '-'}</span>
+                                                            ) : <Globe size={10} />}
+                                                        <span className="text-[6px] sm:text-[10px] font-bold">@{item.workspaces?.account_name || '-'}</span>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            <td className="p-4 align-middle">
+                                            <td className="p-2 sm:p-3 md:p-4 align-middle hidden sm:table-cell">
                                                 {item.contentLink ? (
                                                     <a
                                                         href={item.contentLink}
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         onClick={e => e.stopPropagation()}
-                                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 hover:bg-blue-500/20"
+                                                        className="inline-flex items-center gap-1 text-[7px] sm:text-xs font-bold text-blue-500 bg-blue-500/10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border border-blue-500/20 hover:bg-blue-500/20"
                                                     >
-                                                        <LinkIcon size={12} /> Link Tersedia
+                                                        <LinkIcon size={10} /> Link
                                                     </a>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-500/10 px-2 py-1 rounded border border-slate-500/20">
-                                                        <LinkIcon size={12} /> Kosong
+                                                    <span className="inline-flex items-center gap-1 text-[7px] sm:text-xs font-bold text-slate-400 bg-slate-500/10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border border-slate-500/20">
+                                                        <LinkIcon size={10} /> Kosong
                                                     </span>
                                                 )}
                                             </td>
 
-                                            <td className="p-4 align-middle">
+                                            <td className="p-2 sm:p-3 md:p-4 align-middle">
                                                 {item.metrics ? (
-                                                    <div className={`grid gap-2 text-center w-full ${item.platform === Platform.INSTAGRAM ? 'grid-cols-6 max-w-[400px]' : 'grid-cols-5 max-w-[350px]'}`}>
+                                                    <div className={`grid gap-1 sm:gap-2 text-center w-full text-[7px] sm:text-xs ${item.platform === Platform.INSTAGRAM ? 'grid-cols-3 sm:grid-cols-6 max-w-[250px] sm:max-w-[400px]' : 'grid-cols-2.5 sm:grid-cols-5 max-w-[200px] sm:max-w-[350px]'}`}>
                                                         {item.platform === Platform.INSTAGRAM && (
-                                                            <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Reach</span><span className="text-xs font-black text-slate-800">{(item.metrics as any).reach?.toLocaleString() || 0}</span></div>
+                                                            <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Reach</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics as any).reach?.toLocaleString() || 0}</span></div>
                                                         )}
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-xs font-black text-slate-800">{item.metrics.views.toLocaleString()}</span></div>
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Likes</span><span className="text-xs font-black text-slate-800">{item.metrics.likes.toLocaleString()}</span></div>
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Comm</span><span className="text-xs font-black text-slate-800">{item.metrics.comments.toLocaleString()}</span></div>
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Share</span><span className="text-xs font-black text-slate-800">{item.metrics.shares.toLocaleString()}</span></div>
-                                                        <div><span className="block text-[10px] text-slate-400 font-bold uppercase">Save</span><span className="text-xs font-black text-slate-800">{(item.metrics.saves || 0).toLocaleString()}</span></div>
+                                                        <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.views || 0).toLocaleString()}</span></div>
+                                                        <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Likes</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.likes || 0).toLocaleString()}</span></div>
+                                                        <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Comm</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.comments || 0).toLocaleString()}</span></div>
+                                                        <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Share</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.shares || 0).toLocaleString()}</span></div>
+                                                        <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Save</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.saves || 0).toLocaleString()}</span></div>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-center"><span className="text-xs text-slate-400 italic">Belum dianalisa</span></div>
+                                                    <div className="text-center"><span className="text-[7px] sm:text-xs text-slate-400 italic">Belum</span></div>
                                                 )}
                                             </td>
-                                            <td className="p-4 align-middle text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="p-2 sm:p-3 md:p-4 align-middle text-right">
+                                                <div className="flex items-center justify-end gap-1 sm:gap-2">
                                                     {/* TOMBOL INPUT MANUAL */}
                                                     <Button
                                                         size="sm"
-                                                        className="h-8 px-3 text-xs font-bold rounded-lg border-2 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:border-pink-500/50 shadow-sm"
+                                                        className="h-7 sm:h-8 px-2 sm:px-3 text-[7px] sm:text-xs font-bold rounded-lg border-2 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:border-pink-500/50 shadow-sm hidden sm:flex"
                                                         onClick={(e) => openManualInput(e, item)}
                                                         title="Input Metrics Manual"
                                                     >
-                                                        <Edit3 size={14} className="mr-1.5" /> Input Metrics
+                                                        <Edit3 size={12} className="mr-1" /> Input
                                                     </Button>
+                                                    <button 
+                                                        onClick={(e) => openManualInput(e, item)} 
+                                                        className="p-1 sm:p-2 text-pink-300 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition-colors sm:hidden"
+                                                        title="Input Metrics"
+                                                    >
+                                                        <Edit3 size={12} />
+                                                    </button>
 
-                                                    <button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                                        <Trash2 size={18} />
+                                                    <button onClick={(e) => handleDelete(e, item.id)} className="p-1 sm:p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                        <Trash2 size={14} sm:size={18} />
                                                     </button>
                                                 </div>
                                             </td>
@@ -796,58 +803,58 @@ export const ContentDataInsight: React.FC = () => {
                                         {/* EXPANDED ROW DETAIL */}
                                         {expandedRowId === item.id && (
                                             <tr className="bg-purple-50/30 animate-in slide-in-from-top-2 duration-200">
-                                                <td colSpan={6} className="p-6 border-b-2 border-slate-100">
-                                                    <div className="flex flex-col lg:flex-row gap-6">
+                                                <td colSpan={6} className="p-3 sm:p-4 md:p-6 border-b-2 border-slate-100">
+                                                    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
                                                         {/* Left: Detailed Metrics with NEW FORMULA */}
-                                                        <div className="flex-1 space-y-4">
+                                                        <div className="flex-1 space-y-2 sm:space-y-4">
                                                             <div className="flex justify-between items-center">
-                                                                <h4 className="font-bold text-slate-800 flex items-center gap-2"><TrendingUp size={18} className="text-accent" /> Detailed Metrics</h4>
+                                                                <h4 className="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-2"><TrendingUp size={14} sm:size={18} className="text-accent" /> Details</h4>
                                                                 {(item.metrics as any)?.isManual && (
-                                                                    <span className="text-[10px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-200">
-                                                                        Data Manual
+                                                                    <span className="text-[8px] sm:text-[10px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-200">
+                                                                        Manual
                                                                     </span>
                                                                 )}
                                                             </div>
                                                             {item.metrics ? (
-                                                                <div className="grid grid-cols-2 gap-4">
-                                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                                                                    <div className="bg-white p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                                         <div className="absolute top-0 right-0 p-1">
-                                                                            <TrendingUp size={64} className="text-slate-50 opacity-50 -rotate-12" />
+                                                                            <TrendingUp size={40} className="text-slate-50 opacity-50 -rotate-12" />
                                                                         </div>
-                                                                        <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                            <span className="text-xs font-bold text-slate-400 uppercase">Engagement Rate (ER)</span>
+                                                                        <div className="flex justify-between items-start mb-1 sm:mb-2 relative z-10">
+                                                                            <span className="text-[7px] sm:text-xs font-bold text-slate-400 uppercase">ER</span>
                                                                         </div>
-                                                                        <p className="text-3xl font-black text-slate-800 relative z-10">
+                                                                        <p className="text-xl sm:text-3xl font-black text-slate-800 relative z-10">
                                                                             {calculateER(item.metrics).toFixed(2)}%
                                                                         </p>
-                                                                        <p className="text-[10px] text-slate-400 mt-1 relative z-10 font-medium">
-                                                                            (Interaksi / Views) x 100%
+                                                                        <p className="text-[7px] sm:text-[10px] text-slate-400 mt-0.5 sm:mt-1 relative z-10 font-medium">
+                                                                            Interaksi/Views
                                                                         </p>
                                                                     </div>
-                                                                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                                    <div className="bg-white p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                                         <div className="absolute top-0 right-0 p-1">
-                                                                            <Zap size={64} className="text-slate-50 opacity-50 -rotate-12" />
+                                                                            <Zap size={40} className="text-slate-50 opacity-50 -rotate-12" />
                                                                         </div>
-                                                                        <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                            <span className="text-xs font-bold text-slate-400 uppercase">Total Interaksi</span>
+                                                                        <div className="flex justify-between items-start mb-1 sm:mb-2 relative z-10">
+                                                                            <span className="text-[7px] sm:text-xs font-bold text-slate-400 uppercase">Total</span>
                                                                         </div>
-                                                                        <p className="text-3xl font-black text-slate-800 relative z-10">
+                                                                        <p className="text-xl sm:text-3xl font-black text-slate-800 relative z-10">
                                                                             {calculateInteractions(item.metrics).toLocaleString()}
                                                                         </p>
-                                                                        <p className="text-[10px] text-slate-400 mt-1 relative z-10 font-medium">
-                                                                            Like + Comment + Share + Save
+                                                                        <p className="text-[7px] sm:text-[10px] text-slate-400 mt-0.5 sm:mt-1 relative z-10 font-medium">
+                                                                            L+C+S+V
                                                                         </p>
                                                                     </div>
                                                                     {/* Additional Stats Display */}
                                                                     {(item.metrics as any).reach > 0 && (
-                                                                        <div className="col-span-2 bg-blue-50 p-3 rounded-lg border border-blue-100 flex justify-between items-center">
-                                                                            <span className="text-xs font-bold text-blue-500 uppercase">Total Reach</span>
-                                                                            <span className="font-black text-blue-900">{(item.metrics as any).reach.toLocaleString()}</span>
+                                                                        <div className="col-span-1 sm:col-span-2 bg-blue-50 p-2 sm:p-3 rounded-lg border border-blue-100 flex justify-between items-center">
+                                                                            <span className="text-[7px] sm:text-xs font-bold text-blue-500 uppercase">Reach</span>
+                                                                            <span className="font-black text-blue-900 text-xs sm:text-sm">{(item.metrics as any).reach.toLocaleString()}</span>
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             ) : (
-                                                                <div className="bg-slate-100 p-6 rounded-xl text-center text-slate-400 italic text-sm">Belum ada data detail. Klik tombol Analyze atau Input Manual.</div>
+                                                                <div className="bg-slate-100 p-3 sm:p-6 rounded-lg sm:rounded-xl text-center text-slate-400 italic text-[8px] sm:text-sm">Belum ada data detail.</div>
                                                             )}
                                                         </div>
 
