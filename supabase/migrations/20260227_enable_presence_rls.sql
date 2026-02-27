@@ -4,6 +4,10 @@
 -- Date: 2026-02-27
 -- =============================================================
 
+-- NOTE: This application uses CUSTOM AUTH (app_users table), not Supabase Auth
+-- Therefore, RLS policies use 'true' for permissive access, with filtering
+-- done at the application layer (React/TypeScript components)
+
 -- Enable RLS on app_users if not already enabled
 ALTER TABLE IF EXISTS public.app_users ENABLE ROW LEVEL SECURITY;
 
@@ -14,19 +18,13 @@ CREATE POLICY "Allow read access for presence tracking" ON public.app_users
 FOR SELECT
 USING (true);
 
--- Allow read access to basic user info and presence data
--- This policy enables the PresenceToast component to receive real-time updates
--- about online_status changes from workspace members
-CREATE POLICY "Allow presence updates" ON public.app_users
-FOR SELECT
-USING (
-  -- Users can always read their own record
-  id = auth.uid()::uuid
-  OR
-  -- Users can read other users' presence data (online_status, last_activity_at)
-  -- This is filtered at the application level by workspace membership
-  true
-);
+-- CRITICAL: Allow users to UPDATE their online_status and last_activity_at
+-- This is needed for UserPresence.tsx to track user's online status
+-- Since we use custom auth, we allow all UPDATE operations (application layer filters)
+CREATE POLICY "Allow users to update their own presence" ON public.app_users
+FOR UPDATE
+USING (true)
+WITH CHECK (true);
 
 -- Ensure app_users is added to realtime publication for real-time subscriptions
 -- Note: This is already done in user_presence_migration.sql, so we use IF NOT EXISTS logic

@@ -136,15 +136,18 @@ export const ContentPlan: React.FC = () => {
             // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
             let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period, profile_links, account_names');
 
-            // Construct filter: Match by owner OR by membership
-            // We use 'or' to combine: owner is current user, OR owner is tenant/admin
-            let filterCondition = `owner_id.eq.${userId}`;
-            if (tenantId && tenantId !== userId) {
-                filterCondition += `,owner_id.eq.${tenantId}`;
+            // Construct OR condition: Match by owner OR by membership (user ID or avatar in members array)
+            // This is the SAME query strategy as Team Management
+            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
+                // Backward compatibility for URL-based avatars
+                orCond += `,members.cs.{"${currentUserAvatar}"}`;
             }
-            
-            // For fetching, we use OR to get all owned + all admin-owned workspaces
-            wsQuery = wsQuery.or(filterCondition);
+            // Also include workspaces owned by the tenant (admin) — ensures invited members see their workspaces
+            if (tenantId && tenantId !== userId) {
+                orCond += `,owner_id.eq.${tenantId}`;
+            }
+            wsQuery = wsQuery.or(orCond);
 
             const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, full_name').eq('id', userId || '').single(),
@@ -184,6 +187,7 @@ export const ContentPlan: React.FC = () => {
 
             // 4. Merge & Access Control — check membership by user ID, avatar, or ownership
             // CRITICAL FIX: Include workspaces where user is member (in members array)
+            // This matches Team Management filtering logic
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
                     const isOwner = ws.owner_id === userId || ws.owner_id === tenantId;
