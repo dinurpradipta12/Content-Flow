@@ -146,7 +146,7 @@ export const TeamManagement: React.FC = () => {
 
             // 1. Fetch Workspaces
             // OPTIMIZATION: Select only needed columns
-            let wsQuery = supabase.from('workspaces').select('id, name, owner_id, members, admin_id, description');
+            let wsQuery = supabase.from('workspaces').select('id, name, owner_id, members, admin_id, description, logo_url');
 
             // Construct OR condition safely: Avoid massive base64 strings in URL
             let orCond = `owner_id.eq.${currentUserId},members.cs.{"${currentUserId}"}`;
@@ -718,9 +718,17 @@ export const TeamManagement: React.FC = () => {
                                             }`}
                                     >
                                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                                            <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg bg-pink-500/10 border-2 border-pink-500/20 flex items-center justify-center flex-shrink-0">
-                                                <Globe className="text-pink-500" size={16} className="sm:w-5 sm:h-5" />
-                                            </div>
+                                            {(ws as any).logo_url ? (
+                                                <img
+                                                    src={(ws as any).logo_url}
+                                                    alt={ws.name}
+                                                    className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg border-2 border-slate-300 flex-shrink-0 object-contain bg-card p-1"
+                                                />
+                                            ) : (
+                                                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg bg-pink-500/10 border-2 border-pink-500/20 flex items-center justify-center flex-shrink-0">
+                                                    <Globe className="text-pink-500" size={16} className="sm:w-5 sm:h-5" />
+                                                </div>
+                                            )}
                                             <div className="min-w-0">
                                                 <h4 className="font-heading font-black text-foreground truncate text-xs sm:text-sm md:text-base">{ws.name}</h4>
                                                 <p className="text-[10px] sm:text-xs font-bold text-slate-500">{ws.members?.filter((m: string) => m.includes('/') || m.startsWith('data:')).length || 0} Members</p>
