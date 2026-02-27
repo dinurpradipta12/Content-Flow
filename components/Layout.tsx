@@ -1946,21 +1946,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 />
             </div >
 
-            {/* Floating Messages Button (Mobile only, not on messages page) */}
-            {!isSidebarOpen && !location.pathname.startsWith('/messages') && (
-                <button
-                    onClick={() => navigate('/messages')}
-                    className="md:hidden fixed bottom-[84px] right-4 z-40 w-11 h-11 bg-accent text-white rounded-full shadow-hard flex items-center justify-center transition-all active:scale-95"
-                >
-                    <MessageSquare size={18} />
-                    {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white text-[8px] font-black flex items-center justify-center">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                    )}
-                </button>
-            )}
-
             {/* Mobile Nav & Menu (Only visible on small screens) */}
             {
                 !isSidebarOpen && (
@@ -1988,10 +1973,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <CheckCircle size={22} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
                                 <span className="text-[9px] font-bold">Approval</span>
                             </button>
-                            {/* Right: Carousel */}
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/carousel'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/carousel' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <ImageIcon size={22} className={location.pathname === '/carousel' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Design</span>
+                            {/* Right: Messages */}
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/messages'); }} className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/messages' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <div className="relative">
+                                    <MessageSquare size={22} className={location.pathname === '/messages' ? 'fill-accent/20' : ''} />
+                                    {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                </div>
+                                <span className="text-[9px] font-bold">Pesan</span>
                             </button>
                         </nav>
 

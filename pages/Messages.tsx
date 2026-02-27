@@ -829,7 +829,301 @@ export const Messages: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)] gap-0 overflow-hidden">
+        <>
+        {/* ═══════════════════════════════════════════════════════════════════
+            MOBILE VIEW (< md) - Telegram/Slack Style
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div className="block md:hidden flex flex-col h-[calc(100vh-140px)] overflow-hidden animate-in fade-in duration-300">
+            {mobileView === 'list' ? (
+                /* ── Conversation List ── */
+                <div className="flex flex-col h-full">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-1 pb-2 flex-shrink-0">
+                        <h2 className="text-base font-black text-foreground">Pesan</h2>
+                        <div className="flex items-center gap-1">
+                            <button onClick={() => setSidebarTab('groups')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'groups' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Groups</button>
+                            <button onClick={() => setSidebarTab('dm')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'dm' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>DM</button>
+                            <button onClick={() => setSidebarTab('members')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'members' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Anggota</button>
+                        </div>
+                    </div>
+
+                    {/* Workspace filter - horizontal scroll */}
+                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 flex-shrink-0">
+                        {workspaces.map(ws => {
+                            const isSelected = selectedWorkspace?.id === ws.id;
+                            const wsUnread = unreadCounts[ws.id] || 0;
+                            return (
+                                <button key={ws.id} onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
+                                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${isSelected ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
+                                    {ws.logo_url ? <img src={ws.logo_url} alt="" className="w-3.5 h-3.5 rounded object-contain" /> : null}
+                                    <span className="truncate max-w-[80px]">{ws.name}</span>
+                                    {wsUnread > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{wsUnread > 9 ? '9+' : wsUnread}</span>}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Search */}
+                    <div className="relative mb-2 flex-shrink-0">
+                        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
+                        <input type="text" placeholder="Cari..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full bg-muted border border-border rounded-xl py-2 pl-8 pr-3 text-xs font-medium outline-none focus:border-accent text-foreground" />
+                    </div>
+
+                    {/* Conversation List */}
+                    <div className="flex-1 overflow-y-auto space-y-0.5">
+                        {sidebarTab === 'groups' && (
+                            <>
+                                {filteredGroups.map(g => {
+                                    const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
+                                    const unread = unreadCounts[g.id] || 0;
+                                    const isMuted = mutedGroups.has(g.id);
+                                    return (
+                                        <button key={g.id} onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
+                                            className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
+                                            <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                                                {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover rounded-xl" /> : <Hash size={16} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{g.name}</p>
+                                                <p className="text-[10px] text-mutedForeground">{workspaceMembers.length} anggota</p>
+                                            </div>
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                {isMuted && <VolumeX size={10} className="text-mutedForeground" />}
+                                                {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center">{unread}</span>}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                                <button onClick={() => setShowGroupModal(true)}
+                                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl text-mutedForeground hover:text-accent hover:bg-muted transition-all">
+                                    <div className="w-10 h-10 rounded-xl border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={16} /></div>
+                                    <span className="text-sm font-bold">Buat Group Baru</span>
+                                </button>
+                            </>
+                        )}
+
+                        {sidebarTab === 'dm' && dmConversations
+                            .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .map(dm => {
+                                const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
+                                const unread = dmUnread[dm.userId] || 0;
+                                return (
+                                    <button key={dm.userId} onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
+                                        className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
+                                        <div className="relative flex-shrink-0">
+                                            <img src={dm.userAvatar} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
+                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(dm.userStatus)}`} />
+                                        </div>
+                                        <div className="flex-1 min-w-0 text-left">
+                                            <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
+                                            <p className="text-[10px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
+                                        </div>
+                                        {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                                    </button>
+                                );
+                            })}
+
+                        {sidebarTab === 'members' && filteredMembers
+                            .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
+                            .map(u => (
+                                <button key={u.id} onClick={() => {
+                                    if (u.id === currentUser.id) return;
+                                    const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
+                                    setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
+                                }}
+                                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted transition-all">
+                                    <div className="relative flex-shrink-0">
+                                        <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
+                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(u.online_status)}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0 text-left">
+                                        <p className="text-sm font-bold text-foreground truncate">
+                                            {u.full_name}{u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
+                                        </p>
+                                        <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
+                                            {u.online_status === 'online' ? 'Online' : u.online_status === 'idle' ? 'Away' : u.online_status === 'busy' ? 'Sibuk' : 'Offline'}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
+                    </div>
+                </div>
+            ) : (
+                /* ── Chat View (Full Screen) ── */
+                <div className="flex flex-col h-full">
+                    {/* Chat Header */}
+                    <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0 border-b border-border">
+                        <button onClick={() => setMobileView('list')} className="p-1.5 rounded-xl bg-muted text-foreground flex-shrink-0">
+                            <X size={16} />
+                        </button>
+                        {chatMode === 'dm' && activeDM ? (
+                            <>
+                                <div className="relative flex-shrink-0">
+                                    <img src={activeDM.userAvatar} alt="" className="w-8 h-8 rounded-full border border-border object-cover" />
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background ${getStatusColor(activeDM.userStatus)}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-black text-foreground text-sm truncate">{activeDM.userName}</h4>
+                                    <p className="text-[9px] text-mutedForeground flex items-center gap-1"><Lock size={7} /> Terenkripsi</p>
+                                </div>
+                            </>
+                        ) : activeGroup ? (
+                            <>
+                                <div className="w-8 h-8 bg-muted rounded-lg border border-border flex items-center justify-center flex-shrink-0">
+                                    {activeGroup.icon?.startsWith('data:') ? <img src={activeGroup.icon} className="w-full h-full object-cover rounded-lg" /> : <Hash size={14} className="text-accent" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-black text-foreground text-sm truncate">{activeGroup.name}</h4>
+                                    <p className="text-[9px] text-mutedForeground">{workspaceMembers.length} anggota · {onlineCount} online</p>
+                                </div>
+                            </>
+                        ) : null}
+                        {/* Mute + More */}
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                            {chatMode === 'workspace' && activeGroup && (
+                                <button onClick={() => toggleMuteGroup(activeGroup.id)}
+                                    className={`p-1.5 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50' : 'text-mutedForeground hover:bg-muted'}`}>
+                                    {mutedGroups.has(activeGroup.id) ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                                </button>
+                            )}
+                            <div className="relative" ref={chatMoreMenuRef}>
+                                <button onClick={() => setShowChatMoreMenu(!showChatMoreMenu)} className="p-1.5 rounded-xl text-mutedForeground hover:bg-muted transition-colors">
+                                    <MoreVertical size={14} />
+                                </button>
+                                {showChatMoreMenu && (
+                                    <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
+                                        <button onClick={() => { setShowClearChatConfirm(true); setShowChatMoreMenu(false); }}
+                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500">
+                                            <Eraser size={12} /> Hapus Semua Chat
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5" style={CHAT_BG_STYLE}>
+                        {currentMessages.map((msg, idx) => {
+                            const isMe = msg.sender_id === currentUser.id;
+                            const prevMsg = currentMessages[idx - 1];
+                            const showSenderName = !prevMsg || prevMsg.sender_id !== msg.sender_id;
+                            const replyData = msg.metadata?.reply_to;
+                            const reactionGroups = (msg.reactions || []).reduce((acc: any, r: any) => {
+                                if (!acc[r.emoji]) acc[r.emoji] = { count: 0, hasMe: false };
+                                acc[r.emoji].count++;
+                                if (r.user_id === currentUser.id) acc[r.emoji].hasMe = true;
+                                return acc;
+                            }, {});
+                            return (
+                                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
+                                    <div className={`flex gap-1.5 max-w-[80%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                        <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                            {!isMe && showSenderName && (
+                                                <span className="text-[9px] font-black text-mutedForeground mb-0.5 px-1">{msg.sender_name}</span>
+                                            )}
+                                            {replyData && (
+                                                <div className={`text-[9px] px-2 py-0.5 rounded-lg mb-0.5 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
+                                                    <span className="font-black text-accent">{replyData.name}: </span>
+                                                    <span className="text-mutedForeground">{replyData.content?.slice(0, 40)}</span>
+                                                </div>
+                                            )}
+                                            <div className="relative">
+                                                <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe ? 'bg-accent text-white rounded-br-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'}`}>
+                                                    {msg.type === 'image' ? (
+                                                        <button onClick={() => setPreviewImage(msg.content)}>
+                                                            <img src={msg.content} alt="img" className="max-w-[160px] max-h-[160px] rounded-xl object-cover" />
+                                                        </button>
+                                                    ) : (
+                                                        <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
+                                                    )}
+                                                </div>
+                                                {/* Actions on long press / hover */}
+                                                <div className={`absolute top-0 ${isMe ? 'right-full mr-1' : 'left-full ml-1'} hidden group-hover:flex items-center gap-0.5 bg-card border border-border rounded-xl px-1 py-0.5 shadow-sm z-10`}>
+                                                    <button onClick={() => setReplyTo(msg)} className="p-1 hover:text-accent text-mutedForeground"><Reply size={11} /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id); }} className="p-1 hover:text-accent text-mutedForeground"><Smile size={11} /></button>
+                                                    {isMe && <button onClick={() => setShowDeleteConfirm(msg.id)} className="p-1 hover:text-red-500 text-mutedForeground"><Trash2 size={11} /></button>}
+                                                </div>
+                                                {showEmojiPicker === msg.id && (
+                                                    <div ref={emojiPickerRef} className={`absolute z-50 ${isMe ? 'right-0' : 'left-0'} top-full mt-1 bg-card border-2 border-border rounded-2xl p-2 shadow-hard w-48`} onClick={e => e.stopPropagation()}>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {COMMON_EMOJIS.map(e => (
+                                                                <button key={e} onClick={() => handleAddReaction(msg.id, e)} className={`text-base hover:scale-125 transition-transform p-0.5 rounded ${reactionGroups[e]?.hasMe ? 'bg-accent/20' : ''}`}>{e}</button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {Object.keys(reactionGroups).length > 0 && (
+                                                <div className="flex flex-wrap gap-0.5 mt-0.5">
+                                                    {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
+                                                        <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)}
+                                                            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground'}`}>
+                                                            <span>{emoji}</span><span className="font-bold">{data.count}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className={`flex items-center gap-0.5 mt-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                <span className="text-[8px] text-mutedForeground/60">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                {isMe && ((msg.read_by?.length || 0) > 1 ? <CheckCheck size={9} className="text-accent" /> : <Check size={9} className="text-mutedForeground/60" />)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {typingUsers.length > 0 && (
+                            <div className="flex items-center gap-1.5 px-2">
+                                <div className="flex gap-0.5">{[0, 150, 300].map(d => <div key={d} className="w-1.5 h-1.5 bg-mutedForeground rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />)}</div>
+                                <span className="text-[9px] text-mutedForeground italic">{typingUsers.join(', ')} mengetik...</span>
+                            </div>
+                        )}
+                        <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Reply preview */}
+                    {replyTo && (
+                        <div className="px-3 py-1.5 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
+                            <div className="flex items-center gap-1.5 text-xs">
+                                <Reply size={11} className="text-accent" />
+                                <span className="font-black text-accent">{replyTo.sender_name}:</span>
+                                <span className="text-mutedForeground truncate max-w-[150px]">{replyTo.content}</span>
+                            </div>
+                            <button onClick={() => setReplyTo(null)} className="text-mutedForeground"><X size={12} /></button>
+                        </div>
+                    )}
+
+                    {/* Input */}
+                    <div className="px-2 py-2 border-t border-border flex-shrink-0 bg-card">
+                        <div className="flex items-end gap-1.5 bg-muted border border-border rounded-2xl px-3 py-2 focus-within:border-accent transition-colors">
+                            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                            <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><ImageIcon size={18} /></button>
+                            <input type="text" value={input} onChange={handleInputChange}
+                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                placeholder={chatMode === 'dm' ? `Pesan ke ${activeDM?.userName}...` : `Pesan ke #${activeGroup?.name}...`}
+                                className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground py-0.5" />
+                            <button onClick={() => setShowInputEmoji(!showInputEmoji)} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><Smile size={18} /></button>
+                            <button onClick={() => handleSendMessage()} disabled={!input.trim()}
+                                className="w-8 h-8 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 flex-shrink-0">
+                                <Send size={14} />
+                            </button>
+                        </div>
+                        {showInputEmoji && (
+                            <div ref={inputEmojiRef} className="absolute bottom-full right-2 mb-2 bg-card border-2 border-border rounded-2xl p-2 shadow-hard w-48 z-50">
+                                <div className="flex flex-wrap gap-1">{COMMON_EMOJIS.map(e => <button key={e} onClick={() => { setInput(prev => prev + e); setShowInputEmoji(false); }} className="text-base hover:scale-125 transition-transform p-0.5">{e}</button>)}</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            DESKTOP VIEW (≥ md) - Original Layout
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div className="hidden md:flex flex-col h-[calc(100vh-120px)] gap-0 overflow-hidden">
 
             {/* ── Chat Notification Popup ── */}
             {chatNotifPopup && (
@@ -903,8 +1197,8 @@ export const Messages: React.FC = () => {
                 </div>
             )}
 
-            {/* ── Stats Cards ── */}
-            <div className={`${mobileView === 'chat' ? 'hidden' : 'grid'} grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 flex-shrink-0`}>
+            {/* ── Stats Cards ── (Desktop only) */}
+            <div className="hidden md:grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 flex-shrink-0">
                 <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
                     <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
                         <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
@@ -1649,5 +1943,6 @@ export const Messages: React.FC = () => {
                 </div>
             </Modal>
         </div>
+        </>
     );
 };
