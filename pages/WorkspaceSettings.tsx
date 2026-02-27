@@ -283,7 +283,7 @@ export const WorkspaceSettings: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 sm:gap-4 md:gap-6">
                 <div>
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-heading font-black text-foreground tracking-tighter uppercase italic">
+                    <h2 className="text-base sm:text-3xl md:text-4xl lg:text-6xl font-heading font-black text-foreground tracking-tighter uppercase italic">
                         Workspace Settings
                     </h2>
                     <p className="text-mutedForeground font-bold mt-1 sm:mt-2 pl-1 border-l-4 border-accent text-xs sm:text-sm md:text-base">Configurasi Global & Pusat Kendali Developer.</p>

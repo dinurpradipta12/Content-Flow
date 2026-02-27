@@ -7,7 +7,7 @@ import {
     Users, Trash2, RefreshCw, Loader2, Shield, UserPlus, Hash, Mail, Key, Globe,
     Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search,
     ShieldCheck, ShieldX, AlertTriangle, TrendingUp, UserCheck, Bell, UserMinus,
-    ArrowRight, Activity
+    ArrowRight, Activity, X
 } from 'lucide-react';
 import { useAppConfig } from '../components/AppConfigProvider';
 import bcrypt from 'bcryptjs';
@@ -92,6 +92,7 @@ export const UserManagement: React.FC = () => {
     });
     const [formError, setFormError] = useState('');
     const [formSuccess, setFormSuccess] = useState('');
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -523,11 +524,11 @@ export const UserManagement: React.FC = () => {
                     </div>
 
                     {/* Summary Strategy Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                         {/* Card 1: Total Users */}
                         <div onClick={() => setIsGrowthModalOpen(true)}
-                            className="bg-card dark:bg-blue-600 p-3 sm:p-4 md:p-5 rounded-lg sm:rounded-2xl border-3 sm:border-4 border-slate-900 dark:border-blue-400 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] dark:hover:shadow-[8px_8px_0px_#1e293b] transition-all cursor-pointer group">
-                            <div className="flex justify-between items-start mb-4">
+                            className="bg-card dark:bg-blue-600 p-2.5 sm:p-4 md:p-5 rounded-lg sm:rounded-2xl border-2 sm:border-4 border-slate-900 dark:border-blue-400 shadow-hard hover:-translate-y-1 transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start mb-2 sm:mb-4">
                                 <div className="w-10 h-10 bg-blue-100 dark:bg-blue-500 rounded-xl flex items-center justify-center border-2 border-slate-900 dark:border-blue-300">
                                     <Users className="text-blue-600 dark:text-white" size={20} />
                                 </div>
@@ -592,8 +593,57 @@ export const UserManagement: React.FC = () => {
                     {/* Main: Form + Table side-by-side */}
                     <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
 
-                        {/* ===== REGISTRATION FORM ===== */}
-                        <div className="w-full lg:w-[380px] shrink-0">
+                        {/* Mobile: Undang button */}
+                        <div className="flex lg:hidden mb-2">
+                            <button onClick={() => setShowRegisterModal(true)}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-yellow-300 border-2 border-slate-900 rounded-xl text-sm font-black text-slate-900 shadow-hard active:translate-y-0.5 active:shadow-none transition-all">
+                                <UserPlus size={16} /> Undang Anggota Baru
+                            </button>
+                        </div>
+
+                        {/* Mobile Register Modal */}
+                        {showRegisterModal && (
+                            <div className="fixed inset-0 bg-black/50 z-[9999] flex items-end lg:hidden" onClick={() => setShowRegisterModal(false)}>
+                                <div className="bg-card w-full rounded-t-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                                    <div className="w-10 h-1 bg-border rounded-full mx-auto mt-3 mb-4" />
+                                    <div className="px-5 pb-2 border-b border-border flex items-center justify-between">
+                                        <h3 className="text-base font-black text-foreground">Undang Anggota</h3>
+                                        <button onClick={() => setShowRegisterModal(false)} className="p-1.5 rounded-lg bg-muted text-mutedForeground"><X size={16} /></button>
+                                    </div>
+                                    <form onSubmit={async (e) => { await handleRegister(e); if (!formError) setShowRegisterModal(false); }} className="p-5 space-y-3">
+                                        {formError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-bold p-3 rounded-xl">{formError}</div>}
+                                        {formSuccess && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold p-3 rounded-xl">{formSuccess}</div>}
+                                        <div>
+                                            <label className="block text-xs font-bold text-foreground mb-1">Nama Lengkap</label>
+                                            <input type="text" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
+                                                className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" placeholder="Nama Lengkap" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-foreground mb-1">Email</label>
+                                            <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                                                className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" placeholder="user@gmail.com" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-foreground mb-1">Username</label>
+                                            <input type="text" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))}
+                                                className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" placeholder="contoh: andi_dev" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-foreground mb-1">Password Sementara</label>
+                                            <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                                                className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" placeholder="Min. 6 karakter" />
+                                        </div>
+                                        <button type="submit" disabled={registering}
+                                            className="w-full py-3 bg-yellow-300 border-2 border-slate-900 rounded-xl text-sm font-black text-slate-900 shadow-hard disabled:opacity-50 flex items-center justify-center gap-2">
+                                            {registering ? <><Loader2 size={14} className="animate-spin" /> Mendaftarkan...</> : <><UserPlus size={14} /> Daftarkan User</>}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ===== REGISTRATION FORM (Desktop only) ===== */}
+                        <div className="hidden lg:block w-full lg:w-[380px] shrink-0">
                             <div className="bg-card rounded-2xl border-4 border-slate-900 overflow-hidden sticky top-6 shadow-hard transition-colors">
                                 <div className="p-5 pb-4 border-b-4 border-slate-900 bg-yellow-300 relative">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 rounded-full blur-xl mix-blend-overlay"></div>

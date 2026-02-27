@@ -650,6 +650,23 @@ export const TeamManagement: React.FC = () => {
 
     return (
         <div className="space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
+            {/* Mobile: Workspace filter pills */}
+            {workspaces.length > 0 && (
+                <div className="flex lg:hidden gap-1.5 overflow-x-auto no-scrollbar pb-1 flex-shrink-0">
+                    <button onClick={() => setSelectedWorkspace(null)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${!selectedWorkspace ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
+                        Semua
+                    </button>
+                    {workspaces.map(ws => (
+                        <button key={ws.id} onClick={() => setSelectedWorkspace(ws)}
+                            className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspace?.id === ws.id ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
+                            {(ws as any).logo_url && <img src={(ws as any).logo_url} alt="" className="w-3 h-3 rounded object-contain" />}
+                            <span className="truncate max-w-[80px]">{ws.name}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {/* Page Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 lg:gap-6 pb-1 sm:pb-2">
                 <div className="min-w-0">
