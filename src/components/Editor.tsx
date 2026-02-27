@@ -536,6 +536,12 @@ export const Editor: React.FC = () => {
             updateLayers(); saveCanvas(); addToHistory();
         });
 
+        // Global Event Listeners for External Controls (Undo/Redo)
+        const undoListener = () => handleUndo();
+        const redoListener = () => handleRedo();
+        window.addEventListener('canvas:undo', undoListener);
+        window.addEventListener('canvas:redo', redoListener);
+
         // Mouse Wheel Zoom (Alt + Scroll)
         canvas.on('mouse:wheel', (opt) => {
             if (!opt.e.altKey) return;
@@ -987,6 +993,8 @@ export const Editor: React.FC = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('paste', handleSystemPaste);
+            window.removeEventListener('canvas:undo', undoListener);
+            window.removeEventListener('canvas:redo', redoListener);
             canvas.dispose();
         };
     }, [currentPageIndex, referenceData]);

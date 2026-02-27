@@ -331,15 +331,20 @@ export const TeamManagement: React.FC = () => {
 
         try {
             const hashedPassword = bcrypt.hashSync(inviteForm.password, 10);
+            // IMPORTANT: Generate synthetic email untuk migration later
+            const syntheticEmail = `${inviteForm.username.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
             let insertData: any = {
                 full_name: inviteForm.full_name,
                 username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
                 password: hashedPassword,
                 role: 'Member',
                 avatar_url: avatarUrl,
+                email: syntheticEmail, // Synthetic email untuk Supabase Auth migration
                 is_active: true,
                 is_verified: true, // Admin-invited users are auto-verified
                 subscription_start: new Date().toISOString(),
+                subscription_package: 'Free', // Default package untuk invited user
+                subscription_end: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default 30 days
                 parent_user_id: adminId, // Track parent admin
                 invited_by: adminName // Track who invited
             };
@@ -377,15 +382,20 @@ export const TeamManagement: React.FC = () => {
             console.error('Invite error', error);
             if (error?.message?.includes('admin_id') || error?.message?.includes('parent_user_id') || error?.message?.includes('invited_by')) {
                 // Temporary fallback if columns are not yet migrated
+                // IMPORTANT: Include email and subscription_package to avoid migration failure on login
+                const syntheticEmail = `${inviteForm.username.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
                 let insertData = {
                     full_name: inviteForm.full_name,
                     username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
                     password: inviteForm.password,
                     role: 'Member',
                     avatar_url: avatarUrl,
+                    email: syntheticEmail, // ADD: Synthetic email untuk migration
                     is_active: true,
                     is_verified: true,
-                    subscription_start: new Date().toISOString()
+                    subscription_start: new Date().toISOString(),
+                    subscription_package: 'Free', // ADD: Default package untuk invited user
+                    subscription_end: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString() // Default 30 hari
                 };
                 const { data: fallbackUser, error: fallbackError } = await supabase.from('app_users').insert([insertData]).select().single();
                 if (!fallbackError && fallbackUser) {

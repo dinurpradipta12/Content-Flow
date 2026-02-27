@@ -119,13 +119,24 @@ export const Login: React.FC = () => {
                             });
 
                             if (signUpError) {
-                                // If email already exists in auth, try signing in directly
-                                if (signUpError.message.includes('already registered')) {
+                                // Handle email rate limit and already registered cases
+                                if (signUpError.message.includes('already registered') || signUpError.message.includes('rate limit')) {
+                                    // Try signing in directly if email already exists
                                     const { error: retryError } = await supabase.auth.signInWithPassword({
                                         email: migrationEmail,
                                         password: trimmedPassword
                                     });
                                     if (retryError) {
+                                        // If direct signin fails, update app_users email and show success
+                                        // This handles case where auth already exists but app_users doesn't have email
+                                        try {
+                                            await supabase.from('app_users').update({ 
+                                                email: migrationEmail,
+                                                subscription_package: legacyUser.subscription_package || 'Free'
+                                            }).eq('id', legacyUser.id);
+                                        } catch (updateErr) {
+                                            console.warn("Email update warning:", updateErr);
+                                        }
                                         throw new Error(`Login gagal: ${retryError.message}`);
                                     }
                                     navigate('/');
@@ -135,14 +146,20 @@ export const Login: React.FC = () => {
                                 throw new Error(`Gagal migrasi: ${signUpError.message}`);
                             }
 
-                            // Update app_users with email so future login works seamlessly
-                            if (!legacyUser.email || !legacyUser.email.includes('@')) {
-                                await supabase.from('app_users').update({ email: migrationEmail }).eq('id', legacyUser.id);
+                            // Update app_users with email and ensure subscription_package is set
+                            if (!legacyUser.email || !legacyUser.email.includes('@') || !legacyUser.subscription_package) {
+                                await supabase.from('app_users').update({ 
+                                    email: migrationEmail,
+                                    subscription_package: legacyUser.subscription_package || 'Free'
+                                }).eq('id', legacyUser.id);
                             }
 
                             // Update app_users ID to match auth user ID if they differ
                             if (signUpData?.user && signUpData.user.id !== legacyUser.id) {
-                                await supabase.from('app_users').update({ email: migrationEmail }).eq('id', legacyUser.id);
+                                await supabase.from('app_users').update({ 
+                                    email: migrationEmail,
+                                    subscription_package: legacyUser.subscription_package || 'Free'
+                                }).eq('id', legacyUser.id);
                             }
 
                             setError("✅ Berhasil! Akun Anda telah ditingkatkan ke sistem keamanan baru. Silakan Masuk Kembali sekarang.");
