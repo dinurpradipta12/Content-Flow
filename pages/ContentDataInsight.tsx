@@ -451,7 +451,201 @@ export const ContentDataInsight: React.FC = () => {
     };
 
     return (
-        <div className="space-y-2 sm:space-y-4 md:space-y-6 flex-1 flex flex-col min-h-0">
+        <>
+        {/* ═══════════════════════════════════════════════════════════════════
+            MOBILE VIEW (< md) - ClickUp/Asana Style
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div className="block md:hidden flex flex-col h-full pb-24 animate-in fade-in duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+                <div>
+                    <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['insight']?.title || 'Content Insight'}</h2>
+                    <p className="text-[10px] text-mutedForeground">{filteredData.length} konten</p>
+                </div>
+                <button onClick={fetchData} disabled={loading} className="p-2 rounded-xl bg-muted text-mutedForeground hover:text-foreground transition-colors">
+                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                </button>
+            </div>
+
+            {/* Summary Stats - 2x2 grid */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="bg-blue-500 rounded-xl p-3 text-white">
+                    <p className="text-[9px] font-black uppercase tracking-wider opacity-80 mb-0.5">Total Reach</p>
+                    <p className="text-xl font-black">{summaryStats.reach.toLocaleString()}</p>
+                </div>
+                <div className="bg-pink-500 rounded-xl p-3 text-white">
+                    <p className="text-[9px] font-black uppercase tracking-wider opacity-80 mb-0.5">Engagement Rate</p>
+                    <p className="text-xl font-black">{summaryStats.er.toFixed(2)}%</p>
+                </div>
+                <div className="bg-purple-600 rounded-xl p-3 text-white">
+                    <p className="text-[9px] font-black uppercase tracking-wider opacity-80 mb-0.5">Interactions</p>
+                    <p className="text-xl font-black">{summaryStats.interactions.toLocaleString()}</p>
+                </div>
+                <div className="bg-yellow-400 rounded-xl p-3 text-slate-900">
+                    <p className="text-[9px] font-black uppercase tracking-wider opacity-70 mb-0.5">Views</p>
+                    <p className="text-xl font-black">{summaryStats.views.toLocaleString()}</p>
+                </div>
+            </div>
+
+            {/* Platform Filter */}
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-3 flex-shrink-0">
+                {['all', Platform.INSTAGRAM, Platform.TIKTOK, Platform.YOUTUBE, Platform.LINKEDIN, Platform.FACEBOOK].map(p => (
+                    <button key={p} onClick={() => setFilterPlatform(p)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${filterPlatform === p ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                        {p === 'all' ? 'Semua' : p}
+                    </button>
+                ))}
+            </div>
+
+            {/* Content List */}
+            <div className="flex-1 overflow-y-auto space-y-2">
+                {loading ? (
+                    <div className="flex items-center justify-center h-32">
+                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : filteredData.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
+                        <BarChart2 size={28} className="text-accent/40 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-foreground">Belum ada data insight</p>
+                        <p className="text-xs text-mutedForeground mt-1">Konten Published akan muncul di sini</p>
+                    </div>
+                ) : (
+                    filteredData.map(item => {
+                        const m = item.metrics || {};
+                        const er = calculateER(m);
+                        const interactions = calculateInteractions(m);
+                        const hasMetrics = m.views || interactions;
+                        const isExpanded = expandedRowId === item.id;
+                        return (
+                            <div key={item.id} className="bg-card border border-border rounded-2xl overflow-hidden">
+                                {/* Card Header */}
+                                <button onClick={() => toggleRow(item.id)} className="w-full flex items-start gap-3 p-3 text-left">
+                                    <div className={`w-2 self-stretch rounded-full flex-shrink-0 ${item.platform === Platform.INSTAGRAM ? 'bg-pink-500' : item.platform === Platform.TIKTOK ? 'bg-slate-800' : item.platform === Platform.YOUTUBE ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                            <span className="text-[9px] font-black text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{item.platform}</span>
+                                            {(m as any)?.isManual && <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Manual</span>}
+                                        </div>
+                                        <p className="text-xs font-bold text-foreground line-clamp-2">{item.title}</p>
+                                        <p className="text-[9px] text-mutedForeground mt-0.5">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                                    </div>
+                                    <div className="flex-shrink-0 text-right">
+                                        {hasMetrics ? (
+                                            <>
+                                                <p className="text-sm font-black text-foreground">{er.toFixed(1)}%</p>
+                                                <p className="text-[9px] text-mutedForeground">ER</p>
+                                            </>
+                                        ) : (
+                                            <span className="text-[9px] text-mutedForeground">No data</span>
+                                        )}
+                                    </div>
+                                </button>
+
+                                {/* Expanded Metrics */}
+                                {isExpanded && (
+                                    <div className="px-3 pb-3 border-t border-border">
+                                        {hasMetrics ? (
+                                            <div className="grid grid-cols-3 gap-2 mt-2 mb-3">
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-foreground">{(m.views || 0).toLocaleString()}</p>
+                                                    <p className="text-[8px] text-mutedForeground">Views</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-foreground">{(m.likes || 0).toLocaleString()}</p>
+                                                    <p className="text-[8px] text-mutedForeground">Likes</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-foreground">{(m.comments || 0).toLocaleString()}</p>
+                                                    <p className="text-[8px] text-mutedForeground">Comments</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-foreground">{(m.shares || 0).toLocaleString()}</p>
+                                                    <p className="text-[8px] text-mutedForeground">Shares</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-foreground">{(m.saves || 0).toLocaleString()}</p>
+                                                    <p className="text-[8px] text-mutedForeground">Saves</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-foreground">{interactions.toLocaleString()}</p>
+                                                    <p className="text-[8px] text-mutedForeground">Total Eng</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-mutedForeground text-center py-2">Belum ada data metrics</p>
+                                        )}
+                                        <div className="flex gap-2">
+                                            <button onClick={(e) => openManualInput(e, item)}
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-accent text-white rounded-xl text-xs font-bold">
+                                                <Edit3 size={12} /> Input Manual
+                                            </button>
+                                            {item.contentLink && (
+                                                <button onClick={(e) => handleAnalyze(e, item.id, item.contentLink || '')}
+                                                    disabled={analyzingId === item.id}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-muted border border-border text-foreground rounded-xl text-xs font-bold disabled:opacity-50">
+                                                    {analyzingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                                                    {analyzingId === item.id ? 'Analisa...' : 'Auto Analisa'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+
+            {/* Manual Input Modal - Mobile optimized */}
+            {isManualModalOpen && selectedItemForInput && (
+                <div className="fixed inset-0 bg-black/50 z-[9999] flex items-end" onClick={() => setIsManualModalOpen(false)}>
+                    <div className="bg-card w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
+                        <h3 className="text-base font-black text-foreground mb-1">Input Metrics Manual</h3>
+                        <p className="text-xs text-mutedForeground mb-4 line-clamp-1">{selectedItemForInput.title}</p>
+                        <form onSubmit={saveManualMetrics} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { key: 'views', label: 'Views', icon: <Eye size={14} /> },
+                                    { key: 'likes', label: 'Likes', icon: <Heart size={14} /> },
+                                    { key: 'comments', label: 'Comments', icon: <MessageSquare size={14} /> },
+                                    { key: 'shares', label: 'Shares', icon: <Share2 size={14} /> },
+                                    { key: 'saves', label: 'Saves', icon: <Bookmark size={14} /> },
+                                    { key: 'reach', label: 'Reach', icon: <Globe size={14} /> },
+                                ].map(({ key, label, icon }) => (
+                                    <div key={key} className="bg-muted rounded-xl p-3">
+                                        <div className="flex items-center gap-1.5 mb-1.5 text-mutedForeground">
+                                            {icon}
+                                            <span className="text-[10px] font-black uppercase tracking-wider">{label}</span>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={manualMetrics[key as keyof typeof manualMetrics]}
+                                            onChange={e => setManualMetrics(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
+                                            className="w-full bg-transparent text-lg font-black text-foreground outline-none border-b-2 border-border focus:border-accent transition-colors"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setIsManualModalOpen(false)}
+                                    className="flex-1 py-3 bg-muted text-foreground rounded-xl text-sm font-bold">Batal</button>
+                                <button type="submit"
+                                    className="flex-1 py-3 bg-accent text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                                    <Save size={14} /> Simpan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            DESKTOP VIEW (≥ md) - Original Layout
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div className="hidden md:flex space-y-2 sm:space-y-4 md:space-y-6 flex-1 flex-col min-h-0">
             {/* ... Header ... */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2">
                 <div>
@@ -998,5 +1192,6 @@ export const ContentDataInsight: React.FC = () => {
                 </div>
             )}
         </div>
+        </>
     );
 };
