@@ -60,6 +60,8 @@ export const ChatNotificationListener: React.FC = () => {
     const popupTimerRef = useRef<any>(null);
     const groupChannelRef = useRef<any>(null);
     const dmChannelRef = useRef<any>(null);
+    // Cache user info to avoid repeated DB calls
+    const userCacheRef = useRef<Record<string, { name: string; avatar: string }>>({});
 
     // Get muted groups from localStorage
     const getMutedGroups = (): Set<string> => {
@@ -74,29 +76,52 @@ export const ChatNotificationListener: React.FC = () => {
         popupTimerRef.current = setTimeout(() => setPopup(null), 8000);
     };
 
+    // Fetch user info from DB with cache
+    const getUserInfo = async (userId: string): Promise<{ name: string; avatar: string }> => {
+        if (userCacheRef.current[userId]) return userCacheRef.current[userId];
+        const { data } = await supabase.from('app_users').select('full_name, avatar_url').eq('id', userId).single();
+        const info = { name: data?.full_name || 'Pengguna', avatar: data?.avatar_url || '' };
+        userCacheRef.current[userId] = info;
+        return info;
+    };
+
     useEffect(() => {
         if (!currentUser.id) return;
 
         // ── Group chat messages listener ──────────────────────────────────────
         if (groupChannelRef.current) supabase.removeChannel(groupChannelRef.current);
         const groupChannel = supabase.channel('global-chat-notif-listener')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workspace_chat_messages' }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'workspace_chat_messages' }, async (payload) => {
                 const msg = payload.new as any;
-                // Only show if message is from someone else
                 if (msg.sender_id === currentUser.id) return;
-                // Don't show if user is already on messages page (Messages.tsx handles it there)
                 if (isOnMessagesPage) return;
 
                 const mutedGroups = getMutedGroups();
                 if (msg.group_id && mutedGroups.has(msg.group_id)) return;
 
+                // Get sender info — prefer from message, fallback to DB
+                let senderName = msg.sender_name;
+                let senderAvatar = msg.sender_avatar || '';
+                if (!senderName || senderName === 'Seseorang') {
+                    const info = await getUserInfo(msg.sender_id);
+                    senderName = info.name;
+                    senderAvatar = senderAvatar || info.avatar;
+                }
+
+                // Get group name
+                let groupName: string | undefined;
+                if (msg.group_id) {
+                    const { data: grp } = await supabase.from('workspace_chat_groups').select('name').eq('id', msg.group_id).single();
+                    groupName = grp?.name;
+                }
+
                 playChatSound();
                 showPopup({
                     id: msg.id,
-                    senderName: msg.sender_name || 'Seseorang',
-                    senderAvatar: msg.sender_avatar || '',
+                    senderName,
+                    senderAvatar,
                     content: msg.content || '',
-                    groupName: undefined, // We don't have group name here easily
+                    groupName,
                     isDM: false,
                     senderId: msg.sender_id,
                     groupId: msg.group_id,
@@ -108,22 +133,29 @@ export const ChatNotificationListener: React.FC = () => {
         // ── DM messages listener ──────────────────────────────────────────────
         if (dmChannelRef.current) supabase.removeChannel(dmChannelRef.current);
         const dmChannel = supabase.channel('global-dm-notif-listener')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, async (payload) => {
                 const msg = payload.new as any;
-                // Only show if this message is for current user and from someone else
                 if (msg.recipient_id !== currentUser.id) return;
                 if (msg.sender_id === currentUser.id) return;
-                // Don't show if user is already on messages page
                 if (isOnMessagesPage) return;
 
                 const key = getDMKey(currentUser.id, msg.sender_id);
                 const decryptedContent = msg.type === 'text' ? decryptDM(msg.content, key) : msg.content;
 
+                // Get sender info — prefer from message, fallback to DB
+                let senderName = msg.sender_name;
+                let senderAvatar = msg.sender_avatar || '';
+                if (!senderName || senderName === 'Seseorang') {
+                    const info = await getUserInfo(msg.sender_id);
+                    senderName = info.name;
+                    senderAvatar = senderAvatar || info.avatar;
+                }
+
                 playChatSound();
                 showPopup({
                     id: msg.id,
-                    senderName: msg.sender_name || 'Seseorang',
-                    senderAvatar: msg.sender_avatar || '',
+                    senderName,
+                    senderAvatar,
                     content: decryptedContent,
                     isDM: true,
                     senderId: msg.sender_id,
