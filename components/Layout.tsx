@@ -1298,9 +1298,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Main Wrapper-Uses padding left instead of flex width sharing */}
                 <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
                     <PresenceToast />
-                    <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-12 sm:h-14 md:h-16 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-2 sm:px-3 md:px-4 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                    <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-14 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={18} /></button>
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={22} /></button>
 
                             {/* Mobile Logo replacing Date/Time */}
                             <div className="md:hidden flex items-center">
@@ -1317,10 +1317,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
 
                             <div className="hidden md:flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
-                                <span className="text-[8px] lg:text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
+                                <span className="text-[10px] lg:text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
                                     {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </span>
-                                <span className="text-xs lg:text-sm font-black text-slate-900 font-heading tracking-tight leading-none">
+                                <span className="text-sm lg:text-lg font-black text-slate-900 font-heading tracking-tight leading-none">
                                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                                 </span>
                             </div>
@@ -1328,14 +1328,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                         <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
                             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 py-1 relative">
-                                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border text-[8px] sm:text-[10px] font-bold transition-colors ${getNetworkColor()}`}>
-                                    <Wifi size={12} className="sm:w-3.5 sm:h-3.5 md:w-3.5 md:h-3.5" />
+                                <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-[10px] sm:text-[11px] font-bold transition-colors ${getNetworkColor()}`}>
+                                    <Wifi size={14} className="sm:w-4 sm:h-4 md:w-4 md:h-4" />
                                     <span className="hidden sm:inline">{getNetworkLabel()}</span>
                                 </div>
                                 <div className="flex items-center gap-1 relative" ref={notificationRef}>
-                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-1.5 sm:p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
-                                        <Bell size={16} className="sm:w-4.5 sm:h-4.5 md:w-4.5 md:h-4.5" />
-                                        {unreadCount > 0 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-red-500 rounded-full border-2 border-white text-[7px] sm:text-[9px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 sm:p-2.5 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500 hover:text-accent hover:bg-slate-500/10'} `}>
+                                        <Bell size={20} className="sm:w-5 sm:h-5 md:w-5.5 md:h-5.5" />
+                                        {unreadCount > 0 && <span className="absolute top-0.5 right-0.5 w-4 h-4 sm:w-4.5 sm:h-4.5 bg-red-500 rounded-full border-2 border-white text-[8px] sm:text-[10px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
                                     </button>
                                     {isNotificationOpen && (
                                         <div className="absolute top-full right-0 mt-2 sm:mt-3 w-[90vw] max-w-sm md:max-w-md lg:w-[400px] bg-card border-2 border-border shadow-hard rounded-lg sm:rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
@@ -1371,24 +1371,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         </div>
                                     )}
                                 </div>
-                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 hover:text-accent hover:bg-slate-500/10 rounded-full transition-all"><Settings size={18} /></button>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 text-slate-500 hover:text-accent hover:bg-slate-500/10 rounded-full transition-all"><Settings size={22} /></button>
                             </div>
 
                             <div className="h-6 w-[2px] bg-slate-100"></div>
-                            <div className="flex items-center gap-3 pl-1 cursor-pointer group" onClick={() => navigate('/profile')}>
+                            <div className="flex items-center gap-3 md:gap-4 pl-1 cursor-pointer group" onClick={() => navigate('/profile')}>
                                 <div className="text-right hidden md:block">
-                                    <p className="font-bold text-xs text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
-                                    <p className="text-[10px] text-slate-500 font-medium">{userProfile.jobTitle || userProfile.role}</p>
+                                    <p className="font-bold text-sm md:text-base text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
+                                    <p className="text-[11px] md:text-xs text-slate-500 font-bold">{userProfile.jobTitle || userProfile.role}</p>
                                 </div>
                                 <div className="relative">
-                                    <img src={userProfile.avatar} alt="User" className="w-9 h-9 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
-                                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+                                    <img src={userProfile.avatar} alt="User" className="w-11 h-11 md:w-13 md:h-13 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
+                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                                 </div>
                             </div>
                         </div>
                     </header>
 
-                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-2 sm:p-3 md:px-6 md:py-8 md:pb-8 pb-20'}`}>
+                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-2 sm:p-3 md:px-6 md:py-8 md:pb-8 pb-28'}`}>
                         <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
                             {children}
                         </div>
@@ -1796,27 +1796,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {
                 !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
                     <>
-                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-2 pb-safe pt-2 h-[72px]">
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${location.pathname === '/' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <LayoutDashboard size={20} className={location.pathname === '/' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Dasbor</span>
+                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-2 pb-safe pt-2 h-[84px]">
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-colors ${location.pathname === '/' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <LayoutDashboard size={24} className={location.pathname === '/' ? 'fill-accent/20' : ''} />
+                                <span className="text-[10px] font-bold">Dasbor</span>
                             </button>
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <Layers size={20} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Plan</span>
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <Layers size={24} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
+                                <span className="text-[10px] font-bold">Plan</span>
                             </button>
-                            <div className="relative -top-6">
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className="flex items-center justify-center w-14 h-14 bg-accent text-white rounded-full shadow-[0_8px_16px_rgba(var(--accent),0.4)] border-4 border-background transition-transform active:scale-95">
-                                    <CalendarDays size={22} className="fill-white/20" />
+                            <div className="relative -top-8">
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className="flex items-center justify-center w-16 h-16 bg-accent text-white rounded-full shadow-[0_8px_16px_rgba(var(--accent),0.4)] border-4 border-background transition-transform active:scale-95">
+                                    <CalendarDays size={26} className="fill-white/20" />
                                 </button>
                             </div>
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1 relative transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <CheckCircle size={20} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Approve</span>
+                            <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 relative transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <CheckCircle size={24} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
+                                <span className="text-[10px] font-bold">Approve</span>
                             </button>
-                            <button onClick={() => setShowMobileMenu(!showMobileMenu)} className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${showMobileMenu ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <Menu size={20} />
-                                <span className="text-[9px] font-bold">Menu</span>
+                            <button onClick={() => setShowMobileMenu(!showMobileMenu)} className={`flex flex-col items-center justify-center w-16 h-full gap-1.5 transition-colors ${showMobileMenu ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <Menu size={24} />
+                                <span className="text-[10px] font-bold">Menu</span>
                             </button>
                         </nav>
 

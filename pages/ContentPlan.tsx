@@ -585,11 +585,11 @@ export const ContentPlan: React.FC = () => {
                             <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-4 items-start mb-2 sm:mb-3 md:mb-4 lg:mb-6 relative z-20 pr-2 sm:pr-3">
                                 {/* Left: Logo (Responsive size) */}
                                 {ws.logoUrl ? (
-                                    <div className="ws-logo-box w-16 h-16 sm:w-24 md:w-32 lg:w-[160px] flex-shrink-0 bg-card rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border overflow-hidden p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm">
+                                    <div className="ws-logo-box w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-[160px] lg:h-[160px] flex-shrink-0 bg-card rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border overflow-hidden p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm">
                                         <img src={ws.logoUrl} alt="logo" className="w-full h-full object-contain" />
                                     </div>
                                 ) : (
-                                    <div className="ws-logo-box w-16 h-16 sm:w-24 md:w-32 lg:w-[160px] flex-shrink-0 bg-muted/50 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border flex items-center justify-center p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm text-mutedForeground">
+                                    <div className="ws-logo-box w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-[160px] lg:h-[160px] flex-shrink-0 bg-muted/50 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl border-2 border-border flex items-center justify-center p-0.5 sm:p-1 sm:p-1.5 lg:p-2 shadow-sm text-mutedForeground">
                                         <Layers size={20} className="sm:w-8 sm:h-8 md:w-9 lg:w-10 lg:h-10" />
                                     </div>
                                 )}

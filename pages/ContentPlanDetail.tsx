@@ -326,7 +326,7 @@ const KanbanColumn: React.FC<{
 
     return (
         <div
-            className="flex-shrink-0 min-w-[200px] sm:min-w-[260px] md:min-w-[300px] lg:min-w-[320px] flex flex-col pb-0"
+            className="flex-1 flex-shrink-0 min-w-[320px] sm:min-w-[350px] md:min-w-[380px] lg:min-w-[400px] flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -1226,7 +1226,7 @@ export const ContentPlanDetail: React.FC = () => {
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
                     <div className="flex-1 w-full overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
-                        <div className="flex gap-2 sm:gap-3 md:gap-4 lg:gap-6 items-start min-w-min pl-0 sm:pl-2 pr-2 sm:pr-8">
+                        <div className="flex gap-2 sm:gap-3 md:gap-4 lg:gap-6 items-start min-w-min w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8">
                             {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                                 <KanbanColumn
                                     key={status}
@@ -1246,7 +1246,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     onCardClick={handleCardClick}
                                 />
                             ))}
-                            <div className="w-12 flex-shrink-0 h-full"></div>
+
                         </div>
                     </div>
                 ) : (

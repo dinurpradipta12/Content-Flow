@@ -584,7 +584,7 @@ export const Dashboard: React.FC = () => {
 
                     {/* Welcome Banner */}
                     <div className="mb-0 sm:mb-1 md:mb-2 pt-2 sm:pt-4 md:pt-6 lg:pt-8">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-tight line-clamp-2">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-[1.1] pb-2">
                             {timeInfo.text}, {userName}!
                         </h1>
                         <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-slate-500 font-bold mt-0.5 sm:mt-1 md:mt-2 max-w-2xl leading-snug line-clamp-2">
@@ -594,51 +594,8 @@ export const Dashboard: React.FC = () => {
 
                     {/* Analytics Filtering & Cards */}
                     <div>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+                        <div className="mb-4 sm:mb-6">
                             <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
-
-                            <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2 w-full sm:w-auto">
-                                <select
-                                    className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                    value={filterPlatform}
-                                    onChange={(e) => setFilterPlatform(e.target.value)}
-                                >
-                                    <option value="all">PLATFORM</option>
-                                    {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
-                                        <option key={p} value={p}>{p.toUpperCase()}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                    value={filterWs}
-                                    onChange={(e) => setFilterWs(e.target.value)}
-                                >
-                                    <option value="all">WORKSPACE</option>
-                                    {workspaces.map(ws => (
-                                        <option key={ws.id} value={ws.id}>{ws.name.length > 15 ? ws.name.substring(0, 12) + '...' : ws.name.toUpperCase()}</option>
-                                    ))}
-                                </select>
-                                <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
-                                    <select
-                                        className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                        value={filterMonth}
-                                        onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                                    >
-                                        {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
-                                            <option key={m} value={i}>{m.toUpperCase()}</option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                        value={filterYear}
-                                        onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                                    >
-                                        {[2024, 2025, 2026].map(y => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
@@ -662,7 +619,7 @@ export const Dashboard: React.FC = () => {
                                     <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
                                         <MousePointerClick size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Eng.</span>
+                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Engagement</span>
                                 </div>
                                 <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
                                     <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
@@ -676,7 +633,7 @@ export const Dashboard: React.FC = () => {
                                     <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
                                         <CalendarCheck size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Pub</span>
+                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Published Content</span>
                                 </div>
                                 <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
                                     <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.published}</h3>
@@ -850,7 +807,7 @@ export const Dashboard: React.FC = () => {
 
                                         {/* Middle Section */}
                                         <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6 line-clamp-2 leading-relaxed flex-1">
-                                            {ws.description || "Workspace ini diperuntukan untuk mencatat semua kegiatan atau event yang ada pada task"}
+                                            {ws.description || "Content Plan Workspace yang akan membantu memanajemen konten kamu secara tersistem"}
                                         </p>
 
                                         {/* Divider */}
@@ -891,7 +848,51 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 {/* --- RIGHT DESKTOP COLUMN (4 of 12) --- */}
-                <div className="lg:col-span-4 space-y-2 sm:space-y-3 lg:pt-[220px]">
+                <div className="lg:col-span-4 space-y-4 sm:space-y-6 lg:pt-[115px]">
+
+                    {/* Analytics Filtering shifted here */}
+                    <div className="flex flex-wrap gap-2 w-full justify-end">
+                        <select
+                            className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                            value={filterPlatform}
+                            onChange={(e) => setFilterPlatform(e.target.value)}
+                        >
+                            <option value="all">PLATFORM</option>
+                            {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
+                                <option key={p} value={p}>{p.toUpperCase()}</option>
+                            ))}
+                        </select>
+                        <select
+                            className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                            value={filterWs}
+                            onChange={(e) => setFilterWs(e.target.value)}
+                        >
+                            <option value="all">WORKSPACE</option>
+                            {workspaces.map(ws => (
+                                <option key={ws.id} value={ws.id}>{ws.name.length > 15 ? ws.name.substring(0, 12) + '...' : ws.name.toUpperCase()}</option>
+                            ))}
+                        </select>
+                        <div className="flex gap-2">
+                            <select
+                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                value={filterMonth}
+                                onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                            >
+                                {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
+                                    <option key={m} value={i}>{m.toUpperCase()}</option>
+                                ))}
+                            </select>
+                            <select
+                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                value={filterYear}
+                                onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                            >
+                                {[2024, 2025, 2026].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
                     {/* Religious Card */}
                     <div className="space-y-1.5 sm:space-y-2">
