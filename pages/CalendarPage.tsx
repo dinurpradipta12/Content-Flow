@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -14,7 +14,9 @@ import {
     MoreHorizontal,
     Plus,
     Search,
-    Clock
+    Clock,
+    Palette,
+    Check
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -28,7 +30,35 @@ interface WorkspaceFilter {
     id: string;
     name: string;
     color: string;
+    calendarColor: string; // Custom hex color for calendar
 }
+
+// Default color palette for workspace calendar colors
+const DEFAULT_PALETTE = [
+    '#8b5cf6', // violet
+    '#ec4899', // pink
+    '#f59e0b', // amber
+    '#10b981', // emerald
+    '#3b82f6', // blue
+    '#ef4444', // red
+    '#f97316', // orange
+    '#06b6d4', // cyan
+    '#84cc16', // lime
+    '#6366f1', // indigo
+    '#14b8a6', // teal
+    '#a855f7', // purple
+];
+
+// Get default color based on workspace color theme
+const getDefaultCalendarColor = (colorTheme: string): string => {
+    switch (colorTheme) {
+        case 'violet': return '#8b5cf6';
+        case 'pink': return '#ec4899';
+        case 'yellow': return '#f59e0b';
+        case 'green': return '#10b981';
+        default: return '#8b5cf6';
+    }
+};
 
 export const CalendarPage: React.FC = () => {
     const navigate = useNavigate();
@@ -50,26 +80,58 @@ export const CalendarPage: React.FC = () => {
     const [selectedDateForDay, setSelectedDateForDay] = useState<number | null>(null);
     const [isDayViewOpen, setIsDayViewOpen] = useState(false);
 
+    // Color picker state
+    const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null); // workspace id
+    const [savingColor, setSavingColor] = useState<string | null>(null);
+    const colorPickerRef = useRef<HTMLDivElement>(null);
+
     const userId = localStorage.getItem('user_id');
+    const userAvatar = localStorage.getItem('user_avatar') || '';
 
     useEffect(() => {
         fetchData();
     }, [userId]);
 
+    // Close color picker on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+                setColorPickerOpen(null);
+            }
+        };
+        if (colorPickerOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [colorPickerOpen]);
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch Workspaces
+            // 1. Fetch Workspaces (include calendar_color)
             const { data: wsData } = await supabase
                 .from('workspaces')
-                .select('id, name, color, members, owner_id')
+                .select('id, name, color, calendar_color, members, owner_id')
                 .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`);
 
-            const formattedWorkspaces = (wsData || []).map(ws => ({
-                id: ws.id,
-                name: ws.name,
-                color: ws.color || 'violet'
-            }));
+            const formattedWorkspaces = (wsData || [])
+                .filter(ws => {
+                    // Filter: only workspaces user is owner or member of
+                    if (ws.owner_id === userId) return true;
+                    const members: string[] = ws.members || [];
+                    if (members.includes(userId || '')) return true;
+                    if (userAvatar && members.some((m: string) => {
+                        try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
+                        catch { return m === userAvatar; }
+                    })) return true;
+                    return false;
+                })
+                .map(ws => ({
+                    id: ws.id,
+                    name: ws.name,
+                    color: ws.color || 'violet',
+                    calendarColor: ws.calendar_color || getDefaultCalendarColor(ws.color || 'violet')
+                }));
             setWorkspaces(formattedWorkspaces);
             setSelectedWorkspaces(formattedWorkspaces.map(w => w.id));
 
@@ -78,7 +140,7 @@ export const CalendarPage: React.FC = () => {
                 const wsIds = formattedWorkspaces.map(w => w.id);
                 const { data: items } = await supabase
                     .from('content_items')
-                    .select('*, workspaces(name, color)')
+                    .select('*, workspaces(name, color, calendar_color)')
                     .in('workspace_id', wsIds);
 
                 setContentItems(items || []);
@@ -88,6 +150,39 @@ export const CalendarPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Save workspace calendar color to database
+    const handleSaveCalendarColor = async (wsId: string, color: string) => {
+        setSavingColor(wsId);
+        try {
+            const { error } = await supabase
+                .from('workspaces')
+                .update({ calendar_color: color })
+                .eq('id', wsId);
+
+            if (error) throw error;
+
+            // Update local state
+            setWorkspaces(prev => prev.map(ws =>
+                ws.id === wsId ? { ...ws, calendarColor: color } : ws
+            ));
+            setColorPickerOpen(null);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Warna workspace diperbarui!' } }));
+        } catch (err) {
+            console.error('Error saving calendar color:', err);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menyimpan warna.' } }));
+        } finally {
+            setSavingColor(null);
+        }
+    };
+
+    // Get workspace calendar color by workspace_id
+    const getWorkspaceColor = (workspaceId: string): string => {
+        const ws = workspaces.find(w => w.id === workspaceId);
+        if (ws) return ws.calendarColor;
+        // Fallback: check from content item's workspace data
+        return '#8b5cf6';
     };
 
     // Calendar logic
@@ -240,23 +335,86 @@ export const CalendarPage: React.FC = () => {
                     <div className="space-y-2 sm:space-y-3 md:space-y-6">
                         {/* Workspaces */}
                         <div>
-                            <label className="text-[6px] sm:text-[7px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1 sm:mb-2">Workspaces</label>
+                            <label className="text-[6px] sm:text-[7px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1 sm:mb-2">
+                                Workspaces <span className="normal-case font-medium opacity-60">(klik warna untuk ubah)</span>
+                            </label>
                             <div className="space-y-1 sm:space-y-1.5 md:max-h-none overflow-y-auto md:overflow-y-visible">
                                 {workspaces.map(ws => (
-                                    <button
-                                        key={ws.id}
-                                        onClick={() => toggleWorkspace(ws.id)}
-                                        className={`w-full flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-1 sm:py-2.5 rounded-lg sm:rounded-xl border-2 transition-all font-bold text-[8px] sm:text-xs md:text-sm ${selectedWorkspaces.includes(ws.id)
-                                            ? 'bg-slate-100/50 border-slate-200 text-slate-900 shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white'
-                                            : 'bg-transparent border-transparent text-slate-400 opacity-60'
+                                    <div key={ws.id} className="relative">
+                                        <div className={`w-full flex items-center gap-1.5 sm:gap-2 px-1.5 sm:px-3 py-1 sm:py-2.5 rounded-lg sm:rounded-xl border-2 transition-all font-bold text-[8px] sm:text-xs md:text-sm ${selectedWorkspaces.includes(ws.id)
+                                            ? 'bg-muted/50 border-border text-foreground shadow-sm'
+                                            : 'bg-transparent border-transparent text-mutedForeground opacity-60'
                                             }`}
-                                    >
-                                        <div className={`w-1.5 h-1.5 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0 ${ws.color === 'violet' ? 'bg-accent' :
-                                            ws.color === 'pink' ? 'bg-secondary' :
-                                                ws.color === 'yellow' ? 'bg-tertiary' : 'bg-emerald-400'
-                                            }`} />
-                                        <span className="truncate hidden sm:inline">{ws.name}</span>
-                                    </button>
+                                        >
+                                            {/* Color dot - clickable to open color picker */}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setColorPickerOpen(colorPickerOpen === ws.id ? null : ws.id); }}
+                                                className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0 border-2 border-white/80 shadow-sm hover:scale-125 transition-transform"
+                                                style={{ backgroundColor: ws.calendarColor }}
+                                                title="Ubah warna workspace di kalender"
+                                            />
+                                            {/* Workspace name - clickable to toggle filter */}
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleWorkspace(ws.id)}
+                                                className="flex-1 text-left truncate hidden sm:block"
+                                            >
+                                                {ws.name}
+                                            </button>
+                                        </div>
+
+                                        {/* Color Picker Dropdown */}
+                                        {colorPickerOpen === ws.id && (
+                                            <div
+                                                ref={colorPickerRef}
+                                                className="absolute left-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard p-3 w-52"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-mutedForeground mb-2">Warna Kalender — {ws.name}</p>
+                                                {/* Preset palette */}
+                                                <div className="grid grid-cols-6 gap-1.5 mb-3">
+                                                    {DEFAULT_PALETTE.map(color => (
+                                                        <button
+                                                            key={color}
+                                                            type="button"
+                                                            onClick={() => handleSaveCalendarColor(ws.id, color)}
+                                                            disabled={savingColor === ws.id}
+                                                            className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform flex items-center justify-center"
+                                                            style={{ backgroundColor: color }}
+                                                            title={color}
+                                                        >
+                                                            {ws.calendarColor === color && (
+                                                                <Check size={10} className="text-white" strokeWidth={3} />
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                {/* Custom hex input */}
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className="w-7 h-7 rounded-lg border-2 border-border flex-shrink-0"
+                                                        style={{ backgroundColor: ws.calendarColor }}
+                                                    />
+                                                    <input
+                                                        type="color"
+                                                        value={ws.calendarColor}
+                                                        onChange={(e) => {
+                                                            setWorkspaces(prev => prev.map(w =>
+                                                                w.id === ws.id ? { ...w, calendarColor: e.target.value } : w
+                                                            ));
+                                                        }}
+                                                        onBlur={(e) => handleSaveCalendarColor(ws.id, e.target.value)}
+                                                        className="flex-1 h-7 rounded-lg border-2 border-border cursor-pointer"
+                                                        title="Pilih warna kustom"
+                                                    />
+                                                </div>
+                                                {savingColor === ws.id && (
+                                                    <p className="text-[9px] text-mutedForeground mt-1 text-center">Menyimpan...</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -378,19 +536,30 @@ export const CalendarPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-1">
-                                    {dayItems.slice(0, 5).map((item, idx) => (
+                                    {dayItems.slice(0, 5).map((item, idx) => {
+                                        const wsColor = getWorkspaceColor(item.workspace_id);
+                                        return (
                                         <div
                                             key={item.id}
                                             onClick={() => handleOpenDetail(item)}
-                                            className={`group/item relative border-[1.5px] rounded-lg p-1.5 shadow-sm transition-all cursor-pointer z-10 hover:z-20 hover:scale-[1.02] ${getPlatformCardStyle(item.platform)}`}
+                                            className="group/item relative rounded-lg p-1.5 shadow-sm transition-all cursor-pointer z-10 hover:z-20 hover:scale-[1.02] hover:shadow-md"
+                                            style={{
+                                                backgroundColor: `${wsColor}18`,
+                                                borderLeft: `3px solid ${wsColor}`,
+                                                borderTop: `1px solid ${wsColor}33`,
+                                                borderRight: `1px solid ${wsColor}33`,
+                                                borderBottom: `1px solid ${wsColor}33`,
+                                                color: wsColor
+                                            }}
                                         >
                                             <div className="flex items-center gap-1.5 mb-1">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(item.status)} shadow-[0_0_8px_currentColor] shrink-0`} />
-                                                <div className="font-black text-[10px] leading-tight line-clamp-1 w-full" title={item.title}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(item.status)} shrink-0`} />
+                                                <div className="font-black text-[10px] leading-tight line-clamp-1 w-full" title={item.title}
+                                                    style={{ color: 'inherit' }}>
                                                     {item.title}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between opacity-80">
+                                            <div className="flex items-center justify-between" style={{ opacity: 0.8 }}>
                                                 <div className="flex items-center gap-1">
                                                     <span className="font-bold scale-75 origin-left">{getPlatformIcon(item.platform)}</span>
                                                     <span className="text-[7px] font-black uppercase tracking-wider">{item.platform}</span>
@@ -403,7 +572,8 @@ export const CalendarPage: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                     {dayItems.length > 5 && (
                                         <div 
                                             onClick={() => { setSelectedDateForDay(day); setIsDayViewOpen(true); }}
