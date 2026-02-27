@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input, Textarea } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { useNotifications } from '../components/NotificationProvider';
-import { Search, Plus, Instagram, Video, ArrowRight, MoreHorizontal, Linkedin, Youtube, Facebook, AtSign, Edit, Trash2, User, Image as ImageIcon, Loader2, Upload, Users, Ticket, Layers } from 'lucide-react';
+import { Search, Plus, Instagram, Video, ArrowRight, MoreHorizontal, Linkedin, Youtube, Facebook, AtSign, Edit, Trash2, User, Image as ImageIcon, Loader2, Upload, Users, Ticket, Layers, Lock, Globe } from 'lucide-react';
 import { Workspace } from '../types';
 import { supabase } from '../services/supabaseClient';
 import { useAppConfig } from '../components/AppConfigProvider';
@@ -22,6 +22,8 @@ interface WorkspaceData extends Workspace {
     logoUrl?: string;
     profile_links?: Record<string, string>;
     account_names?: Record<string, string>;
+    workspace_type?: 'personal' | 'team';
+    owner_id?: string;
 }
 
 // Helper to render platform icons as links
@@ -116,7 +118,8 @@ export const ContentPlan: React.FC = () => {
         description: '',
         period: '',
         profileLinks: {} as Record<string, string>,
-        accountNames: {} as Record<string, string> // New: Store usernames per platform
+        accountNames: {} as Record<string, string>, // New: Store usernames per platform
+        workspace_type: 'team' as 'personal' | 'team'
     });
 
     const [currentUserName, setCurrentUserName] = useState('Anda');
@@ -131,21 +134,21 @@ export const ContentPlan: React.FC = () => {
 
             // 1. Fetch User Data & Workspaces in Parallel
             const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
+            // NOTE: tenantId is only used for owner check, NOT for fetching all admin workspaces
+            // This prevents invited users from seeing ALL admin workspaces
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
-            let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period, profile_links, account_names');
+            // Include workspace_type for personal/team filtering
+            let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period, profile_links, account_names, workspace_type');
 
-            // Construct OR condition: Match by owner OR by membership (user ID or avatar in members array)
-            // This is the SAME query strategy as Team Management
+            // FIX: Only fetch workspaces where user is owner OR explicitly a member
+            // REMOVED: owner_id.eq.${tenantId} — this was causing invited users to see ALL admin workspaces
+            // Now invited users only see workspaces they are explicitly added to (members array)
             let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
             if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
                 // Backward compatibility for URL-based avatars
                 orCond += `,members.cs.{"${currentUserAvatar}"}`;
-            }
-            // Also include workspaces owned by the tenant (admin) — ensures invited members see their workspaces
-            if (tenantId && tenantId !== userId) {
-                orCond += `,owner_id.eq.${tenantId}`;
             }
             wsQuery = wsQuery.or(orCond);
 
@@ -186,11 +189,13 @@ export const ContentPlan: React.FC = () => {
             });
 
             // 4. Merge & Access Control — check membership by user ID, avatar, or ownership
-            // CRITICAL FIX: Include workspaces where user is member (in members array)
-            // This matches Team Management filtering logic
+            // WORKSPACE TYPE RULES:
+            // - 'personal': Only visible if user is owner OR explicitly in members array
+            // - 'team': Visible if user is owner OR in members array (same as personal, but semantically different)
+            // The key fix: we no longer include ALL admin workspaces for invited users
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
-                    const isOwner = ws.owner_id === userId || ws.owner_id === tenantId;
+                    const isOwner = ws.owner_id === userId;
                     if (isOwner) return true;
 
                     const members: string[] = ws.members || [];
@@ -216,6 +221,8 @@ export const ContentPlan: React.FC = () => {
                     members: ws.members || [],
                     profile_links: ws.profile_links || {},
                     account_names: ws.account_names || {},
+                    workspace_type: (ws.workspace_type as 'personal' | 'team') || 'team',
+                    owner_id: ws.owner_id,
                     totalContent: statsMap[ws.id]?.total || 0,
                     publishedCount: statsMap[ws.id]?.published || 0
                 }));
@@ -262,7 +269,8 @@ export const ContentPlan: React.FC = () => {
             description: '',
             period: '',
             profileLinks: {},
-            accountNames: {}
+            accountNames: {},
+            workspace_type: 'team'
         });
         setIsModalOpen(true);
     };
@@ -279,7 +287,8 @@ export const ContentPlan: React.FC = () => {
             description: workspace.description || '',
             period: workspace.period || '',
             profileLinks: workspace.profile_links || {},
-            accountNames: workspace.account_names || { [workspace.platforms[0]]: workspace.accountName || '' }
+            accountNames: workspace.account_names || { [workspace.platforms[0]]: workspace.accountName || '' },
+            workspace_type: workspace.workspace_type || 'team'
         });
         setIsModalOpen(true);
         setActiveMenu(null);
@@ -344,11 +353,12 @@ export const ContentPlan: React.FC = () => {
                         period: formData.period,
                         account_name: formData.accountName,
                         logo_url: formData.logoUrl, // Base64 string is saved here
-                        members: [userId, currentUserAvatar], // Include both ID and Avatar for reliability and dispay
+                        members: [userId, currentUserAvatar], // Include both ID and Avatar for reliability and display
                         admin_id: localStorage.getItem('tenant_id') || userId,
                         owner_id: userId,
                         profile_links: formData.profileLinks,
-                        account_names: formData.accountNames
+                        account_names: formData.accountNames,
+                        workspace_type: formData.workspace_type // 'personal' or 'team'
                     }
                 ]).select('id'); // Only select id to minimize response size (prevents "Failed to fetch" on large rows)
 
@@ -364,7 +374,8 @@ export const ContentPlan: React.FC = () => {
                     account_name: formData.accountName,
                     logo_url: formData.logoUrl,
                     profile_links: formData.profileLinks,
-                    account_names: formData.accountNames
+                    account_names: formData.accountNames,
+                    workspace_type: formData.workspace_type // 'personal' or 'team'
                 }).eq('id', editingId);
 
                 if (error) throw error;
@@ -610,10 +621,22 @@ export const ContentPlan: React.FC = () => {
                                     </h3>
 
                                     {/* 3. Status Badge - Smaller on mobile */}
-                                    <div>
+                                    <div className="flex items-center gap-1 flex-wrap">
                                         <span className="inline-block px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] lg:text-[11px] font-bold text-mutedForeground bg-muted border-2 border-border shadow-sm">
                                             {ws.role}
                                         </span>
+                                        {/* Workspace Type Badge */}
+                                        {ws.workspace_type === 'personal' ? (
+                                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] lg:text-[11px] font-bold text-purple-600 bg-purple-50 border-2 border-purple-200 shadow-sm">
+                                                <Lock size={8} className="sm:w-2.5 sm:h-2.5" />
+                                                Personal
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] lg:text-[11px] font-bold text-blue-600 bg-blue-50 border-2 border-blue-200 shadow-sm">
+                                                <Globe size={8} className="sm:w-2.5 sm:h-2.5" />
+                                                Team
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -696,6 +719,43 @@ export const ContentPlan: React.FC = () => {
                 title={modalMode === 'create' ? 'Buat Workspace Baru' : 'Edit Info Workspace'}
             >
                 <form onSubmit={handleSaveWorkspace} className="space-y-5">
+
+                    {/* Workspace Type Selection */}
+                    <div>
+                        <label className="font-bold text-xs text-mutedForeground mb-2 block ml-1">Tipe Workspace</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, workspace_type: 'team' }))}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all font-bold text-sm ${
+                                    formData.workspace_type === 'team'
+                                        ? 'bg-accent border-accent text-white shadow-hard'
+                                        : 'bg-muted/50 border-border text-foreground hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-600'
+                                }`}
+                            >
+                                <Globe size={22} />
+                                <span>Team</span>
+                                <span className={`text-[10px] font-medium leading-tight text-center ${formData.workspace_type === 'team' ? 'text-white/80' : 'text-mutedForeground'}`}>
+                                    Terlihat oleh semua member yang sudah bergabung
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, workspace_type: 'personal' }))}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all font-bold text-sm ${
+                                    formData.workspace_type === 'personal'
+                                        ? 'bg-accent border-accent text-white shadow-hard'
+                                        : 'bg-muted/50 border-border text-foreground hover:bg-purple-500/10 hover:border-purple-500/50 hover:text-purple-600'
+                                }`}
+                            >
+                                <Lock size={22} />
+                                <span>Personal</span>
+                                <span className={`text-[10px] font-medium leading-tight text-center ${formData.workspace_type === 'personal' ? 'text-white/80' : 'text-mutedForeground'}`}>
+                                    Hanya terlihat oleh member yang diundang secara khusus
+                                </span>
+                            </button>
+                        </div>
+                    </div>
 
                     {/* Top Section: Logo & Basic Info */}
                     <div className="flex gap-4">

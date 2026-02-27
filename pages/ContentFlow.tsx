@@ -286,6 +286,8 @@ export const ContentFlow: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             // 1. Fetch workspaces
+            // FIX: Only fetch workspaces where user is owner OR explicitly a member
+            // REMOVED: owner_id.eq.${tenantId} — this was causing invited users to see ALL admin workspaces
             let wsQuery = supabase
                 .from('workspaces')
                 .select('id, name, platforms, color, logo_url, members, owner_id');
@@ -293,9 +295,6 @@ export const ContentFlow: React.FC = () => {
             let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
             if (userAvatar && !userAvatar.startsWith('data:')) {
                 orCond += `,members.cs.{"${userAvatar}"}`;
-            }
-            if (tenantId && tenantId !== userId) {
-                orCond += `,owner_id.eq.${tenantId}`;
             }
             wsQuery = wsQuery.or(orCond);
 
