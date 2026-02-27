@@ -219,11 +219,11 @@ export const CalendarPage: React.FC = () => {
     }).length;
 
     return (
-        <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col h-full gap-2 sm:gap-4">
             {/* ── Header ── */}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 flex-wrap">
                 <div>
-                    <h2 className="text-2xl font-extrabold text-foreground font-heading">
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-foreground font-heading">
                         {config?.page_titles?.['calendar']?.title || 'Content Calendar'}
                     </h2>
                     <p className="text-sm text-mutedForeground mt-0.5">
@@ -231,16 +231,16 @@ export const CalendarPage: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                     {/* Search */}
-                    <div className="relative">
+                    <div className="relative flex-shrink-0">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
                         <input
                             type="text"
-                            placeholder="Cari konten..."
+                            placeholder="Cari..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="pl-9 pr-3 py-2 bg-muted border-2 border-border rounded-xl text-sm font-medium focus:border-accent transition-colors w-44 sm:w-56 text-foreground"
+                            className="pl-9 pr-3 py-2 bg-muted border-2 border-border rounded-xl text-sm font-medium focus:border-accent transition-colors w-28 sm:w-44 md:w-56 text-foreground"
                         />
                         {searchQuery && (
                             <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-mutedForeground hover:text-foreground">
@@ -402,7 +402,7 @@ export const CalendarPage: React.FC = () => {
                         <div className="text-sm font-bold animate-pulse">Memuat kalender...</div>
                     </div>
                 ) : (
-                    <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridAutoRows: 'minmax(100px, 1fr)' }}>
+                    <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridAutoRows: 'minmax(70px, 1fr)' }}>
                         {/* Prev month empty cells */}
                         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
                             <div key={`e-${i}`} className="border-r border-b border-border bg-muted/20" />
