@@ -672,12 +672,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             .channel('global_broadcast_listener')
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'global_broadcasts' },
+                { event: 'INSERT', schema: 'public', table: 'global_broadcasts' },
                 (payload: any) => {
                     const newMsg = payload.new;
-                    if (newMsg.is_active && newMsg.sender_id !== localStorage.getItem('user_id')) {
+                    const currentUserId = localStorage.getItem('user_id');
+                    // Show to all users EXCEPT the sender (developer who sent it)
+                    if (newMsg && newMsg.is_active && newMsg.sender_id !== currentUserId) {
                         setActiveBroadcast(newMsg);
                         setShowBroadcastModal(true);
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'global_broadcasts' },
+                (payload: any) => {
+                    const newMsg = payload.new;
+                    const currentUserId = localStorage.getItem('user_id');
+                    // Show updated broadcast to all users except sender
+                    if (newMsg && newMsg.is_active && newMsg.sender_id !== currentUserId) {
+                        const seenId = localStorage.getItem('seen_broadcast_id');
+                        if (seenId !== newMsg.id) {
+                            setActiveBroadcast(newMsg);
+                            setShowBroadcastModal(true);
+                        }
                     }
                 }
             )
@@ -1728,17 +1746,33 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 {activeBroadcast?.message}
                             </p>
                         </div>
-                        <Button
-                            onClick={() => {
-                                if (activeBroadcast) {
-                                    localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
-                                }
-                                setShowBroadcastModal(false);
-                            }}
-                            className="w-full h-12 mt-4"
-                        >
-                            MENGERTI
-                        </Button>
+                        {/* Action buttons: Reload Now + Later */}
+                        <div className="flex gap-3 mt-4">
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    if (activeBroadcast) {
+                                        localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
+                                    }
+                                    setShowBroadcastModal(false);
+                                }}
+                                className="flex-1 h-12"
+                            >
+                                Nanti
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    if (activeBroadcast) {
+                                        localStorage.setItem('seen_broadcast_id', activeBroadcast.id);
+                                    }
+                                    setShowBroadcastModal(false);
+                                    window.location.reload();
+                                }}
+                                className="flex-1 h-12"
+                            >
+                                Reload Sekarang
+                            </Button>
+                        </div>
                     </div>
                 </Modal>
 
