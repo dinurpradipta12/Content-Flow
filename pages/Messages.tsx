@@ -4,7 +4,7 @@ import {
     MessageSquare, X, Users, Send, Smile, Reply, Check, CheckCheck,
     Plus, AtSign, Image as ImageIcon, Search, Trash2, Lock, Hash,
     MessageCircle, ChevronDown, Circle, Bell, BellOff, Edit2, UserMinus,
-    MoreVertical, Volume2, VolumeX
+    MoreVertical, Volume2, VolumeX, Eraser
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -196,6 +196,11 @@ export const Messages: React.FC = () => {
     const [currentStatus, setCurrentStatus] = useState(localStorage.getItem('user_status') || 'online');
     const [customStatus, setCustomStatus] = useState('');
 
+    // Chat header more menu
+    const [showChatMoreMenu, setShowChatMoreMenu] = useState(false);
+    const [showClearChatConfirm, setShowClearChatConfirm] = useState(false);
+    const chatMoreMenuRef = useRef<HTMLDivElement>(null);
+
     // Group management state
     const [groupMenuOpen, setGroupMenuOpen] = useState<string | null>(null); // group id
     const [showDeleteGroupConfirm, setShowDeleteGroupConfirm] = useState<ChatGroup | null>(null);
@@ -252,6 +257,9 @@ export const Messages: React.FC = () => {
             }
             if (groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node)) {
                 setGroupMenuOpen(null);
+            }
+            if (chatMoreMenuRef.current && !chatMoreMenuRef.current.contains(e.target as Node)) {
+                setShowChatMoreMenu(false);
             }
         };
         document.addEventListener('mousedown', handleClick);
@@ -661,6 +669,23 @@ export const Messages: React.FC = () => {
             setShowGroupModal(false);
             setNewGroupName('');
         }
+    };
+
+    // ── Clear Chat ─────────────────────────────────────────────────────────────
+    const handleClearChat = async () => {
+        if (chatMode === 'dm' && activeDM) {
+            // Clear DM messages (soft delete for current user's view)
+            await supabase.from('direct_messages')
+                .update({ is_deleted: true })
+                .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${activeDM.userId}),and(sender_id.eq.${activeDM.userId},recipient_id.eq.${currentUser.id})`);
+            setDmMessages([]);
+        } else if (chatMode === 'workspace' && activeGroup) {
+            // Clear all messages in group
+            await supabase.from('workspace_chat_messages').delete().eq('group_id', activeGroup.id);
+            setMessages([]);
+        }
+        setShowClearChatConfirm(false);
+        setShowChatMoreMenu(false);
     };
 
     // ── Group Management ───────────────────────────────────────────────────────
@@ -1112,7 +1137,11 @@ export const Messages: React.FC = () => {
                             .map(u => (
                                 <button
                                     key={u.id}
-                                    onClick={() => setUserInfoModal(u)}
+                                    onClick={() => {
+                                        if (u.id === currentUser.id) return; // Don't DM yourself
+                                        const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
+                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm');
+                                    }}
                                     className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 hover:bg-muted transition-all text-left"
                                 >
                                     <div className="relative flex-shrink-0">
@@ -1163,16 +1192,38 @@ export const Messages: React.FC = () => {
                                         </>
                                     ) : null}
                                 </div>
-                                {/* Mute button in header for active group */}
-                                {chatMode === 'workspace' && activeGroup && (
-                                    <button
-                                        onClick={() => toggleMuteGroup(activeGroup.id)}
-                                        className={`p-2 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-mutedForeground hover:bg-muted hover:text-foreground'}`}
-                                        title={mutedGroups.has(activeGroup.id) ? 'Unmute notifikasi' : 'Mute notifikasi'}
-                                    >
-                                        {mutedGroups.has(activeGroup.id) ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                                    </button>
-                                )}
+                                <div className="flex items-center gap-1">
+                                    {/* Mute button in header for active group */}
+                                    {chatMode === 'workspace' && activeGroup && (
+                                        <button
+                                            onClick={() => toggleMuteGroup(activeGroup.id)}
+                                            className={`p-2 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-mutedForeground hover:bg-muted hover:text-foreground'}`}
+                                            title={mutedGroups.has(activeGroup.id) ? 'Unmute notifikasi' : 'Mute notifikasi'}
+                                        >
+                                            {mutedGroups.has(activeGroup.id) ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                                        </button>
+                                    )}
+                                    {/* More menu button */}
+                                    <div className="relative" ref={chatMoreMenuRef}>
+                                        <button
+                                            onClick={() => setShowChatMoreMenu(!showChatMoreMenu)}
+                                            className="p-2 rounded-xl text-mutedForeground hover:bg-muted hover:text-foreground transition-colors"
+                                            title="Opsi lainnya"
+                                        >
+                                            <MoreVertical size={16} />
+                                        </button>
+                                        {showChatMoreMenu && (
+                                            <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-48 overflow-hidden">
+                                                <button
+                                                    onClick={() => { setShowClearChatConfirm(true); setShowChatMoreMenu(false); }}
+                                                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
+                                                >
+                                                    <Eraser size={12} /> Hapus Semua Chat
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Messages with background pattern */}
@@ -1442,6 +1493,22 @@ export const Messages: React.FC = () => {
                         <div className="flex gap-3">
                             <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)} className="flex-1">Batal</Button>
                             <Button onClick={() => handleDeleteMessage(showDeleteConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Clear Chat Confirm */}
+            {showClearChatConfirm && (
+                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowClearChatConfirm(false)}>
+                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-black text-foreground mb-2">Hapus Semua Chat?</h3>
+                        <p className="text-mutedForeground text-sm mb-4">
+                            {chatMode === 'dm' ? 'Semua pesan DM ini akan dihapus permanen.' : `Semua pesan di #${activeGroup?.name} akan dihapus permanen.`}
+                        </p>
+                        <div className="flex gap-3">
+                            <Button variant="secondary" onClick={() => setShowClearChatConfirm(false)} className="flex-1">Batal</Button>
+                            <Button onClick={handleClearChat} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Semua</Button>
                         </div>
                     </div>
                 </div>
