@@ -1383,25 +1383,78 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
                     <PresenceToast />
                     <ChatNotificationListener />
-                    <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-14 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
-                        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="hidden md:block p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={22} /></button>
+                    <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-12 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
 
-                            {/* Mobile Logo replacing Date/Time */}
-                            <div className="md:hidden flex items-center">
+                        {/* ── MOBILE HEADER (< md) ── */}
+                        <div className="flex md:hidden items-center justify-between w-full">
+                            {/* Left: Network indicator */}
+                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold transition-colors ${getNetworkColor()}`}>
+                                <Wifi size={12} />
+                                <span className="hidden xs:inline">{getNetworkLabel()}</span>
+                            </div>
+
+                            {/* Center: Favicon/Logo */}
+                            <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
                                 {(() => {
                                     const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
+                                    const favicon = config?.app_favicon || branding.appFavicon;
                                     const activeLogo = isDarkTheme
                                         ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
                                         : (config?.app_logo || branding.appLogo);
-                                    if (activeLogo) {
-                                        return <img src={activeLogo} className="max-h-6 sm:max-h-7 max-w-[100px] sm:max-w-[120px] object-contain" alt="Logo" />;
-                                    }
-                                    return <div className="font-heading font-black text-sm sm:text-base text-accent tracking-tighter">ContentFlow</div>;
+                                    if (favicon) return <img src={favicon} className="w-8 h-8 object-contain rounded-lg" alt="Logo" />;
+                                    if (activeLogo) return <img src={activeLogo} className="max-h-7 max-w-[80px] object-contain" alt="Logo" />;
+                                    return <div className="font-heading font-black text-sm text-accent tracking-tighter">CF</div>;
                                 })()}
                             </div>
 
-                            <div className="hidden md:flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
+                            {/* Right: Notif + Settings + More */}
+                            <div className="flex items-center gap-0.5">
+                                <div className="relative" ref={notificationRef}>
+                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500'}`}>
+                                        <Bell size={18} />
+                                        {unreadCount > 0 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                    </button>
+                                    {isNotificationOpen && (
+                                        <div className="absolute top-full right-0 mt-2 w-[90vw] max-w-sm bg-card border-2 border-border shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="px-4 py-3 border-b-2 border-border flex items-center justify-between bg-muted/50">
+                                                <div className="flex items-center gap-2"><Bell size={14} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-sm">Notifikasi</span></div>
+                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-2 py-1 rounded-lg">Tandai</button>}
+                                            </div>
+                                            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                                {notifications.length === 0 ? (
+                                                    <div className="py-8 flex flex-col items-center justify-center text-slate-400"><Bell size={28} className="opacity-10 mb-2" /><p className="font-bold text-xs">Tidak ada notifikasi</p></div>
+                                                ) : (
+                                                    <div className="divide-y divide-border">
+                                                        {notifications.map((notif) => (
+                                                            <div key={notif.id} className={`p-3 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
+                                                                {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
+                                                                <div className="shrink-0">
+                                                                    {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-8 h-8 rounded-full border border-border object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={14} /></div>}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                                                                    <p className="text-xs font-bold text-slate-600 leading-snug">
+                                                                        {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (<span className="text-slate-900">{notif.actor.full_name} </span>)}
+                                                                        {notif.content}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 rounded-full transition-all"><Settings size={18} /></button>
+                                <button onClick={() => setShowMobileMenu(!showMobileMenu)} className={`p-2 rounded-full transition-all ${showMobileMenu ? 'text-accent bg-accent/5' : 'text-slate-500'}`}><Menu size={18} /></button>
+                            </div>
+                        </div>
+
+                        {/* ── DESKTOP HEADER (≥ md) ── */}
+                        <div className="hidden md:flex items-center gap-3 md:gap-4">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={22} /></button>
+                            <div className="flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
                                 <span className="text-[10px] lg:text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
                                     {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                 </span>
@@ -1411,7 +1464,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
+                        <div className="hidden md:flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
                             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 py-1 relative">
                                 <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-[10px] sm:text-[11px] font-bold transition-colors ${getNetworkColor()}`}>
                                     <Wifi size={14} className="sm:w-4 sm:h-4 md:w-4 md:h-4" />
@@ -1892,6 +1945,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     onSkip={() => setShowEmailSetupModal(false)}
                 />
             </div >
+
+            {/* Floating Messages Button (Mobile only, not on messages page) */}
+            {!isSidebarOpen && !location.pathname.startsWith('/messages') && (
+                <button
+                    onClick={() => navigate('/messages')}
+                    className="md:hidden fixed bottom-[84px] right-4 z-40 w-11 h-11 bg-accent text-white rounded-full shadow-hard flex items-center justify-center transition-all active:scale-95"
+                >
+                    <MessageSquare size={18} />
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border border-white text-[8px] font-black flex items-center justify-center">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+                </button>
+            )}
 
             {/* Mobile Nav & Menu (Only visible on small screens) */}
             {
