@@ -95,34 +95,39 @@ export const ContentDataInsight: React.FC = () => {
             const userId = localStorage.getItem('user_id');
             const userRole = localStorage.getItem('user_role') || 'Member';
             const userAvatar = localStorage.getItem('user_avatar') || '';
+            const tenantId = localStorage.getItem('tenant_id') || userId;
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
 
-            // No changes here, just removing the lines below in the replacement range
-
-            // OPTIMIZATION: Select only needed columns for account list
+            // SIMPLIFIED QUERY: Fetch only owned workspaces (no member filtering in DB)
+            // This avoids PostgREST array contains issues with encoded URLs
             let wsQuery = supabase.from('workspaces').select('id, account_name, members, owner_id');
 
-            // Construct OR condition safely: Avoid massive base64 strings in URL
-            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
-            if (userAvatar && !userAvatar.startsWith('data:')) {
-                // Backward compatibility for URL-based avatars
-                orCond += `,members.cs.{"${userAvatar}"}`;
+            // Fetch workspaces where user is owner or admin is owner
+            let filterCondition = `owner_id.eq.${userId}`;
+            if (tenantId && tenantId !== userId) {
+                filterCondition += `,owner_id.eq.${tenantId}`;
             }
-            wsQuery = wsQuery.or(orCond);
+            wsQuery = wsQuery.or(filterCondition);
 
             const { data: wsData, error: wsError } = await wsQuery;
             if (wsError) throw wsError;
 
             if (wsData) {
-                // For members: only show workspaces they belong to or own (redundancy check for security)
-                const accessibleWorkspaces = wsData.filter((w: any) =>
-                    w.owner_id === userId ||
-                    (w.members || []).some((m: string) => {
-                        if (m === userId) return true;
+                // For members: filter locally to include workspaces they belong to
+                // This is more reliable than PostgREST member filtering
+                const accessibleWorkspaces = wsData.filter((w: any) => {
+                    const isOwner = w.owner_id === userId || w.owner_id === tenantId;
+                    if (isOwner) return true;
+
+                    // Check membership by user ID or avatar
+                    const members: string[] = w.members || [];
+                    if (members.includes(userId || '')) return true;
+                    if (!userAvatar) return false;
+                    return members.some(m => {
                         try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
                         catch { return m === userAvatar; }
-                    })
-                );
+                    });
+                });
 
                 const uniqueAccounts = Array.from(new Set(
                     accessibleWorkspaces.map((w: any) => w.account_name).filter((n: string) => n && n.trim() !== '')
