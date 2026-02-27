@@ -670,10 +670,10 @@ export const TeamManagement: React.FC = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 lg:gap-6 pb-1 sm:pb-2">
                 <div className="min-w-0">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-1 sm:gap-2">
+                    <h2 className="text-base md:text-2xl lg:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-1 sm:gap-2">
                         {config?.page_titles?.['team']?.title || 'Team Management'}
                     </h2>
-                    <p className="text-slate-500 font-bold mt-1 sm:mt-1.5 md:mt-2 text-[10px] sm:text-xs md:text-sm lg:text-base">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
+                    <p className="text-slate-500 font-bold mt-0.5 md:mt-2 text-[10px] sm:text-xs md:text-sm lg:text-base hidden md:block">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
                 </div>
                 <div className="flex z-10 items-center gap-1.5 sm:gap-2 md:gap-3 w-full md:w-auto">
                     {currentAdmin && (
@@ -790,9 +790,48 @@ export const TeamManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Invite Form inline dropdown */}
+                        {/* Mobile: Invite Form as bottom sheet */}
                         {isInviteOpen && selectedWorkspace && (
-                            <div className="bg-emerald-500/10 border-b-4 border-slate-900 border-dashed p-3 sm:p-4 md:p-6 animate-in fade-in slide-in-from-top-4">
+                            <div className="lg:hidden fixed inset-0 bg-black/50 z-[9999] flex items-end" onClick={() => setIsInviteOpen(false)}>
+                                <div className="bg-card w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                                    <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
+                                    {inviteSuccess ? (
+                                        <div className="space-y-4">
+                                            <h3 className="text-base font-black text-foreground">✅ Berhasil!</h3>
+                                            <div className="bg-muted border border-border rounded-xl p-4 space-y-2">
+                                                <p className="text-xs font-bold text-foreground">Link Login: <span className="text-blue-500 break-all">{getLoginLink()}</span></p>
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    <div><p className="text-[9px] text-mutedForeground uppercase">Username</p><p className="font-black text-foreground">{inviteSuccess.username}</p></div>
+                                                    <div><p className="text-[9px] text-mutedForeground uppercase">Password</p><p className="font-black text-foreground">{inviteSuccess.password}</p></div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={handleCopyLoginInfo} className="flex-1 py-2.5 bg-muted border border-border rounded-xl text-xs font-bold text-foreground">📋 Salin</button>
+                                                <button onClick={handleShareViaWhatsApp} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-bold">📱 WhatsApp</button>
+                                                <button onClick={() => { setInviteSuccess(null); setIsInviteOpen(false); }} className="px-4 py-2.5 bg-muted text-foreground rounded-xl text-xs font-bold">Tutup</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleInviteUser} className="space-y-3">
+                                            <h3 className="text-base font-black text-foreground mb-3">Undang Member ke {selectedWorkspace.name}</h3>
+                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" />
+                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" />
+                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" />
+                                            <div className="flex gap-2 pt-1">
+                                                <button type="button" onClick={() => setIsInviteOpen(false)} className="flex-1 py-3 bg-muted text-foreground rounded-xl text-sm font-bold">Batal</button>
+                                                <button type="submit" disabled={inviting} className="flex-1 py-3 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
+                                                    {inviting ? <><Loader2 size={14} className="animate-spin" /> Mendaftarkan...</> : 'Daftarkan & Tambahkan'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Desktop: Invite Form inline dropdown */}
+                        {isInviteOpen && selectedWorkspace && (
+                            <div className="hidden lg:block bg-emerald-500/10 border-b-4 border-slate-900 border-dashed p-3 sm:p-4 md:p-6 animate-in fade-in slide-in-from-top-4">
                                 {inviteSuccess ? (
                                     /* Success Panel with Login Link */
                                     <div className="space-y-4">
@@ -877,7 +916,8 @@ export const TeamManagement: React.FC = () => {
                             ) : !selectedWorkspace ? (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-slate-400">
                                     <Briefcase size={48} className="mb-2 opacity-50" />
-                                    <p className="font-bold">Pilih workspace di panel kiri</p>
+                                    <p className="font-bold hidden lg:block">Pilih workspace di panel kiri</p>
+                                    <p className="font-bold lg:hidden">Pilih workspace di atas</p>
                                 </div>
                             ) : filteredUsers.length === 0 && !refreshing ? (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-slate-400">
