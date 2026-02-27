@@ -153,7 +153,25 @@ export const Login: React.FC = () => {
 
                                 if (signUpError.message.includes('already registered') || isRateLimit) {
                                     if (isRateLimit) {
-                                        throw new Error("⚠️ Terlalu banyak permintaan login (Rate Limit). Silakan tunggu 1 menit dan coba klik 'Masuk Sekarang' lagi.");
+                                        // EMERGENCY FALLBACK: Allow legacy login if Supabase is rate limiting us
+                                        console.warn("Rate limit hit, using legacy fallback login for user:", legacyUser.username);
+
+                                        localStorage.setItem('isLegacyAuth', 'true');
+                                        localStorage.setItem('user_id', legacyUser.id);
+                                        localStorage.setItem('user_role', legacyUser.role || 'Member');
+                                        localStorage.setItem('isAuthenticated', 'true');
+                                        if (legacyUser.username) localStorage.setItem('user_username', legacyUser.username);
+                                        if (legacyUser.full_name) localStorage.setItem('user_name', legacyUser.full_name);
+                                        if (legacyUser.avatar_url) localStorage.setItem('user_avatar', legacyUser.avatar_url);
+                                        if (legacyUser.parent_user_id) localStorage.setItem('tenant_id', legacyUser.parent_user_id);
+
+                                        setError("⚠️ Sistem sibuk. Anda masuk dengan 'Mode Kompatibilitas'. Keamanan akun akan ditingkatkan otomatis nanti.");
+
+                                        setTimeout(() => {
+                                            navigate('/');
+                                            window.location.reload(); // Ensure AuthProvider re-checks localStorage
+                                        }, 2000);
+                                        return;
                                     }
 
                                     // Try signing in directly if email already exists

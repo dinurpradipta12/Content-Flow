@@ -82,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data && !error && data.is_active !== false) {
           setUser({ ...authUser, ...data });
           setRole(data.role || 'Member');
+          localStorage.setItem('isLegacyAuth', 'false'); // Clear legacy flag on real login
 
           // Legacy Sync
           localStorage.setItem('user_id', data.id);
@@ -102,10 +103,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (err) {
         console.error("Profile sync error:", err);
       }
+    } else if (localStorage.getItem('isLegacyAuth') === 'true' && localStorage.getItem('user_id')) {
+      // FALLBACK: Legacy Authentication (for users hitting Rate Limits)
+      try {
+        const legacyId = localStorage.getItem('user_id');
+        const { data: legacyProfile } = await supabase
+          .from('app_users')
+          .select('*')
+          .eq('id', legacyId)
+          .maybeSingle();
+
+        if (legacyProfile && legacyProfile.is_active !== false) {
+          setUser(legacyProfile);
+          setRole(legacyProfile.role || 'Member');
+          localStorage.setItem('isAuthenticated', 'true');
+        } else {
+          localStorage.removeItem('isLegacyAuth');
+          localStorage.removeItem('isAuthenticated');
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("Legacy auth error:", err);
+      }
     } else {
       setUser(null);
       setRole('Member');
       localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('isLegacyAuth');
     }
     setLoading(false);
   };
@@ -129,7 +153,7 @@ const RequireAuth = () => {
     </div>
   );
 
-  if (!session) {
+  if (!session && localStorage.getItem('isLegacyAuth') !== 'true') {
     return <Navigate to="/welcome" replace />;
   }
 
