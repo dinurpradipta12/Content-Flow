@@ -1684,55 +1684,55 @@ export const ContentPlanDetail: React.FC = () => {
                         setPdfUrl(null);
                     }}
                     title="Detail Konten"
-                    maxWidth={isPdfPreviewOpen ? "max-w-[47vw]" : "max-w-4xl"}
+                    maxWidth={isPdfPreviewOpen ? "max-w-[47vw] hidden md:block" : "max-w-4xl"}
                     duration={800}
                     zIndex={9990}
-                    overlayClassName={isPdfPreviewOpen ? 'bg-slate-900/40 backdrop-blur-none transition-all' : ''}
-                    className={isPdfPreviewOpen ? '-translate-x-[52%] shadow-2xl' : 'translate-x-0'}
+                    overlayClassName={isPdfPreviewOpen ? 'bg-slate-900/40 backdrop-blur-none transition-all md:block' : ''}
+                    className={isPdfPreviewOpen ? 'md:-translate-x-[52%] shadow-2xl' : 'translate-x-0'}
                 >
-                    <div className="space-y-8 px-2 h-[75vh] overflow-y-auto no-scrollbar">
+                    <div className="space-y-4 md:space-y-8 px-1 md:px-2 h-[80vh] md:h-[75vh] overflow-y-auto no-scrollbar">
                         {/* Header: Title & Platform */}
-                        <div className="flex flex-col-reverse md:flex-row md:items-start justify-between gap-4">
-                            <h2 className="text-3xl md:text-5xl font-black font-heading text-slate-800 leading-tight">
+                        <div className="flex flex-col-reverse md:flex-row md:items-start justify-between gap-2 md:gap-4">
+                            <h2 className="text-xl md:text-3xl lg:text-5xl font-black font-heading text-slate-800 leading-tight">
                                 {selectedTask.title}
                             </h2>
 
-                            <div className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold border-2 border-slate-900 shadow-hard -rotate-2 transform transition-transform hover:rotate-0 ${getPlatformBadgeStyle(selectedTask.platform)}`}>
-                                <div className="flex items-center gap-2">
+                            <div className={`shrink-0 px-3 md:px-5 py-1.5 md:py-2.5 rounded-xl text-xs md:text-sm font-bold border-2 border-slate-900 shadow-hard md:-rotate-2 transform transition-transform hover:rotate-0 self-start ${getPlatformBadgeStyle(selectedTask.platform)}`}>
+                                <div className="flex items-center gap-1.5 md:gap-2">
                                     {getPlatformIcon(selectedTask.platform)}
                                     <span>{selectedTask.platform}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Metadata Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl flex flex-col justify-center items-center text-center hover:border-accent transition-colors">
-                                <span className="text-[10px] font-bold text-slate-400 tracking-wider">Tanggal Posting</span>
-                                <div className="font-bold text-slate-800 text-lg flex items-center gap-2 mt-1">
-                                    <Calendar size={18} className="text-slate-400" />
-                                    {selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                        {/* Metadata Grid - 2 cols on mobile, 4 on desktop */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
+                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Tanggal</span>
+                                <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
+                                    <Calendar size={12} className="text-slate-400 md:w-[18px] md:h-[18px]" />
+                                    {selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
                                 </div>
                             </div>
-                            <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl flex flex-col justify-center items-center text-center hover:border-accent transition-colors">
-                                <span className="text-[10px] font-bold text-slate-400 tracking-wider">Tipe Konten</span>
-                                <div className="font-bold text-slate-800 text-lg flex items-center gap-2 mt-1">
+                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
+                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Tipe</span>
+                                <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
                                     {getTypeIcon(selectedTask.type)}
-                                    {selectedTask.type}
+                                    <span className="truncate max-w-[60px] md:max-w-none">{selectedTask.type}</span>
                                 </div>
                             </div>
-                            <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl flex flex-col justify-center items-center text-center hover:border-accent transition-colors">
-                                <span className="text-[10px] font-bold text-slate-400 tracking-wider">Prioritas</span>
-                                <div className={`mt-1 px-3 py-1 rounded-lg text-sm font-black tracking-wide border-2 ${selectedTask.priority === ContentPriority.HIGH ? 'bg-red-100 border-red-300 text-red-600' :
+                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
+                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Prioritas</span>
+                                <div className={`mt-0.5 md:mt-1 px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-[10px] md:text-sm font-black tracking-wide border ${selectedTask.priority === ContentPriority.HIGH ? 'bg-red-100 border-red-300 text-red-600' :
                                     selectedTask.priority === ContentPriority.MEDIUM ? 'bg-amber-100 border-amber-300 text-amber-600' :
                                         'bg-slate-100 border-slate-300 text-slate-600'
                                     }`}>
                                     {selectedTask.priority}
                                 </div>
                             </div>
-                            <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-2xl flex flex-col justify-center items-center text-center hover:border-accent transition-colors">
-                                <span className="text-[10px] font-bold text-slate-400 tracking-wider">PIC / Creator</span>
-                                <div className="font-bold text-slate-800 text-lg flex items-center gap-2 mt-1">
+                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
+                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">PIC</span>
+                                <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
                                     {(() => {
                                         const picMember = teamMembers.find(m => m.name === selectedTask.pic);
                                         return picMember ? (
@@ -1753,10 +1753,10 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
 
                         {/* Status & Tags */}
-                        <div className="flex flex-wrap gap-3 items-center py-2 border-y-2 border-slate-100 border-dashed">
-                            <span className="text-xs font-bold text-slate-400 tracking-wide mr-2">Quick Stats:</span>
+                        <div className="flex flex-wrap gap-2 items-center py-1.5 md:py-2 border-y border-slate-100 border-dashed">
+                            <span className="text-[9px] md:text-xs font-bold text-slate-400 tracking-wide mr-1 md:mr-2">Status:</span>
 
-                            <div className={`px-4 py-1.5 rounded-full border-2 text-sm font-bold flex items-center gap-2 ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-100 border-slate-300 text-slate-600' :
+                            <div className={`px-2.5 md:px-4 py-1 md:py-1.5 rounded-full border text-[10px] md:text-sm font-bold flex items-center gap-1.5 md:gap-2 ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-100 border-slate-300 text-slate-600' :
                                 selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-purple-100 border-purple-300 text-purple-700' :
                                     selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-100 border-amber-300 text-amber-700' :
                                         selectedTask.status === ContentStatus.SCHEDULED ? 'bg-pink-100 border-pink-300 text-pink-700' :
@@ -1822,10 +1822,10 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
 
                         {/* ── Asset Upload Section ── */}
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-2 mb-1">
-                                <HardDrive size={16} className="text-accent" />
-                                <h4 className="font-black text-sm text-foreground">Aset Konten</h4>
+                        <div className="space-y-2 md:space-y-3">
+                            <div className="flex items-center gap-2 mb-0.5 md:mb-1">
+                                <HardDrive size={14} className="text-accent md:w-4 md:h-4" />
+                                <h4 className="font-black text-xs md:text-sm text-foreground">Aset Konten</h4>
                             </div>
 
                             {/* Hidden file input */}
@@ -1964,12 +1964,12 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
 
                         {/* Script / Notes Area */}
-                        <div className="bg-muted p-5 rounded-2xl border-2 border-border relative shadow-hard">
-                            <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 w-40 h-8 bg-tertiary -rotate-1 rounded-sm border-2 border-border flex items-center justify-center shadow-sm z-10">
-                                <span className="font-bold text-xs font-heading text-slate-900">Brief / Script</span>
+                        <div className="bg-muted p-3 md:p-5 rounded-xl md:rounded-2xl border border-border md:border-2 relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[10px] md:text-xs font-black text-mutedForeground uppercase tracking-wider">Brief / Script</span>
                             </div>
 
-                            <div className="text-foreground font-medium font-sans text-base min-h-[100px] overflow-hidden">
+                            <div className="text-foreground font-medium font-sans text-sm md:text-base min-h-[80px] md:min-h-[100px] overflow-hidden">
                                 <RichTextRenderer
                                     text={(selectedTask as any).script}
                                     onPdfClick={(url) => {
@@ -2019,77 +2019,86 @@ export const ContentPlanDetail: React.FC = () => {
                 </Modal>
             )}
 
-            {/* --- SEPARATE PDF PREVIEW MODAL (Side-by-side with Detail) --- */}
+            {/* --- PDF PREVIEW MODAL --- */}
+            {/* Desktop: side-by-side | Mobile: full screen */}
             {pdfMounted && pdfUrl && (
-                <Modal
-                    isOpen={isPdfPreviewOpen}
-                    onClose={() => setIsPdfPreviewOpen(false)}
-                    title={
-                        <div className="flex items-center gap-2">
-                            <div className="p-1 bg-white/20 rounded">
-                                <FileText size={18} />
+                <>
+                    {/* Mobile: full screen overlay */}
+                    <div className={`md:hidden fixed inset-0 z-[10001] bg-slate-900 flex flex-col transition-all duration-300 ${isPdfPreviewOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                        <div className="flex items-center justify-between p-3 bg-slate-800 text-white">
+                            <div className="flex items-center gap-2">
+                                <FileText size={16} />
+                                <span className="text-sm font-bold">PDF Preview</span>
                             </div>
-                            <span>PDF Preview</span>
+                            <button onClick={() => setIsPdfPreviewOpen(false)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20">
+                                <X size={16} />
+                            </button>
                         </div>
-                    }
-                    maxWidth="max-w-[47vw]"
-                    duration={1000}
-                    zIndex={10000}
-                    overlayClassName="bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
-                    className={`pointer-events-auto shadow-2xl overflow-hidden ${isPdfPreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
-                >
-                    <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
-                        {pdfUrl && (
-                            <iframe
-                                src={pdfUrl}
-                                className="w-full h-full border-none"
-                                title="PDF Content"
-                            />
-                        )}
+                        <iframe src={pdfUrl} className="flex-1 w-full border-none" title="PDF Content" />
                     </div>
-                </Modal>
+                    {/* Desktop: side-by-side */}
+                    <Modal
+                        isOpen={isPdfPreviewOpen}
+                        onClose={() => setIsPdfPreviewOpen(false)}
+                        title={<div className="flex items-center gap-2"><div className="p-1 bg-white/20 rounded"><FileText size={18} /></div><span>PDF Preview</span></div>}
+                        maxWidth="max-w-[47vw]"
+                        duration={1000}
+                        zIndex={10000}
+                        overlayClassName="hidden md:block bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
+                        className={`pointer-events-auto shadow-2xl overflow-hidden ${isPdfPreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                    >
+                        <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
+                            {pdfUrl && <iframe src={pdfUrl} className="w-full h-full border-none" title="PDF Content" />}
+                        </div>
+                    </Modal>
+                </>
             )}
 
-            {/* --- DRIVE PREVIEW MODAL (Side-by-side with Detail) --- */}
+            {/* --- DRIVE PREVIEW MODAL --- */}
+            {/* Desktop: side-by-side | Mobile: full screen */}
             {driveMounted && drivePreviewUrl && (
-                <Modal
-                    isOpen={isDrivePreviewOpen}
-                    onClose={() => setIsDrivePreviewOpen(false)}
-                    title={
-                        <div className="flex items-center gap-2">
-                            <div className="p-1 bg-white/20 rounded">
-                                <FolderOpen size={18} />
+                <>
+                    {/* Mobile: full screen overlay */}
+                    <div className={`md:hidden fixed inset-0 z-[10001] bg-slate-900 flex flex-col transition-all duration-300 ${isDrivePreviewOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                        <div className="flex items-center justify-between p-3 bg-slate-800 text-white">
+                            <div className="flex items-center gap-2">
+                                <FolderOpen size={16} />
+                                <span className="text-sm font-bold">Google Drive</span>
                             </div>
-                            <span>Google Drive Preview</span>
+                            <div className="flex items-center gap-2">
+                                <a href={selectedTask?.drive_folder_url || ''} target="_blank" rel="noreferrer"
+                                    className="px-2 py-1 bg-white/10 text-white text-xs font-bold rounded-lg flex items-center gap-1">
+                                    <ExternalLink size={12} /> Buka
+                                </a>
+                                <button onClick={() => setIsDrivePreviewOpen(false)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20">
+                                    <X size={16} />
+                                </button>
+                            </div>
                         </div>
-                    }
-                    maxWidth="max-w-[47vw]"
-                    duration={1000}
-                    zIndex={10000}
-                    overlayClassName="bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
-                    className={`pointer-events-auto shadow-2xl overflow-hidden ${isDrivePreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
-                >
-                    <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
-                        <div className="absolute top-2 right-2 z-10 flex gap-2">
-                            <a
-                                href={selectedTask?.drive_folder_url || ''}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-3 py-1.5 bg-white/90 text-slate-800 font-bold text-xs rounded-lg shadow-sm hover:bg-white transition-colors flex items-center gap-1.5 border border-slate-200"
-                            >
-                                <ExternalLink size={12} /> Buka di Drive
-                            </a>
-                        </div>
-                        {drivePreviewUrl && (
-                            <iframe
-                                src={drivePreviewUrl}
-                                className="w-full h-full border-none"
-                                title="Google Drive Preview"
-                                allow="autoplay"
-                            />
-                        )}
+                        <iframe src={drivePreviewUrl} className="flex-1 w-full border-none" title="Google Drive Preview" allow="autoplay" />
                     </div>
-                </Modal>
+                    {/* Desktop: side-by-side */}
+                    <Modal
+                        isOpen={isDrivePreviewOpen}
+                        onClose={() => setIsDrivePreviewOpen(false)}
+                        title={<div className="flex items-center gap-2"><div className="p-1 bg-white/20 rounded"><FolderOpen size={18} /></div><span>Google Drive Preview</span></div>}
+                        maxWidth="max-w-[47vw]"
+                        duration={1000}
+                        zIndex={10000}
+                        overlayClassName="hidden md:block bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
+                        className={`pointer-events-auto shadow-2xl overflow-hidden ${isDrivePreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                    >
+                        <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
+                            <div className="absolute top-2 right-2 z-10 flex gap-2">
+                                <a href={selectedTask?.drive_folder_url || ''} target="_blank" rel="noreferrer"
+                                    className="px-3 py-1.5 bg-white/90 text-slate-800 font-bold text-xs rounded-lg shadow-sm hover:bg-white transition-colors flex items-center gap-1.5 border border-slate-200">
+                                    <ExternalLink size={12} /> Buka di Drive
+                                </a>
+                            </div>
+                            {drivePreviewUrl && <iframe src={drivePreviewUrl} className="w-full h-full border-none" title="Google Drive Preview" allow="autoplay" />}
+                        </div>
+                    </Modal>
+                </>
             )}
 
             {/* Modal Create/Edit Content */}
