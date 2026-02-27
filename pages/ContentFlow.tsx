@@ -491,11 +491,11 @@ export const ContentFlow: React.FC = () => {
                 {/* Workspace Filter */}
                 <div className="flex flex-wrap gap-2">
                     <button
-                        onClick={() => setSelectedWorkspace('all')}
-                        className={`px-3 py-1.5 rounded-xl border-2 font-bold text-xs transition-all ${selectedWorkspace === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-card border-border text-foreground hover:border-foreground'}`}
-                    >
-                        Semua Workspace
-                    </button>
+                            onClick={() => setSelectedWorkspace('all')}
+                            className={`px-3 py-1.5 rounded-xl border-2 font-bold text-xs transition-all ${selectedWorkspace === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground hover:border-foreground'}`}
+                        >
+                            Semua Workspace
+                        </button>
                     {workspaceSummaries.map(ws => (
                         <button
                             key={ws.id}
@@ -517,7 +517,7 @@ export const ContentFlow: React.FC = () => {
                     <div className="flex flex-wrap gap-2 ml-auto">
                         <button
                             onClick={() => setSelectedPlatform('all')}
-                            className={`px-3 py-1.5 rounded-xl border-2 font-bold text-xs transition-all ${selectedPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-card border-border text-foreground hover:border-foreground'}`}
+                            className={`px-3 py-1.5 rounded-xl border-2 font-bold text-xs transition-all ${selectedPlatform === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground hover:border-foreground'}`}
                         >
                             All Platforms
                         </button>
