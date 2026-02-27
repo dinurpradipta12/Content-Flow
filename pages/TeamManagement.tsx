@@ -332,7 +332,7 @@ export const TeamManagement: React.FC = () => {
         try {
             const hashedPassword = bcrypt.hashSync(inviteForm.password, 10);
             // IMPORTANT: Generate synthetic email untuk migration later
-            const syntheticEmail = `${inviteForm.username.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
+            const syntheticEmail = `${inviteForm.username.toLowerCase().replace(/[^a-z0-9]/g, '-')}@aruneeka.id`;
             let insertData: any = {
                 full_name: inviteForm.full_name,
                 username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),
@@ -383,7 +383,7 @@ export const TeamManagement: React.FC = () => {
             if (error?.message?.includes('admin_id') || error?.message?.includes('parent_user_id') || error?.message?.includes('invited_by')) {
                 // Temporary fallback if columns are not yet migrated
                 // IMPORTANT: Include email and subscription_package to avoid migration failure on login
-                const syntheticEmail = `${inviteForm.username.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
+                const syntheticEmail = `${inviteForm.username.toLowerCase().replace(/[^a-z0-9]/g, '-')}@aruneeka.id`;
                 let insertData = {
                     full_name: inviteForm.full_name,
                     username: inviteForm.username.toLowerCase().replace(/\s/g, '_'),

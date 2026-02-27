@@ -83,7 +83,7 @@ export const Login: React.FC = () => {
                     console.log("Found email for username:", loginEmail);
                 } else if (userData) {
                     // User exists but has no email — use synthetic email format
-                    loginEmail = `${trimmedUsername.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
+                    loginEmail = `${trimmedUsername.toLowerCase().replace(/[^a-z0-9]/g, '-')}@aruneeka.id`;
                     console.log("Using synthetic email:", loginEmail);
                 }
             }
@@ -137,7 +137,7 @@ export const Login: React.FC = () => {
                             // Generate a synthetic email for users without one
                             const migrationEmail = legacyUser.email && legacyUser.email.includes('@')
                                 ? legacyUser.email
-                                : `${legacyUser.username.toLowerCase().replace(/\s/g, '_')}@team.contentflow.app`;
+                                : `${legacyUser.username.toLowerCase().replace(/[^a-z0-9]/g, '-')}@aruneeka.id`;
 
                             const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
                                 email: migrationEmail,
@@ -147,7 +147,15 @@ export const Login: React.FC = () => {
 
                             if (signUpError) {
                                 // Handle email rate limit and already registered cases
-                                if (signUpError.message.includes('already registered') || signUpError.message.includes('rate limit')) {
+                                const isRateLimit = signUpError.message.toLowerCase().includes('rate limit') ||
+                                    signUpError.message.toLowerCase().includes('too many requests') ||
+                                    (signUpError as any).status === 429;
+
+                                if (signUpError.message.includes('already registered') || isRateLimit) {
+                                    if (isRateLimit) {
+                                        throw new Error("⚠️ Terlalu banyak permintaan login (Rate Limit). Silakan tunggu 1 menit dan coba klik 'Masuk Sekarang' lagi.");
+                                    }
+
                                     // Try signing in directly if email already exists
                                     const { error: retryError } = await supabase.auth.signInWithPassword({
                                         email: migrationEmail,
@@ -260,7 +268,7 @@ export const Login: React.FC = () => {
             await logActivity({ user_id: profile.id, action: 'LOGIN' });
 
             // Mark email setup status
-            if (profile.email && profile.email.includes('@') && !profile.email.endsWith('@team.contentflow.app')) {
+            if (profile.email && profile.email.includes('@') && !profile.email.endsWith('@aruneeka.id')) {
                 localStorage.setItem('email_setup_complete', 'true');
             } else {
                 localStorage.removeItem('email_setup_complete');

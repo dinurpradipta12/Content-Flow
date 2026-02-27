@@ -7,12 +7,13 @@
 --        menyebabkan migration failure saat login
 -- ============================================================================
 
--- 1. Update users tanpa email (invited users) dengan synthetic email
+-- 1. Update users tanpa email (invited users) dengan synthetic email baru
 UPDATE public.app_users 
-SET email = LOWER(username) || '@team.contentflow.app'
+SET email = LOWER(REGEXP_REPLACE(username, '[^a-zA-Z0-9]', '-', 'g')) || '@aruneeka.id'
 WHERE email IS NULL 
    OR email = '' 
-   OR email NOT LIKE '%@%';
+   OR email NOT LIKE '%@%'
+   OR email LIKE '%@team.contentflow.app';
 
 -- 2. Update users tanpa subscription_package dengan default 'Free'
 UPDATE public.app_users 
@@ -33,23 +34,10 @@ WHERE is_verified = false
   AND invited_by IS NOT NULL;
 
 -- ============================================================================
--- OPTIONAL: Verify hasilnya dengan query berikut (jangan jalankan, hanya untuk cek)
+-- OPTIONAL: Verify hasilnya
 -- ============================================================================
-
 -- SELECT id, username, email, subscription_package, subscription_end, is_verified, invited_by
 -- FROM public.app_users
 -- WHERE invited_by IS NOT NULL
 -- ORDER BY created_at DESC
 -- LIMIT 20;
-
--- ============================================================================
--- OPTIONAL: Jika perlu lihat users yang masih belum valid
--- ============================================================================
-
--- SELECT id, username, email, subscription_package, subscription_end
--- FROM public.app_users
--- WHERE email IS NULL 
---    OR email = '' 
---    OR email NOT LIKE '%@%'
---    OR subscription_package IS NULL
---    OR subscription_package = '';
