@@ -111,28 +111,37 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
         <AppConfigContext.Provider value={{ config, loading }}>
             {children}
 
-            <Modal isOpen={showUpdateModal} onClose={() => { }} title="Pembaruan Sistem Tersedia" maxWidth="max-w-md">
+            <Modal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} title="Pembaruan Sistem Tersedia" maxWidth="max-w-md">
                 <div className="flex flex-col items-center justify-center text-center space-y-4 p-4">
                     <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
                         <Rocket size={32} className="text-emerald-500" />
                     </div>
                     <h3 className="text-2xl font-black text-slate-900 font-heading">Versi Baru Dirilis!</h3>
                     <p className="text-sm font-bold text-slate-500">
-                        Sistem telah diperbarui ke versi terbaru. Silakan muat ulang aplikasi untuk mendapatkan fitur terbaru dan memastikan kelancaran sistem.
+                        Sistem telah diperbarui ke versi terbaru. Muat ulang untuk mendapatkan fitur terbaru dan memastikan kelancaran sistem.
                     </p>
 
-                    <div className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-left my-4">
+                    <div className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-left my-2">
                         <h4 className="text-[10px] font-black uppercase text-slate-500 mb-2">Changelog</h4>
                         <p className="text-sm font-bold text-slate-700 whitespace-pre-wrap">{changelog || 'Pembaruan stabilitas dan performa.'}</p>
                     </div>
 
-                    <Button
-                        onClick={() => window.location.reload()}
-                        className="w-full h-12 text-sm uppercase tracking-widest gap-2"
-                        icon={<RefreshCw size={18} />}
-                    >
-                        Muat Ulang Sekarang
-                    </Button>
+                    <div className="flex gap-3 w-full">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowUpdateModal(false)}
+                            className="flex-1 h-12 text-sm"
+                        >
+                            Nanti
+                        </Button>
+                        <Button
+                            onClick={() => window.location.reload()}
+                            className="flex-1 h-12 text-sm uppercase tracking-widest gap-2"
+                            icon={<RefreshCw size={18} />}
+                        >
+                            Reload Sekarang
+                        </Button>
+                    </div>
                 </div>
             </Modal>
         </AppConfigContext.Provider>
