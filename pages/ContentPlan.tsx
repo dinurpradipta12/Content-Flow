@@ -136,16 +136,15 @@ export const ContentPlan: React.FC = () => {
             // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
             let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period, profile_links, account_names');
 
-            // Construct OR condition: Match by owner, user ID in members, avatar in members, OR owner is the admin (tenant)
-            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
-            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
-                orCond += `,members.cs.{"${currentUserAvatar}"}`;
-            }
-            // Also include workspaces owned by the tenant (admin) — ensures invited members see their workspaces
+            // Construct filter: Match by owner OR by membership
+            // We use 'or' to combine: owner is current user, OR owner is tenant/admin
+            let filterCondition = `owner_id.eq.${userId}`;
             if (tenantId && tenantId !== userId) {
-                orCond += `,owner_id.eq.${tenantId}`;
+                filterCondition += `,owner_id.eq.${tenantId}`;
             }
-            wsQuery = wsQuery.or(orCond);
+            
+            // For fetching, we use OR to get all owned + all admin-owned workspaces
+            wsQuery = wsQuery.or(filterCondition);
 
             const [userRes, wsRes] = await Promise.all([
                 supabase.from('app_users').select('avatar_url, full_name').eq('id', userId || '').single(),
@@ -184,6 +183,7 @@ export const ContentPlan: React.FC = () => {
             });
 
             // 4. Merge & Access Control — check membership by user ID, avatar, or ownership
+            // CRITICAL FIX: Include workspaces where user is member (in members array)
             const mergedData: WorkspaceData[] = wsData
                 .filter(ws => {
                     const isOwner = ws.owner_id === userId || ws.owner_id === tenantId;
@@ -217,6 +217,7 @@ export const ContentPlan: React.FC = () => {
                 }));
 
             setWorkspaces(mergedData);
+            console.log(`Fetched ${mergedData.length} workspaces for user ${userId}`);
         } catch (error) {
             console.error("Error fetching workspaces:", error);
         } finally {

@@ -13,6 +13,7 @@ export const PresenceToast = () => {
 
         let membersToTrackIds: string[] = [];
         const statusCache = new Map<string, string>();
+        let channelRef: any = null;
 
         const setupPresenceTracking = async () => {
             try {
@@ -59,6 +60,7 @@ export const PresenceToast = () => {
                         .in('avatar_url', membersToTrackAvatars);
 
                     if (usersToTrack) {
+                        membersToTrackIds = []; // Reset array
                         usersToTrack.forEach(u => {
                             membersToTrackIds.push(u.id);
                             if (u.online_status) statusCache.set(u.id, u.online_status);
@@ -68,15 +70,26 @@ export const PresenceToast = () => {
 
                 console.log(`Presence System: Tracking ${membersToTrackIds.length} peers.`);
 
-                // 4. Realtime Subscription
+                // 4. Realtime Subscription dengan filter untuk user IDs yang di-track
+                if (membersToTrackIds.length === 0) {
+                    console.log('No peers to track');
+                    return null;
+                }
+
+                // Subscribe ke perubahan online_status dari user yang di-track
                 const channel = supabase
-                    .channel('global_presence_toast')
+                    .channel(`presence_toast_${currentUserId}`, {
+                        config: {
+                            broadcast: { self: false }
+                        }
+                    })
                     .on(
                         'postgres_changes',
                         {
                             event: 'UPDATE',
                             schema: 'public',
-                            table: 'app_users'
+                            table: 'app_users',
+                            filter: `id=in.(${membersToTrackIds.join(',')})`
                         },
                         (payload) => {
                             const newUser = payload.new;
@@ -86,7 +99,7 @@ export const PresenceToast = () => {
                             // Skip self
                             if (userId === currentUserId) return;
 
-                            // Only if user is in our track list
+                            // Verify user is still in our track list (in case workspace changed)
                             if (membersToTrackIds.includes(userId)) {
                                 const lastStatus = statusCache.get(userId);
 
@@ -112,10 +125,14 @@ export const PresenceToast = () => {
                             }
                         }
                     )
-                    .subscribe((status) => {
+                    .subscribe((status, error) => {
                         console.log('Presence Subscription Status:', status);
+                        if (error) {
+                            console.error('Presence subscription error:', error);
+                        }
                     });
 
+                channelRef = channel;
                 return channel;
             } catch (err) {
                 console.error('Presence setup error:', err);
@@ -124,8 +141,17 @@ export const PresenceToast = () => {
 
         const channelPromise = setupPresenceTracking();
 
+        // Re-setup tracking every 5 minutes to catch workspace membership changes
+        const intervalId = setInterval(() => {
+            if (channelRef) {
+                supabase.removeChannel(channelRef);
+            }
+            setupPresenceTracking();
+        }, 5 * 60 * 1000);
+
         return () => {
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+            clearInterval(intervalId);
             channelPromise.then(channel => {
                 if (channel) supabase.removeChannel(channel);
             });

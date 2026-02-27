@@ -4,4 +4,5 @@ ADD COLUMN IF NOT EXISTS online_status TEXT DEFAULT 'offline',
 ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMPTZ DEFAULT now();
 
 -- Ensure the columns are available for Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.app_users;
+-- Use SET instead of ADD to avoid duplicate membership error
+ALTER PUBLICATION supabase_realtime SET TABLE public.app_users;
