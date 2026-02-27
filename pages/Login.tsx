@@ -71,24 +71,69 @@ export const Login: React.FC = () => {
             let loginEmail = trimmedUsername;
             console.log("Attempting login for:", loginEmail);
 
+            // Fetch user data first to check if they are an invited user
+            let preloadedUser: any = null;
             if (!trimmedUsername.includes('@')) {
                 const { data: userData } = await supabase
                     .from('app_users')
-                    .select('email')
+                    .select('*')
                     .ilike('username', trimmedUsername)
                     .maybeSingle();
 
-                if (userData && userData.email && userData.email.includes('@')) {
+                preloadedUser = userData;
+
+                if (userData && userData.email && userData.email.includes('@') && !userData.email.endsWith('@aruneeka.id')) {
                     loginEmail = userData.email;
-                    console.log("Found email for username:", loginEmail);
+                    console.log("Found real email for username:", loginEmail);
                 } else if (userData) {
-                    // User exists but has no email — use synthetic email format
+                    // User exists but has no real email (invited user) — use synthetic email format
                     loginEmail = `${trimmedUsername.toLowerCase().replace(/[^a-z0-9]/g, '-')}@aruneeka.id`;
                     console.log("Using synthetic email:", loginEmail);
                 }
             }
 
-            // 2. Try Standard Supabase Auth Login
+            // EARLY CHECK: If user is an invited user (has parent_user_id or invited_by, or synthetic email),
+            // try legacy auth first to avoid email confirmation issues
+            const isInvitedUser = preloadedUser && (
+                preloadedUser.parent_user_id ||
+                preloadedUser.invited_by ||
+                (preloadedUser.email && preloadedUser.email.endsWith('@aruneeka.id'))
+            );
+
+            if (isInvitedUser && preloadedUser.password) {
+                const isHash = preloadedUser.password.startsWith('$2');
+                const isMatch = isHash
+                    ? bcrypt.compareSync(trimmedPassword, preloadedUser.password)
+                    : (trimmedPassword === preloadedUser.password);
+
+                if (isMatch) {
+                    console.log("Invited user - using legacy auth bypass");
+                    // Use legacy auth for invited users to bypass email confirmation
+                    localStorage.setItem('isLegacyAuth', 'true');
+                    localStorage.setItem('user_id', preloadedUser.id);
+                    localStorage.setItem('user_role', preloadedUser.role || 'Member');
+                    localStorage.setItem('isAuthenticated', 'true');
+                    if (preloadedUser.username) localStorage.setItem('user_username', preloadedUser.username);
+                    if (preloadedUser.full_name) localStorage.setItem('user_name', preloadedUser.full_name);
+                    if (preloadedUser.avatar_url) localStorage.setItem('user_avatar', preloadedUser.avatar_url);
+                    if (preloadedUser.parent_user_id) localStorage.setItem('tenant_id', preloadedUser.parent_user_id);
+                    if (preloadedUser.admin_id) localStorage.setItem('tenant_id', preloadedUser.admin_id);
+
+                    // Check if account is active
+                    if (preloadedUser.is_active === false) {
+                        throw new Error("Akun Anda telah dinonaktifkan.");
+                    }
+
+                    await logActivity({ user_id: preloadedUser.id, action: 'LOGIN' });
+                    navigate('/');
+                    window.location.reload();
+                    return;
+                } else {
+                    throw new Error("Username atau Password salah.");
+                }
+            }
+
+            // 2. Try Standard Supabase Auth Login (for self-registered users with real email)
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 email: loginEmail,
                 password: trimmedPassword
@@ -98,6 +143,39 @@ export const Login: React.FC = () => {
             if (authError) {
                 // Specific Check for Email Not Confirmed
                 if (authError.message.toLowerCase().includes('email not confirmed') || authError.message.toLowerCase().includes('confirm your email')) {
+                    // Check if this is a synthetic email (invited user) - bypass confirmation
+                    if (loginEmail.endsWith('@aruneeka.id')) {
+                        // Try legacy auth for invited users with unconfirmed synthetic email
+                        const { data: invitedUserData } = await supabase
+                            .from('app_users')
+                            .select('*')
+                            .ilike('username', trimmedUsername)
+                            .maybeSingle();
+
+                        if (invitedUserData && invitedUserData.password) {
+                            const isHash = invitedUserData.password.startsWith('$2');
+                            const isMatch = isHash
+                                ? bcrypt.compareSync(trimmedPassword, invitedUserData.password)
+                                : (trimmedPassword === invitedUserData.password);
+
+                            if (isMatch) {
+                                localStorage.setItem('isLegacyAuth', 'true');
+                                localStorage.setItem('user_id', invitedUserData.id);
+                                localStorage.setItem('user_role', invitedUserData.role || 'Member');
+                                localStorage.setItem('isAuthenticated', 'true');
+                                if (invitedUserData.username) localStorage.setItem('user_username', invitedUserData.username);
+                                if (invitedUserData.full_name) localStorage.setItem('user_name', invitedUserData.full_name);
+                                if (invitedUserData.avatar_url) localStorage.setItem('user_avatar', invitedUserData.avatar_url);
+                                if (invitedUserData.parent_user_id) localStorage.setItem('tenant_id', invitedUserData.parent_user_id);
+                                if (invitedUserData.admin_id) localStorage.setItem('tenant_id', invitedUserData.admin_id);
+
+                                await logActivity({ user_id: invitedUserData.id, action: 'LOGIN' });
+                                navigate('/');
+                                window.location.reload();
+                                return;
+                            }
+                        }
+                    }
                     setShowResend(true);
                     throw new Error("⚠️ Email Anda belum dikonfirmasi. Periksa inbox email Anda untuk memverifikasi akun.");
                 }
