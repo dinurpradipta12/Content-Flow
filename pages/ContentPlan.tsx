@@ -301,8 +301,8 @@ export const ContentPlan: React.FC = () => {
         const file = e.target.files?.[0];
         if (file) {
             // Validate size (max 1MB for base64 safety in standard text columns)
-            if (file.size > 1024 * 1024) {
-                alert("Ukuran file terlalu besar (Max 1MB)");
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Ukuran file terlalu besar (Max 5MB)");
                 return;
             }
 

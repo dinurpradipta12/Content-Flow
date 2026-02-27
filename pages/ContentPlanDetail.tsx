@@ -953,8 +953,8 @@ export const ContentPlanDetail: React.FC = () => {
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert("Ukuran file terlalu besar (Maks 2MB). Gunakan link eksternal untuk file besar.");
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Ukuran file terlalu besar (Maks 5MB). Gunakan link eksternal untuk file besar.");
                 return;
             }
             const reader = new FileReader();

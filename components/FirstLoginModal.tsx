@@ -79,8 +79,8 @@ export const FirstLoginModal: React.FC<FirstLoginModalProps> = ({ isOpen, onComp
     const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 1 * 1024 * 1024) {
-                alert('File terlalu besar (Maks. 1MB)');
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File terlalu besar (Maks. 5MB)');
                 return;
             }
             const reader = new FileReader();

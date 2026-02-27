@@ -918,7 +918,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'user' | 'app' | 'favicon' | 'app_light') => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 1024 * 1024) { alert("File terlalu besar (Max 1MB)"); return; }
+            if (file.size > 5 * 1024 * 1024) { alert("File terlalu besar (Max 5MB)"); return; }
             const reader = new FileReader();
             reader.onloadend = () => {
                 const res = reader.result as string;
@@ -962,7 +962,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handlePaymentProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) { alert("File terlalu besar (Max 2MB)"); return; }
+            if (file.size > 5 * 1024 * 1024) { alert("File terlalu besar (Max 5MB)"); return; }
             const reader = new FileReader();
             reader.onloadend = () => setPaymentProof(reader.result as string);
             reader.readAsDataURL(file);

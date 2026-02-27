@@ -196,8 +196,8 @@ export const Profile: React.FC = () => {
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) {
-        window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'File terlalu besar (Max 1MB)' } }));
+      if (file.size > 5 * 1024 * 1024) {
+        window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'File terlalu besar (Max 5MB)' } }));
         return;
       }
       const reader = new FileReader();
