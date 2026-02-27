@@ -98,14 +98,15 @@ export const ContentDataInsight: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
             const isAdminOrOwner = ['Admin', 'Owner', 'Developer'].includes(userRole);
 
-            // SIMPLIFIED QUERY: Fetch only owned workspaces (no member filtering in DB)
-            // This avoids PostgREST array contains issues with encoded URLs
+            // FIX: Only fetch workspaces where user is owner OR explicitly a member
+            // REMOVED: owner_id.eq.${tenantId} — this was causing invited users to see ALL admin workspaces
+            // Now invited users only see workspaces they are explicitly added to (members array)
             let wsQuery = supabase.from('workspaces').select('id, account_name, members, owner_id');
 
-            // Fetch workspaces where user is owner or admin is owner
-            let filterCondition = `owner_id.eq.${userId}`;
-            if (tenantId && tenantId !== userId) {
-                filterCondition += `,owner_id.eq.${tenantId}`;
+            // Fetch workspaces where user is owner or explicitly a member
+            let filterCondition = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+            if (userAvatar && !userAvatar.startsWith('data:')) {
+                filterCondition += `,members.cs.{"${userAvatar}"}`;
             }
             wsQuery = wsQuery.or(filterCondition);
 
@@ -116,7 +117,7 @@ export const ContentDataInsight: React.FC = () => {
                 // For members: filter locally to include workspaces they belong to
                 // This is more reliable than PostgREST member filtering
                 const accessibleWorkspaces = wsData.filter((w: any) => {
-                    const isOwner = w.owner_id === userId || w.owner_id === tenantId;
+                    const isOwner = w.owner_id === userId;
                     if (isOwner) return true;
 
                     // Check membership by user ID or avatar

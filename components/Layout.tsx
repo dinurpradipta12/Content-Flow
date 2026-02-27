@@ -1108,6 +1108,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
+            { id: 'flow', path: '/flow', label: 'Content Flow', icon: Globe },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
             { id: 'approval', path: '/approval', label: 'Approval Area', icon: CheckCircle },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
@@ -1210,7 +1211,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }
 
                                 // Known core pages that are visible by default unless explicitly hidden
-                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'flow', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
 
                                 const isHidden = config?.hidden_pages?.includes(item.id);
 

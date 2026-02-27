@@ -6,6 +6,7 @@ import { ContentPlan } from './pages/ContentPlan';
 import { ContentPlanDetail } from './pages/ContentPlanDetail';
 import { Approval } from './pages/Approval';
 import { ContentDataInsight } from './pages/ContentDataInsight';
+import { ContentFlow } from './pages/ContentFlow';
 import { CarouselMaker } from './pages/CarouselMaker';
 import { TeamKPIBoard } from './pages/TeamKPIBoard';
 import { Login } from './pages/Login';
@@ -205,6 +206,7 @@ const App: React.FC = () => {
                 <Route path="/" element={<Dashboard />} />
                 <Route path="plan" element={<ContentPlan />} />
                 <Route path="plan/:id" element={<ContentPlanDetail />} />
+                <Route path="flow" element={<ContentFlow />} />
                 <Route path="calendar" element={<CalendarPage />} />
                 <Route path="approval" element={<RequireAdmin><Approval /></RequireAdmin>} />
                 <Route path="insight" element={<ContentDataInsight />} />
