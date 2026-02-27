@@ -2421,7 +2421,6 @@ export const ContentPlanDetail: React.FC = () => {
                     scrollbar-width: none;
                 }
             `}</style>
-            </div>
         </>
     );
 };
