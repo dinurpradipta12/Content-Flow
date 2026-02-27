@@ -1306,7 +1306,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                                 const isHidden = config?.hidden_pages?.includes(item.id);
 
-                                // Safety: While loading for the first time (no cache), 
+                                // Messages is always globally visible to all users
+                                if (item.id === 'messages') return true;
+
+                                // Safety: While loading for the first time (no cache),
                                 // assume hidden for everything except dashboard to prevent flickering.
                                 if (!config && configLoading && item.id !== 'dashboard') return false;
 
@@ -1949,6 +1952,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                 if (!isSelfRegisteredAdmin) return false;
                                                 return true;
                                             }
+                                            // Messages is always globally visible to all users
+                                            if (item.id === 'messages') return true;
                                             const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
                                             const isHidden = config?.hidden_pages?.includes(item.id);
                                             if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
