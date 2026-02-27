@@ -417,7 +417,150 @@ export const ContentFlow: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-full min-h-screen pb-10">
+        <>
+        {/* ═══════════════════════════════════════════════════════════════════
+            MOBILE VIEW (< md) - ClickUp/Asana Style
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div className="block md:hidden flex flex-col h-full pb-24 animate-in fade-in duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+                <div>
+                    <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['flow']?.title || 'Content Flow'}</h2>
+                    <p className="text-[10px] text-mutedForeground">{totalItems} konten</p>
+                </div>
+                <button onClick={fetchData} disabled={loading} className="p-2 rounded-xl bg-muted text-mutedForeground">
+                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                </button>
+            </div>
+
+            {/* Stats Row - 2x2 */}
+            {!loading && (
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="bg-card border border-border rounded-xl p-2.5 flex items-center gap-2">
+                        <div className="w-7 h-7 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Layers size={14} className="text-accent" />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-bold text-mutedForeground uppercase">Total</p>
+                            <p className="text-base font-black text-foreground">{totalItems}</p>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-2.5 flex items-center gap-2">
+                        <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <CheckCircle size={14} className="text-emerald-600" />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-bold text-mutedForeground uppercase">Published</p>
+                            <p className="text-base font-black text-foreground">{publishedItems}</p>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-2.5 flex items-center gap-2">
+                        <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Zap size={14} className="text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-bold text-mutedForeground uppercase">In Progress</p>
+                            <p className="text-base font-black text-foreground">{inProgressItems}</p>
+                        </div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-2.5 flex items-center gap-2">
+                        <div className="w-7 h-7 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Eye size={14} className="text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-bold text-mutedForeground uppercase">Review</p>
+                            <p className="text-base font-black text-foreground">{reviewItems}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Workspace Filter */}
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-2 flex-shrink-0">
+                <button onClick={() => setSelectedWorkspace('all')}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspace === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                    Semua
+                </button>
+                {workspaceSummaries.map(ws => (
+                    <button key={ws.id} onClick={() => setSelectedWorkspace(ws.id)}
+                        className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspace === ws.id ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
+                        {ws.logo_url && <img src={ws.logo_url} alt="" className="w-3 h-3 rounded object-contain" />}
+                        <span className="truncate max-w-[70px]">{ws.name}</span>
+                    </button>
+                ))}
+            </div>
+
+            {/* Status Filter Tabs */}
+            <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2 mb-3 flex-shrink-0">
+                {Object.values(ContentStatus).map(status => {
+                    const cfg = STATUS_CONFIG[status];
+                    const count = itemsByStatus[status]?.length || 0;
+                    return (
+                        <button key={status} onClick={() => setSelectedPlatform(status === selectedPlatform ? 'all' : status)}
+                            className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[9px] font-black border transition-all ${cfg.bg} ${cfg.border} ${cfg.color}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${cfg.dotColor}`} />
+                            {cfg.label}
+                            <span className={`text-[8px] font-black px-1 py-0.5 rounded-full bg-black/10`}>{count}</span>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Content List */}
+            <div className="flex-1 overflow-y-auto space-y-1.5">
+                {loading ? (
+                    <div className="flex items-center justify-center h-32">
+                        <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : filteredItems.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
+                        <Layers size={28} className="text-accent/40 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-foreground">Belum ada konten</p>
+                    </div>
+                ) : (
+                    filteredItems.map(item => {
+                        const cfg = STATUS_CONFIG[item.status];
+                        return (
+                            <button key={item.id} onClick={() => handleCardClick(item)}
+                                className="w-full bg-card border border-border rounded-xl p-3 text-left active:scale-[0.99] transition-transform hover:border-accent">
+                                <div className="flex items-start gap-2.5">
+                                    {/* Status dot */}
+                                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${cfg.dotColor}`} />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${cfg.bg} ${cfg.border} ${cfg.color}`}>{cfg.label}</span>
+                                            <span className="text-[8px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{item.platform}</span>
+                                            {item.priority === 'High' && <span className="text-[8px] font-black text-red-600 bg-red-50 px-1.5 py-0.5 rounded">🔥 High</span>}
+                                        </div>
+                                        <p className="text-xs font-bold text-foreground line-clamp-2">{item.title}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {item.date && (
+                                                <span className="text-[9px] text-mutedForeground flex items-center gap-0.5">
+                                                    <Calendar size={9} /> {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                </span>
+                                            )}
+                                            {item.pillar && <span className="text-[9px] text-mutedForeground">{item.pillar}</span>}
+                                            {item.pic && <span className="text-[9px] font-bold text-accent">{item.pic}</span>}
+                                        </div>
+                                    </div>
+                                    {/* Workspace logo */}
+                                    {item.workspace_logo ? (
+                                        <img src={item.workspace_logo} alt="" className="w-6 h-6 rounded object-contain flex-shrink-0 opacity-60" />
+                                    ) : (
+                                        <div className={`w-2 self-stretch rounded-full flex-shrink-0 bg-gradient-to-b ${WORKSPACE_COLORS[item.workspace_color] || WORKSPACE_COLORS.violet}`} />
+                                    )}
+                                </div>
+                            </button>
+                        );
+                    })
+                )}
+            </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            DESKTOP VIEW (≥ md) - Original Kanban Layout
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div className="hidden md:flex flex-col h-full min-h-screen pb-10">
             {/* Page Header */}
             <div className="flex flex-col gap-2 md:gap-4 border-b-2 border-border pb-3 md:pb-6 mb-3 md:mb-6">
                 <div className="flex items-start justify-between gap-2 md:gap-4">
@@ -815,5 +958,6 @@ export const ContentFlow: React.FC = () => {
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
         </div>
+        </>
     );
 };
