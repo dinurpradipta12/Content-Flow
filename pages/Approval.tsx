@@ -79,8 +79,20 @@ export const Approval: React.FC = () => {
 
     return (
         <div className="space-y-4 sm:space-y-5 md:space-y-6 flex-1 flex flex-col min-h-0">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2 shrink-0">
+            {/* Mobile Header */}
+            <div className="flex md:hidden items-center justify-between pb-2 border-b border-border shrink-0">
+                <div>
+                    <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['approval']?.title || 'Approval'}</h2>
+                    <p className="text-[10px] text-mutedForeground">{requests.length} pengajuan</p>
+                </div>
+                <button onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-accent text-white rounded-xl text-xs font-bold">
+                    <Plus size={14} /> Buat
+                </button>
+            </div>
+
+            {/* Desktop Header */}
+            <div className="hidden md:flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2 shrink-0">
                 <div>
                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground font-heading tracking-tight flex items-center gap-2 sm:gap-3">
                         {config?.page_titles?.['approval']?.title || 'Team Approval Section'}
