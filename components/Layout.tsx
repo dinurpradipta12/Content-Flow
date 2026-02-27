@@ -1948,7 +1948,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Mobile Nav & Menu (Only visible on small screens) */}
             {
-                !isSidebarOpen && (
+                !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
                     <>
                         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-1 pb-safe pt-1 h-[72px]">
                             {/* Left: Content Plan */}

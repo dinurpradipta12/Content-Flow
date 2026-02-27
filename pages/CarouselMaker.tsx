@@ -190,12 +190,12 @@ export const CarouselMaker: React.FC = () => {
 
             {showThemeModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white border-4 border-slate-900 rounded-3xl p-6 w-[700px] shadow-[8px_8px_0px_0px_#0f172a] relative">
-                        <button onClick={() => setShowThemeModal(false)} className="absolute top-4 right-4 hover:bg-slate-100 p-2 rounded-xl">
-                            <X size={20} />
+                    <div className="bg-white border-4 border-slate-900 rounded-3xl p-4 sm:p-6 w-[95vw] sm:w-[700px] max-h-[90vh] overflow-y-auto shadow-[8px_8px_0px_0px_#0f172a] relative">
+                        <button onClick={() => setShowThemeModal(false)} className="absolute top-3 right-3 hover:bg-slate-100 p-2 rounded-xl">
+                            <X size={18} />
                         </button>
-                        <h2 className="font-black text-2xl mb-6">Window Theme</h2>
-                        <div className="grid grid-cols-3 gap-4">
+                        <h2 className="font-black text-lg sm:text-2xl mb-4 sm:mb-6">Window Theme</h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                             {[
                                 { id: 'light', name: 'Light (Default)', colors: ['#f8fafc', '#ffffff', '#0f172a'] },
                                 { id: 'dark', name: 'Dark Mode', colors: ['#0f172a', '#1e293b', '#f8fafc'] },
@@ -257,36 +257,46 @@ export const CarouselMaker: React.FC = () => {
                 </div>
             )}
 
-            {/* Header */}
-            <header className="h-auto sm:h-14 lg:h-16 py-2 sm:py-0 bg-white border-b-2 sm:border-b-4 border-slate-900 flex flex-wrap sm:flex-nowrap items-center justify-between px-2 sm:px-4 lg:px-6 shrink-0 z-20 gap-2 sm:gap-3">
-                <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 max-w-full sm:max-w-[50%] w-full sm:w-auto">
-                    <button onClick={() => navigate(-1)} className="sm:hidden flex items-center justify-center p-1.5 bg-slate-100 rounded-lg hover:bg-slate-200 border-2 border-slate-900 shrink-0 shadow-[2px_2px_0px_0px_#0f172a]">
+            {/* Header - Canva/ibis Paint style on mobile */}
+            <header className="h-11 sm:h-14 lg:h-16 bg-white border-b-2 sm:border-b-4 border-slate-900 flex items-center justify-between px-2 sm:px-4 lg:px-6 shrink-0 z-20 gap-2">
+                {/* Left: Back + Logo + Title */}
+                <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 min-w-0">
+                    <button onClick={() => navigate(-1)} className="flex items-center justify-center w-8 h-8 bg-slate-100 rounded-lg border-2 border-slate-900 shrink-0 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5 active:shadow-none transition-all">
                         <ArrowLeft size={14} className="text-slate-900" />
                     </button>
                     {brandLogo ? (
-                        <img src={brandLogo} alt="Logo" className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 object-contain shrink-0" />
+                        <img src={brandLogo} alt="Logo" className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0" />
                     ) : (
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-accent rounded-lg sm:rounded-xl border-2 border-slate-900 flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
-                            <Sparkles size={12} className="text-white sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-accent rounded-lg border-2 border-slate-900 flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                            <Sparkles size={11} className="text-white" />
                         </div>
                     )}
-                    <h1 className="font-black text-sm sm:text-base lg:text-xl tracking-tighter leading-tight break-words truncate">{config?.page_titles?.['carousel']?.title || 'Carousel'}</h1>
+                    <h1 className="font-black text-xs sm:text-base lg:text-xl tracking-tighter truncate max-w-[100px] sm:max-w-none">{config?.page_titles?.['carousel']?.title || 'Design'}</h1>
                 </div>
 
-                <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 w-full sm:w-auto justify-end overflow-x-auto pb-1 sm:pb-0 custom-scrollbar hide-scrollbar">
-                    <button
-                        onClick={handleQuickSave}
-                        disabled={isSaving}
-                        className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-accent text-white font-black text-[9px] sm:text-[10px] lg:text-xs tracking-widest hover:brightness-110 rounded-lg transition-all border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] disabled:opacity-50 shrink-0"
-                    >
-                        {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                        <span className="hidden sm:inline">{currentProjectId ? 'Update' : 'Save'}</span>
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+                    {/* Mobile: Sidebar toggle */}
+                    <button onClick={() => setShowMobileSidebar(!showMobileSidebar)} className="sm:hidden w-8 h-8 bg-slate-100 rounded-lg border-2 border-slate-900 flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5 active:shadow-none transition-all">
+                        <Menu size={14} className="text-slate-900" />
                     </button>
-                    <button onClick={() => setShowThemeModal(true)} className="hidden sm:flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-slate-100 text-slate-900 font-black text-[10px] lg:text-xs tracking-widest hover:bg-slate-200 rounded-lg transition-colors border-2 border-slate-300 shrink-0">
+                    {/* Mobile: Theme */}
+                    <button onClick={() => setShowThemeModal(true)} className="sm:hidden w-8 h-8 bg-slate-100 rounded-lg border-2 border-slate-900 flex items-center justify-center shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5 active:shadow-none transition-all">
+                        <Palette size={14} className="text-slate-900" />
+                    </button>
+                    {/* Desktop: Theme + New Canvas */}
+                    <button onClick={() => setShowThemeModal(true)} className="hidden sm:flex items-center gap-1 px-3 py-1.5 lg:px-4 lg:py-2 bg-slate-100 text-slate-900 font-black text-[10px] lg:text-xs tracking-widest hover:bg-slate-200 rounded-lg transition-colors border-2 border-slate-300 shrink-0">
                         <Palette size={12} /> <span className="hidden lg:inline">Theme</span>
                     </button>
-                    <button onClick={handleNewCanvas} className="hidden sm:flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-white text-slate-900 font-black text-[10px] lg:text-xs tracking-widest hover:bg-slate-50 rounded-lg transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                    <button onClick={handleNewCanvas} className="hidden sm:flex items-center gap-1 px-3 py-1.5 lg:px-4 lg:py-2 bg-white text-slate-900 font-black text-[10px] lg:text-xs tracking-widest hover:bg-slate-50 rounded-lg transition-colors border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
                         <Plus size={12} /> <span className="hidden lg:inline">Canvas</span>
+                    </button>
+                    {/* Save button */}
+                    <button onClick={handleQuickSave} disabled={isSaving}
+                        className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-1.5 lg:px-4 lg:py-2 bg-accent text-white font-black text-[10px] sm:text-[10px] lg:text-xs tracking-widest hover:brightness-110 rounded-lg transition-all border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] disabled:opacity-50 shrink-0">
+                        {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                        <span className="hidden sm:inline">{currentProjectId ? 'Update' : 'Save'}</span>
+                        <span className="sm:hidden">{currentProjectId ? 'Update' : 'Save'}</span>
                     </button>
                 </div>
             </header>
@@ -306,35 +316,12 @@ export const CarouselMaker: React.FC = () => {
                     <div className="flex-1 flex flex-col overflow-hidden relative transition-all duration-300 min-h-0 w-full">
                         <Editor />
 
-                        <div className={`${showMobileBottomBar ? 'block absolute bottom-0 left-0 right-0 z-30 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.1)]' : 'hidden'} sm:block transition-all duration-300 max-h-[40vh]`}>
-                            {/* Mobile Bottom Bar Header/Close */}
-                            {showMobileBottomBar && (
-                                <div className="sm:hidden flex justify-between items-center bg-slate-100 border-t-2 border-b-2 border-slate-900 px-3 py-1.5">
-                                    <span className="font-bold text-[10px] uppercase tracking-widest text-slate-500">Tools</span>
-                                    <button onClick={() => setShowMobileBottomBar(false)} className="p-1 hover:bg-slate-200 rounded-lg"><X size={14} /></button>
-                                </div>
-                            )}
-                            <div className="overflow-y-auto max-h-[calc(40vh-40px)] sm:max-h-none">
-                                <BottomBar />
-                            </div>
+                        {/* BottomBar: hidden on mobile, visible on desktop */}
+                        <div className="hidden sm:block">
+                            <BottomBar />
                         </div>
                     </div>
 
-                    {/* Mobile Floating Toggle Buttons */}
-                    <div className="sm:hidden absolute bottom-4 right-3 flex flex-col gap-2 z-20">
-                        {/* Sidebar Toggle FAB */}
-                        {!showMobileSidebar && (
-                            <button onClick={() => setShowMobileSidebar(true)} className="w-10 h-10 rounded-xl bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-all flex-shrink-0">
-                                <Menu size={16} />
-                            </button>
-                        )}
-                        {/* Bottom Bar Toggle FAB */}
-                        {!showMobileBottomBar && (
-                            <button onClick={() => setShowMobileBottomBar(true)} className="w-10 h-10 rounded-xl bg-accent border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] flex items-center justify-center text-white hover:brightness-110 transition-all flex-shrink-0">
-                                <Wrench size={16} />
-                            </button>
-                        )}
-                    </div>
 
                     {/* Toggle Button for Notes */}
                     <button
