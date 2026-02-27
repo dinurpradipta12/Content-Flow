@@ -510,12 +510,12 @@ export const UserManagement: React.FC = () => {
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-accent rounded-lg sm:rounded-2xl flex items-center justify-center border-3 sm:border-4 border-slate-900 shadow-hard rotate-3 flex-shrink-0">
-                                <Users size={20} className="sm:w-7 sm:h-7 text-white" />
+                            <div className="w-9 h-9 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-accent rounded-lg sm:rounded-2xl flex items-center justify-center border-2 sm:border-4 border-slate-900 shadow-hard flex-shrink-0">
+                                <Users size={16} className="sm:w-5 sm:h-5 md:w-7 md:h-7 text-white" />
                             </div>
                             <div className="min-w-0">
-                                <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-black text-slate-900 leading-tight truncate">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
-                                <p className="text-slate-500 font-bold text-xs sm:text-sm">Total {users.length} pengguna terdaftar.</p>
+                                <h2 className="text-base sm:text-2xl md:text-3xl font-heading font-black text-slate-900 leading-tight truncate">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
+                                <p className="text-slate-500 font-bold text-[10px] sm:text-sm">Total {users.length} pengguna terdaftar.</p>
                             </div>
                         </div>
                         <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={14} className={`${loading ? 'animate-spin' : ''} sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px]`} />} className="shadow-hard border-2 border-slate-900 text-xs sm:text-sm w-full md:w-auto">
@@ -734,43 +734,40 @@ export const UserManagement: React.FC = () => {
 
                         {/* ===== USER TABLE ===== */}
                         <div className="flex-1 min-w-0">
-                            <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-hard flex flex-col overflow-hidden transition-colors">
-                                <div className="px-6 py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-primary relative gap-4">
-                                    {/* Geometric detail */}
-                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 blur-2xl rounded-full"></div>
-
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-card p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
-                                            <Users className="text-slate-800" size={20} />
+                            <div className="bg-card rounded-xl md:rounded-2xl border-2 md:border-4 border-slate-900 shadow-hard flex flex-col overflow-hidden transition-colors">
+                                <div className="px-3 md:px-6 py-2.5 md:py-5 border-b-2 md:border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-primary relative gap-2 md:gap-4">
+                                    <div className="flex items-center gap-2 md:gap-3">
+                                        <div className="bg-card p-1.5 md:p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
+                                            <Users className="text-slate-800" size={16} />
                                         </div>
-                                        <h3 className="font-heading font-black text-white text-xl">Daftar User ({users.length})</h3>
+                                        <h3 className="font-heading font-black text-white text-sm md:text-xl">Daftar User ({users.length})</h3>
                                     </div>
 
                                     {/* SEARCH BAR */}
                                     <div className="relative w-full sm:w-64 z-10">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                                         <input
                                             type="text"
                                             placeholder="Cari nama / username..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all shadow-[2px_2px_0px_#0f172a]"
+                                            className="w-full bg-card border-2 border-slate-900 rounded-xl pl-9 pr-4 py-2 text-xs md:text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all shadow-[2px_2px_0px_#0f172a]"
                                         />
                                     </div>
                                 </div>
                                 <div className="overflow-x-auto bg-card">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-slate-50 border-b-4 border-slate-900">
+                                    <table className="w-full text-left min-w-[500px]">
+                                        <thead className="bg-slate-50 border-b-2 md:border-b-4 border-slate-900">
                                             <tr>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">User</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Username</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Invited By</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest">Verifikasi</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Status</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Package</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
-                                                <th className="p-4 text-sm font-black text-slate-800 uppercase tracking-widest text-right">Action</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest">User</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Username</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden sm:table-cell">Invited By</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest">Verif</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Status</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Package</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest text-right">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y-2 divide-slate-100">
