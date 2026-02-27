@@ -20,7 +20,6 @@ import { CalendarPage } from './pages/CalendarPage';
 import { Messages } from './pages/Messages';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
 import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
-import { ActivityLog } from './pages/ActivityLog';
 import { NotificationProvider } from './components/NotificationProvider';
 import { AppConfigProvider } from './components/AppConfigProvider';
 import { supabase } from './services/supabaseClient';
@@ -194,7 +193,6 @@ const App: React.FC = () => {
 
                 {/* Superuser / Developer Infrastructure */}
                 <Route path="messages" element={<RequireDeveloper><Messages /></RequireDeveloper>} />
-                <Route path="admin/activity" element={<RequireDeveloper><ActivityLog /></RequireDeveloper>} />
                 <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
                 <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
                 <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />

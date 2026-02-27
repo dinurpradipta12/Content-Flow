@@ -818,19 +818,19 @@ export const Dashboard: React.FC = () => {
 
                                         {/* Bottom Section */}
                                         <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex -space-x-1 sm:-space-x-2">
+                                            <div className="flex -space-x-2 sm:-space-x-4">
                                                 {(ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 0) ? (
                                                     ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url: string, i: number) => (
-                                                        <img key={i} src={url} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 bg-slate-200 object-cover" />
+                                                        <img key={i} src={url} className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 bg-slate-200 object-cover" />
                                                     ))
                                                 ) : (
                                                     <>
-                                                        <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
-                                                        <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 object-cover" />
+                                                        <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
+                                                        <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
                                                     </>
                                                 )}
                                                 {ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 3 && (
-                                                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-white shadow-sm font-bold text-[7px] sm:text-[10px] flex items-center justify-center bg-slate-100 text-slate-500 z-10 relative">
+                                                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md font-black text-[10px] sm:text-[14px] flex items-center justify-center bg-slate-100 text-slate-900 z-10 relative">
                                                         +{ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length - 3}
                                                     </div>
                                                 )}

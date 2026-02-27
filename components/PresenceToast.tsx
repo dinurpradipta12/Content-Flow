@@ -9,6 +9,7 @@ export const PresenceToast = () => {
     const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
     const membersToTrackRef = useRef<Set<string>>(new Set());
     const statusCacheRef = useRef<Map<string, string>>(new Map());
+    const userDetailsRef = useRef<Map<string, { name: string; avatar?: string }>>(new Map());
     const channelRef = useRef<any>(null);
 
     useEffect(() => {
@@ -70,7 +71,7 @@ export const PresenceToast = () => {
 
                 // 3. Map members to User IDs for reliable tracking
                 if (memberIds.length > 0 || memberAvatars.length > 0) {
-                    let query = supabase.from('app_users').select('id, online_status, full_name, username');
+                    let query = supabase.from('app_users').select('id, online_status, full_name, username, avatar_url');
 
                     // Build OR filter: match by ID OR by Avatar URL
                     const filters = [];
@@ -85,6 +86,10 @@ export const PresenceToast = () => {
 
                         usersToTrack.forEach(u => {
                             membersToTrackRef.current.add(u.id);
+                            userDetailsRef.current.set(u.id, {
+                                name: u.full_name || u.username || 'Seseorang',
+                                avatar: u.avatar_url
+                            });
                             if (u.online_status) {
                                 statusCacheRef.current.set(u.id, u.online_status);
                             }
@@ -126,10 +131,12 @@ export const PresenceToast = () => {
                                         statusCacheRef.current.set(userId, newStatus);
 
                                         // Show toast even on first status update
+                                        // Use cached details if payload is missing them
+                                        const cached = userDetailsRef.current.get(userId);
                                         setPresence({
-                                            name: newUser.full_name || newUser.username || 'Seseorang',
+                                            name: newUser.full_name || newUser.username || cached?.name || 'Seseorang',
                                             status: newStatus,
-                                            avatar: newUser.avatar_url
+                                            avatar: newUser.avatar_url || cached?.avatar
                                         });
                                         setIsVisible(true);
 

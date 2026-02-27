@@ -600,7 +600,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             .channel('global_broadcast_listener')
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'global_broadcasts' },
+                { event: '*', schema: 'public', table: 'global_broadcasts' },
                 (payload: any) => {
                     const newMsg = payload.new;
                     if (newMsg.is_active && newMsg.sender_id !== localStorage.getItem('user_id')) {
@@ -1120,7 +1120,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         'Superuser': [
             { id: 'messages', path: '/messages', label: 'Messages', icon: MessageSquare, developerOnly: true, badge: unreadCount > 0 ? unreadCount : null },
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
-            { id: 'activity', path: '/admin/activity', label: 'Activity Log', icon: Presentation, developerOnly: true },
             { id: 'inbox', path: '/admin/inbox', label: 'Developer Inbox', icon: Inbox, developerOnly: true },
             { id: 'analytics', path: '/admin/analytics', label: 'Analytics', icon: BarChart3, developerOnly: true },
             { id: 'workspace', path: '/admin/workspace', label: 'Workspace Settings', icon: Settings, developerOnly: true },
@@ -1211,7 +1210,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }
 
                                 // Known core pages that are visible by default unless explicitly hidden
-                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
 
                                 const isHidden = config?.hidden_pages?.includes(item.id);
 
