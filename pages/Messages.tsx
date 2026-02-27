@@ -944,13 +944,14 @@ export const Messages: React.FC = () => {
                             <button
                                 key={ws.id}
                                 onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
-                                className={`relative w-11 h-11 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden bg-white ${isSelected ? 'border-accent shadow-hard-mini scale-105' : 'border-border hover:border-accent/50 hover:scale-105'}`}
+                                className={`relative w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden ${isSelected ? 'border-accent shadow-hard-mini scale-105' : 'border-border hover:border-accent/50 hover:scale-105'}`}
+                                style={{ backgroundColor: '#ffffff' }}
                                 title={ws.name}
                             >
                                 {ws.logo_url ? (
-                                    <img src={ws.logo_url} alt="" className="w-full h-full object-contain p-0.5" />
+                                    <img src={ws.logo_url} alt="" className="w-full h-full object-contain p-1" />
                                 ) : (
-                                    <div className={`w-full h-full flex items-center justify-center text-sm font-black ${isSelected ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>
+                                    <div className={`w-full h-full flex items-center justify-center text-sm font-black ${isSelected ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600'}`}>
                                         {ws.name.charAt(0).toUpperCase()}
                                     </div>
                                 )}
@@ -1145,16 +1146,16 @@ export const Messages: React.FC = () => {
                                     className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 hover:bg-muted transition-all text-left"
                                 >
                                     <div className="relative flex-shrink-0">
-                                        <img src={u.avatar_url} alt="" className="w-8 h-8 rounded-full border border-border object-cover bg-muted" />
-                                        <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${getStatusColor(u.online_status)}`} />
+                                        <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border-2 border-border object-cover bg-muted" />
+                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(u.online_status)}`} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-foreground truncate">
+                                        <p className="text-sm font-bold text-foreground truncate">
                                             {u.full_name}
-                                            {u.id === currentUser.id && <span className="ml-1 text-[8px] text-accent">(Anda)</span>}
+                                            {u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
                                         </p>
-                                        <p className={`text-[9px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
-                                            {u.online_status === 'online' ? 'Online' : u.online_status === 'idle' ? 'Away' : u.online_status === 'busy' ? 'Sibuk' : 'Offline'}
+                                        <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
+                                            {u.online_status === 'online' ? '● Online' : u.online_status === 'idle' ? '● Away' : u.online_status === 'busy' ? '● Sibuk' : '● Offline'}
                                         </p>
                                     </div>
                                 </button>
@@ -1430,10 +1431,10 @@ export const Messages: React.FC = () => {
                                     </div>
                                 )}
 
-                                <div className="flex items-end gap-2 bg-muted border-2 border-border rounded-2xl px-4 py-3 focus-within:border-accent transition-colors">
+                                <div className="flex items-center gap-3 bg-muted border-2 border-border rounded-2xl px-4 py-2.5 focus-within:border-accent transition-colors min-h-[52px]">
                                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                                    <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0 mb-0.5" title="Upload foto">
-                                        <ImageIcon size={20} />
+                                    <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0" title="Upload foto">
+                                        <ImageIcon size={24} />
                                     </button>
                                     <input
                                         type="text"
@@ -1441,21 +1442,21 @@ export const Messages: React.FC = () => {
                                         onChange={handleInputChange}
                                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                                         placeholder={chatMode === 'dm' ? `Pesan ke ${activeDM?.userName}... (@ mention, # konten)` : `Pesan ke #${activeGroup?.name}... (@ mention, # konten)`}
-                                        className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground py-0.5"
+                                        className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground"
                                     />
                                     <button
                                         onClick={() => setShowInputEmoji(!showInputEmoji)}
-                                        className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0 mb-0.5"
+                                        className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0"
                                         title="Emoji"
                                     >
-                                        <Smile size={20} />
+                                        <Smile size={22} />
                                     </button>
                                     <button
                                         onClick={() => handleSendMessage()}
                                         disabled={!input.trim()}
-                                        className="w-9 h-9 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                                        className="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
                                     >
-                                        <Send size={16} />
+                                        <Send size={18} />
                                     </button>
                                 </div>
                             </div>
