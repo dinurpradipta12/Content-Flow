@@ -1,0 +1,97 @@
+/* 
+  Mobile Optimization Guide
+  
+  Tailwind Breakpoints used:
+  - base (mobile): < 640px
+  - sm: 640px+
+  - md: 768px+
+  - lg: 1024px+
+  - xl: 1280px+
+  
+  Mobile-First Principles:
+  1. Start with mobile layout (no prefix)
+  2. Enhance with sm:/md:/lg: for larger screens
+  3. Use responsive text sizes: text-xs (mobile) → text-sm (sm+) → text-base (lg+)
+  4. Use responsive padding: p-2 (mobile) → p-4 (sm+) → p-6 (lg+)
+  5. Use responsive gaps: gap-2 (mobile) → gap-3 (sm+) → gap-4 (lg+)
+*/
+
+/* Common Mobile Optimization Patterns */
+
+/* 1. CARD LAYOUTS - Reduce height on mobile */
+.card-mobile-auto {
+  @apply h-auto sm:h-[300px] lg:h-[320px];
+}
+
+.card-compact {
+  @apply p-2 sm:p-3 md:p-4 lg:p-6;
+}
+
+/* 2. GRID LAYOUTS - Single column on mobile */
+.grid-responsive {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5;
+}
+
+.grid-responsive-2col {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5;
+}
+
+/* 3. FLEX LAYOUTS - Stack on mobile */
+.flex-responsive {
+  @apply flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4;
+}
+
+/* 4. FILTER/DROPDOWN MOBILE */
+.filter-dropdown-mobile {
+  @apply hidden sm:block;
+}
+
+.filter-select-mobile {
+  @apply sm:hidden w-full;
+}
+
+/* 5. TEXT RESPONSIVE */
+.heading-responsive {
+  @apply text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl;
+}
+
+.subheading-responsive {
+  @apply text-xs sm:text-sm md:text-base lg:text-lg;
+}
+
+/* 6. CHART/STATS - Compress on mobile */
+.chart-responsive {
+  @apply h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px];
+}
+
+/* 7. KANBAN - Horizontal scroll on mobile */
+.kanban-container {
+  @apply flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory;
+}
+
+.kanban-column {
+  @apply snap-start flex-shrink-0 w-[320px] sm:w-[350px] md:w-auto md:flex-1;
+}
+
+/* 8. MODAL/DRAWER - Full height on mobile */
+.modal-mobile {
+  @apply fixed inset-0 sm:absolute sm:inset-auto;
+}
+
+/* 9. SIDEBAR - Collapse on mobile */
+.sidebar-mobile {
+  @apply hidden md:block;
+}
+
+.sidebar-drawer-mobile {
+  @apply md:hidden fixed inset-0 z-40;
+}
+
+/* 10. BUTTONS - Stack on mobile */
+.button-group-mobile {
+  @apply flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto;
+}
+
+.button-full-mobile {
+  @apply w-full sm:w-auto;
+}

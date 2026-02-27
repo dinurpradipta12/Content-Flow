@@ -649,34 +649,34 @@ export const TeamManagement: React.FC = () => {
     const isLimitReached = !isDeveloper && subUsersCount >= (currentAdmin?.member_limit || 2);
 
     return (
-        <div className="space-y-4 sm:space-y-5 md:space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
+        <div className="space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-6 pb-0 animate-in fade-in duration-300 relative w-full flex-1 flex flex-col min-h-0">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 sm:gap-4 md:gap-6 pb-1 sm:pb-2">
-                <div>
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-2 sm:gap-3">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 lg:gap-6 pb-1 sm:pb-2">
+                <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-heading font-black text-slate-900 tracking-tight flex items-center gap-1 sm:gap-2">
                         {config?.page_titles?.['team']?.title || 'Team Management'}
                     </h2>
-                    <p className="text-slate-500 font-bold mt-1.5 sm:mt-2 text-xs sm:text-sm md:text-base">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
+                    <p className="text-slate-500 font-bold mt-1 sm:mt-1.5 md:mt-2 text-[10px] sm:text-xs md:text-sm lg:text-base">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
                 </div>
-                <div className="flex z-10 items-center gap-2 sm:gap-3 w-full md:w-auto">
+                <div className="flex z-10 items-center gap-1.5 sm:gap-2 md:gap-3 w-full md:w-auto">
                     {currentAdmin && (
-                        <div className="hidden md:flex flex-col items-end mr-1 sm:mr-2">
-                            <span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">Kapasitas Tim</span>
-                            <div className="flex items-center gap-1.5 sm:gap-2">
-                                <div className="w-16 sm:w-20 md:w-24 bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="hidden md:flex flex-col items-end mr-1 sm:mr-2 flex-shrink-0">
+                            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Kapasitas Tim</span>
+                            <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                                <div className="w-12 sm:w-16 md:w-20 lg:w-24 bg-slate-200 h-1.5 sm:h-2 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full transition-all duration-500 ${isLimitReached ? 'bg-red-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${Math.min((subUsersCount / (currentAdmin.member_limit || 2)) * 100, 100)}%` }}
                                     />
                                 </div>
-                                <span className={`text-[9px] sm:text-xs font-black ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
+                                <span className={`text-[7px] sm:text-[8px] md:text-xs font-black whitespace-nowrap ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
                                     {isDeveloper ? 'Unlimited' : `${subUsersCount}/${currentAdmin.member_limit || 2}`}
                                 </span>
                             </div>
                         </div>
                     )}
                     <Button
-                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-xs sm:text-sm`}
+                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-[10px] sm:text-xs md:text-sm flex-shrink-0`}
                         onClick={() => {
                             if (isLimitReached) {
                                 setIsUpgradeModalOpen(true);
@@ -689,44 +689,44 @@ export const TeamManagement: React.FC = () => {
                             setIsInviteOpen(!isInviteOpen);
                         }}
                     >
-                        {isLimitReached ? 'Kuota Penuh (Upgrade)' : '+ Mendaftarkan Anggota'}
+                        {isLimitReached ? 'Kuota Penuh' : '+ Member'}
                     </Button>
                 </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-5 lg:gap-6 flex-1 min-h-0">
-                {/* LEFT: WORKSPACES LIST */}
-                <div className="w-full lg:w-1/3 flex flex-col gap-3 sm:gap-4 min-h-0">
-                    <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
-                        <div className="p-4 bg-primary flex items-center gap-3">
-                            <Layers className="text-white" size={24} />
-                            <h3 className="font-heading font-black text-white text-lg">Workspace</h3>
+            <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 flex-1 min-h-0">
+                {/* LEFT: WORKSPACES LIST - Hidden on mobile, shown as dropdown */}
+                <div className="hidden lg:flex w-full lg:w-1/3 flex-col gap-2 sm:gap-3 md:gap-4 min-h-0">
+                    <div className="bg-card rounded-xl sm:rounded-2xl border-3 sm:border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
+                        <div className="p-2 sm:p-3 md:p-4 bg-primary flex items-center gap-2 sm:gap-3">
+                            <Layers className="text-white" size={20} className="sm:w-6 sm:h-6" />
+                            <h3 className="font-heading font-black text-white text-sm sm:text-base md:text-lg">Workspace</h3>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-500/5">
+                        <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 space-y-1.5 sm:space-y-2 md:space-y-3 bg-slate-500/5">
                             {loading && !workspaces.length ? (
-                                <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-slate-400" /></div>
+                                <div className="p-6 sm:p-8 text-center"><Loader2 className="animate-spin mx-auto text-slate-400 w-6 h-6 sm:w-8 sm:h-8" /></div>
                             ) : workspaces.length === 0 ? (
-                                <div className="p-8 text-center text-slate-500 font-bold">Tidak ada workspace ditemukan.</div>
+                                <div className="p-6 sm:p-8 text-center text-slate-500 font-bold text-xs sm:text-sm">Tidak ada workspace ditemukan.</div>
                             ) : (
                                 workspaces.map(ws => (
                                     <button
                                         key={ws.id}
                                         onClick={() => setSelectedWorkspace(ws)}
-                                        className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center justify-between ${selectedWorkspace?.id === ws.id
+                                        className={`w-full text-left p-2 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border-2 transition-all flex items-center justify-between ${selectedWorkspace?.id === ws.id
                                             ? 'bg-card border-slate-900 shadow-[4px_4px_0px_#0f172a] transform -translate-y-1'
                                             : 'bg-card border-transparent hover:border-slate-300 hover:shadow-sm'
                                             }`}
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <div className="w-10 h-10 rounded-lg bg-pink-500/10 border-2 border-pink-500/20 flex items-center justify-center flex-shrink-0">
-                                                <Globe className="text-pink-500" size={20} />
+                                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                                            <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg bg-pink-500/10 border-2 border-pink-500/20 flex items-center justify-center flex-shrink-0">
+                                                <Globe className="text-pink-500" size={16} className="sm:w-5 sm:h-5" />
                                             </div>
                                             <div className="min-w-0">
-                                                <h4 className="font-heading font-black text-foreground truncate">{ws.name}</h4>
-                                                <p className="text-xs font-bold text-slate-500">{ws.members?.filter((m: string) => m.includes('/') || m.startsWith('data:')).length || 0} Members</p>
+                                                <h4 className="font-heading font-black text-foreground truncate text-xs sm:text-sm md:text-base">{ws.name}</h4>
+                                                <p className="text-[10px] sm:text-xs font-bold text-slate-500">{ws.members?.filter((m: string) => m.includes('/') || m.startsWith('data:')).length || 0} Members</p>
                                             </div>
                                         </div>
-                                        <ChevronRight size={20} className={selectedWorkspace?.id === ws.id ? 'text-accent' : 'text-slate-300'} />
+                                        <ChevronRight size={16} className={`sm:w-5 sm:h-5 flex-shrink-0 ${selectedWorkspace?.id === ws.id ? 'text-accent' : 'text-slate-300'}`} />
                                     </button>
                                 ))
                             )}
@@ -736,30 +736,30 @@ export const TeamManagement: React.FC = () => {
 
                 {/* RIGHT: USERS LIST IN WORKSPACE */}
                 <div className="w-full lg:w-2/3 flex flex-col min-h-0">
-                    <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col h-full">
-                        <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-2 sm:gap-3 md:gap-4">
+                    <div className="bg-card rounded-xl sm:rounded-2xl border-3 sm:border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col h-full">
+                        <div className="px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4 lg:py-5 border-b-3 sm:border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-2 sm:gap-3 md:gap-4">
                             {/* Geometric detail */}
-                            <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/20 blur-3xl rounded-full pointer-events-none"></div>
+                            <div className="absolute top-0 right-0 w-20 sm:w-24 md:w-32 h-20 sm:h-24 md:h-32 bg-white/20 blur-3xl rounded-full pointer-events-none"></div>
 
-                            <div className="flex items-center gap-2 sm:gap-3 relative z-10">
-                                <div className="bg-white p-1.5 sm:p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
-                                    <Users className="text-slate-800" size={16} className="sm:w-5 sm:h-5" />
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 relative z-10 min-w-0">
+                                <div className="bg-white p-1 sm:p-1.5 md:p-2 border-2 border-slate-900 rounded-lg sm:rounded-xl shadow-[2px_2px_0px_#0f172a] flex-shrink-0">
+                                    <Users className="text-slate-800 w-3 sm:w-4 md:w-5" />
                                 </div>
-                                <h3 className="font-heading font-black text-white text-xs sm:text-lg md:text-xl">
-                                    Anggota di Workspace {selectedWorkspace ? selectedWorkspace.name : '...'}
+                                <h3 className="font-heading font-black text-white text-xs sm:text-sm md:text-lg lg:text-xl truncate">
+                                    Anggota {selectedWorkspace ? `: ${selectedWorkspace.name}` : '...'}
                                 </h3>
                             </div>
 
-                            {/* SEARCH BAR (Button moved out) */}
-                            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto z-10">
-                                <div className="relative w-full sm:w-48 md:w-64">
-                                    <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} className="sm:w-4 sm:h-4" />
+                            {/* SEARCH BAR */}
+                            <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 md:gap-3 w-full sm:w-auto z-10 flex-1 sm:flex-none">
+                                <div className="relative w-full sm:w-40 md:w-48 lg:w-64">
+                                    <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} className="sm:w-4 sm:h-4" />
                                     <input
                                         type="text"
-                                        placeholder="Cari anggota tim..."
+                                        placeholder="Cari..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[2px_2px_0px_#0f172a]"
+                                        className="w-full bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl pl-6 sm:pl-8 md:pl-10 pr-2 sm:pr-3 md:pr-4 py-1 sm:py-1.5 md:py-2 text-[10px] sm:text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[2px_2px_0px_#0f172a]"
                                     />
                                 </div>
                             </div>

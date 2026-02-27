@@ -236,7 +236,7 @@ export const WorkspaceSettings: React.FC = () => {
     const togglePageVisibility = (path: string) => {
         if (!config) return;
 
-        const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+        const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity', 'calendar'];
 
         if (CORE_PAGES.includes(path)) {
             const currentList = config.hidden_pages || [];

@@ -575,31 +575,31 @@ export const Dashboard: React.FC = () => {
     };
 
     return (
-        <div className="w-full px-6 md:px-10 space-y-8 animate-in fade-in duration-500 pb-20">
+        <div className="w-full px-2 sm:px-4 md:px-6 lg:px-10 space-y-4 sm:space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12 sm:pb-20">
             {/* GRID LAYOUT */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8">
 
                 {/* --- LEFT DESKTOP COLUMN (8 of 12) --- */}
-                <div className="lg:col-span-8 space-y-4 sm:space-y-6 lg:space-y-8">
+                <div className="lg:col-span-8 space-y-2 sm:space-y-4 md:space-y-6 lg:space-y-8">
 
                     {/* Welcome Banner */}
-                    <div className="mb-1 sm:mb-2 pt-4 sm:pt-6 lg:pt-8">
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-tight">
+                    <div className="mb-0 sm:mb-1 md:mb-2 pt-2 sm:pt-4 md:pt-6 lg:pt-8">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-tight line-clamp-2">
                             {timeInfo.text}, {userName}!
                         </h1>
-                        <p className="text-xs sm:text-sm md:text-base lg:text-lg text-slate-500 font-bold mt-1 sm:mt-2 max-w-2xl leading-relaxed">
-                            {timeInfo.quote} Konsistensi adalah kunci kesuksesan. Mari buat karya luar biasa hari ini! ✨
+                        <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-slate-500 font-bold mt-0.5 sm:mt-1 md:mt-2 max-w-2xl leading-snug line-clamp-2">
+                            {timeInfo.quote}
                         </p>
                     </div>
 
                     {/* Analytics Filtering & Cards */}
                     <div>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-5 lg:mb-6">
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 mb-2 sm:mb-3 md:mb-4 lg:mb-6">
+                            <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
 
-                            <div className="flex flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto">
+                            <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2 w-full sm:w-auto">
                                 <select
-                                    className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                     value={filterPlatform}
                                     onChange={(e) => setFilterPlatform(e.target.value)}
                                 >
@@ -609,18 +609,18 @@ export const Dashboard: React.FC = () => {
                                     ))}
                                 </select>
                                 <select
-                                    className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                     value={filterWs}
                                     onChange={(e) => setFilterWs(e.target.value)}
                                 >
                                     <option value="all">WORKSPACE</option>
                                     {workspaces.map(ws => (
-                                        <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>
+                                        <option key={ws.id} value={ws.id}>{ws.name.length > 15 ? ws.name.substring(0, 12) + '...' : ws.name.toUpperCase()}</option>
                                     ))}
                                 </select>
-                                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                                <div className="flex flex-wrap gap-1 sm:gap-1.5 md:gap-2">
                                     <select
-                                        className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                        className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                         value={filterMonth}
                                         onChange={(e) => setFilterMonth(parseInt(e.target.value))}
                                     >
@@ -629,7 +629,7 @@ export const Dashboard: React.FC = () => {
                                         ))}
                                     </select>
                                     <select
-                                        className="px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-slate-900 rounded-full font-black text-[8px] sm:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                        className="px-2 sm:px-3 md:px-4 py-0.5 sm:py-1 md:py-1.5 border-2 border-slate-900 rounded-full font-black text-[7px] sm:text-[8px] md:text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
                                         value={filterYear}
                                         onChange={(e) => setFilterYear(parseInt(e.target.value))}
                                     >
@@ -641,45 +641,45 @@ export const Dashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
                             {/* Total Views Card */}
-                            <div className="bg-card rounded-2xl sm:rounded-[16px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[120px] sm:h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-10 sm:h-14 bg-accent px-3 sm:px-4 flex items-center gap-2 sm:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <Eye size={14} className="sm:w-4.5 sm:h-4.5 text-foreground" strokeWidth={2.5} />
+                            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-8 sm:h-10 md:h-14 bg-accent px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <Eye size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-foreground" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-white text-[9px] sm:text-sm uppercase tracking-wider">Total Views</span>
+                                    <span className="font-black text-white text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Views</span>
                                 </div>
-                                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-xl sm:text-3xl font-black text-foreground mb-1 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
+                                <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
                                     {renderMetricCompare(metricsCurrent.views, metricsPrev.views)}
                                 </div>
                             </div>
 
                             {/* Engagement Card */}
-                            <div className="bg-card rounded-2xl sm:rounded-[16px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[120px] sm:h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-10 sm:h-14 bg-tertiary px-3 sm:px-4 flex items-center gap-2 sm:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <MousePointerClick size={14} className="sm:w-4.5 sm:h-4.5 text-slate-900" strokeWidth={2.5} />
+                            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-8 sm:h-10 md:h-14 bg-tertiary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <MousePointerClick size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-slate-900 text-[9px] sm:text-sm uppercase tracking-wider">Engagement</span>
+                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Eng.</span>
                                 </div>
-                                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-xl sm:text-3xl font-black text-foreground mb-1 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
+                                <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
                                     {renderMetricCompare(metricsCurrent.er, metricsPrev.er)}
                                 </div>
                             </div>
 
                             {/* Published Card */}
-                            <div className="bg-card rounded-2xl sm:rounded-[16px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[120px] sm:h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-10 sm:h-14 bg-quaternary px-3 sm:px-4 flex items-center gap-2 sm:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <CalendarCheck size={14} className="sm:w-4.5 sm:h-4.5 text-slate-900" strokeWidth={2.5} />
+                            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
+                                <div className="h-8 sm:h-10 md:h-14 bg-quaternary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                        <CalendarCheck size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
                                     </div>
-                                    <span className="font-black text-slate-900 text-[9px] sm:text-sm uppercase tracking-wider">Published</span>
+                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Pub</span>
                                 </div>
-                                <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-xl sm:text-3xl font-black text-foreground mb-1 leading-none">{metricsCurrent.published}</h3>
+                                <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
+                                    <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.published}</h3>
                                     {renderMetricCompare(metricsCurrent.published, metricsPrev.published)}
                                 </div>
                             </div>
@@ -687,13 +687,13 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Minimalist Analytics Chart */}
-                    <div className="bg-white rounded-2xl sm:rounded-[32px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] p-3 sm:p-4 lg:p-6 lg:p-8">
-                        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
-                            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                                <TrendingUp size={18} className="sm:w-6 sm:h-6 text-slate-800" />
-                                <h3 className="text-base sm:text-lg lg:text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
+                    <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-[32px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] p-2 sm:p-3 md:p-4 lg:p-6 lg:p-8">
+                        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-8">
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+                                <TrendingUp size={16} className="sm:w-5 md:w-6 text-slate-800" />
+                                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
                             </div>
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 md:gap-2">
                                 {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
                                     <button
                                         key={metric}
@@ -709,7 +709,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="h-[200px] sm:h-[250px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                        <div className="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
                             <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                 <AreaChart data={chartData}>
                                     <defs>
@@ -723,13 +723,13 @@ export const Dashboard: React.FC = () => {
                                         dataKey="formattedDate"
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
+                                        tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
                                         minTickGap={30}
                                     />
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
+                                        tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
                                         tickFormatter={formatShortNumber}
                                     />
                                     <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 2 }} />

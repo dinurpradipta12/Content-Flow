@@ -35,36 +35,54 @@ export const PresenceToast = () => {
 
                 if (!workspaces || !isMounted) return;
 
-                // 2. Extract unique members of our workspaces
-                const memberAvatarSet = new Set<string>();
+                const memberIdsSet = new Set<string>();
+                const memberAvatarsSet = new Set<string>();
+
                 workspaces.forEach(ws => {
+                    const members = ws.members || [];
                     const isMember = (ws.owner_id === currentUserId) ||
-                        (ws.members || []).some((m: string) => {
+                        members.some((m: string) => {
+                            if (m === currentUserId) return true;
                             try { return decodeURIComponent(m) === decodeURIComponent(myAvatar || '') || m === myAvatar; }
                             catch { return m === myAvatar; }
                         });
 
-                    if (isMember && ws.members) {
-                        ws.members.forEach((m: string) => {
-                            if (m !== myAvatar) memberAvatarSet.add(m);
+                    if (isMember) {
+                        members.forEach((m: string) => {
+                            if (m === currentUserId || m === myAvatar) return;
+
+                            // Check if it's a UUID (User ID)
+                            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m);
+                            if (isUUID) {
+                                memberIdsSet.add(m);
+                            } else if (m.startsWith('http') && !m.startsWith('data:')) {
+                                // Only track non-base64 avatars to avoid URI length issues
+                                memberAvatarsSet.add(m);
+                            }
                         });
                     }
                 });
 
-                const membersToTrackAvatars = Array.from(memberAvatarSet);
-                console.log(`Found ${membersToTrackAvatars.length} workspace members to track`);
+                const memberIds = Array.from(memberIdsSet);
+                const memberAvatars = Array.from(memberAvatarsSet);
 
-                // 3. Map avatars to User IDs for reliable tracking
-                if (membersToTrackAvatars.length > 0) {
-                    const { data: usersToTrack } = await supabase
-                        .from('app_users')
-                        .select('id, online_status, full_name, username')
-                        .in('avatar_url', membersToTrackAvatars);
+                console.log(`Presence System: Found ${memberIds.length} IDs and ${memberAvatars.length} Avatars to track`);
+
+                // 3. Map members to User IDs for reliable tracking
+                if (memberIds.length > 0 || memberAvatars.length > 0) {
+                    let query = supabase.from('app_users').select('id, online_status, full_name, username');
+
+                    // Build OR filter: match by ID OR by Avatar URL
+                    const filters = [];
+                    if (memberIds.length > 0) filters.push(`id.in.(${memberIds.join(',')})`);
+                    if (memberAvatars.length > 0) filters.push(`avatar_url.in.(${memberAvatars.map(a => `"${a}"`).join(',')})`);
+
+                    const { data: usersToTrack } = await query.or(filters.join(','));
 
                     if (usersToTrack && isMounted) {
                         membersToTrackRef.current.clear();
                         statusCacheRef.current.clear();
-                        
+
                         usersToTrack.forEach(u => {
                             membersToTrackRef.current.add(u.id);
                             if (u.online_status) {
