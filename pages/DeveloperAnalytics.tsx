@@ -199,13 +199,13 @@ export const DeveloperAnalytics: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="p-6 bg-blue-600 border-[3px] border-slate-900 shadow-[8px_8px_0px_#0f172a] rounded-[24px] h-44 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-2 transition-all duration-300">
+                <div className="p-3 md:p-6 bg-blue-600 border-2 md:border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] md:shadow-[8px_8px_0px_#0f172a] rounded-2xl md:rounded-[24px] h-32 md:h-44 flex flex-col justify-between relative overflow-hidden group transition-all duration-300">
                     <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-4 -translate-y-4 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform">
                         <Users size={100} className="text-white" />
                     </div>
                     <div className="relative z-10">
                         <h3 className="text-white/70 text-xs font-black uppercase tracking-[0.2em] mb-2">User Aktif</h3>
-                        <p className="text-4xl lg:text-5xl font-black text-white drop-shadow-sm">{data.activeUsers}</p>
+                        <p className="text-xl md:text-4xl lg:text-5xl font-black text-white drop-shadow-sm">{data.activeUsers}</p>
                     </div>
                     <div className="relative z-10 flex gap-2">
                         <span className="text-[10px] font-black text-white/80 bg-white/15 px-3 py-1 rounded-lg backdrop-blur-md border border-white/10">PERAN: {data.personalSubscribers}</span>
@@ -213,26 +213,26 @@ export const DeveloperAnalytics: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="p-6 bg-rose-600 border-[3px] border-slate-900 shadow-[8px_8px_0px_#0f172a] rounded-[24px] h-44 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-2 transition-all duration-300">
+                <div className="p-3 md:p-6 bg-rose-600 border-2 md:border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] md:shadow-[8px_8px_0px_#0f172a] rounded-2xl md:rounded-[24px] h-32 md:h-44 flex flex-col justify-between relative overflow-hidden group transition-all duration-300">
                     <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-4 -translate-y-4 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform">
                         <Briefcase size={100} className="text-white" />
                     </div>
                     <div className="relative z-10">
                         <h3 className="text-white/70 text-xs font-black uppercase tracking-[0.2em] mb-2">Total Tim (Tenant)</h3>
-                        <p className="text-4xl lg:text-5xl font-black text-white drop-shadow-sm">{data.totalTenants}</p>
+                        <p className="text-xl md:text-4xl lg:text-5xl font-black text-white drop-shadow-sm">{data.totalTenants}</p>
                     </div>
                     <div className="relative z-10 flex items-center gap-1 text-emerald-300 font-black text-sm bg-white/10 w-fit px-3 py-1.5 rounded-xl backdrop-blur-md border border-white/10">
                         <ArrowUpRight size={16} /> 3%
                     </div>
                 </div>
 
-                <div className="p-6 bg-amber-500 border-[3px] border-slate-900 shadow-[8px_8px_0px_#0f172a] rounded-[24px] h-44 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-2 transition-all duration-300">
+                <div className="p-3 md:p-6 bg-amber-500 border-2 md:border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] md:shadow-[8px_8px_0px_#0f172a] rounded-2xl md:rounded-[24px] h-32 md:h-44 flex flex-col justify-between relative overflow-hidden group transition-all duration-300">
                     <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-4 -translate-y-4 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform">
                         <Activity size={100} className="text-white" />
                     </div>
                     <div className="relative z-10">
                         <h3 className="text-slate-900/60 text-xs font-black uppercase tracking-[0.2em] mb-2">Konversi Rate</h3>
-                        <p className="text-4xl lg:text-5xl font-black text-slate-900 drop-shadow-sm">{data.growthRate}%</p>
+                        <p className="text-xl md:text-4xl lg:text-5xl font-black text-slate-900 drop-shadow-sm">{data.growthRate}%</p>
                     </div>
                     <div className="relative z-10 flex items-center gap-2">
                         <div className="flex-1 h-3 bg-slate-900/10 rounded-full overflow-hidden border border-slate-900/5">
@@ -244,19 +244,18 @@ export const DeveloperAnalytics: React.FC = () => {
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
                 {/* Sales Accumulation Chart */}
-                <Card className="p-8 border-2 border-border shadow-hard bg-card relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700"></div>
-                    <div className="flex items-center justify-between mb-8 relative z-10">
+                <Card className="p-4 md:p-8 border-2 border-border shadow-hard bg-card relative overflow-hidden group">
+                    <div className="flex items-center justify-between mb-4 md:mb-8 relative z-10">
                         <div>
-                            <h3 className="text-xl font-black text-foreground flex items-center gap-2">
-                                <TrendingUp size={20} className="text-accent" />
+                            <h3 className="text-sm md:text-xl font-black text-foreground flex items-center gap-2">
+                                <TrendingUp size={16} className="text-accent md:w-5 md:h-5" />
                                 Penjualan Bulanan
                             </h3>
-                            <p className="text-muted-foreground text-sm font-bold mt-1">Akumulasi pendapatan per paket langganan.</p>
+                            <p className="text-muted-foreground text-xs md:text-sm font-bold mt-0.5 md:mt-1 hidden md:block">Akumulasi pendapatan per paket langganan.</p>
                         </div>
-                        <Download size={20} className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+                        <Download size={16} className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors md:w-5 md:h-5" />
                     </div>
                     <div className="h-80 w-full relative z-10">
                         <ResponsiveContainer width="100%" height="100%">
