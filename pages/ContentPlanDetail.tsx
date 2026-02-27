@@ -397,6 +397,8 @@ export const ContentPlanDetail: React.FC = () => {
     const [viewMode, setViewMode] = useState<'kanban' | 'table'>(() => {
         return window.innerWidth < 768 ? 'table' : 'kanban';
     });
+    // Mobile: active status tab for Trello-style view
+    const [mobileStatusTab, setMobileStatusTab] = useState<string>('all');
 
     // --- Presence Helpers ---
     const getStatusDot = (status: string) => {
@@ -1068,7 +1070,140 @@ export const ContentPlanDetail: React.FC = () => {
 
     return (
         <>
-            <div className="flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
+            {/* ═══════════════════════════════════════════════════════════════════
+                MOBILE VIEW (< md) - Trello-inspired card list
+                ═══════════════════════════════════════════════════════════════════ */}
+            <div className="block md:hidden flex flex-col h-full pb-24 animate-in fade-in duration-300">
+                {/* Mobile Header */}
+                <div className="flex items-center gap-2 mb-3 sticky top-0 z-40 bg-background py-2">
+                    <button onClick={() => navigate('/plan')}
+                        className="p-2 rounded-xl bg-card border border-border text-foreground flex-shrink-0">
+                        <ArrowLeft size={16} />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-sm font-black text-foreground truncate">{workspaceData.name || 'Content Plan'}</h2>
+                        <p className="text-[9px] text-mutedForeground">{tasks.length} konten · {workspaceData.account_name}</p>
+                    </div>
+                    <button onClick={handleOpenCreateModal}
+                        className="flex items-center gap-1 px-3 py-2 bg-accent text-white rounded-xl text-xs font-bold flex-shrink-0">
+                        <Plus size={14} /> Tambah
+                    </button>
+                </div>
+
+                {/* Platform filter - horizontal scroll */}
+                <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-2 flex-shrink-0">
+                    <button onClick={() => setFilterPlatform('all')}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${filterPlatform === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                        Semua
+                    </button>
+                    {workspaceData.platforms.map(p => (
+                        <button key={p} onClick={() => setFilterPlatform(p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)}
+                            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${filterPlatform !== 'all' && (filterPlatform === (p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)) ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
+                            {p}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Status tabs - Trello style */}
+                <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2 mb-3 flex-shrink-0">
+                    {[
+                        { value: 'all', label: 'Semua', color: 'bg-slate-500' },
+                        { value: ContentStatus.TODO, label: 'To Do', color: 'bg-slate-400' },
+                        { value: ContentStatus.IN_PROGRESS, label: 'In Progress', color: 'bg-blue-500' },
+                        { value: ContentStatus.REVIEW, label: 'Review', color: 'bg-amber-500' },
+                        { value: ContentStatus.SCHEDULED, label: 'Scheduled', color: 'bg-purple-500' },
+                        { value: ContentStatus.PUBLISHED, label: 'Published', color: 'bg-emerald-500' },
+                    ].map(s => {
+                        const count = s.value === 'all' ? tasks.length : tasks.filter(t => t.status === s.value).length;
+                        return (
+                            <button key={s.value} onClick={() => setMobileStatusTab(s.value)}
+                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${mobileStatusTab === s.value ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                                <div className={`w-2 h-2 rounded-full ${s.color}`} />
+                                {s.label}
+                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full ${mobileStatusTab === s.value ? 'bg-white/20' : 'bg-muted'}`}>{count}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Content Cards - Trello style */}
+                <div className="flex-1 overflow-y-auto space-y-2">
+                    {loading ? (
+                        <div className="flex items-center justify-center h-32">
+                            <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : (
+                        tasks
+                            .filter(t => {
+                                const statusMatch = mobileStatusTab === 'all' || t.status === mobileStatusTab;
+                                const platformMatch = filterPlatform === 'all' || t.platform === filterPlatform;
+                                return statusMatch && platformMatch;
+                            })
+                            .sort((a, b) => new Date(a.date || '').getTime() - new Date(b.date || '').getTime())
+                            .map(task => {
+                                const statusColors: Record<string, string> = {
+                                    [ContentStatus.TODO]: 'border-l-slate-400',
+                                    [ContentStatus.IN_PROGRESS]: 'border-l-blue-500',
+                                    [ContentStatus.REVIEW]: 'border-l-amber-500',
+                                    [ContentStatus.SCHEDULED]: 'border-l-purple-500',
+                                    [ContentStatus.PUBLISHED]: 'border-l-emerald-500',
+                                };
+                                const statusBadgeColors: Record<string, string> = {
+                                    [ContentStatus.TODO]: 'bg-slate-100 text-slate-600',
+                                    [ContentStatus.IN_PROGRESS]: 'bg-blue-50 text-blue-700',
+                                    [ContentStatus.REVIEW]: 'bg-amber-50 text-amber-700',
+                                    [ContentStatus.SCHEDULED]: 'bg-purple-50 text-purple-700',
+                                    [ContentStatus.PUBLISHED]: 'bg-emerald-50 text-emerald-700',
+                                };
+                                return (
+                                    <button key={task.id} onClick={() => handleCardClick(task)}
+                                        className={`w-full bg-card border border-border border-l-4 ${statusColors[task.status] || 'border-l-slate-300'} rounded-xl p-3 text-left active:scale-[0.99] transition-transform`}>
+                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                            <p className="text-sm font-bold text-foreground line-clamp-2 flex-1">{task.title}</p>
+                                            <span className={`flex-shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full ${statusBadgeColors[task.status] || 'bg-muted text-mutedForeground'}`}>
+                                                {task.status}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {task.platform && (
+                                                <span className="text-[9px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{task.platform}</span>
+                                            )}
+                                            {task.date && (
+                                                <span className="text-[9px] font-bold text-mutedForeground flex items-center gap-0.5">
+                                                    <Calendar size={9} /> {new Date(task.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                </span>
+                                            )}
+                                            {task.pillar && (
+                                                <span className="text-[9px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{task.pillar}</span>
+                                            )}
+                                            {task.pic && (
+                                                <span className="text-[9px] font-bold text-accent">{task.pic}</span>
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })
+                    )}
+                    {!loading && tasks.filter(t => {
+                        const statusMatch = mobileStatusTab === 'all' || t.status === mobileStatusTab;
+                        const platformMatch = filterPlatform === 'all' || t.platform === filterPlatform;
+                        return statusMatch && platformMatch;
+                    }).length === 0 && (
+                        <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
+                            <Layers size={28} className="text-accent/40 mx-auto mb-2" />
+                            <p className="text-sm font-bold text-foreground mb-1">Belum ada konten</p>
+                            <button onClick={handleOpenCreateModal} className="mt-2 px-4 py-2 bg-accent text-white rounded-xl text-xs font-bold">
+                                + Tambah Konten
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════════
+                DESKTOP VIEW (≥ md) - Original Kanban/Table Layout
+                ═══════════════════════════════════════════════════════════════════ */}
+            <div className="hidden md:flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
                 {/* Mobile Header Section - Collapsible */}
                 <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-end gap-2 sm:gap-3 lg:gap-6 border-b-2 border-border pb-2 sm:pb-3 lg:pb-6 flex-shrink-0 w-full max-w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-2 sm:py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
                     {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
