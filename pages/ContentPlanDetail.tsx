@@ -802,11 +802,19 @@ export const ContentPlanDetail: React.FC = () => {
             platform: formData.platform,
             priority: formData.priority,
             script: formData.script,
-            pic: formData.pic,
-            approval: formData.approval,
-            content_link: formData.contentLink // Ensure SNAKE_CASE for DB
+            pic: formData.pic || null, // FIX: Use null instead of empty string for UUID safety
+            approval: formData.approval || null, // FIX: Use null instead of empty string for UUID safety
+            content_link: formData.contentLink
         };
+
         try {
+            // Validation: Ensure workspace ID is a valid UUID
+            if (!id || id.length < 36) {
+                console.error("Invalid Workspace ID:", id);
+                alert("ID Workspace tidak valid. Coba muat ulang halaman.");
+                return;
+            }
+
             const currentUserName = localStorage.getItem('user_name') || 'Seseorang';
             const wsName = workspaceData.name;
             let currentContentId = editingId;

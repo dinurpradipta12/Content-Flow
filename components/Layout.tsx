@@ -1409,7 +1409,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 md:gap-6">
                                             <div className="relative group cursor-pointer w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-slate-800 bg-muted shadow-sm flex-shrink-0">
                                                 <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload className="text-white" size={16} className="sm:w-5 sm:h-5" /></div>
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Upload size={16} className="text-white sm:w-5 sm:h-5" /></div>
                                                 <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'user')} />
                                             </div>
                                             <div className="flex-1 text-center sm:text-left"><h4 className="font-bold text-sm sm:text-lg text-foreground">Foto Profil</h4><p className="text-xs sm:text-sm text-mutedForeground">Klik avatar untuk mengganti.</p></div>
@@ -1444,7 +1444,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     <div className="flex flex-col gap-2">
                                                         <label className="font-bold text-[10px] sm:text-xs md:text-sm text-mutedForeground">Logo Sidebar (Standard)</label>
                                                         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-xl bg-slate-500/5 hover:bg-card transition-colors relative cursor-pointer group">
-                                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2 flex-shrink-0">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={20} className="sm:w-6 sm:h-6" />}</div>
+                                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-card border-2 border-slate-200 rounded-lg flex items-center justify-center p-2 flex-shrink-0">{branding.appLogo ? <img src={branding.appLogo} alt="Logo" className="w-full h-full object-contain" /> : <Layers size={20} className="text-slate-300 sm:w-6 sm:h-6" />}</div>
                                                             <div><p className="font-bold text-foreground text-[10px] sm:text-xs md:text-sm text-center">Upload PNG</p></div>
                                                             <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app')} />
                                                         </div>
@@ -1452,7 +1452,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     <div className="flex flex-col gap-2">
                                                         <label className="font-bold text-[10px] sm:text-xs md:text-sm text-mutedForeground">&nbsp;</label>
                                                         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-colors relative cursor-pointer group">
-                                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2 flex-shrink-0">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers className="text-slate-600" size={20} className="sm:w-6 sm:h-6" />}</div>
+                                                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-card border-2 border-slate-700 rounded-lg flex items-center justify-center p-2 flex-shrink-0">{branding.appLogoLight ? <img src={branding.appLogoLight} alt="Logo Light" className="w-full h-full object-contain" /> : <Layers size={20} className="text-slate-600 sm:w-6 sm:h-6" />}</div>
                                                             <div><p className="font-bold text-foreground text-[10px] sm:text-xs md:text-sm text-center">Upload PNG Putih</p></div>
                                                             <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'app_light')} />
                                                         </div>
