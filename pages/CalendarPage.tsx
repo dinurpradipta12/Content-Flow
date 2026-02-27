@@ -5,7 +5,6 @@ import {
     Filter,
     Layers,
     Instagram,
-    Video,
     Linkedin,
     Youtube,
     Facebook,
@@ -14,14 +13,12 @@ import {
     Search,
     X,
     Check,
-    Palette,
-    ChevronDown
+    ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '../components/ui/Modal';
-import { Select } from '../components/ui/Input';
 import { useAppConfig } from '../components/AppConfigProvider';
 
 interface WorkspaceFilter {
@@ -509,17 +506,18 @@ export const CalendarPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="text-[10px] font-black uppercase text-mutedForeground tracking-widest block mb-1.5">Status</label>
-                                <Select
+                                <select
                                     value={selectedItem.status}
                                     onChange={e => handleUpdateStatus(e.target.value)}
                                     disabled={updating}
+                                    className="w-full bg-muted border-2 border-border text-foreground rounded-xl px-3 py-2.5 outline-none transition-all focus:border-accent font-bold text-sm"
                                 >
                                     <option value="To-Do">To-Do</option>
                                     <option value="In Progress">In Progress</option>
                                     <option value="Review">Review</option>
                                     <option value="Scheduled">Scheduled</option>
                                     <option value="Published">Published</option>
-                                </Select>
+                                </select>
                             </div>
                             <div>
                                 <label className="text-[10px] font-black uppercase text-mutedForeground tracking-widest block mb-1.5">Tipe</label>
@@ -579,7 +577,7 @@ export const CalendarPage: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <ChevronRight size={16} className="text-mutedForeground group-hover:text-accent transition-colors flex-shrink-0 mt-0.5" />
+                                    <ChevronRightIcon size={16} className="text-mutedForeground group-hover:text-accent transition-colors flex-shrink-0 mt-0.5" />
                                 </div>
                             </button>
                         );
