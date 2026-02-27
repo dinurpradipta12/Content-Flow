@@ -154,17 +154,17 @@ export const DeveloperAnalytics: React.FC = () => {
     if (!data) return null;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+        <div className="space-y-4 md:space-y-8 animate-in fade-in duration-500 pb-20">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 flex items-center gap-3">
-                        <div className="w-14 h-14 bg-accent text-white rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3 group-hover:rotate-0 transition-transform">
-                            <TrendingUp size={30} />
+                    <h1 className="text-base md:text-4xl font-black text-slate-900 flex items-center gap-2 md:gap-3">
+                        <div className="w-9 h-9 md:w-14 md:h-14 bg-accent text-white rounded-xl md:rounded-2xl flex items-center justify-center shadow-hard-mini flex-shrink-0">
+                            <TrendingUp size={18} className="md:w-[30px] md:h-[30px]" />
                         </div>
                         Developer Analytics
                     </h1>
-                    <p className="text-slate-500 font-bold text-lg mt-2 ml-1">Statistik performa dan pertumbuhan aplikasi secara mendalam.</p>
+                    <p className="text-slate-500 font-bold text-xs md:text-lg mt-0.5 md:mt-2 hidden md:block">Statistik performa dan pertumbuhan aplikasi secara mendalam.</p>
                 </div>
 
                 <div className="flex items-center gap-3 bg-card p-2 rounded-2xl border-2 border-border shadow-hard-mini">
@@ -182,15 +182,15 @@ export const DeveloperAnalytics: React.FC = () => {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="p-6 bg-indigo-600 border-[3px] border-slate-900 shadow-[8px_8px_0px_#0f172a] rounded-[24px] h-44 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-2 transition-all duration-300">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                <div className="p-3 md:p-6 bg-indigo-600 border-2 md:border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] md:shadow-[8px_8px_0px_#0f172a] rounded-2xl md:rounded-[24px] h-32 md:h-44 flex flex-col justify-between relative overflow-hidden group transition-all duration-300">
                     <div className="absolute top-0 right-0 p-2 opacity-20 transform translate-x-4 -translate-y-4 group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform">
                         <DollarSign size={100} className="text-white" />
                     </div>
                     <div className="relative z-10">
                         <h3 className="text-white/70 text-xs font-black uppercase tracking-[0.2em] mb-2">Total Pendapatan</h3>
-                        <p className="text-4xl lg:text-5xl font-black text-white drop-shadow-sm">
-                            <span className="text-lg opacity-60 mr-1">Rp</span>
+                        <p className="text-xl md:text-4xl lg:text-5xl font-black text-white drop-shadow-sm">
+                            <span className="text-sm md:text-lg opacity-60 mr-1">Rp</span>
                             {data.totalRevenue.toLocaleString('id-ID')}
                         </p>
                     </div>

@@ -235,7 +235,7 @@ export const DeveloperInbox: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2 sm:gap-3">
+                    <h1 className="text-base sm:text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2 sm:gap-3">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 text-white rounded-lg sm:rounded-xl flex items-center justify-center relative shadow-hard-mini flex-shrink-0">
                             <Inbox size={20} className="sm:w-6 sm:h-6" />
                             {unreadCount > 0 && (

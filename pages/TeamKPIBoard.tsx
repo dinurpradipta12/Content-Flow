@@ -362,6 +362,26 @@ export const TeamKPIBoard: React.FC = () => {
 
     return (
         <div className="space-y-2 sm:space-y-4 md:space-y-6">
+            {/* Mobile: Workspace filter pills */}
+            {myWorkspaces.length > 1 && (
+                <div className="flex md:hidden gap-1.5 overflow-x-auto no-scrollbar pb-1 flex-shrink-0">
+                    <button onClick={() => setSelectedWorkspaceId('all')}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white border-violet-600' : 'bg-card border-border text-foreground'}`}>
+                        Semua ({filteredMembers.length})
+                    </button>
+                    {myWorkspaces.map(ws => {
+                        const wsAvatars = new Set(ws.members || []);
+                        const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
+                        return (
+                            <button key={ws.id} onClick={() => setSelectedWorkspaceId(ws.id)}
+                                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspaceId === ws.id ? 'bg-violet-600 text-white border-violet-600' : 'bg-card border-border text-foreground'}`}>
+                                {ws.name} ({count})
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
                 <div>
@@ -383,7 +403,7 @@ export const TeamKPIBoard: React.FC = () => {
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
                 <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
                     <div className="w-10 sm:w-12 h-10 sm:h-12 bg-violet-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
                         <Users className="text-violet-500" size={18} />
@@ -471,7 +491,7 @@ export const TeamKPIBoard: React.FC = () => {
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                             {filteredMembers.map(member => {
                                 const rate = getCompletionRate(member.id);
                                 const color = getCompletionColor(rate);
