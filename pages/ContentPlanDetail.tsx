@@ -1083,10 +1083,10 @@ export const ContentPlanDetail: React.FC = () => {
 
                             <div className="relative group">
                                 {workspaceData.logo_url ? (
-                                    <img src={workspaceData.logo_url} alt="Logo" className="h-16 sm:h-20 md:h-24 lg:h-32 w-auto object-contain" />
+                                    <img src={workspaceData.logo_url} alt="Logo" className="h-10 sm:h-16 md:h-20 lg:h-32 w-auto object-contain" />
                                 ) : (
-                                    <div className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 lg:h-32 lg:w-32 bg-accent/20 rounded-2xl sm:rounded-3xl border-2 border-slate-200 shadow-hard flex items-center justify-center">
-                                        <Layers size={32} className="sm:w-10 sm:h-10 md:w-12 md:h-12 text-accent" />
+                                    <div className="h-10 w-10 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-32 lg:w-32 bg-accent/20 rounded-xl sm:rounded-2xl md:rounded-3xl border-2 border-slate-200 shadow-hard flex items-center justify-center">
+                                        <Layers size={20} className="sm:w-8 sm:h-8 md:w-10 md:h-10 text-accent" />
                                     </div>
                                 )}
                             </div>
