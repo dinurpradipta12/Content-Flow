@@ -1,0 +1,210 @@
+/*
+ * Mobile App Styles
+ * Applied only on screens < 768px (md breakpoint)
+ * Does NOT affect desktop or tablet layouts
+ */
+
+/* ─── Global Mobile Fixes ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Prevent horizontal overflow */
+  body, #root {
+    overflow-x: hidden;
+  }
+
+  /* Better touch targets */
+  button, a, [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Compact spacing for mobile */
+  .space-y-8 { --tw-space-y-reverse: 0; margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1.5rem * var(--tw-space-y-reverse)); }
+  .space-y-6 { --tw-space-y-reverse: 0; margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1rem * var(--tw-space-y-reverse)); }
+
+  /* Compact padding for page containers */
+  .px-10 { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .px-8 { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .px-6 { padding-left: 0.5rem; padding-right: 0.5rem; }
+
+  /* Compact text sizes */
+  .text-4xl { font-size: 1.5rem; line-height: 2rem; }
+  .text-3xl { font-size: 1.25rem; line-height: 1.75rem; }
+  .text-2xl { font-size: 1.125rem; line-height: 1.5rem; }
+
+  /* Scrollable horizontal containers */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .overflow-x-auto::-webkit-scrollbar { display: none; }
+}
+
+/* ─── Dashboard Mobile ────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Dashboard grid: single column */
+  .dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Analytics cards: 2 columns on mobile */
+  .analytics-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Chart height on mobile */
+  .chart-container {
+    height: 150px !important;
+  }
+
+  /* Prayer times: compact */
+  .prayer-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.375rem !important;
+  }
+}
+
+/* ─── Content Plan Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Workspace cards: single column, compact */
+  .workspace-card {
+    padding: 0.75rem !important;
+  }
+
+  /* Card header: smaller logo */
+  .ws-logo-box {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+}
+
+/* ─── Calendar Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Calendar day cells: smaller */
+  .calendar-cell {
+    min-height: 60px !important;
+    padding: 0.25rem !important;
+  }
+
+  /* Day number: smaller */
+  .calendar-day-number {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    font-size: 0.625rem !important;
+  }
+
+  /* Content items in calendar: very compact */
+  .calendar-item {
+    font-size: 0.5rem !important;
+    padding: 0.125rem 0.25rem !important;
+  }
+}
+
+/* ─── Approval Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Approval cards: 1 column */
+  .approval-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Approval card: compact */
+  .approval-card {
+    padding: 0.75rem !important;
+  }
+}
+
+/* ─── Messages Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Messages: full height */
+  .messages-container {
+    height: calc(100vh - 180px) !important;
+  }
+
+  /* Chat input: larger touch target */
+  .chat-input {
+    font-size: 16px !important; /* Prevent iOS zoom */
+  }
+}
+
+/* ─── Content Flow Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Kanban columns: narrower */
+  .kanban-column {
+    min-width: 240px !important;
+  }
+
+  /* Flow stats: 2 columns */
+  .flow-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ─── Content Data Insight Mobile ────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Insight charts: full width */
+  .insight-chart {
+    width: 100% !important;
+    height: 200px !important;
+  }
+
+  /* Insight filters: scrollable */
+  .insight-filters {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* ─── Team KPI Board Mobile ───────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* KPI cards: 1 column */
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* KPI member card: compact */
+  .kpi-member-card {
+    padding: 0.75rem !important;
+  }
+}
+
+/* ─── Modal Mobile ────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Modals: full screen on mobile */
+  .modal-content {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ─── Form Inputs Mobile ──────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Prevent iOS zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ─── Scrollbar Hide on Mobile ────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    scrollbar-width: none;
+  }
+}

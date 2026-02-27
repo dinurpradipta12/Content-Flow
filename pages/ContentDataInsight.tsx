@@ -578,7 +578,7 @@ export const ContentDataInsight: React.FC = () => {
                         </div>
 
                         {/* Chart Area */}
-                        <div className="h-[300px] w-full bg-white border-2 border-slate-800 rounded-xl p-4 shadow-hard relative">
+                        <div className="h-[180px] sm:h-[300px] w-full bg-white border-2 border-slate-800 rounded-xl p-3 sm:p-4 shadow-hard relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData}>
                                     <defs>

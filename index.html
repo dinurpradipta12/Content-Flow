@@ -114,6 +114,39 @@
       button, a {
         touch-action: manipulation;
       }
+
+      /* Prevent iOS zoom on input focus */
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="number"],
+      input[type="search"],
+      textarea,
+      select {
+        font-size: 16px !important;
+      }
+
+      /* Hide scrollbars on mobile for cleaner look */
+      ::-webkit-scrollbar { display: none !important; }
+      * { scrollbar-width: none !important; }
+
+      /* Prevent horizontal overflow */
+      body { overflow-x: hidden; }
+
+      /* Compact text sizes on mobile */
+      .text-4xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+      .text-3xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+      .text-2xl { font-size: 1.125rem !important; line-height: 1.5rem !important; }
+
+      /* Compact padding on mobile */
+      .px-10 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+      .px-8 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+      /* Better touch targets */
+      button { min-height: 36px; }
+
+      /* Smooth horizontal scroll */
+      .overflow-x-auto { -webkit-overflow-scrolling: touch; }
     }
 
     /* Override min-h-screen and h-screen to use percentages for zoom compatibility */
