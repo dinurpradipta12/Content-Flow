@@ -158,6 +158,28 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-dark .cal-threads * { color: #cbd5e1 !important; }
         .theme-dark .cal-default { background-color: #1e293b !important; border-color: #475569 !important; color: #e2e8f0 !important; }
         .theme-dark .cal-default * { color: #e2e8f0 !important; }
+
+        /* ContentFlow Status Column Headers - Dark Mode */
+        .theme-dark .bg-slate-100 { background-color: rgba(51, 65, 85, 0.6) !important; border-color: #475569 !important; color: #cbd5e1 !important; }
+        .theme-dark .bg-slate-100 * { color: #cbd5e1 !important; }
+        .theme-dark .text-slate-600 { color: #94a3b8 !important; }
+        .theme-dark .bg-blue-100 { background-color: rgba(30, 58, 138, 0.5) !important; border-color: #1d4ed8 !important; color: #93c5fd !important; }
+        .theme-dark .bg-blue-100 * { color: #93c5fd !important; }
+        .theme-dark .text-blue-600 { color: #60a5fa !important; }
+        .theme-dark .bg-amber-100 { background-color: rgba(120, 53, 15, 0.5) !important; border-color: #b45309 !important; color: #fcd34d !important; }
+        .theme-dark .bg-amber-100 * { color: #fcd34d !important; }
+        .theme-dark .text-amber-600 { color: #fbbf24 !important; }
+        .theme-dark .bg-purple-100 { background-color: rgba(76, 29, 149, 0.5) !important; border-color: #7c3aed !important; color: #c4b5fd !important; }
+        .theme-dark .bg-purple-100 * { color: #c4b5fd !important; }
+        .theme-dark .text-purple-600 { color: #a78bfa !important; }
+        .theme-dark .bg-emerald-100 { background-color: rgba(6, 78, 59, 0.5) !important; border-color: #059669 !important; color: #6ee7b7 !important; }
+        .theme-dark .bg-emerald-100 * { color: #6ee7b7 !important; }
+        .theme-dark .text-emerald-600 { color: #34d399 !important; }
+        .theme-dark .border-slate-300 { border-color: #475569 !important; }
+        .theme-dark .border-blue-300 { border-color: #1d4ed8 !important; }
+        .theme-dark .border-amber-300 { border-color: #b45309 !important; }
+        .theme-dark .border-purple-300 { border-color: #7c3aed !important; }
+        .theme-dark .border-emerald-300 { border-color: #059669 !important; }
     `,
     midnight: () => `
         body.theme-midnight, .theme-midnight, .theme-midnight main, .theme-midnight .bg-background, .theme-midnight.bg-background { background-color: #0c1130 !important; }
@@ -239,6 +261,28 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
 
         .theme-midnight .text-mutedForeground, .theme-midnight .text-slate-400 { color: #818cf8 !important; }
         .theme-midnight .text-mutedForeground svg, .theme-midnight .text-slate-400 svg { color: #818cf8 !important; stroke: #818cf8 !important; }
+
+        /* ContentFlow Status Column Headers - Midnight Mode */
+        .theme-midnight .bg-slate-100 { background-color: rgba(30, 27, 75, 0.8) !important; border-color: #4338ca !important; color: #c7d2fe !important; }
+        .theme-midnight .bg-slate-100 * { color: #c7d2fe !important; }
+        .theme-midnight .text-slate-600 { color: #a5b4fc !important; }
+        .theme-midnight .bg-blue-100 { background-color: rgba(30, 27, 75, 0.7) !important; border-color: #4f46e5 !important; color: #a5b4fc !important; }
+        .theme-midnight .bg-blue-100 * { color: #a5b4fc !important; }
+        .theme-midnight .text-blue-600 { color: #818cf8 !important; }
+        .theme-midnight .bg-amber-100 { background-color: rgba(120, 53, 15, 0.4) !important; border-color: #d97706 !important; color: #fde68a !important; }
+        .theme-midnight .bg-amber-100 * { color: #fde68a !important; }
+        .theme-midnight .text-amber-600 { color: #fcd34d !important; }
+        .theme-midnight .bg-purple-100 { background-color: rgba(76, 29, 149, 0.4) !important; border-color: #7c3aed !important; color: #ddd6fe !important; }
+        .theme-midnight .bg-purple-100 * { color: #ddd6fe !important; }
+        .theme-midnight .text-purple-600 { color: #c4b5fd !important; }
+        .theme-midnight .bg-emerald-100 { background-color: rgba(6, 78, 59, 0.4) !important; border-color: #059669 !important; color: #a7f3d0 !important; }
+        .theme-midnight .bg-emerald-100 * { color: #a7f3d0 !important; }
+        .theme-midnight .text-emerald-600 { color: #6ee7b7 !important; }
+        .theme-midnight .border-slate-300 { border-color: #4338ca !important; }
+        .theme-midnight .border-blue-300 { border-color: #4f46e5 !important; }
+        .theme-midnight .border-amber-300 { border-color: #d97706 !important; }
+        .theme-midnight .border-purple-300 { border-color: #7c3aed !important; }
+        .theme-midnight .border-emerald-300 { border-color: #059669 !important; }
     `,
     pastel: () => `
         body.theme-pastel, .theme-pastel, .theme-pastel main, .theme-pastel .bg-background, .theme-pastel.bg-background { background-color: #fff1f2 !important; }

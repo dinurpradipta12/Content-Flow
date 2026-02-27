@@ -106,40 +106,40 @@ const STATUS_CONFIG: Record<ContentStatus, {
     [ContentStatus.TODO]: {
         label: 'To-Do',
         color: 'text-slate-600',
-        bg: 'bg-slate-50',
-        border: 'border-slate-200',
+        bg: 'bg-slate-100',
+        border: 'border-slate-300',
         icon: <Circle size={14} />,
         dotColor: 'bg-slate-400'
     },
     [ContentStatus.IN_PROGRESS]: {
         label: 'In Progress',
         color: 'text-blue-600',
-        bg: 'bg-blue-50',
-        border: 'border-blue-200',
+        bg: 'bg-blue-100',
+        border: 'border-blue-300',
         icon: <Clock size={14} />,
         dotColor: 'bg-blue-500'
     },
     [ContentStatus.REVIEW]: {
         label: 'Review',
         color: 'text-amber-600',
-        bg: 'bg-amber-50',
-        border: 'border-amber-200',
+        bg: 'bg-amber-100',
+        border: 'border-amber-300',
         icon: <Eye size={14} />,
         dotColor: 'bg-amber-500'
     },
     [ContentStatus.SCHEDULED]: {
         label: 'Scheduled',
         color: 'text-purple-600',
-        bg: 'bg-purple-50',
-        border: 'border-purple-200',
+        bg: 'bg-purple-100',
+        border: 'border-purple-300',
         icon: <Calendar size={14} />,
         dotColor: 'bg-purple-500'
     },
     [ContentStatus.PUBLISHED]: {
         label: 'Published',
         color: 'text-emerald-600',
-        bg: 'bg-emerald-50',
-        border: 'border-emerald-200',
+        bg: 'bg-emerald-100',
+        border: 'border-emerald-300',
         icon: <CheckCircle size={14} />,
         dotColor: 'bg-emerald-500'
     }
