@@ -208,7 +208,7 @@ const App: React.FC = () => {
                 <Route path="plan/:id" element={<ContentPlanDetail />} />
                 <Route path="flow" element={<ContentFlow />} />
                 <Route path="calendar" element={<CalendarPage />} />
-                <Route path="approval" element={<RequireAdmin><Approval /></RequireAdmin>} />
+                <Route path="approval" element={<Approval />} />
                 <Route path="insight" element={<ContentDataInsight />} />
                 <Route path="carousel" element={<CarouselMaker />} />
                 <Route path="script" element={<TeamKPIBoard />} />

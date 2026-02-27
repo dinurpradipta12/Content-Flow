@@ -115,6 +115,7 @@ export const getRequests = async (): Promise<ApprovalRequest[]> => {
     const userId = localStorage.getItem('user_id');
     const tenantId = localStorage.getItem('tenant_id') || userId;
     const userAvatar = localStorage.getItem('user_avatar') || '';
+    const userRole = localStorage.getItem('user_role') || 'Member';
 
     try {
         // Step 1: Get all workspaces where user is member or owner
@@ -126,29 +127,32 @@ export const getRequests = async (): Promise<ApprovalRequest[]> => {
 
         // Filter workspaces where user is member or owner
         const userWorkspaceOwnerIds = new Set<string>();
+        const userWorkspaceIds = new Set<string>();
         (wsData || []).forEach(ws => {
             const isOwner = ws.owner_id === userId;
             if (isOwner) {
                 userWorkspaceOwnerIds.add(ws.owner_id);
+                userWorkspaceIds.add(ws.id);
                 return;
             }
 
             // Check membership
             const members: string[] = ws.members || [];
-            if (members.includes(userId || '')) {
+            const isMember = members.includes(userId || '') ||
+                (userAvatar && members.some(m => {
+                    try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
+                    catch { return m === userAvatar; }
+                }));
+
+            if (isMember) {
                 userWorkspaceOwnerIds.add(ws.owner_id);
-                return;
-            }
-            if (userAvatar && members.some(m => {
-                try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
-                catch { return m === userAvatar; }
-            })) {
-                userWorkspaceOwnerIds.add(ws.owner_id);
+                userWorkspaceIds.add(ws.id);
             }
         });
 
-        // Step 2: Fetch approval_requests where admin_id matches user or workspace owners
-        // Build an OR condition with user ID, tenant ID, and all workspace owner IDs
+        // Step 2: Fetch approval_requests
+        // For Admin/Owner: see all requests from their workspaces (by admin_id)
+        // For Member: see requests they submitted OR requests from workspaces they belong to
         let adminIds = Array.from(userWorkspaceOwnerIds);
         adminIds.push(userId!);
         if (tenantId && tenantId !== userId) {
@@ -156,10 +160,11 @@ export const getRequests = async (): Promise<ApprovalRequest[]> => {
         }
         adminIds = [...new Set(adminIds)]; // Deduplicate
 
+        // Fetch by admin_id (workspace owner) OR by requester_id (own submissions)
         const { data, error } = await supabase
             .from('approval_requests')
             .select(`*, template:approval_templates(*)`)
-            .in('admin_id', adminIds)
+            .or(`admin_id.in.(${adminIds.join(',')}),requester_id.eq.${userId}`)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
