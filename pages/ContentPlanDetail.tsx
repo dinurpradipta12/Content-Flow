@@ -326,7 +326,7 @@ const KanbanColumn: React.FC<{
 
     return (
         <div
-            className="flex-1 flex-shrink-0 min-w-[320px] sm:min-w-[350px] md:min-w-[380px] lg:min-w-[400px] flex flex-col pb-0"
+            className="flex-1 flex-shrink-0 min-w-[260px] sm:min-w-[300px] md:min-w-[340px] lg:min-w-[380px] flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -393,7 +393,10 @@ export const ContentPlanDetail: React.FC = () => {
     });
     const [loading, setLoading] = useState(true);
     const [errorState, setErrorState] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+    // Default to table view on mobile for better readability
+    const [viewMode, setViewMode] = useState<'kanban' | 'table'>(() => {
+        return window.innerWidth < 768 ? 'table' : 'kanban';
+    });
 
     // --- Presence Helpers ---
     const getStatusDot = (status: string) => {
@@ -1341,8 +1344,8 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
 
                         {/* Table Container - Custom Scrollbar */}
-                        <div className="flex-1 pb-4">
-                            <table className="w-full text-left border-separate border-spacing-y-3 px-1">
+                        <div className="flex-1 pb-4 overflow-x-auto">
+                            <table className="w-full min-w-[600px] text-left border-separate border-spacing-y-3 px-1">
                                 {/* Header */}
                                 <thead className="sticky top-0 z-20">
                                     <tr>
