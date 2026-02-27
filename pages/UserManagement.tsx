@@ -526,65 +526,65 @@ export const UserManagement: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                         {/* Card 1: Total Users */}
                         <div onClick={() => setIsGrowthModalOpen(true)}
-                            className="bg-white p-3 sm:p-4 md:p-5 rounded-lg sm:rounded-2xl border-3 sm:border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            className="bg-card dark:bg-blue-600 p-3 sm:p-4 md:p-5 rounded-lg sm:rounded-2xl border-3 sm:border-4 border-slate-900 dark:border-blue-400 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] dark:hover:shadow-[8px_8px_0px_#1e293b] transition-all cursor-pointer group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
-                                    <Users className="text-blue-600" size={20} />
+                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-500 rounded-xl flex items-center justify-center border-2 border-slate-900 dark:border-blue-300">
+                                    <Users className="text-blue-600 dark:text-white" size={20} />
                                 </div>
-                                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-tighter">Growth</span>
+                                <span className="text-[10px] font-black text-blue-600 dark:text-blue-100 bg-blue-50 dark:bg-blue-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-blue-200 dark:border-blue-300">Growth</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Total Users</h4>
+                            <h4 className="text-xs font-bold text-slate-400 dark:text-blue-100 uppercase tracking-widest leading-none mb-1">Total Users</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900">{users.length}</span>
-                                <span className="text-xs font-bold text-emerald-500 flex items-center"><TrendingUp size={12} className="mr-0.5" /> Live</span>
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">{users.length}</span>
+                                <span className="text-xs font-bold text-emerald-500 dark:text-emerald-300 flex items-center"><TrendingUp size={12} className="mr-0.5" /> Live</span>
                             </div>
                         </div>
 
                         {/* Card 2: Expiring */}
                         <div onClick={() => setIsExpiringModalOpen(true)}
-                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            className="bg-card dark:bg-amber-600 p-5 rounded-2xl border-4 border-slate-900 dark:border-amber-400 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] dark:hover:shadow-[8px_8px_0px_#1e293b] transition-all cursor-pointer group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
-                                    <Bell className="text-amber-600" size={20} />
+                                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-500 rounded-xl flex items-center justify-center border-2 border-slate-900 dark:border-amber-300">
+                                    <Bell className="text-amber-600 dark:text-white" size={20} />
                                 </div>
-                                <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-full uppercase tracking-tighter">Retention</span>
+                                <span className="text-[10px] font-black text-amber-600 dark:text-amber-100 bg-amber-50 dark:bg-amber-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-amber-200 dark:border-amber-300">Retention</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Masa Tenggang</h4>
+                            <h4 className="text-xs font-bold text-slate-400 dark:text-amber-100 uppercase tracking-widest leading-none mb-1">Masa Tenggang</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900">{expiringUsers.length}</span>
-                                <span className="text-xs font-bold text-slate-400">User / 5 Hari</span>
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">{expiringUsers.length}</span>
+                                <span className="text-xs font-bold text-slate-400 dark:text-amber-100">User / 5 Hari</span>
                             </div>
                         </div>
 
                         {/* Card 3: Admins */}
                         <div onClick={() => setIsAdminStatsModalOpen(true)}
-                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            className="bg-card dark:bg-purple-600 p-5 rounded-2xl border-4 border-slate-900 dark:border-purple-400 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] dark:hover:shadow-[8px_8px_0px_#1e293b] transition-all cursor-pointer group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
-                                    <ShieldCheck className="text-purple-600" size={20} />
+                                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-500 rounded-xl flex items-center justify-center border-2 border-slate-900 dark:border-purple-300">
+                                    <ShieldCheck className="text-purple-600 dark:text-white" size={20} />
                                 </div>
-                                <span className="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-1 rounded-full uppercase tracking-tighter">Structure</span>
+                                <span className="text-[10px] font-black text-purple-600 dark:text-purple-100 bg-purple-50 dark:bg-purple-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-purple-200 dark:border-purple-300">Structure</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Admin Roles</h4>
+                            <h4 className="text-xs font-bold text-slate-400 dark:text-purple-100 uppercase tracking-widest leading-none mb-1">Admin Roles</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900">{admins.length}</span>
-                                <span className="text-xs font-bold text-slate-400">Total Admin</span>
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">{admins.length}</span>
+                                <span className="text-xs font-bold text-slate-400 dark:text-purple-100">Total Admin</span>
                             </div>
                         </div>
 
                         {/* Card 4: Inactive */}
                         <div onClick={() => setIsInactiveModalOpen(true)}
-                            className="bg-white p-5 rounded-2xl border-4 border-slate-900 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] transition-all cursor-pointer group">
+                            className="bg-card dark:bg-red-600 p-5 rounded-2xl border-4 border-slate-900 dark:border-red-400 shadow-hard hover:-translate-y-1 hover:shadow-[8px_8px_0px_#0f172a] dark:hover:shadow-[8px_8px_0px_#1e293b] transition-all cursor-pointer group">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center border-2 border-slate-900">
-                                    <UserMinus className="text-red-600" size={20} />
+                                <div className="w-10 h-10 bg-red-100 dark:bg-red-500 rounded-xl flex items-center justify-center border-2 border-slate-900 dark:border-red-300">
+                                    <UserMinus className="text-red-600 dark:text-white" size={20} />
                                 </div>
-                                <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-full uppercase tracking-tighter">Alert</span>
+                                <span className="text-[10px] font-black text-red-600 dark:text-red-100 bg-red-50 dark:bg-red-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-red-200 dark:border-red-300">Alert</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Non-Aktif / Expired</h4>
+                            <h4 className="text-xs font-bold text-slate-400 dark:text-red-100 uppercase tracking-widest leading-none mb-1">Non-Aktif / Expired</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900">{inactiveUsers.length}</span>
-                                <span className="text-xs font-bold text-red-500">Warning</span>
+                                <span className="text-3xl font-black text-slate-900 dark:text-white">{inactiveUsers.length}</span>
+                                <span className="text-xs font-bold text-red-500 dark:text-red-200">Warning</span>
                             </div>
                         </div>
                     </div>
@@ -594,7 +594,7 @@ export const UserManagement: React.FC = () => {
 
                         {/* ===== REGISTRATION FORM ===== */}
                         <div className="w-full lg:w-[380px] shrink-0">
-                            <div className="bg-white rounded-2xl border-4 border-slate-900 overflow-hidden sticky top-6 shadow-hard">
+                            <div className="bg-card rounded-2xl border-4 border-slate-900 overflow-hidden sticky top-6 shadow-hard transition-colors">
                                 <div className="p-5 pb-4 border-b-4 border-slate-900 bg-yellow-300 relative">
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 rounded-full blur-xl mix-blend-overlay"></div>
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] relative z-10">
@@ -608,7 +608,7 @@ export const UserManagement: React.FC = () => {
                                     <div>
                                         <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Nama Anggota</label>
                                         <input type="text" value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-                                            className="w-full bg-white border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
+                                            className="w-full bg-card border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-foreground placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                             placeholder="Nama Lengkap" />
                                     </div>
                                     {/* Email */}
@@ -617,7 +617,7 @@ export const UserManagement: React.FC = () => {
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                             <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                                                className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
+                                                className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-foreground placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="user@gmail.com" />
                                         </div>
                                     </div>
@@ -627,7 +627,7 @@ export const UserManagement: React.FC = () => {
                                         <div className="relative">
                                             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                             <input type="text" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))}
-                                                className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
+                                                className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-foreground placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="contoh: andi_dev" />
                                         </div>
                                     </div>
@@ -637,7 +637,7 @@ export const UserManagement: React.FC = () => {
                                         <div className="relative group">
                                             <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                             <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                                className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-10 py-3 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
+                                                className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-10 py-3 text-sm font-bold text-foreground placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="Min. 6 Karakter" />
                                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 z-10">
                                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -652,7 +652,7 @@ export const UserManagement: React.FC = () => {
                                             <div className="relative">
                                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={16} />
                                                 <input type="datetime-local" value={form.subscription_end} onChange={e => setForm(f => ({ ...f, subscription_end: e.target.value }))}
-                                                    className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all" />
+                                                    className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all" />
                                             </div>
                                             <p className="text-[10px] font-bold text-slate-400 mt-1">Kosongkan untuk akses unlimited.</p>
                                         </div>
@@ -660,9 +660,9 @@ export const UserManagement: React.FC = () => {
 
                                     {/* Subscription Package */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 tracking-wide">Subscription Package</label>
+                                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 tracking-wide">Subscription Package</label>
                                         <select value={form.subscription_package} onChange={e => setForm(f => ({ ...f, subscription_package: e.target.value }))}
-                                            className="w-full bg-white border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all">
+                                            className="w-full bg-card border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all">
                                             <option value="">Pilih Paket (Default: Free)</option>
                                             <option value="Free">Free</option>
                                             {availablePackages.map(pkg => (
@@ -684,13 +684,13 @@ export const UserManagement: React.FC = () => {
 
                         {/* ===== USER TABLE ===== */}
                         <div className="flex-1 min-w-0">
-                            <div className="bg-white rounded-2xl border-4 border-slate-900 shadow-hard flex flex-col overflow-hidden">
+                            <div className="bg-card rounded-2xl border-4 border-slate-900 shadow-hard flex flex-col overflow-hidden transition-colors">
                                 <div className="px-6 py-5 border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-primary relative gap-4">
                                     {/* Geometric detail */}
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-white/20 blur-2xl rounded-full"></div>
 
                                     <div className="flex items-center gap-3">
-                                        <div className="bg-white p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
+                                        <div className="bg-card p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
                                             <Users className="text-slate-800" size={20} />
                                         </div>
                                         <h3 className="font-heading font-black text-white text-xl">Daftar User ({users.length})</h3>
@@ -704,11 +704,11 @@ export const UserManagement: React.FC = () => {
                                             placeholder="Cari nama / username..."
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full bg-white border-2 border-slate-900 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent transition-all shadow-[2px_2px_0px_#0f172a]"
+                                            className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-4 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all shadow-[2px_2px_0px_#0f172a]"
                                         />
                                     </div>
                                 </div>
-                                <div className="overflow-x-auto bg-white">
+                                <div className="overflow-x-auto bg-card">
                                     <table className="w-full text-left">
                                         <thead className="bg-slate-50 border-b-4 border-slate-900">
                                             <tr>
@@ -912,16 +912,16 @@ export const UserManagement: React.FC = () => {
                                     {/* Verification Section - Developer Only */}
                                     {isDeveloper && selectedUser.role !== 'Developer' && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                                 <ShieldCheck size={16} /> Verifikasi Akun
                                             </h4>
-                                            <div className={`bg-white rounded-2xl border-2 shadow-[4px_4px_0px_#0f172a] p-4 space-y-4 ${selectedUser.is_verified ? 'border-emerald-500' : 'border-amber-500'}`}>
+                                            <div className={`bg-card rounded-2xl border-2 shadow-[4px_4px_0px_#0f172a] p-4 space-y-4 ${selectedUser.is_verified ? 'border-emerald-500' : 'border-amber-500'}`}>
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center ${selectedUser.is_verified ? 'bg-emerald-300' : 'bg-amber-300'}`}>
                                                         {selectedUser.is_verified ? <ShieldCheck className="text-slate-900" size={24} /> : <AlertTriangle className="text-slate-900" size={24} />}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-black text-slate-900">
+                                                        <p className="text-sm font-black text-foreground">
                                                             {selectedUser.is_verified ? 'Akun Terverifikasi ✓' : 'Belum Diverifikasi'}
                                                         </p>
                                                         <p className="text-xs font-bold text-slate-500">
@@ -983,10 +983,10 @@ export const UserManagement: React.FC = () => {
 
                                     {/* Keanggotaan Workspace */}
                                     <div>
-                                        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                        <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                             <Layers size={16} /> Keanggotaan Workspace
                                         </h4>
-                                        <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
+                                        <div className="bg-card rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
                                             {(() => {
                                                 // Filter workspaces where selectedUser is actually a member
                                                 const userWs = workspaces.filter(ws => {
@@ -1005,10 +1005,10 @@ export const UserManagement: React.FC = () => {
                                                 return (
                                                     <div className="space-y-3">
                                                         {userWs.map(ws => (
-                                                            <div key={ws.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border-2 border-slate-900">
+                                                            <div key={ws.id} className="flex items-center gap-3 p-3 bg-muted rounded-xl border-2 border-slate-900">
                                                                 <Globe className="text-slate-400 shrink-0" size={16} />
                                                                 <div className="flex-1 min-w-0">
-                                                                    <span className="text-sm font-bold text-slate-900 line-clamp-1">{ws.name}</span>
+                                                                    <span className="text-sm font-bold text-foreground line-clamp-1">{ws.name}</span>
                                                                 </div>
                                                                 <span className="px-2.5 py-1 text-xs font-bold bg-accent text-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded shrink-0">Member</span>
                                                                 <button
@@ -1049,16 +1049,16 @@ export const UserManagement: React.FC = () => {
                                     {/* Status Akun - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                                 <Power size={16} /> Status Akun
                                             </h4>
-                                            <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 flex items-center justify-between">
+                                            <div className="bg-card rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center ${selectedUser.is_active !== false ? 'bg-emerald-300' : 'bg-red-300'}`}>
                                                         {selectedUser.is_active !== false ? <CheckCircle className="text-slate-900" size={24} /> : <XCircle className="text-slate-900" size={24} />}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-black text-slate-900">
+                                                        <p className="text-sm font-black text-foreground">
                                                             {selectedUser.is_active !== false ? 'User Dapat Login' : 'Akun Dinonaktifkan'}
                                                         </p>
                                                         <p className="text-xs font-bold text-slate-500">
@@ -1080,28 +1080,28 @@ export const UserManagement: React.FC = () => {
                                     {/* Subscription Period - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                                 <Calendar size={16} /> Periode Subscription
                                             </h4>
                                             <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 text-center">
-                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Mulai</p>
-                                                    <p className="text-sm font-black text-slate-900">
+                                                <div className="bg-card rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 text-center">
+                                                    <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Mulai</p>
+                                                    <p className="text-sm font-black text-foreground">
                                                         {selectedUser.subscription_start
                                                             ? new Date(selectedUser.subscription_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
                                                             : '-'}
                                                     </p>
                                                 </div>
-                                                <div className="bg-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 relative hover:shadow-[4px_4px_0px_#0f172a] transition-all">
-                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 text-center">Berakhir</p>
+                                                <div className="bg-card rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 relative hover:shadow-[4px_4px_0px_#0f172a] transition-all">
+                                                    <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 text-center">Berakhir</p>
                                                     <input
                                                         type="datetime-local"
                                                         value={formatForDatetimeLocal(selectedUser.subscription_end)}
                                                         onChange={e => {
-                                                            const isoString = e.target.value ? new Date(e.target.value).toISOString() : '';
-                                                            handleUpdateSubscriptionEnd(selectedUser.id, isoString);
+                                                            const val = e.target.value;
+                                                            handleUpdateSubscriptionEnd(selectedUser.id, val ? new Date(val).toISOString() : '');
                                                         }}
-                                                        className="w-full text-sm font-black text-slate-900 bg-transparent text-center focus:outline-none cursor-pointer"
+                                                        className="w-full bg-card border-none text-sm font-black text-foreground focus:outline-none focus:ring-0 text-center"
                                                     />
                                                 </div>
                                             </div>
