@@ -3,7 +3,8 @@ import { supabase } from '../services/supabaseClient';
 import {
     MessageSquare, X, Users, Send, Smile, Reply, Check, CheckCheck,
     Plus, AtSign, Image as ImageIcon, Search, Trash2, Lock, Hash,
-    MessageCircle, ChevronDown, Circle
+    MessageCircle, ChevronDown, Circle, Bell, BellOff, Edit2, UserMinus,
+    MoreVertical, Volume2, VolumeX
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -124,6 +125,20 @@ const CHAT_BG_STYLE: React.CSSProperties = {
     backgroundSize: '20px 20px'
 };
 
+// ─── Chat Notification Popup ──────────────────────────────────────────────────
+
+interface ChatNotifPopup {
+    id: string;
+    senderName: string;
+    senderAvatar: string;
+    content: string;
+    groupName?: string;
+    isDM: boolean;
+    senderId: string;
+    groupId?: string;
+    recipientId?: string;
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const Messages: React.FC = () => {
@@ -169,7 +184,7 @@ export const Messages: React.FC = () => {
     const isTypingRef = useRef(false);
 
     // UI State
-    const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null); // message id
+    const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
     const [showInputEmoji, setShowInputEmoji] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [showGroupModal, setShowGroupModal] = useState(false);
@@ -180,6 +195,22 @@ export const Messages: React.FC = () => {
     const [showStatusPicker, setShowStatusPicker] = useState(false);
     const [currentStatus, setCurrentStatus] = useState(localStorage.getItem('user_status') || 'online');
     const [customStatus, setCustomStatus] = useState('');
+
+    // Group management state
+    const [groupMenuOpen, setGroupMenuOpen] = useState<string | null>(null); // group id
+    const [showDeleteGroupConfirm, setShowDeleteGroupConfirm] = useState<ChatGroup | null>(null);
+    const [showEditGroupModal, setShowEditGroupModal] = useState<ChatGroup | null>(null);
+    const [editGroupName, setEditGroupName] = useState('');
+    const [editGroupMembers, setEditGroupMembers] = useState<string[]>([]);
+    const [mutedGroups, setMutedGroups] = useState<Set<string>>(() => {
+        try { return new Set(JSON.parse(localStorage.getItem('muted_groups') || '[]')); }
+        catch { return new Set(); }
+    });
+
+    // Chat notification popup
+    const [chatNotifPopup, setChatNotifPopup] = useState<ChatNotifPopup | null>(null);
+    const [notifReplyInput, setNotifReplyInput] = useState('');
+    const notifTimerRef = useRef<any>(null);
 
     // Refs
     const activeGroupRef = useRef<ChatGroup | null>(null);
@@ -196,6 +227,8 @@ export const Messages: React.FC = () => {
     const emojiPickerRef = useRef<HTMLDivElement>(null);
     const inputEmojiRef = useRef<HTMLDivElement>(null);
     const statusPickerRef = useRef<HTMLDivElement>(null);
+    const groupMenuRef = useRef<HTMLDivElement>(null);
+    const mutedGroupsRef = useRef(mutedGroups);
 
     // Sync refs
     useEffect(() => { activeGroupRef.current = activeGroup; }, [activeGroup]);
@@ -203,6 +236,7 @@ export const Messages: React.FC = () => {
     useEffect(() => { selectedWorkspaceRef.current = selectedWorkspace; }, [selectedWorkspace]);
     useEffect(() => { workspacesRef.current = workspaces; }, [workspaces]);
     useEffect(() => { messagesRef.current = messages; }, [messages]);
+    useEffect(() => { mutedGroupsRef.current = mutedGroups; }, [mutedGroups]);
 
     // Close pickers on outside click
     useEffect(() => {
@@ -215,6 +249,9 @@ export const Messages: React.FC = () => {
             }
             if (statusPickerRef.current && !statusPickerRef.current.contains(e.target as Node)) {
                 setShowStatusPicker(false);
+            }
+            if (groupMenuRef.current && !groupMenuRef.current.contains(e.target as Node)) {
+                setGroupMenuOpen(null);
             }
         };
         document.addEventListener('mousedown', handleClick);
@@ -371,6 +408,16 @@ export const Messages: React.FC = () => {
                     } else if (msg.sender_id !== currentUser.id) {
                         setDmUnread(prev => ({ ...prev, [otherUserId]: (prev[otherUserId] || 0) + 1 }));
                         playChatSound();
+                        // Show DM notification popup
+                        showChatNotifPopup({
+                            id: msg.id,
+                            senderName: msg.sender_name || 'Seseorang',
+                            senderAvatar: msg.sender_avatar || '',
+                            content: decryptedMsg.content,
+                            isDM: true,
+                            senderId: msg.sender_id,
+                            recipientId: msg.recipient_id,
+                        });
                     }
                 }
             })
@@ -396,6 +443,28 @@ export const Messages: React.FC = () => {
             })
             .subscribe();
         typingChannelRef.current = channel;
+    };
+
+    // ── Chat Notification Popup ────────────────────────────────────────────────
+    const showChatNotifPopup = (notif: ChatNotifPopup) => {
+        setChatNotifPopup(notif);
+        setNotifReplyInput('');
+        if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+        notifTimerRef.current = setTimeout(() => setChatNotifPopup(null), 8000);
+    };
+
+    const handleNotifReply = async () => {
+        if (!notifReplyInput.trim() || !chatNotifPopup) return;
+        if (chatNotifPopup.isDM) {
+            const key = getDMKey(currentUser.id, chatNotifPopup.senderId);
+            const encryptedContent = encryptDM(notifReplyInput, key);
+            await supabase.from('direct_messages').insert({
+                sender_id: currentUser.id, recipient_id: chatNotifPopup.senderId,
+                content: encryptedContent, type: 'text', metadata: {}
+            });
+        }
+        setNotifReplyInput('');
+        setChatNotifPopup(null);
     };
 
     // ── Message Handlers ───────────────────────────────────────────────────────
@@ -429,7 +498,25 @@ export const Messages: React.FC = () => {
             setUnreadCounts(prev => ({ ...prev, [wsId]: (prev[wsId] || 0) + 1 }));
         }
         if (msg.sender_id !== currentUserRef.current.id) {
-            playChatSound();
+            const groupId = msg.group_id;
+            const isMuted = groupId ? mutedGroupsRef.current.has(groupId) : false;
+            if (!isMuted) {
+                playChatSound();
+            }
+            // Show group message notification popup
+            if (!isActiveGroup) {
+                const groupName = groups.find(g => g.id === msg.group_id)?.name;
+                showChatNotifPopup({
+                    id: msg.id,
+                    senderName: msg.sender_name,
+                    senderAvatar: msg.sender_avatar,
+                    content: msg.content,
+                    groupName,
+                    isDM: false,
+                    senderId: msg.sender_id,
+                    groupId: msg.group_id,
+                });
+            }
             if (msg.content.includes(`@${currentUserRef.current.name}`) || msg.content.includes('@everyone')) {
                 sendNotification({ recipientId: currentUserRef.current.id, type: 'MENTION', title: `Disebut di workspace`, content: `${msg.sender_name}: ${msg.content}`, metadata: { workspace_id: wsId } });
             }
@@ -480,7 +567,6 @@ export const Messages: React.FC = () => {
         }).select().single();
         if (data) {
             setMessages(prev => prev.map(m => m.id === tempId ? { ...data, read_by: [currentUser.id], reactions: [] } : m));
-            // Handle @mentions
             if (content.includes('@')) {
                 const mentions = content.match(/@([\w\s]+)/g);
                 if (mentions) {
@@ -521,23 +607,19 @@ export const Messages: React.FC = () => {
 
     const handleAddReaction = async (messageId: string, emoji: string) => {
         setShowEmojiPicker(null);
-        // Optimistic update
         const existingReaction = messages.find(m => m.id === messageId)?.reactions?.find(r => r.user_id === currentUser.id && r.emoji === emoji);
         if (existingReaction) {
-            // Remove reaction
             setMessages(prev => prev.map(msg =>
                 msg.id === messageId ? { ...msg, reactions: (msg.reactions || []).filter(r => !(r.user_id === currentUser.id && r.emoji === emoji)) } : msg
             ));
             await supabase.from('workspace_chat_reactions').delete().eq('message_id', messageId).eq('user_id', currentUser.id).eq('emoji', emoji);
         } else {
-            // Add reaction
             const newReaction = { id: `temp-${Date.now()}`, message_id: messageId, user_id: currentUser.id, emoji, group_id: activeGroup?.id };
             setMessages(prev => prev.map(msg =>
                 msg.id === messageId ? { ...msg, reactions: [...(msg.reactions || []), newReaction] } : msg
             ));
             const { error } = await supabase.from('workspace_chat_reactions').insert({ message_id: messageId, user_id: currentUser.id, emoji, group_id: activeGroup?.id });
             if (error) {
-                // Rollback
                 setMessages(prev => prev.map(msg =>
                     msg.id === messageId ? { ...msg, reactions: (msg.reactions || []).filter(r => r.id !== newReaction.id) } : msg
                 ));
@@ -581,6 +663,47 @@ export const Messages: React.FC = () => {
         }
     };
 
+    // ── Group Management ───────────────────────────────────────────────────────
+    const handleDeleteGroup = async (group: ChatGroup) => {
+        await supabase.from('workspace_chat_messages').delete().eq('group_id', group.id);
+        await supabase.from('workspace_chat_groups').delete().eq('id', group.id);
+        setGroups(prev => prev.filter(g => g.id !== group.id));
+        if (activeGroup?.id === group.id) {
+            const remaining = groups.filter(g => g.id !== group.id);
+            setActiveGroup(remaining.length > 0 ? remaining[0] : null);
+        }
+        setShowDeleteGroupConfirm(null);
+    };
+
+    const handleOpenEditGroup = (group: ChatGroup) => {
+        setShowEditGroupModal(group);
+        setEditGroupName(group.name);
+        // Pre-select all current workspace members
+        setEditGroupMembers(workspaceMembers.map(m => m.id));
+        setGroupMenuOpen(null);
+    };
+
+    const handleSaveEditGroup = async () => {
+        if (!showEditGroupModal || !editGroupName.trim()) return;
+        await supabase.from('workspace_chat_groups').update({ name: editGroupName }).eq('id', showEditGroupModal.id);
+        setGroups(prev => prev.map(g => g.id === showEditGroupModal.id ? { ...g, name: editGroupName } : g));
+        if (activeGroup?.id === showEditGroupModal.id) {
+            setActiveGroup(prev => prev ? { ...prev, name: editGroupName } : prev);
+        }
+        setShowEditGroupModal(null);
+    };
+
+    const toggleMuteGroup = (groupId: string) => {
+        setMutedGroups(prev => {
+            const next = new Set(prev);
+            if (next.has(groupId)) next.delete(groupId);
+            else next.add(groupId);
+            localStorage.setItem('muted_groups', JSON.stringify(Array.from(next)));
+            return next;
+        });
+        setGroupMenuOpen(null);
+    };
+
     const handleUpdateStatus = async (status: string) => {
         setCurrentStatus(status);
         localStorage.setItem('user_status', status);
@@ -593,7 +716,6 @@ export const Messages: React.FC = () => {
         setInput(val);
         handleTyping();
 
-        // @mention detection
         const lastAt = val.lastIndexOf('@');
         const lastHash = val.lastIndexOf('#');
         const cursorPos = e.target.selectionStart || 0;
@@ -631,7 +753,6 @@ export const Messages: React.FC = () => {
     const filteredMembers = workspaceMembers.filter(m => m.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
     const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    // Render content mention in message
     const renderMessageContent = (content: string) => {
         const parts = content.split(/(#\[[^\]]+\]\(content:[^)]+\))/g);
         return parts.map((part, i) => {
@@ -682,6 +803,79 @@ export const Messages: React.FC = () => {
 
     return (
         <div className="flex flex-col h-[calc(100vh-120px)] gap-0 overflow-hidden">
+
+            {/* ── Chat Notification Popup ── */}
+            {chatNotifPopup && (
+                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-md px-4 animate-in slide-in-from-top-3 duration-300">
+                    <div className="bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden">
+                        <div className="flex items-start gap-3 p-4">
+                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {chatNotifPopup.senderAvatar ? (
+                                    <img src={chatNotifPopup.senderAvatar} alt="" className="w-full h-full object-cover rounded-xl" />
+                                ) : (
+                                    <MessageSquare size={18} className="text-accent" />
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                    <span className="font-black text-foreground text-sm">{chatNotifPopup.senderName}</span>
+                                    {chatNotifPopup.groupName && (
+                                        <span className="text-[10px] text-mutedForeground font-bold bg-muted px-1.5 py-0.5 rounded-full">#{chatNotifPopup.groupName}</span>
+                                    )}
+                                    {chatNotifPopup.isDM && (
+                                        <span className="text-[10px] text-accent font-bold bg-accent/10 px-1.5 py-0.5 rounded-full flex items-center gap-1"><Lock size={8} /> DM</span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-mutedForeground truncate">{chatNotifPopup.content}</p>
+                            </div>
+                            <button onClick={() => setChatNotifPopup(null)} className="text-mutedForeground hover:text-foreground flex-shrink-0 mt-0.5">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        {chatNotifPopup.isDM && (
+                            <div className="px-4 pb-4 flex gap-2">
+                                <input
+                                    type="text"
+                                    value={notifReplyInput}
+                                    onChange={e => setNotifReplyInput(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleNotifReply(); }}
+                                    placeholder="Balas pesan..."
+                                    className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-accent transition-colors text-foreground"
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={handleNotifReply}
+                                    disabled={!notifReplyInput.trim()}
+                                    className="w-9 h-9 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 transition-all flex-shrink-0"
+                                >
+                                    <Send size={14} />
+                                </button>
+                            </div>
+                        )}
+                        {!chatNotifPopup.isDM && (
+                            <div className="px-4 pb-4 flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        const group = groups.find(g => g.id === chatNotifPopup.groupId);
+                                        if (group) { setActiveGroup(group); setChatMode('workspace'); }
+                                        setChatNotifPopup(null);
+                                    }}
+                                    className="flex-1 py-2 bg-accent text-white rounded-xl text-sm font-bold hover:bg-accent/90 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Reply size={14} /> Buka Chat
+                                </button>
+                                <button
+                                    onClick={() => setChatNotifPopup(null)}
+                                    className="px-4 py-2 bg-muted text-foreground rounded-xl text-sm font-bold hover:bg-muted/80 transition-colors"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* ── Stats Cards ── */}
             <div className="grid grid-cols-3 gap-3 mb-4 flex-shrink-0">
                 <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
@@ -828,20 +1022,56 @@ export const Messages: React.FC = () => {
                                 {filteredGroups.map(g => {
                                     const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
                                     const unread = unreadCounts[g.id] || 0;
+                                    const isMuted = mutedGroups.has(g.id);
                                     return (
-                                        <button
-                                            key={g.id}
-                                            onClick={() => { setActiveGroup(g); setChatMode('workspace'); }}
-                                            className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
-                                        >
-                                            <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover" /> : <Hash size={14} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
+                                        <div key={g.id} className="relative group/item">
+                                            <button
+                                                onClick={() => { setActiveGroup(g); setChatMode('workspace'); }}
+                                                className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover" /> : <Hash size={14} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold truncate">{g.name}</p>
+                                                </div>
+                                                {isMuted && <VolumeX size={10} className="text-mutedForeground flex-shrink-0" />}
+                                                {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                                            </button>
+                                            {/* Group context menu button */}
+                                            <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity" ref={groupMenuOpen === g.id ? groupMenuRef : undefined}>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setGroupMenuOpen(groupMenuOpen === g.id ? null : g.id); }}
+                                                    className="p-1 rounded-lg hover:bg-muted text-mutedForeground hover:text-foreground transition-colors"
+                                                >
+                                                    <MoreVertical size={12} />
+                                                </button>
+                                                {groupMenuOpen === g.id && (
+                                                    <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
+                                                        <button
+                                                            onClick={() => handleOpenEditGroup(g)}
+                                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
+                                                        >
+                                                            <Edit2 size={12} className="text-accent" /> Edit Group
+                                                        </button>
+                                                        <button
+                                                            onClick={() => toggleMuteGroup(g.id)}
+                                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
+                                                        >
+                                                            {isMuted ? <Volume2 size={12} className="text-emerald-500" /> : <VolumeX size={12} className="text-amber-500" />}
+                                                            {isMuted ? 'Unmute Notifikasi' : 'Mute Notifikasi'}
+                                                        </button>
+                                                        <div className="border-t border-border" />
+                                                        <button
+                                                            onClick={() => { setShowDeleteGroupConfirm(g); setGroupMenuOpen(null); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
+                                                        >
+                                                            <Trash2 size={12} /> Hapus Group
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold truncate">{g.name}</p>
-                                            </div>
-                                            {unread > 0 && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
-                                        </button>
+                                        </div>
                                     );
                                 })}
                                 <button
@@ -934,6 +1164,16 @@ export const Messages: React.FC = () => {
                                         </>
                                     ) : null}
                                 </div>
+                                {/* Mute button in header for active group */}
+                                {chatMode === 'workspace' && activeGroup && (
+                                    <button
+                                        onClick={() => toggleMuteGroup(activeGroup.id)}
+                                        className={`p-2 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-mutedForeground hover:bg-muted hover:text-foreground'}`}
+                                        title={mutedGroups.has(activeGroup.id) ? 'Unmute notifikasi' : 'Mute notifikasi'}
+                                    >
+                                        {mutedGroups.has(activeGroup.id) ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                                    </button>
+                                )}
                             </div>
 
                             {/* Messages with background pattern */}
@@ -941,7 +1181,7 @@ export const Messages: React.FC = () => {
                                 {currentMessages.map((msg, idx) => {
                                     const isMe = msg.sender_id === currentUser.id;
                                     const prevMsg = currentMessages[idx - 1];
-                                    const showAvatar = !prevMsg || prevMsg.sender_id !== msg.sender_id;
+                                    const showSenderName = !prevMsg || prevMsg.sender_id !== msg.sender_id;
                                     const replyData = msg.metadata?.reply_to;
 
                                     // Group reactions by emoji
@@ -956,22 +1196,10 @@ export const Messages: React.FC = () => {
                                     return (
                                         <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
                                             <div className={`flex gap-2 max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                {/* Avatar */}
-                                                {!isMe && (
-                                                    <div className="flex-shrink-0 self-end mb-1">
-                                                        {showAvatar ? (
-                                                            <button onClick={() => {
-                                                                const member = workspaceMembers.find(m => m.id === msg.sender_id);
-                                                                if (member) setUserInfoModal(member);
-                                                            }}>
-                                                                <img src={msg.sender_avatar} alt="" className="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover bg-muted hover:ring-2 hover:ring-accent transition-all" />
-                                                            </button>
-                                                        ) : <div className="w-8" />}
-                                                    </div>
-                                                )}
+                                                {/* No avatar shown next to bubble — removed per request */}
 
                                                 <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                                    {!isMe && showAvatar && (
+                                                    {!isMe && showSenderName && (
                                                         <span className="text-[10px] font-black text-mutedForeground mb-1 px-1">{msg.sender_name}</span>
                                                     )}
 
@@ -1017,7 +1245,7 @@ export const Messages: React.FC = () => {
                                                             )}
                                                         </div>
 
-                                                        {/* Emoji picker - single instance */}
+                                                        {/* Emoji picker */}
                                                         {showEmojiPicker === msg.id && (
                                                             <div
                                                                 ref={emojiPickerRef}
@@ -1206,7 +1434,7 @@ export const Messages: React.FC = () => {
                 </div>
             )}
 
-            {/* Delete Confirm */}
+            {/* Delete Message Confirm */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(null)}>
                     <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
@@ -1215,6 +1443,75 @@ export const Messages: React.FC = () => {
                         <div className="flex gap-3">
                             <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)} className="flex-1">Batal</Button>
                             <Button onClick={() => handleDeleteMessage(showDeleteConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Group Confirm */}
+            {showDeleteGroupConfirm && (
+                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteGroupConfirm(null)}>
+                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-black text-foreground mb-2">Hapus Group?</h3>
+                        <p className="text-mutedForeground text-sm mb-1">Group <span className="font-black text-foreground">#{showDeleteGroupConfirm.name}</span> akan dihapus permanen.</p>
+                        <p className="text-mutedForeground text-xs mb-4">Semua pesan di dalam group ini juga akan terhapus.</p>
+                        <div className="flex gap-3">
+                            <Button variant="secondary" onClick={() => setShowDeleteGroupConfirm(null)} className="flex-1">Batal</Button>
+                            <Button onClick={() => handleDeleteGroup(showDeleteGroupConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Group</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Group Modal */}
+            {showEditGroupModal && (
+                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEditGroupModal(null)}>
+                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-md w-full" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-black text-foreground text-lg mb-4">Edit Group</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
+                                <input
+                                    type="text"
+                                    value={editGroupName}
+                                    onChange={e => setEditGroupName(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveEditGroup(); }}
+                                    placeholder="Nama group..."
+                                    className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-2">Anggota Group</label>
+                                <div className="max-h-48 overflow-y-auto space-y-1 border-2 border-border rounded-xl p-2">
+                                    {workspaceMembers.map(m => (
+                                        <label key={m.id} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted cursor-pointer transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={editGroupMembers.includes(m.id)}
+                                                onChange={e => {
+                                                    if (e.target.checked) setEditGroupMembers(prev => [...prev, m.id]);
+                                                    else setEditGroupMembers(prev => prev.filter(id => id !== m.id));
+                                                }}
+                                                className="w-4 h-4 accent-accent rounded"
+                                            />
+                                            <div className="relative flex-shrink-0">
+                                                <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full border border-border object-cover bg-muted" />
+                                                <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-card ${getStatusColor(m.online_status)}`} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-foreground truncate">{m.full_name}</p>
+                                                <p className="text-[9px] text-mutedForeground">{m.role}</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-mutedForeground mt-1">{editGroupMembers.length} anggota dipilih</p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <Button variant="secondary" onClick={() => setShowEditGroupModal(null)} className="flex-1">Batal</Button>
+                                <Button onClick={handleSaveEditGroup} disabled={!editGroupName.trim()} className="flex-1">Simpan</Button>
+                            </div>
                         </div>
                     </div>
                 </div>
