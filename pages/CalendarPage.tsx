@@ -219,7 +219,94 @@ export const CalendarPage: React.FC = () => {
     }).length;
 
     return (
-        <div className="flex flex-col h-full gap-2 sm:gap-4">
+        <>
+        {/* ═══ MOBILE VIEW ═══ */}
+        <div className="block md:hidden flex flex-col h-full pb-24 animate-in fade-in duration-300">
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between mb-3">
+                <div>
+                    <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['calendar']?.title || 'Kalender'}</h2>
+                    <p className="text-[10px] text-mutedForeground">{totalThisMonth} konten bulan ini</p>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => setCurrentDate(new Date(year, month - 1))} className="p-2 rounded-lg bg-muted text-foreground"><ChevronLeft size={16} /></button>
+                    <button onClick={() => setCurrentDate(new Date())} className="px-2 py-1.5 rounded-lg bg-muted text-xs font-black text-foreground">{MONTH_NAMES[month].slice(0, 3)} {year}</button>
+                    <button onClick={() => setCurrentDate(new Date(year, month + 1))} className="p-2 rounded-lg bg-muted text-foreground"><ChevronRight size={16} /></button>
+                </div>
+            </div>
+
+            {/* Compact Calendar Grid */}
+            <div className="bg-card border border-border rounded-2xl overflow-hidden mb-3 flex-shrink-0">
+                {/* Day headers */}
+                <div className="grid grid-cols-7 border-b border-border bg-muted/40">
+                    {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
+                        <div key={d} className="py-1.5 text-center text-[9px] font-black text-mutedForeground uppercase">{d}</div>
+                    ))}
+                </div>
+                {/* Calendar cells */}
+                <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(44px, 1fr)' }}>
+                    {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                        <div key={`e-${i}`} className="border-r border-b border-border bg-muted/10" />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const dayItems = getItemsForDay(day);
+                        const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                        return (
+                            <button key={day} onClick={() => { if (dayItems.length > 0) { setDayViewDate(day); setIsDayViewOpen(true); } }}
+                                className={`border-r border-b border-border p-1 flex flex-col items-center gap-0.5 transition-colors ${isToday ? 'bg-accent/5' : dayItems.length > 0 ? 'hover:bg-muted/30' : ''}`}>
+                                <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-black ${isToday ? 'bg-accent text-white' : 'text-foreground'}`}>{day}</span>
+                                {dayItems.length > 0 && (
+                                    <div className="flex gap-0.5 flex-wrap justify-center">
+                                        {dayItems.slice(0, 3).map((item, idx) => {
+                                            const wsColor = getWorkspaceColor(item.workspace_id);
+                                            return <div key={idx} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: wsColor }} />;
+                                        })}
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Today's Events */}
+            <div className="flex-1 overflow-y-auto">
+                <h3 className="text-xs font-black text-foreground uppercase tracking-wider mb-2">
+                    Konten {MONTH_NAMES[month]} {year}
+                </h3>
+                {loading ? (
+                    <div className="flex items-center justify-center h-20"><div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" /></div>
+                ) : (
+                    <div className="space-y-1.5">
+                        {Array.from({ length: daysInMonth }).map((_,i) => {
+                            const day = i + 1;
+                            const dayItems = getItemsForDay(day);
+                            if (dayItems.length === 0) return null;
+                            return dayItems.map(item => {
+                                const wsColor = getWorkspaceColor(item.workspace_id);
+                                return (
+                                    <button key={item.id} onClick={() => { setSelectedItem(item); setIsDetailOpen(true); }}
+                                        className="w-full flex items-center gap-2 p-2.5 bg-card border border-border rounded-xl text-left hover:border-accent transition-colors">
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-xs font-black" style={{ backgroundColor: wsColor }}>
+                                            {day}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
+                                            <p className="text-[9px] text-mutedForeground">{item.platform} · {item.status}</p>
+                                        </div>
+                                        <ChevronRightIcon size={14} className="text-mutedForeground flex-shrink-0" />
+                                    </button>
+                                );
+                            });
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {/* ═══ DESKTOP VIEW ═══ */}
+        <div className="hidden md:flex flex-col h-full gap-2 sm:gap-4">
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 flex-wrap">
                 <div>
@@ -585,5 +672,6 @@ export const CalendarPage: React.FC = () => {
                 </div>
             </Modal>
         </div>
+        </>
     );
 };
