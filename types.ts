@@ -33,8 +33,10 @@ export interface ContentItem {
   assignee?: string;
   pic?: string;
   script?: string;
-  contentLink?: string; // New field for direct post link
+  contentLink?: string; // Direct post link for analytics
   approval?: string;
+  asset_url?: string; // Uploaded JPG/image asset (base64 or URL)
+  drive_folder_url?: string; // Google Drive folder link for video/multi-file assets
   metrics?: {
     views: number;
     likes: number;
