@@ -810,15 +810,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             manifestLink.href = manifestUrl;
             document.head.appendChild(manifestLink);
 
-            // Update apple-touch-icon if available
-            let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+            // Update apple-touch-icon - CRITICAL for iOS home screen
+            // Try to find existing link by id first, then by rel
+            let appleLink = document.getElementById('apple-touch-icon-link') as HTMLLinkElement || document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+            
             if (config.app_icon_192) {
                 if (!appleLink) {
                     appleLink = document.createElement('link');
+                    appleLink.id = 'apple-touch-icon-link';
                     appleLink.rel = 'apple-touch-icon';
                     document.head.appendChild(appleLink);
                 }
                 appleLink.href = config.app_icon_192;
+                console.log('✅ Apple Touch Icon updated:', config.app_icon_192);
+            } else {
+                // No icon - use fallback
+                console.log('⚠️ No app_icon_192 found, using fallback');
             }
         }
     }, [branding, config?.app_icon_192, config?.app_icon_512, config?.app_icon_mask, currentTheme]);
@@ -833,13 +840,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 appFavicon: config.app_favicon || ''
             });
             // Update cache for next refresh - only store small text values, not long URLs
-            try {
-                localStorage.setItem('app_name', config.app_name);
-            } catch (e) {
-                console.warn('Failed to cache app_name:', e);
-            }
+            localStorage.setItem('app_name', config.app_name);
             // Don't store long image URLs in localStorage to avoid quota exceeded
             // These are fetched fresh from config which is already cached in memory
+            
+            // EARLY: Set apple-touch-icon immediately when config loads
+            // This is critical for iOS home screen icon to work
+            if (config.app_icon_192) {
+                let appleLink = document.getElementById('apple-touch-icon-link') as HTMLLinkElement;
+                if (!appleLink) {
+                    appleLink = document.createElement('link');
+                    appleLink.id = 'apple-touch-icon-link';
+                    appleLink.rel = 'apple-touch-icon';
+                    document.head.appendChild(appleLink);
+                }
+                appleLink.href = config.app_icon_192;
+                console.log('✅ Early: Apple Touch Icon set to:', config.app_icon_192);
+            }
         }
     }, [config]);
 
@@ -1060,12 +1077,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             return;
         }
 
-        // 1. Update State (Don't store long URLs in localStorage - causes quota exceeded)
-        try {
-            localStorage.setItem('app_name', branding.appName);
-        } catch (e) {
-            console.warn('Failed to update app_name in localStorage:', e);
-        }
+        // 1. Update State & LocalStorage (Optimistic)
+        localStorage.setItem('app_name', branding.appName);
+        localStorage.setItem('app_logo', branding.appLogo);
+        localStorage.setItem('app_logo_light', branding.appLogoLight);
+        localStorage.setItem('app_favicon', branding.appFavicon);
 
         // 2. Persist to Global Config Table
         try {
