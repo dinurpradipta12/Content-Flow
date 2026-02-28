@@ -311,6 +311,21 @@
   }
 }
 
+/* ─── Top Safe Area (Status Bar / Notch) ──────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Main app container: add padding-top for status bar on mobile */
+  .mobile-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Fallback for browsers that don't support env() */
+  @supports not (padding-top: env(safe-area-inset-top)) {
+    .mobile-safe-top {
+      padding-top: 20px; /* Default status bar height */
+    }
+  }
+}
+
 /* ─── Mobile Notification Page ────────────────────────────────────────────── */
 @media (max-width: 767px) {
   /* Notification inbox full-screen page */

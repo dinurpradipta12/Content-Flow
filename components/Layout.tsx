@@ -1388,7 +1388,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </aside>
 
                 {/* Main Wrapper-Uses padding left instead of flex width sharing */}
-                <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
+                <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 mobile-safe-top ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
                     <PresenceToast />
                     <ChatNotificationListener />
                     <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-12 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
