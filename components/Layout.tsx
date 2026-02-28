@@ -2110,37 +2110,40 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {
                 !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
                     <>
-                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] flex items-center justify-around px-1 pb-safe pt-2 min-h-[72px] sm:min-h-[80px]">
-                            {/* Left: Content Plan */}
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <Layers size={22} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Plan</span>
-                            </button>
-                            {/* Left: Calendar */}
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/calendar' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <CalendarDays size={22} className={location.pathname === '/calendar' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Kalender</span>
-                            </button>
-                            {/* Center: Dashboard (elevated) */}
-                            <div className="relative flex-shrink-0 z-10 -mt-6">
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-full border-4 border-background shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform active:scale-95 ${location.pathname === '/' ? 'bg-accent text-white' : 'bg-slate-800 text-white'}`}>
-                                    <LayoutDashboard size={24} />
+                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
+                            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+                            <div className="flex items-center justify-around px-1 pt-2 pb-1 h-[64px]">
+                                {/* Left: Content Plan */}
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                    <Layers size={22} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
+                                    <span className="text-[9px] font-bold">Plan</span>
                                 </button>
-                                <span className={`text-[9px] font-bold text-center block mt-1 ${location.pathname === '/' ? 'text-accent' : 'text-slate-400'}`}>Dasbor</span>
-                            </div>
-                            {/* Right: Approval */}
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <CheckCircle size={22} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
-                                <span className="text-[9px] font-bold">Approval</span>
-                            </button>
-                            {/* Right: Messages */}
-                            <button onClick={() => { setShowMobileMenu(false); navigate('/messages'); }} className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/messages' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <div className="relative">
-                                    <MessageSquare size={22} className={location.pathname === '/messages' ? 'fill-accent/20' : ''} />
-                                    {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                {/* Left: Calendar */}
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/calendar' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                    <CalendarDays size={22} className={location.pathname === '/calendar' ? 'fill-accent/20' : ''} />
+                                    <span className="text-[9px] font-bold">Kalender</span>
+                                </button>
+                                {/* Center: Dashboard (elevated) */}
+                                <div className="relative flex-shrink-0 z-10 -mt-6">
+                                    <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-full border-4 border-background shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform active:scale-95 ${location.pathname === '/' ? 'bg-accent text-white' : 'bg-slate-800 text-white'}`}>
+                                        <LayoutDashboard size={24} />
+                                    </button>
+                                    <span className={`text-[9px] font-bold text-center block mt-1 ${location.pathname === '/' ? 'text-accent' : 'text-slate-400'}`}>Dasbor</span>
                                 </div>
-                                <span className="text-[9px] font-bold">Pesan</span>
-                            </button>
+                                {/* Right: Approval */}
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                    <CheckCircle size={22} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
+                                    <span className="text-[9px] font-bold">Approval</span>
+                                </button>
+                                {/* Right: Messages */}
+                                <button onClick={() => { setShowMobileMenu(false); navigate('/messages'); }} className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/messages' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
+                                    <div className="relative">
+                                        <MessageSquare size={22} className={location.pathname === '/messages' ? 'fill-accent/20' : ''} />
+                                        {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                    </div>
+                                    <span className="text-[9px] font-bold">Pesan</span>
+                                </button>
+                            </div>
                         </nav>
 
                         {/* Mobile Full Screen Notification Inbox */}
@@ -2335,9 +2338,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                 <p className="text-xs text-mutedForeground font-bold truncate">{userProfile.jobTitle || userProfile.role}</p>
                                                 <div className="flex items-center gap-1.5 mt-1">
                                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                                                            userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                                                                userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                                                    'bg-slate-100 text-slate-600 border-slate-200'
+                                                        userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                                                            userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                                                'bg-slate-100 text-slate-600 border-slate-200'
                                                         }`}>{userProfile.role}</span>
                                                 </div>
                                             </div>
@@ -2412,8 +2415,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                                     key={item.path}
                                                                     onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
                                                                     className={`flex items-center w-full px-4 py-3 rounded-xl transition-all font-bold active:scale-[0.98] ${isActive
-                                                                            ? 'bg-accent text-white shadow-sm'
-                                                                            : 'text-slate-600 hover:bg-slate-500/10 bg-card border border-transparent hover:border-slate-200'
+                                                                        ? 'bg-accent text-white shadow-sm'
+                                                                        : 'text-slate-600 hover:bg-slate-500/10 bg-card border border-transparent hover:border-slate-200'
                                                                         }`}
                                                                 >
                                                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
