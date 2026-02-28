@@ -297,7 +297,8 @@
 @media (max-width: 767px) {
   /* Add bottom padding for bottom nav - ensures content is not hidden behind bottom menu */
   .main-content {
-    padding-bottom: 6rem !important;
+    /* Menu height is ~64px + 8px safe area */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   /* Extra padding for pages with floating action buttons */
@@ -305,9 +306,9 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Ensure pb-32 class works correctly on mobile */
-  .pb-32 {
-    padding-bottom: 8rem !important;
+  /* Ensure pb-safe class works correctly on mobile */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px) !important;
   }
 }
 
