@@ -2110,8 +2110,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {
                 !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
                     <>
-                        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
-                            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+                        <nav className="md:hidden fixed inset-x-0 z-[60] bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
+                            style={{ bottom: '0px', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
                             <div className="flex items-center justify-around px-1 pt-2 pb-1 h-[64px]">
                                 {/* Left: Content Plan */}
                                 <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>

@@ -104,14 +104,15 @@
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
       background-color: var(--background);
       color: var(--foreground);
-      zoom: 0.9;
       transition: background-color 0.2s ease, color 0.2s ease;
+      touch-action: pan-x pan-y;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Remove zoom on mobile for better usability */
-    @media (max-width: 767px) {
+    /* Apply zoom ONLY on desktop. Using zoom on mobile Safari breaks 'fixed bottom-0' */
+    @media (min-width: 768px) {
       body {
-        zoom: 1;
+        zoom: 0.9;
       }
     }
 
