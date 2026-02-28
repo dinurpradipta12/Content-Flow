@@ -115,18 +115,16 @@
       }
     }
 
-    /* Mobile safe area support */
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-      .pb-safe {
-        padding-bottom: env(safe-area-inset-bottom);
-      }
-      .pt-safe {
-        padding-top: env(safe-area-inset-top);
-      }
-      .mobile-safe-top-spacer {
-        height: env(safe-area-inset-top);
-        flex-shrink: 0;
-      }
+    /* Mobile safe area support with fallback */
+    .pb-safe {
+      padding-bottom: max(env(safe-area-inset-bottom), 16px);
+    }
+    .pt-safe {
+      padding-top: max(env(safe-area-inset-top), 8px);
+    }
+    .mobile-safe-top-spacer {
+      height: max(env(safe-area-inset-top), 8px);
+      flex-shrink: 0;
     }
 
     /* Mobile touch improvements */
