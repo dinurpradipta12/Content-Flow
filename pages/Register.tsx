@@ -22,6 +22,7 @@ export const Register: React.FC = () => {
     const [registeredUserId, setRegisteredUserId] = useState('');
     const [sendingInbox, setSendingInbox] = useState(false);
     const [inboxSent, setInboxSent] = useState(false);
+    const [rateLimitCooldown, setRateLimitCooldown] = useState(0);
 
     // Fetch config on mount
     React.useEffect(() => {
@@ -33,6 +34,15 @@ export const Register: React.FC = () => {
         };
         fetchConfig();
     }, []);
+
+    // Rate limit cooldown timer
+    React.useEffect(() => {
+        if (rateLimitCooldown <= 0) return;
+        const timer = setInterval(() => {
+            setRateLimitCooldown(prev => Math.max(0, prev - 1));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [rateLimitCooldown]);
 
     const selectedPackage = React.useMemo(() => {
         if (!paymentConfig) return null;
@@ -46,6 +56,12 @@ export const Register: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorStatus('');
+
+        // Check rate limit cooldown
+        if (rateLimitCooldown > 0) {
+            setErrorStatus(`Silakan tunggu ${rateLimitCooldown} detik sebelum mencoba lagi.`);
+            return;
+        }
 
         // Basic Validation
         if (!form.fullName.trim() || !form.email.trim() || !form.username.trim() || !form.password.trim() || !form.selectedPackageId) {
@@ -83,6 +99,13 @@ export const Register: React.FC = () => {
             });
 
             if (authError) {
+                // Handle rate limit error specifically
+                if (authError.message?.includes('only request this after')) {
+                    const match = authError.message.match(/after (\d+) seconds/);
+                    const waitTime = match ? parseInt(match[1]) : 60;
+                    setRateLimitCooldown(waitTime);
+                    throw new Error(`Terlalu banyak percobaan. Silakan tunggu ${waitTime} detik sebelum mencoba lagi.`);
+                }
                 throw authError;
             }
 
@@ -124,14 +147,23 @@ export const Register: React.FC = () => {
                 subscription_package: selectedPackage?.name || 'Free',
                 is_verified: isVerified,
                 member_limit: memberLimit,
-                last_activity_at: null
+                last_activity_at: null,
+                password: '' // Password stored in Supabase Auth, set empty string here to satisfy DB constraint
             };
 
             if (subscriptionEnd) insertData.subscription_end = subscriptionEnd;
 
             // 3. Sync to public profile table
-            const { error: profileError } = await supabase.from('app_users').upsert([insertData]);
-            if (profileError) throw profileError;
+            const { error: profileError } = await supabase.from('app_users').upsert([insertData], { 
+                onConflict: 'id' 
+            });
+            if (profileError) {
+                // If password constraint error, show helpful message
+                if (profileError.message?.includes('password')) {
+                    throw new Error('Database constraint issue. Silakan hubungi admin dengan error code: PASSWORD_CONSTRAINT. Pendaftaran masih dalam proses.');
+                }
+                throw profileError;
+            }
 
             // 4. Log activity
             await logActivity({
@@ -145,7 +177,8 @@ export const Register: React.FC = () => {
 
         } catch (err: any) {
             console.error(err);
-            setErrorStatus(err.message || 'Gagal melakukan registrasi.');
+            const errorMsg = err.message || 'Gagal melakukan registrasi.';
+            setErrorStatus(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -401,13 +434,27 @@ export const Register: React.FC = () => {
                         </div>
                     )}
 
+                    {rateLimitCooldown > 0 && (
+                        <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
+                            <p className="text-xs font-bold text-amber-800 flex items-center gap-2">
+                                <Info size={16} /> Terlalu banyak percobaan. Tunggu <span className="text-lg font-black text-amber-900">{rateLimitCooldown}s</span> sebelum mencoba lagi.
+                            </p>
+                        </div>
+                    )}
+
                     <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full bg-slate-900 text-white font-black text-lg p-4 rounded-xl border-4 border-slate-900 hover:-translate-y-1 shadow-[4px_4px_0px_0px_#334155] hover:shadow-[6px_6px_0px_0px_#334155] active:translate-y-1 active:shadow-none transition-all disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+                        disabled={loading || rateLimitCooldown > 0}
+                        className={`w-full font-black text-lg p-4 rounded-xl border-4 flex items-center justify-center gap-2 mt-4 transition-all ${
+                            loading || rateLimitCooldown > 0
+                                ? 'bg-slate-400 text-white border-slate-400 cursor-not-allowed opacity-75'
+                                : 'bg-slate-900 text-white border-slate-900 hover:-translate-y-1 shadow-[4px_4px_0px_0px_#334155] hover:shadow-[6px_6px_0px_0px_#334155] active:translate-y-1 active:shadow-none'
+                        }`}
                     >
                         {loading ? (
                             <><Loader2 size={24} className="animate-spin" /> Memproses...</>
+                        ) : rateLimitCooldown > 0 ? (
+                            <><Info size={20} /> Tunggu {rateLimitCooldown} detik...</>
                         ) : (
                             'Daftar Sekarang'
                         )}
