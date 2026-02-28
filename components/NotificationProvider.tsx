@@ -4,7 +4,7 @@ import { AppNotification, NotificationType } from '../types';
 import { Bell, Info, X, CheckCircle2, AlertTriangle, MessageSquare, Clock, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { checkUpcomingContent } from '../services/notificationService';
-import { registerPushNotifications, isPushSupported } from '../services/pushNotificationService';
+import { registerPushNotifications, isPushSupported, showLocalNotification } from '../services/pushNotificationService';
 
 interface NotificationContextType {
     notifications: AppNotification[];
@@ -338,6 +338,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
                         window.dispatchEvent(new CustomEvent('new-notification', { detail: payload.new }));
 
+                        // Show local OS notification when app is in background/minimized
+                        if (document.hidden && Notification.permission === 'granted') {
+                            const actorName = actorData?.full_name || 'Seseorang';
+                            const body = payload.new.metadata?.hide_actor_name
+                                ? payload.new.content
+                                : `${actorName}: ${payload.new.content}`;
+                            showLocalNotification(payload.new.title || 'Notifikasi Baru', {
+                                body,
+                                tag: payload.new.id,
+                                data: { url: '/' }
+                            });
+                        }
+
                         setTimeout(() => {
                             setToasts(prev => prev.filter(t => t.id !== newNotif.id));
                         }, 8000);
@@ -469,6 +482,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    // ── Update App Badge when unread count changes ────────────────────────────
+    useEffect(() => {
+        if ('setAppBadge' in navigator) {
+            if (unreadCount > 0) {
+                (navigator as any).setAppBadge(unreadCount).catch(() => {});
+            } else {
+                (navigator as any).clearAppBadge().catch(() => {});
+            }
+        }
+    }, [unreadCount]);
 
     // ── Notification type icon helper ─────────────────────────────────────────
     const getNotifTypeIcon = (type: string, isSpecial: boolean) => {
