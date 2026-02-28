@@ -295,8 +295,40 @@
 
 /* ─── Bottom Safe Area ────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Add bottom padding for bottom nav */
+  /* Add bottom padding for bottom nav - ensures content is not hidden behind bottom menu */
   .main-content {
-    padding-bottom: 5rem !important;
+    padding-bottom: 6rem !important;
+  }
+
+  /* Extra padding for pages with floating action buttons */
+  main {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Ensure pb-32 class works correctly on mobile */
+  .pb-32 {
+    padding-bottom: 8rem !important;
+  }
+}
+
+/* ─── Mobile Notification Page ────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Notification inbox full-screen page */
+  .mobile-notif-page {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--background);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Safe area padding for notch devices */
+  .pt-safe {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+
+  .pb-safe {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 }

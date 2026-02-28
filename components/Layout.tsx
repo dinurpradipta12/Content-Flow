@@ -34,7 +34,11 @@ import {
     AlertTriangle,
     BarChart3,
     Copy,
-    GitBranch
+    GitBranch,
+    Smartphone,
+    Clock,
+    CheckCheck,
+    Trash2
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -414,7 +418,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Settings State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'branding' | null>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'webapp' | null>('profile');
+
+    // Mobile Notification Page State
+    const [showMobileNotifications, setShowMobileNotifications] = useState(false);
 
     // Live Time for Header
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -425,7 +432,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }, []);
 
     // Notification State
-    const { notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick } = useNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick, clearAllNotifications } = useNotifications();
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -1171,7 +1178,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
     };
 
-    const toggleTab = (tab: 'profile' | 'branding' | 'integration') => {
+    const toggleTab = (tab: 'profile' | 'branding' | 'webapp') => {
         setActiveTab(activeTab === tab ? null : tab);
     };
 
@@ -1386,15 +1393,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <header className={`mt-2 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-12 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
 
                         {/* ── MOBILE HEADER (< md) ── */}
-                        <div className="flex md:hidden items-center justify-between w-full">
-                            {/* Left: Network indicator */}
-                            <div className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold transition-colors ${getNetworkColor()}`}>
-                                <Wifi size={12} />
-                                <span className="hidden xs:inline">{getNetworkLabel()}</span>
-                            </div>
-
-                            {/* Center: Favicon/Logo */}
-                            <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+                        <div className="flex md:hidden items-center justify-between w-full gap-1">
+                            {/* Left: Favicon/Logo */}
+                            <div className="flex items-center flex-shrink-0">
                                 {(() => {
                                     const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
                                     const favicon = config?.app_favicon || branding.appFavicon;
@@ -1402,50 +1403,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
                                         : (config?.app_logo || branding.appLogo);
                                     if (favicon) return <img src={favicon} className="w-8 h-8 object-contain rounded-lg" alt="Logo" />;
-                                    if (activeLogo) return <img src={activeLogo} className="max-h-7 max-w-[80px] object-contain" alt="Logo" />;
+                                    if (activeLogo) return <img src={activeLogo} className="max-h-7 max-w-[100px] object-contain" alt="Logo" />;
                                     return <div className="font-heading font-black text-sm text-accent tracking-tighter">CF</div>;
                                 })()}
                             </div>
 
-                            {/* Right: Notif + Settings + More */}
-                            <div className="flex items-center gap-0.5">
-                                <div className="relative" ref={notificationRef}>
-                                    <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className={`p-2 rounded-full transition-all relative ${isNotificationOpen ? 'text-accent bg-accent/5' : 'text-slate-500'}`}>
-                                        <Bell size={18} />
-                                        {unreadCount > 0 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-                                    </button>
-                                    {isNotificationOpen && (
-                                        <div className="absolute top-full right-0 mt-2 w-[90vw] max-w-sm bg-card border-2 border-border shadow-hard rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <div className="px-4 py-3 border-b-2 border-border flex items-center justify-between bg-muted/50">
-                                                <div className="flex items-center gap-2"><Bell size={14} className="text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-sm">Notifikasi</span></div>
-                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-2 py-1 rounded-lg">Tandai</button>}
-                                            </div>
-                                            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
-                                                {notifications.length === 0 ? (
-                                                    <div className="py-8 flex flex-col items-center justify-center text-slate-400"><Bell size={28} className="opacity-10 mb-2" /><p className="font-bold text-xs">Tidak ada notifikasi</p></div>
-                                                ) : (
-                                                    <div className="divide-y divide-border">
-                                                        {notifications.map((notif) => (
-                                                            <div key={notif.id} className={`p-3 flex gap-3 transition-colors hover:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : ''}`} onClick={() => { handleNotificationClick(notif); setIsNotificationOpen(false); }}>
-                                                                {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>}
-                                                                <div className="shrink-0">
-                                                                    {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-8 h-8 rounded-full border border-border object-cover" /> : <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={14} /></div>}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
-                                                                    <p className="text-xs font-bold text-slate-600 leading-snug">
-                                                                        {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (<span className="text-slate-900">{notif.actor.full_name} </span>)}
-                                                                        {notif.content}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+                            {/* Right: Connection + Notif + Settings + More */}
+                            <div className="flex items-center gap-0.5 ml-auto">
+                                {/* Network indicator */}
+                                <div className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[9px] font-bold transition-colors ${getNetworkColor()}`}>
+                                    <Wifi size={11} />
                                 </div>
+                                {/* Notification Bell - opens full-screen notification page on mobile */}
+                                <button onClick={() => setShowMobileNotifications(true)} className={`p-2 rounded-full transition-all relative ${showMobileNotifications ? 'text-accent bg-accent/5' : 'text-slate-500'}`}>
+                                    <Bell size={18} />
+                                    {unreadCount > 0 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                                </button>
                                 <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-500 rounded-full transition-all"><Settings size={18} /></button>
                                 <button onClick={() => setShowMobileMenu(!showMobileMenu)} className={`p-2 rounded-full transition-all ${showMobileMenu ? 'text-accent bg-accent/5' : 'text-slate-500'}`}><Menu size={18} /></button>
                             </div>
@@ -1526,7 +1499,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </div>
                     </header>
 
-                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-2 sm:p-3 md:px-6 md:py-8 md:pb-8 pb-28'}`}>
+                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-2 sm:p-3 md:px-6 md:py-8 md:pb-8 pb-32 md:pb-8'}`}>
                         <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
                             {children}
                         </div>
@@ -1604,6 +1577,107 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 </div>
                             </>
                         )}
+
+                        {/* Webapp Icon & Favicon Settings - Available to all users */}
+                        <div className={`rounded-xl border-2 border-slate-800 overflow-hidden shadow-hard transition-all duration-300 ${activeTab === 'webapp' ? 'bg-card' : 'bg-card hover:bg-slate-500/5'} `}>
+                            <button onClick={() => toggleTab('webapp')} className={`w-full flex items-center justify-between p-4 font-black font-heading text-lg transition-colors ${activeTab === 'webapp' ? 'bg-emerald-600 text-white' : 'text-foreground'} `}>
+                                <div className="flex items-center gap-3"><Smartphone size={20} className={activeTab === 'webapp' ? 'text-white' : 'text-emerald-600'} /> Ikon Webapp & Favicon</div>
+                                {activeTab === 'webapp' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            {activeTab === 'webapp' && (
+                                <div className="p-4 sm:p-5 md:p-6 bg-card animate-in slide-in-from-top-2 duration-300">
+                                    <div className="space-y-5">
+                                        <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
+                                            <p className="text-xs font-bold text-emerald-700 leading-relaxed">
+                                                <span className="font-black">Favicon</span> adalah ikon kecil yang muncul di tab browser. <span className="font-black">Ikon Webapp</span> digunakan saat aplikasi ditambahkan ke layar utama perangkat mobile (Add to Home Screen).
+                                            </p>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {/* Favicon Upload */}
+                                            <div className="flex flex-col gap-2">
+                                                <label className="font-bold text-xs text-mutedForeground flex items-center gap-1.5">
+                                                    <Globe size={12} className="text-emerald-600" /> Favicon (Browser Tab)
+                                                </label>
+                                                <div className="flex flex-col items-center gap-3 p-4 border-2 border-dashed border-emerald-300 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 transition-colors relative cursor-pointer group">
+                                                    <div className="w-16 h-16 bg-white border-2 border-slate-200 rounded-xl flex items-center justify-center p-2 shadow-sm">
+                                                        {branding.appFavicon
+                                                            ? <img src={branding.appFavicon} alt="Favicon" className="w-full h-full object-contain" />
+                                                            : <Globe size={24} className="text-slate-300" />
+                                                        }
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="font-bold text-foreground text-xs">Upload Favicon</p>
+                                                        <p className="text-[10px] text-mutedForeground">PNG/ICO, 32×32 atau 64×64px</p>
+                                                    </div>
+                                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,.ico" onChange={(e) => handleImageUpload(e, 'favicon')} />
+                                                </div>
+                                                {branding.appFavicon && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setBranding(b => ({ ...b, appFavicon: '' }))}
+                                                        className="text-[10px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1 justify-center"
+                                                    >
+                                                        <X size={10} /> Hapus Favicon
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Webapp Icon Upload */}
+                                            <div className="flex flex-col gap-2">
+                                                <label className="font-bold text-xs text-mutedForeground flex items-center gap-1.5">
+                                                    <Smartphone size={12} className="text-emerald-600" /> Ikon Webapp (Mobile)
+                                                </label>
+                                                <div className="flex flex-col items-center gap-3 p-4 border-2 border-dashed border-emerald-300 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 transition-colors relative cursor-pointer group">
+                                                    <div className="w-16 h-16 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center p-2 shadow-sm">
+                                                        {branding.appFavicon
+                                                            ? <img src={branding.appFavicon} alt="Webapp Icon" className="w-full h-full object-contain rounded-xl" />
+                                                            : <Smartphone size={24} className="text-slate-300" />
+                                                        }
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="font-bold text-foreground text-xs">Upload Ikon Webapp</p>
+                                                        <p className="text-[10px] text-mutedForeground">PNG, 192×192 atau 512×512px</p>
+                                                    </div>
+                                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => handleImageUpload(e, 'favicon')} />
+                                                </div>
+                                                <p className="text-[10px] text-mutedForeground text-center">Ikon ini juga digunakan sebagai favicon</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Preview Section */}
+                                        {branding.appFavicon && (
+                                            <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-4">
+                                                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Preview</p>
+                                                <div className="flex items-center gap-6 flex-wrap">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                                                            <img src={branding.appFavicon} alt="" className="w-4 h-4 object-contain" />
+                                                            <span className="text-xs text-slate-600 font-medium">{branding.appName}</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400">Browser Tab</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="w-14 h-14 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center shadow-md p-2">
+                                                            <img src={branding.appFavicon} alt="" className="w-full h-full object-contain rounded-xl" />
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400">Home Screen</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {isDeveloper && (
+                                            <div className="pt-2 flex justify-center sm:justify-end">
+                                                <Button type="button" onClick={(e) => handleSaveBranding(e as any)} className="bg-emerald-600 w-full sm:w-auto" icon={<CheckCircle size={16} />}>
+                                                    Simpan Ikon Global
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </Modal>
 
@@ -1982,6 +2056,152 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span className="text-[9px] font-bold">Pesan</span>
                             </button>
                         </nav>
+
+                        {/* Mobile Full Screen Notification Inbox */}
+                        {showMobileNotifications && (
+                            <div className="md:hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center">
+                                            <Bell size={18} className="text-accent" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-black font-heading text-lg text-foreground leading-tight">Notifikasi</h2>
+                                            {unreadCount > 0 && <p className="text-[10px] font-bold text-accent">{unreadCount} belum dibaca</p>}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {unreadCount > 0 && (
+                                            <button
+                                                onClick={() => markAllAsRead()}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                            >
+                                                <CheckCheck size={12} /> Tandai Semua
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setShowMobileNotifications(false)}
+                                            className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Notification List */}
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
+                                    {notifications.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 py-20">
+                                            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center">
+                                                <Bell size={36} className="opacity-30" />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="font-black text-base text-slate-500">Kotak Masuk Kosong</p>
+                                                <p className="text-sm font-bold text-slate-400 mt-1">Belum ada notifikasi untuk Anda</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-border">
+                                            {/* Date grouping header - Today */}
+                                            {notifications.some(n => {
+                                                const d = new Date(n.created_at);
+                                                const today = new Date();
+                                                return d.toDateString() === today.toDateString();
+                                            }) && (
+                                                <div className="px-4 py-2 bg-muted/30 sticky top-0 z-10">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</span>
+                                                </div>
+                                            )}
+                                            {notifications.map((notif) => {
+                                                const notifDate = new Date(notif.created_at);
+                                                const today = new Date();
+                                                const isToday = notifDate.toDateString() === today.toDateString();
+                                                const timeStr = isToday
+                                                    ? notifDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                                                    : notifDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+
+                                                const getNotifIcon = () => {
+                                                    switch (notif.type) {
+                                                        case 'MENTION': return <MessageSquare size={14} className="text-blue-500" />;
+                                                        case 'STATUS_CHANGE': return <CheckCircle size={14} className="text-emerald-500" />;
+                                                        case 'CONTENT_H1': return <AlertTriangle size={14} className="text-amber-500" />;
+                                                        case 'APPROVAL': return <CheckCircle size={14} className="text-purple-500" />;
+                                                        default: return <Bell size={14} className="text-accent" />;
+                                                    }
+                                                };
+
+                                                return (
+                                                    <div
+                                                        key={notif.id}
+                                                        className={`flex gap-3 p-4 transition-colors active:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : 'bg-card'}`}
+                                                        onClick={() => { handleNotificationClick(notif); setShowMobileNotifications(false); }}
+                                                    >
+                                                        {/* Unread indicator */}
+                                                        {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-r-full"></div>}
+
+                                                        {/* Avatar */}
+                                                        <div className="shrink-0 relative">
+                                                            {notif.actor?.avatar_url
+                                                                ? <img src={notif.actor.avatar_url} alt="" className="w-11 h-11 rounded-full border-2 border-border object-cover" />
+                                                                : <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-mutedForeground border-2 border-border"><User size={18} /></div>
+                                                            }
+                                                            {/* Type badge */}
+                                                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white border border-border rounded-full flex items-center justify-center shadow-sm">
+                                                                {getNotifIcon()}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Content */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex justify-between items-start mb-1">
+                                                                <h5 className={`font-black text-[10px] uppercase tracking-widest truncate pr-2 ${!notif.is_read ? 'text-accent' : 'text-slate-500'}`}>
+                                                                    {notif.title}
+                                                                </h5>
+                                                                <div className="flex items-center gap-1 flex-shrink-0">
+                                                                    <Clock size={9} className="text-slate-300" />
+                                                                    <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">{timeStr}</span>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-sm font-bold text-slate-600 leading-snug">
+                                                                {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
+                                                                    <span className="text-slate-900 font-extrabold">{notif.actor.full_name} </span>
+                                                                )}
+                                                                {notif.content}
+                                                            </p>
+                                                            {!notif.is_read && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
+                                                                    className="mt-1.5 text-[9px] font-black text-accent/70 hover:text-accent uppercase tracking-widest"
+                                                                >
+                                                                    Tandai dibaca
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Bottom Action Bar */}
+                                {notifications.length > 0 && (
+                                    <div className="flex-shrink-0 px-4 py-3 bg-card border-t-2 border-border pb-safe">
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) {
+                                                    await clearAllNotifications();
+                                                }
+                                            }}
+                                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors"
+                                        >
+                                            <Trash2 size={14} /> Hapus Semua Notifikasi
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Mobile Full Screen Menu Drawer */}
                         {showMobileMenu && (
