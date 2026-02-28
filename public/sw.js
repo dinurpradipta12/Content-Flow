@@ -13,6 +13,14 @@
 
 const CACHE_NAME = 'contentflow-v1';
 
+// ── Message Handler ───────────────────────────────────────────────────────────
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        console.log('[SW] SKIP_WAITING received, activating new SW...');
+        self.skipWaiting();
+    }
+});
+
 // ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
     console.log('[SW] Installed');
@@ -22,7 +30,25 @@ self.addEventListener('install', (event) => {
 // ── Activate ──────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activated');
-    event.waitUntil(clients.claim());
+    
+    // Clear old caches and cache bust manifest.json
+    event.waitUntil(
+        (async () => {
+            // Delete old cache versions
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames
+                    .filter(name => name !== CACHE_NAME)
+                    .map(name => caches.delete(name))
+            );
+            
+            // Force refresh manifest.json by removing it from cache
+            const cache = await caches.open(CACHE_NAME);
+            cache.delete('/manifest.json');
+            
+            await clients.claim();
+        })()
+    );
 });
 
 // ── Push Event: Show native notification ─────────────────────────────────────

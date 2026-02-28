@@ -2,7 +2,7 @@
   "name": "ContentFlow - Content Planner Pro",
   "short_name": "ContentFlow",
   "description": "Platform manajemen konten profesional untuk tim kreatif",
-  "start_url": "/",
+  "start_url": "/#/",
   "display": "standalone",
   "background_color": "#FFFDF5",
   "theme_color": "#8B5CF6",
