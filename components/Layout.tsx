@@ -813,7 +813,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // Update apple-touch-icon - CRITICAL for iOS home screen
             // Try to find existing link by id first, then by rel
             let appleLink = document.getElementById('apple-touch-icon-link') as HTMLLinkElement || document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
-            
+
             // Only set if URL is valid and HTTPS
             if (config.app_icon_192 && config.app_icon_192.startsWith('https://')) {
                 if (!appleLink) {
@@ -844,7 +844,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             localStorage.setItem('app_name', config.app_name);
             // Don't store long image URLs in localStorage to avoid quota exceeded
             // These are fetched fresh from config which is already cached in memory
-            
+
             // EARLY: Set apple-touch-icon immediately when config loads
             // This is critical for iOS home screen icon to work
             // Only set if URL is valid and HTTPS to prevent iOS fallback
@@ -2122,7 +2122,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span className="text-[9px] font-bold">Kalender</span>
                             </button>
                             {/* Center: Dashboard (elevated) */}
-                            <div className="relative -top-5 flex-shrink-0">
+                            <div className="relative flex-shrink-0 z-10 -mt-6">
                                 <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-full border-4 border-background shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform active:scale-95 ${location.pathname === '/' ? 'bg-accent text-white' : 'bg-slate-800 text-white'}`}>
                                     <LayoutDashboard size={24} />
                                 </button>
@@ -2195,10 +2195,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                 const today = new Date();
                                                 return d.toDateString() === today.toDateString();
                                             }) && (
-                                                <div className="px-4 py-2 bg-muted/30 sticky top-0 z-10">
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</span>
-                                                </div>
-                                            )}
+                                                    <div className="px-4 py-2 bg-muted/30 sticky top-0 z-10">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</span>
+                                                    </div>
+                                                )}
                                             {notifications.map((notif) => {
                                                 const notifDate = new Date(notif.created_at);
                                                 const today = new Date();
@@ -2334,12 +2334,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                 <h3 className="font-heading font-black text-base text-foreground leading-tight truncate">{userProfile.name}</h3>
                                                 <p className="text-xs text-mutedForeground font-bold truncate">{userProfile.jobTitle || userProfile.role}</p>
                                                 <div className="flex items-center gap-1.5 mt-1">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                                        userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                                                        userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                                                        userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                                        'bg-slate-100 text-slate-600 border-slate-200'
-                                                    }`}>{userProfile.role}</span>
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                                            userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                                                                userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                                                    'bg-slate-100 text-slate-600 border-slate-200'
+                                                        }`}>{userProfile.role}</span>
                                                 </div>
                                             </div>
                                             {/* Arrow */}
@@ -2412,11 +2411,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                                 <button
                                                                     key={item.path}
                                                                     onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
-                                                                    className={`flex items-center w-full px-4 py-3 rounded-xl transition-all font-bold active:scale-[0.98] ${
-                                                                        isActive
+                                                                    className={`flex items-center w-full px-4 py-3 rounded-xl transition-all font-bold active:scale-[0.98] ${isActive
                                                                             ? 'bg-accent text-white shadow-sm'
                                                                             : 'text-slate-600 hover:bg-slate-500/10 bg-card border border-transparent hover:border-slate-200'
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
                                                                         <item.icon size={17} className={isActive ? 'text-white' : 'text-slate-500'} />

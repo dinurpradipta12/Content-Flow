@@ -117,14 +117,25 @@
 
     /* Mobile safe area support with fallback */
     .pb-safe {
-      padding-bottom: max(env(safe-area-inset-bottom), 16px);
+      padding-bottom: max(env(safe-area-inset-bottom), 8px);
     }
+
     .pt-safe {
       padding-top: max(env(safe-area-inset-top), 8px);
     }
+
     .mobile-safe-top-spacer {
-      height: max(env(safe-area-inset-top), 8px);
+      height: env(safe-area-inset-top, 24px);
       flex-shrink: 0;
+    }
+
+    /* Fallback for standalone/PWA on Android where safe-area is 0 but status bar covers content */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      @media all and (display-mode: standalone) {
+        .mobile-safe-top-spacer {
+          height: max(env(safe-area-inset-top), 36px);
+        }
+      }
     }
 
     /* Mobile touch improvements */
@@ -132,7 +143,9 @@
       * {
         -webkit-tap-highlight-color: transparent;
       }
-      button, a {
+
+      button,
+      a {
         touch-action: manipulation;
       }
 
@@ -148,74 +161,183 @@
       }
 
       /* Hide scrollbars on mobile for cleaner look */
-      ::-webkit-scrollbar { display: none !important; }
-      * { scrollbar-width: none !important; }
+      ::-webkit-scrollbar {
+        display: none !important;
+      }
+
+      * {
+        scrollbar-width: none !important;
+      }
 
       /* Prevent horizontal overflow */
-      body { overflow-x: hidden; }
+      body {
+        overflow-x: hidden;
+      }
 
       /* Compact text sizes on mobile */
-      .text-4xl { font-size: 1.5rem !important; line-height: 2rem !important; }
-      .text-3xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
-      .text-2xl { font-size: 1.125rem !important; line-height: 1.5rem !important; }
+      .text-4xl {
+        font-size: 1.5rem !important;
+        line-height: 2rem !important;
+      }
+
+      .text-3xl {
+        font-size: 1.25rem !important;
+        line-height: 1.75rem !important;
+      }
+
+      .text-2xl {
+        font-size: 1.125rem !important;
+        line-height: 1.5rem !important;
+      }
 
       /* Compact padding on mobile */
-      .px-10 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
-      .px-8 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+      .px-10 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+      }
+
+      .px-8 {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+      }
 
       /* Better touch targets */
-      button { min-height: 36px; }
+      button {
+        min-height: 36px;
+      }
 
       /* Smooth horizontal scroll */
-      .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+      .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+      }
 
       /* Compact text sizes */
-      .text-5xl { font-size: 1.75rem !important; line-height: 2rem !important; }
-      .text-4xl { font-size: 1.5rem !important; line-height: 1.75rem !important; }
-      .text-3xl { font-size: 1.25rem !important; line-height: 1.5rem !important; }
-      .text-2xl { font-size: 1.125rem !important; line-height: 1.375rem !important; }
+      .text-5xl {
+        font-size: 1.75rem !important;
+        line-height: 2rem !important;
+      }
+
+      .text-4xl {
+        font-size: 1.5rem !important;
+        line-height: 1.75rem !important;
+      }
+
+      .text-3xl {
+        font-size: 1.25rem !important;
+        line-height: 1.5rem !important;
+      }
+
+      .text-2xl {
+        font-size: 1.125rem !important;
+        line-height: 1.375rem !important;
+      }
 
       /* Reduce heavy shadows */
-      .shadow-\[0px_8px_0px_\#0f172a\] { box-shadow: 2px 2px 0px #0f172a !important; }
-      .shadow-\[4px_4px_0px_0px_\#0f172a\] { box-shadow: 2px 2px 0px 0px #0f172a !important; }
-      .shadow-\[8px_8px_0px_0px_\#0f172a\] { box-shadow: 2px 2px 0px 0px #0f172a !important; }
-      .shadow-\[12px_12px_0px_0px_\#0f172a\] { box-shadow: 2px 2px 0px 0px #0f172a !important; }
+      .shadow-\[0px_8px_0px_\#0f172a\] {
+        box-shadow: 2px 2px 0px #0f172a !important;
+      }
+
+      .shadow-\[4px_4px_0px_0px_\#0f172a\] {
+        box-shadow: 2px 2px 0px 0px #0f172a !important;
+      }
+
+      .shadow-\[8px_8px_0px_0px_\#0f172a\] {
+        box-shadow: 2px 2px 0px 0px #0f172a !important;
+      }
+
+      .shadow-\[12px_12px_0px_0px_\#0f172a\] {
+        box-shadow: 2px 2px 0px 0px #0f172a !important;
+      }
 
       /* Reduce large border-radius */
-      .rounded-\[32px\] { border-radius: 1rem !important; }
+      .rounded-\[32px\] {
+        border-radius: 1rem !important;
+      }
 
       /* Reduce large borders */
-      .border-\[3px\] { border-width: 2px !important; }
-      .border-4 { border-width: 2px !important; }
+      .border-\[3px\] {
+        border-width: 2px !important;
+      }
+
+      .border-4 {
+        border-width: 2px !important;
+      }
 
       /* Reduce large padding */
-      .p-6 { padding: 0.75rem !important; }
-      .p-8 { padding: 1rem !important; }
-      .py-8 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
-      .py-6 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+      .p-6 {
+        padding: 0.75rem !important;
+      }
+
+      .p-8 {
+        padding: 1rem !important;
+      }
+
+      .py-8 {
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+      }
+
+      .py-6 {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+      }
 
       /* Reduce large gaps */
-      .gap-8 { gap: 0.75rem !important; }
-      .gap-6 { gap: 0.5rem !important; }
+      .gap-8 {
+        gap: 0.75rem !important;
+      }
+
+      .gap-6 {
+        gap: 0.5rem !important;
+      }
 
       /* Reduce large margins */
-      .mb-8 { margin-bottom: 0.75rem !important; }
-      .mb-6 { margin-bottom: 0.5rem !important; }
-      .mt-8 { margin-top: 0.75rem !important; }
-      .mt-6 { margin-top: 0.5rem !important; }
+      .mb-8 {
+        margin-bottom: 0.75rem !important;
+      }
+
+      .mb-6 {
+        margin-bottom: 0.5rem !important;
+      }
+
+      .mt-8 {
+        margin-top: 0.75rem !important;
+      }
+
+      .mt-6 {
+        margin-top: 0.5rem !important;
+      }
 
       /* Reduce min heights */
-      .min-h-\[300px\] { min-height: 150px !important; }
-      .min-h-\[220px\] { min-height: 120px !important; }
-      .min-h-\[240px\] { min-height: 140px !important; }
+      .min-h-\[300px\] {
+        min-height: 150px !important;
+      }
+
+      .min-h-\[220px\] {
+        min-height: 120px !important;
+      }
+
+      .min-h-\[240px\] {
+        min-height: 140px !important;
+      }
 
       /* Reduce fixed heights for charts */
-      .h-\[300px\] { height: 160px !important; }
-      .h-\[250px\] { height: 140px !important; }
+      .h-\[300px\] {
+        height: 160px !important;
+      }
+
+      .h-\[250px\] {
+        height: 140px !important;
+      }
 
       /* Disable hover translate on touch devices */
-      .hover\:-translate-y-2:hover { transform: none !important; }
-      .hover\:-translate-y-1:hover { transform: none !important; }
+      .hover\:-translate-y-2:hover {
+        transform: none !important;
+      }
+
+      .hover\:-translate-y-1:hover {
+        transform: none !important;
+      }
 
     }
 
@@ -326,20 +448,21 @@
   <!-- PWA & iOS Web App Configuration -->
   <!-- For manifest with icons, will be set dynamically by Layout.tsx -->
   <link rel="manifest" href="/manifest.json">
-  
+
   <!-- iOS Web App Meta Tags (Apple Home Screen Support) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Aruneeka">
-  
+
   <!-- Apple Touch Icon (192x192) - Will be updated dynamically by Layout.tsx -->
   <!-- Default fallback: Purple square with Aruneeka monogram -->
-  <link id="apple-touch-icon-link" rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%238B5CF6' width='192' height='192'/%3E%3Ctext x='50%' y='50%' font-family='system-ui,sans-serif' font-size='80' font-weight='900' fill='white' text-anchor='middle' dominant-baseline='middle'%3EAR%3C/text%3E%3C/svg%3E">
-  
+  <link id="apple-touch-icon-link" rel="apple-touch-icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%238B5CF6' width='192' height='192'/%3E%3Ctext x='50%' y='50%' font-family='system-ui,sans-serif' font-size='80' font-weight='900' fill='white' text-anchor='middle' dominant-baseline='middle'%3EAR%3C/text%3E%3C/svg%3E">
+
   <!-- Theme color for browser UI (Android) & status bar (iOS) -->
   <meta name="theme-color" content="#8B5CF6">
   <meta name="msapplication-TileColor" content="#8B5CF6">
-  
+
   <!-- Additional iOS support -->
   <meta name="application-name" content="Aruneeka">
   <meta name="apple-mobile-web-app-capable" content="yes">
