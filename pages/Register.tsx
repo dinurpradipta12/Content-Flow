@@ -99,7 +99,12 @@ export const Register: React.FC = () => {
             });
 
             if (authError) {
-                // Handle rate limit error specifically
+                // Handle email rate limit (typically 60-300 seconds)
+                if (authError.message?.includes('email rate limit')) {
+                    setRateLimitCooldown(300); // 5 minutes for email rate limit
+                    throw new Error(`Email Anda terlalu banyak digunakan untuk signup. Silakan tunggu 5 menit sebelum mencoba lagi dengan email yang berbeda.`);
+                }
+                // Handle general rate limit error
                 if (authError.message?.includes('only request this after')) {
                     const match = authError.message.match(/after (\d+) seconds/);
                     const waitTime = match ? parseInt(match[1]) : 60;
