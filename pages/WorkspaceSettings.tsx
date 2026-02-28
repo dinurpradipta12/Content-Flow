@@ -23,9 +23,12 @@ import {
     Send,
     User,
     Users,
-    Palette
+    Palette,
+    Upload,
+    Loader
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
+import { uploadToCloudinary } from '../services/cloudinaryService';
 
 interface PageConfig {
     title: string;
@@ -87,6 +90,9 @@ export const WorkspaceSettings: React.FC = () => {
     // Form States
     const [changelogInput, setChangelogInput] = useState('');
 
+    // Upload States
+    const [uploading, setUploading] = useState<string | null>(null); // 'icon-192' | 'icon-512' | 'maskable'
+
     // Broadcast State
     const [broadcastTitle, setBroadcastTitle] = useState('');
     const [broadcastMessage, setBroadcastMessage] = useState('');
@@ -96,6 +102,40 @@ export const WorkspaceSettings: React.FC = () => {
     const [sbKey, setSbKey] = useState(localStorage.getItem('sb_key') || '');
 
     const { sendNotification } = useNotifications();
+
+    /**
+     * Handle file upload ke Cloudinary
+     */
+    const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>, iconType: 'app_icon_192' | 'app_icon_512' | 'app_icon_mask') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(iconType);
+        try {
+            const url = await uploadToCloudinary(file, 'aruneeka-icons');
+            
+            // Update config dengan URL dari Cloudinary
+            setConfig(prev => prev ? { ...prev, [iconType]: url } : null);
+            
+            sendNotification({
+                type: 'success',
+                title: 'Upload Berhasil',
+                message: `Icon berhasil diupload ke Cloudinary`
+            });
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Gagal upload file';
+            sendNotification({
+                type: 'error',
+                title: 'Upload Gagal',
+                message: errorMsg
+            });
+            console.error('Upload error:', error);
+        } finally {
+            setUploading(null);
+            // Reset input
+            e.target.value = '';
+        }
+    };
 
     const fetchConfig = async () => {
         setLoading(true);
@@ -400,12 +440,33 @@ export const WorkspaceSettings: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Web App Icon 192×192 (Home Screen)</label>
-                                        <input
-                                            value={config?.app_icon_192 || ''}
-                                            onChange={e => setConfig(prev => prev ? { ...prev, app_icon_192: e.target.value } : null)}
-                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
-                                            placeholder="https://... (192×192)"
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                value={config?.app_icon_192 || ''}
+                                                onChange={e => setConfig(prev => prev ? { ...prev, app_icon_192: e.target.value } : null)}
+                                                className="flex-1 bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                                placeholder="https://... (192×192)"
+                                            />
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={e => handleIconUpload(e, 'app_icon_192')}
+                                                    className="hidden"
+                                                    disabled={uploading === 'app_icon_192'}
+                                                />
+                                                <Button
+                                                    disabled={uploading === 'app_icon_192'}
+                                                    className="bg-accent hover:bg-accent/90 text-white px-4 py-3 rounded-xl flex items-center gap-2"
+                                                >
+                                                    {uploading === 'app_icon_192' ? (
+                                                        <Loader className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Upload className="w-4 h-4" />
+                                                    )}
+                                                </Button>
+                                            </label>
+                                        </div>
                                         {config?.app_icon_192 && (
                                             <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_icon_192} className="w-24 h-24 object-contain" alt="Icon 192" />
@@ -414,12 +475,33 @@ export const WorkspaceSettings: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Web App Icon 512×512 (PWA)</label>
-                                        <input
-                                            value={config?.app_icon_512 || ''}
-                                            onChange={e => setConfig(prev => prev ? { ...prev, app_icon_512: e.target.value } : null)}
-                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
-                                            placeholder="https://... (512×512)"
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                value={config?.app_icon_512 || ''}
+                                                onChange={e => setConfig(prev => prev ? { ...prev, app_icon_512: e.target.value } : null)}
+                                                className="flex-1 bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                                placeholder="https://... (512×512)"
+                                            />
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={e => handleIconUpload(e, 'app_icon_512')}
+                                                    className="hidden"
+                                                    disabled={uploading === 'app_icon_512'}
+                                                />
+                                                <Button
+                                                    disabled={uploading === 'app_icon_512'}
+                                                    className="bg-accent hover:bg-accent/90 text-white px-4 py-3 rounded-xl flex items-center gap-2"
+                                                >
+                                                    {uploading === 'app_icon_512' ? (
+                                                        <Loader className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Upload className="w-4 h-4" />
+                                                    )}
+                                                </Button>
+                                            </label>
+                                        </div>
                                         {config?.app_icon_512 && (
                                             <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_icon_512} className="w-24 h-24 object-contain" alt="Icon 512" />
@@ -428,12 +510,33 @@ export const WorkspaceSettings: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Maskable Icon (Adaptive)</label>
-                                        <input
-                                            value={config?.app_icon_mask || ''}
-                                            onChange={e => setConfig(prev => prev ? { ...prev, app_icon_mask: e.target.value } : null)}
-                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
-                                            placeholder="https://... (Maskable)"
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                value={config?.app_icon_mask || ''}
+                                                onChange={e => setConfig(prev => prev ? { ...prev, app_icon_mask: e.target.value } : null)}
+                                                className="flex-1 bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                                placeholder="https://... (Maskable)"
+                                            />
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={e => handleIconUpload(e, 'app_icon_mask')}
+                                                    className="hidden"
+                                                    disabled={uploading === 'app_icon_mask'}
+                                                />
+                                                <Button
+                                                    disabled={uploading === 'app_icon_mask'}
+                                                    className="bg-accent hover:bg-accent/90 text-white px-4 py-3 rounded-xl flex items-center gap-2"
+                                                >
+                                                    {uploading === 'app_icon_mask' ? (
+                                                        <Loader className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Upload className="w-4 h-4" />
+                                                    )}
+                                                </Button>
+                                            </label>
+                                        </div>
                                         {config?.app_icon_mask && (
                                             <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_icon_mask} className="w-24 h-24 object-contain rounded-full border-2 border-accent" alt="Maskable" />
