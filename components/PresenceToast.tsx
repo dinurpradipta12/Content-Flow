@@ -196,14 +196,14 @@ export const PresenceToast = () => {
     if (isMobile) {
         return (
             <div
-                className={`fixed left-1/2 -translate-x-1/2 z-[1001] transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                className={`fixed left-1/2 -translate-x-1/2 z-[1001] transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-[calc(100vw-2rem)] max-w-[320px] ${
                     isVisible
                         ? 'translate-y-0 opacity-100 scale-100'
                         : '-translate-y-full opacity-0 scale-75 pointer-events-none'
                 }`}
                 style={{ top: 'max(0.5rem, env(safe-area-inset-top, 0.5rem))' }}
             >
-                <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-[20px] bg-[#0d0d0d] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] whitespace-nowrap">
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-[20px] bg-[#0d0d0d] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden">
                     {/* Animated status dot */}
                     <div
                         className="w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse"
@@ -226,10 +226,10 @@ export const PresenceToast = () => {
                     </div>
 
                     {/* Text */}
-                    <p className="text-[12px] font-bold text-white leading-none">
-                        <span className="font-extrabold text-white">{presence.name}</span>
-                        <span className="text-white/50 ml-1.5">{getStatusText(presence.status)}</span>
-                    </p>
+                    <div className="flex-1 min-w-0 flex items-center gap-1.5 overflow-hidden">
+                        <span className="font-extrabold text-[12px] text-white truncate max-w-[100px]">{presence.name}</span>
+                        <span className="text-[11px] text-white/50 font-bold flex-shrink-0">{getStatusText(presence.status)}</span>
+                    </div>
                 </div>
             </div>
         );

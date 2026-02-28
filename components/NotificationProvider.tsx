@@ -84,6 +84,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [currentPopup, setCurrentPopup] = useState<AppNotification | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(localStorage.getItem('user_id'));
     const [isMobile, setIsMobile] = useState(false);
+    const [showPushBanner, setShowPushBanner] = useState(false);
     const navigate = useNavigate();
 
     // Notification Sounds (fallback for desktop)
@@ -259,19 +260,40 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (currentUserId) {
             checkUpcomingContent().then(() => fetchNotifications());
 
-            // Register Web Push Notifications (mobile/desktop)
+            // Show push notification permission banner if not yet granted
             if (isPushSupported()) {
-                // Delay slightly to not block initial render
-                setTimeout(() => {
-                    registerPushNotifications(currentUserId).then(success => {
-                        if (success) {
-                            console.log('[Push] Web Push registered successfully');
-                        }
-                    });
-                }, 3000);
+                const permission = 'Notification' in window ? Notification.permission : 'denied';
+                const dismissed = localStorage.getItem('push_banner_dismissed');
+
+                if (permission === 'default' && !dismissed) {
+                    // Show banner after 5 seconds (after user has settled in)
+                    setTimeout(() => setShowPushBanner(true), 5000);
+                } else if (permission === 'granted') {
+                    // Already granted - register silently
+                    setTimeout(() => {
+                        registerPushNotifications(currentUserId).then(success => {
+                            if (success) console.log('[Push] Web Push registered');
+                        });
+                    }, 2000);
+                }
             }
         }
     }, [currentUserId, fetchNotifications]);
+
+    const handleAllowPush = async () => {
+        setShowPushBanner(false);
+        if (currentUserId) {
+            const success = await registerPushNotifications(currentUserId);
+            if (success) {
+                console.log('[Push] Web Push registered after user consent');
+            }
+        }
+    };
+
+    const handleDismissPushBanner = () => {
+        setShowPushBanner(false);
+        localStorage.setItem('push_banner_dismissed', 'true');
+    };
 
     useEffect(() => {
         if (!currentUserId) return;
@@ -472,6 +494,53 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             clearAllNotifications
         }}>
             {children}
+
+            {/* ══════════════════════════════════════════════════════════════════
+                PUSH NOTIFICATION PERMISSION BANNER
+                Shown once when user hasn't granted/denied permission yet
+            ══════════════════════════════════════════════════════════════════ */}
+            {showPushBanner && (
+                <div className="fixed bottom-[80px] left-3 right-3 z-[9998] animate-in slide-in-from-bottom-4 fade-in duration-400 md:bottom-6 md:left-auto md:right-6 md:w-[360px]">
+                    <div className="bg-card border-2 border-border rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center gap-3 px-4 py-3 bg-accent/5 border-b border-border">
+                            <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Bell size={18} className="text-accent" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-black text-sm text-foreground leading-tight">Aktifkan Notifikasi</p>
+                                <p className="text-[10px] text-mutedForeground font-bold">Terima update real-time di perangkat ini</p>
+                            </div>
+                            <button
+                                onClick={handleDismissPushBanner}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-400 active:bg-slate-200 flex-shrink-0"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                        {/* Body */}
+                        <div className="px-4 py-3">
+                            <p className="text-xs text-mutedForeground font-bold mb-3 leading-relaxed">
+                                Dapatkan notifikasi langsung di HP/tablet kamu, bahkan saat app ditutup.
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleDismissPushBanner}
+                                    className="flex-1 h-9 rounded-xl border-2 border-slate-200 text-xs font-black text-slate-500 active:bg-slate-50 transition-colors"
+                                >
+                                    Nanti Saja
+                                </button>
+                                <button
+                                    onClick={handleAllowPush}
+                                    className="flex-1 h-9 rounded-xl bg-accent text-white text-xs font-black active:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
+                                >
+                                    <Bell size={13} /> Izinkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ══════════════════════════════════════════════════════════════════
                 TOAST NOTIFICATIONS
