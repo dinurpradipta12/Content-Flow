@@ -833,7 +833,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 appFavicon: config.app_favicon || ''
             });
             // Update cache for next refresh - only store small text values, not long URLs
-            localStorage.setItem('app_name', config.app_name);
+            try {
+                localStorage.setItem('app_name', config.app_name);
+            } catch (e) {
+                console.warn('Failed to cache app_name:', e);
+            }
             // Don't store long image URLs in localStorage to avoid quota exceeded
             // These are fetched fresh from config which is already cached in memory
         }
@@ -1056,11 +1060,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             return;
         }
 
-        // 1. Update State & LocalStorage (Optimistic)
-        localStorage.setItem('app_name', branding.appName);
-        localStorage.setItem('app_logo', branding.appLogo);
-        localStorage.setItem('app_logo_light', branding.appLogoLight);
-        localStorage.setItem('app_favicon', branding.appFavicon);
+        // 1. Update State (Don't store long URLs in localStorage - causes quota exceeded)
+        try {
+            localStorage.setItem('app_name', branding.appName);
+        } catch (e) {
+            console.warn('Failed to update app_name in localStorage:', e);
+        }
 
         // 2. Persist to Global Config Table
         try {
