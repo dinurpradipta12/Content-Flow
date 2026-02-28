@@ -9,6 +9,7 @@ import {
     Settings,
     LogOut,
     ChevronDown,
+    ChevronRight,
     UserPlus,
     Layers,
     Menu,
@@ -2205,67 +2206,155 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                         {/* Mobile Full Screen Menu Drawer */}
                         {showMobileMenu && (
-                            <div className="md:hidden fixed inset-0 z-[45] bg-background flex flex-col pt-20 pb-[72px] animate-in fade-in slide-in-from-bottom duration-300">
-                                <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
-                                    <div className="flex items-center gap-4 mb-8">
-                                        <img src={userProfile.avatar} alt="User" className="w-14 h-14 rounded-full border-2 border-slate-200 object-cover" />
-                                        <div>
-                                            <h3 className="font-heading font-black text-xl text-foreground">{userProfile.name}</h3>
-                                            <p className="text-sm text-mutedForeground">{userProfile.jobTitle || userProfile.role}</p>
-                                        </div>
+                            <div className="md:hidden fixed inset-0 z-[45] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
+                                {/* ── Drawer Header ── */}
+                                <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
+                                    <div className="flex items-center gap-2">
+                                        {(() => {
+                                            const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
+                                            const favicon = config?.app_favicon || branding.appFavicon;
+                                            const activeLogo = isDarkTheme
+                                                ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
+                                                : (config?.app_logo || branding.appLogo);
+                                            if (favicon) return <img src={favicon} className="w-7 h-7 object-contain rounded-lg" alt="Logo" />;
+                                            if (activeLogo) return <img src={activeLogo} className="max-h-6 max-w-[80px] object-contain" alt="Logo" />;
+                                            return <div className="font-heading font-black text-sm text-accent tracking-tighter">CF</div>;
+                                        })()}
+                                        <span className="font-heading font-black text-base text-foreground tracking-tight">{config?.app_name || branding.appName}</span>
                                     </div>
+                                    <button
+                                        onClick={() => setShowMobileMenu(false)}
+                                        className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500 active:bg-slate-200 transition-colors"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
 
-                                    {Object.entries(NAV_ITEMS).map(([section, items]) => {
-                                        const filteredItems = items.filter(item => {
-                                            if (item.adminOnly && !isAdmin) return false;
-                                            if (item.developerOnly && !isDeveloper) return false;
-                                            if (isDeveloper) return true;
-                                            if (item.id === 'team') {
-                                                const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
-                                                if (!isSelfRegisteredAdmin) return false;
-                                                return true;
-                                            }
-                                            // Messages is always globally visible to all users
-                                            if (item.id === 'messages') return true;
-                                            const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
-                                            const isHidden = config?.hidden_pages?.includes(item.id);
-                                            if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
-                                            else { if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false; }
-                                            return true;
-                                        });
+                                {/* ── Scrollable Content ── */}
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
 
-                                        if (filteredItems.length === 0) return null;
-                                        return (
-                                            <div key={section} className="mb-8 font-heading animate-in slide-in-from-left delay-100 fill-mode-both">
-                                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{section}</h3>
-                                                <div className="space-y-2 flex flex-col w-full">
-                                                    {filteredItems.map((item) => {
-                                                        const isActive = location.pathname === item.path;
-                                                        return (
-                                                            <button
-                                                                key={item.path}
-                                                                onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
-                                                                className={`flex items-center w-full px-4 py-3.5 rounded-xl transition-all font-bold ${isActive ? 'bg-accent text-white shadow-hard-mini' : 'text-slate-600 hover:bg-slate-500/10'}`}
-                                                            >
-                                                                <item.icon size={20} className="shrink-0 mr-4" />
-                                                                <span className="text-base tracking-tight">{item.label}</span>
-                                                                {item.badge && <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-black bg-red-500 text-white">{item.badge}</span>}
-                                                            </button>
-                                                        );
-                                                    })}
+                                    {/* ── Profile Card (Clickable → /profile) ── */}
+                                    <div className="px-4 pt-4 pb-3">
+                                        <button
+                                            onClick={() => { setShowMobileMenu(false); navigate('/profile'); }}
+                                            className="w-full flex items-center gap-3 p-3.5 bg-card border-2 border-border rounded-2xl shadow-sm active:scale-[0.98] transition-all hover:border-accent/40 hover:shadow-md group"
+                                        >
+                                            {/* Avatar with online dot */}
+                                            <div className="relative flex-shrink-0">
+                                                <img src={userProfile.avatar} alt="User" className="w-14 h-14 rounded-full border-2 border-slate-200 object-cover group-hover:border-accent transition-colors" />
+                                                <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                                            </div>
+                                            {/* Info */}
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <h3 className="font-heading font-black text-base text-foreground leading-tight truncate">{userProfile.name}</h3>
+                                                <p className="text-xs text-mutedForeground font-bold truncate">{userProfile.jobTitle || userProfile.role}</p>
+                                                <div className="flex items-center gap-1.5 mt-1">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                                        userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                                        userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                                                        userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                                        'bg-slate-100 text-slate-600 border-slate-200'
+                                                    }`}>{userProfile.role}</span>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
+                                            {/* Arrow */}
+                                            <ChevronRight size={18} className="text-slate-400 flex-shrink-0 group-hover:text-accent transition-colors" />
+                                        </button>
+                                    </div>
 
-                                    <div className="pt-4 border-t-2 border-border mb-10">
-                                        <button onClick={() => { setShowMobileMenu(false); setShowThemeModal(true); }} className="flex items-center w-full px-4 py-3.5 rounded-xl text-slate-600 font-bold hover:bg-slate-500/10 transition-all">
-                                            <Palette size={20} className="shrink-0 mr-4" /> UI Theme
+                                    {/* ── Quick Actions Row ── */}
+                                    <div className="px-4 pb-4 grid grid-cols-3 gap-2">
+                                        <button
+                                            onClick={() => { setShowMobileMenu(false); setIsSettingsOpen(true); }}
+                                            className="flex flex-col items-center gap-1.5 p-3 bg-card border-2 border-border rounded-xl active:scale-95 transition-all hover:border-accent/30"
+                                        >
+                                            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                                                <Settings size={16} className="text-slate-600" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Pengaturan</span>
                                         </button>
-                                        <button onClick={() => { setShowMobileMenu(false); handleLogout(); }} className="flex items-center w-full px-4 py-3.5 rounded-xl text-red-500 font-bold hover:bg-red-500/10 transition-all mt-2">
-                                            <LogOut size={20} className="shrink-0 mr-4" /> Sign Out
+                                        <button
+                                            onClick={() => { setShowMobileMenu(false); setShowThemeModal(true); }}
+                                            className="flex flex-col items-center gap-1.5 p-3 bg-card border-2 border-border rounded-xl active:scale-95 transition-all hover:border-accent/30"
+                                        >
+                                            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                                                <Palette size={16} className="text-slate-600" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Tema</span>
                                         </button>
-                                        <p className="text-[10px] text-slate-400 font-bold px-4 mt-6 opacity-70 italic text-center">v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}</p>
+                                        <button
+                                            onClick={() => { setShowMobileMenu(false); handleLogout(); }}
+                                            className="flex flex-col items-center gap-1.5 p-3 bg-red-50 border-2 border-red-100 rounded-xl active:scale-95 transition-all hover:border-red-300"
+                                        >
+                                            <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                                <LogOut size={16} className="text-red-500" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-red-400 uppercase tracking-wide">Keluar</span>
+                                        </button>
+                                    </div>
+
+                                    {/* ── Divider ── */}
+                                    <div className="mx-4 border-t-2 border-border mb-3"></div>
+
+                                    {/* ── Navigation Items ── */}
+                                    <div className="px-4 pb-4">
+                                        {Object.entries(NAV_ITEMS).map(([section, items]) => {
+                                            const filteredItems = items.filter(item => {
+                                                if (item.adminOnly && !isAdmin) return false;
+                                                if (item.developerOnly && !isDeveloper) return false;
+                                                if (isDeveloper) return true;
+                                                if (item.id === 'team') {
+                                                    const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
+                                                    if (!isSelfRegisteredAdmin) return false;
+                                                    return true;
+                                                }
+                                                if (item.id === 'messages') return true;
+                                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+                                                const isHidden = config?.hidden_pages?.includes(item.id);
+                                                if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
+                                                else { if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false; }
+                                                return true;
+                                            });
+
+                                            if (filteredItems.length === 0) return null;
+                                            return (
+                                                <div key={section} className="mb-5">
+                                                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{section}</h3>
+                                                    <div className="space-y-1">
+                                                        {filteredItems.map((item) => {
+                                                            const isActive = location.pathname === item.path || location.pathname === `/${item.path}`;
+                                                            return (
+                                                                <button
+                                                                    key={item.path}
+                                                                    onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
+                                                                    className={`flex items-center w-full px-4 py-3 rounded-xl transition-all font-bold active:scale-[0.98] ${
+                                                                        isActive
+                                                                            ? 'bg-accent text-white shadow-sm'
+                                                                            : 'text-slate-600 hover:bg-slate-500/10 bg-card border border-transparent hover:border-slate-200'
+                                                                    }`}
+                                                                >
+                                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                                                        <item.icon size={17} className={isActive ? 'text-white' : 'text-slate-500'} />
+                                                                    </div>
+                                                                    <span className="text-sm tracking-tight flex-1 text-left">{item.label}</span>
+                                                                    {item.badge && (
+                                                                        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500 text-white">{item.badge}</span>
+                                                                    )}
+                                                                    {isActive && <ChevronRight size={14} className="ml-auto text-white/70" />}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* ── App Version Footer ── */}
+                                    <div className="px-4 pb-6 text-center">
+                                        <p className="text-[10px] text-slate-400 font-bold opacity-60 italic">
+                                            v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
