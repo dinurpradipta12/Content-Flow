@@ -99,11 +99,17 @@ export const Register: React.FC = () => {
             });
 
             if (authError) {
-                // Handle email rate limit (typically 60-300 seconds)
-                if (authError.message?.includes('email rate limit')) {
-                    setRateLimitCooldown(300); // 5 minutes for email rate limit
-                    throw new Error(`Email Anda terlalu banyak digunakan untuk signup. Silakan tunggu 5 menit sebelum mencoba lagi dengan email yang berbeda.`);
+                // Check for 429 Too Many Requests (generic rate limit)
+                const isRateLimitError = authError.message?.includes('429') || 
+                                       authError.message?.includes('Too Many Requests');
+                
+                // Handle email rate limit (typically 15-60 minutes)
+                if (authError.message?.includes('email rate limit') || (isRateLimitError && normalizedEmail)) {
+                    const waitTime = 900; // 15 minutes for email rate limit
+                    setRateLimitCooldown(waitTime);
+                    throw new Error(`Email Anda terlalu banyak digunakan untuk signup dalam waktu singkat. Silakan tunggu 15 menit dan coba lagi dengan email yang berbeda, atau hubungi support jika masalah berlanjut.`);
                 }
+                
                 // Handle general rate limit error
                 if (authError.message?.includes('only request this after')) {
                     const match = authError.message.match(/after (\d+) seconds/);
@@ -111,6 +117,14 @@ export const Register: React.FC = () => {
                     setRateLimitCooldown(waitTime);
                     throw new Error(`Terlalu banyak percobaan. Silakan tunggu ${waitTime} detik sebelum mencoba lagi.`);
                 }
+                
+                // Handle other rate limits
+                if (isRateLimitError) {
+                    const waitTime = 600; // 10 minutes default for any 429
+                    setRateLimitCooldown(waitTime);
+                    throw new Error(`Server sedang sibuk (429 - Too Many Requests). Silakan tunggu 10 menit dan coba lagi.`);
+                }
+                
                 throw authError;
             }
 
@@ -321,6 +335,13 @@ export const Register: React.FC = () => {
                         <div className="p-4 bg-red-50 text-red-700 border-2 border-red-500 rounded-xl font-bold text-sm flex items-center gap-3">
                             <Info size={16} className="shrink-0" />
                             <span>{errorStatus}</span>
+                        </div>
+                    )}
+
+                    {!errorStatus && (
+                        <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-xl font-bold text-sm flex items-center gap-3">
+                            <Info size={16} className="shrink-0 text-blue-600" />
+                            <span className="text-blue-800">⏱️ Harap tunggu sebelum submit ulang. Supabase memiliki rate limit ketat untuk mencegah spam.</span>
                         </div>
                     )}
 

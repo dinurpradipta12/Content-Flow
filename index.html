@@ -44,21 +44,36 @@
     rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
+    html {
+      background-color: #FFFDF5;
+      /* Default fallback */
+    }
+
     html,
     body,
     #root {
       width: 100%;
-      height: 100vh;
-      height: -webkit-fill-available;
-      height: 100dvh;
+      height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
     }
 
+    /* Mobile specific viewport height fixes */
+    @media (max-width: 767px) {
+
+      html,
+      body,
+      #root {
+        height: 100dvh;
+        height: -webkit-fill-available;
+      }
+    }
+
     :root,
     .theme-light,
-    html.theme-light {
+    html.theme-light,
+    html {
       --background: #FFFDF5;
       --foreground: #1E293B;
       --muted: #F1F5F9;
@@ -344,13 +359,25 @@
 
     }
 
-    /* Override min-h-screen and h-screen to use dvh for exact mobile height calculation */
+    /* Override min-h-screen and h-screen to fill viewport correctly. 
+       On desktop, we use 100% to fill the zoomed body physically.
+       On mobile, we use 100dvh to handle dynamic status bars. */
     .min-h-screen {
-      min-height: 100dvh !important;
+      min-height: 100% !important;
     }
 
     .h-screen {
-      height: 100dvh !important;
+      height: 100% !important;
+    }
+
+    @media (max-width: 767px) {
+      .min-h-screen {
+        min-height: 100dvh !important;
+      }
+
+      .h-screen {
+        height: 100dvh !important;
+      }
     }
 
     h1,

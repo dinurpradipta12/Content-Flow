@@ -209,7 +209,7 @@ export const Profile: React.FC = () => {
     }
   };
 
-  if (loading || !user) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-slate-300" size={24} className="sm:w-8 sm:h-8 md:w-8 md:h-8" /></div>;
+  if (loading || !user) return <div className="h-screen flex items-center justify-center"><Loader2 size={24} className="animate-spin text-slate-300 sm:w-8 sm:h-8 md:w-8 md:h-8" /></div>;
 
   return (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500 pb-12 sm:pb-16 md:pb-20 pt-4 sm:pt-6 md:pt-10 px-2 sm:px-4 md:px-8 max-w-7xl mx-auto">
@@ -220,7 +220,7 @@ export const Profile: React.FC = () => {
           <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-44 md:h-44 rounded-full border-3 sm:border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1E293B] sm:shadow-[8px_8px_0px_0px_#1E293B] overflow-hidden bg-white relative">
             <img src={user.avatar_url} className="w-full h-full object-cover" alt="User Avatar" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
-              <Upload className="text-white" size={24} className="sm:w-8 sm:h-8 md:w-8 md:h-8" />
+              <Upload size={24} className="text-white sm:w-8 sm:h-8 md:w-8 md:h-8" />
             </div>
           </div>
           <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 bg-quaternary border-3 sm:border-4 border-slate-800 rounded-full flex items-center justify-center pointer-events-none">
