@@ -1476,10 +1476,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <ChatNotificationListener />
                     {/* Mobile top safe area spacer - pushes header below status bar */}
                     <div className="md:hidden flex-shrink-0 mobile-safe-top-spacer"></div>
-                    <header className={`mt-1 sm:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-1 sm:mb-2 h-12 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                    <header className={`mt-0 sm:mt-0 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-2 sm:mb-3 md:mb-2 h-14 sm:h-16 md:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 sm:px-4 md:px-6 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
 
                         {/* ── MOBILE HEADER (< md) ── */}
-                        <div className="flex md:hidden items-center justify-between w-full gap-1">
+                        <div className="flex md:hidden items-center justify-between w-full gap-1 pb-2">
                             {/* Left: Favicon/Logo */}
                             <div className="flex items-center flex-shrink-0">
                                 {(() => {
@@ -1585,7 +1585,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </div>
                     </header>
 
-                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-2 sm:p-3 md:px-6 md:py-8 md:pb-8 pb-32 md:pb-8'}`}>
+                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8 md:pb-8' : 'p-4 sm:p-4 md:px-6 md:py-8 md:pb-8 pb-20 sm:pb-20 md:pb-8'}`}>
                         <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
                             {children}
                         </div>
