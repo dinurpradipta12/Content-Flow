@@ -81,8 +81,28 @@ export const getNotificationPermission = (): NotificationPermission => {
 };
 
 /**
- * Register service worker and subscribe to push notifications
- * Call this after user logs in
+ * Request notification permission from the browser.
+ * This shows the native browser permission dialog.
+ * Works even without VAPID keys.
+ */
+export const requestNotificationPermission = async (): Promise<NotificationPermission> => {
+    if (!('Notification' in window)) return 'denied';
+    if (Notification.permission !== 'default') return Notification.permission;
+
+    try {
+        const permission = await Notification.requestPermission();
+        console.log('[Push] Permission result:', permission);
+        return permission;
+    } catch (err) {
+        console.error('[Push] Permission request failed:', err);
+        return 'denied';
+    }
+};
+
+/**
+ * Register service worker and subscribe to push notifications.
+ * Requires VAPID keys for background push (when app is closed).
+ * If no VAPID key, still registers SW and requests permission for local notifications.
  */
 export const registerPushNotifications = async (userId: string): Promise<boolean> => {
     if (!isPushSupported()) {
@@ -90,34 +110,51 @@ export const registerPushNotifications = async (userId: string): Promise<boolean
         return false;
     }
 
-    if (!VAPID_PUBLIC_KEY) {
-        console.warn('[Push] VITE_VAPID_PUBLIC_KEY not set. Web Push disabled.');
-        return false;
-    }
-
     try {
-        // 1. Register service worker
+        // 1. Register service worker (works without VAPID)
         const registration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/'
         });
         console.log('[Push] Service Worker registered:', registration.scope);
 
         // 2. Request notification permission
-        const permission = await Notification.requestPermission();
+        const permission = await requestNotificationPermission();
         if (permission !== 'granted') {
-            console.log('[Push] Permission denied:', permission);
+            console.log('[Push] Permission not granted:', permission);
             return false;
         }
 
-        // 3. Subscribe to push
+        // 3. Update app badge if supported
+        if ('setAppBadge' in navigator) {
+            (navigator as any).setAppBadge(0).catch(() => {});
+        }
+
+        // 4. Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'NOTIFICATION_CLICK') {
+                window.dispatchEvent(new CustomEvent('push-notification-click', {
+                    detail: event.data.data
+                }));
+            }
+            if (event.data?.type === 'PUSH_SUBSCRIPTION_CHANGED') {
+                registerPushNotifications(userId);
+            }
+        });
+
+        // 5. Subscribe to push (requires VAPID key for background push)
+        if (!VAPID_PUBLIC_KEY) {
+            console.warn('[Push] VITE_VAPID_PUBLIC_KEY not set. Background push disabled, but local notifications work.');
+            return true; // Still return true - permission granted, SW registered
+        }
+
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
 
-        console.log('[Push] Subscribed:', subscription.endpoint);
+        console.log('[Push] Push subscription created:', subscription.endpoint);
 
-        // 4. Save subscription to Supabase
+        // 6. Save subscription to Supabase
         const subscriptionJSON = subscription.toJSON();
         const { error } = await supabase
             .from('push_subscriptions')
@@ -134,24 +171,10 @@ export const registerPushNotifications = async (userId: string): Promise<boolean
 
         if (error) {
             console.error('[Push] Failed to save subscription:', error);
-            return false;
+            // Don't return false - permission and SW are still working
+        } else {
+            console.log('[Push] Push subscription saved to database');
         }
-
-        console.log('[Push] Subscription saved to database');
-
-        // 5. Listen for messages from service worker
-        navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data?.type === 'NOTIFICATION_CLICK') {
-                // Handle notification click from SW
-                window.dispatchEvent(new CustomEvent('push-notification-click', {
-                    detail: event.data.data
-                }));
-            }
-            if (event.data?.type === 'PUSH_SUBSCRIPTION_CHANGED') {
-                // Re-save updated subscription
-                registerPushNotifications(userId);
-            }
-        });
 
         return true;
     } catch (err) {
