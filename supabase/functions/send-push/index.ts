@@ -1,47 +1,28 @@
 /**
  * Supabase Edge Function: send-push
  *
- * Sends Web Push Notifications to subscribed devices.
+ * Mengirim Web Push Notifications ke device yang sudah subscribe.
  *
- * ── SETUP ─────────────────────────────────────────────────────────────────────
+ * Bisa dipanggil dengan 2 cara:
  *
- * 1. Install web-push: (handled by Deno import)
+ * 1. Database Webhook (otomatis saat INSERT ke tabel notifications):
+ *    Body yang dikirim Supabase:
+ *    { "type": "INSERT", "table": "notifications", "record": { "recipient_id": "...", "title": "...", "content": "..." }, ... }
  *
- * 2. Set Edge Function secrets in Supabase Dashboard:
- *    supabase secrets set VAPID_PUBLIC_KEY=<your-public-key>
- *    supabase secrets set VAPID_PRIVATE_KEY=<your-private-key>
- *    supabase secrets set VAPID_EMAIL=mailto:your@email.com
- *
- * 3. Deploy:
- *    supabase functions deploy send-push
- *
- * 4. Call from NotificationProvider after inserting a notification:
- *    await supabase.functions.invoke('send-push', {
- *      body: { recipient_id: userId, title: '...', body: '...', url: '/plan/...' }
- *    })
- *
- * ── HOW TO TRIGGER ────────────────────────────────────────────────────────────
- *
- * Option A: Call from client (NotificationProvider.sendNotification)
- * Option B: Supabase Database Webhook on notifications INSERT
- *   → Go to Supabase Dashboard → Database → Webhooks
- *   → Create webhook on notifications table INSERT
- *   → Point to this Edge Function URL
- *   → This sends push automatically whenever a notification is inserted!
+ * 2. Manual dari client/server:
+ *    { "recipient_id": "...", "title": "...", "message": "...", "url": "/" }
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// VAPID keys from environment secrets
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') || '';
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || '';
 const VAPID_EMAIL = Deno.env.get('VAPID_EMAIL') || 'mailto:admin@example.com';
-
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-// ── VAPID Signing (manual implementation for Deno) ────────────────────────────
+// ── VAPID JWT Signing ─────────────────────────────────────────────────────────
 async function generateVapidHeaders(endpoint: string, publicKey: string, privateKey: string, email: string) {
     const url = new URL(endpoint);
     const audience = `${url.protocol}//${url.host}`;
@@ -58,8 +39,11 @@ async function generateVapidHeaders(endpoint: string, publicKey: string, private
 
     const signingInput = `${encode(header)}.${encode(payload)}`;
 
-    // Import private key
-    const keyData = Uint8Array.from(atob(privateKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+    const keyData = Uint8Array.from(
+        atob(privateKey.replace(/-/g, '+').replace(/_/g, '/')),
+        c => c.charCodeAt(0)
+    );
+
     const cryptoKey = await crypto.subtle.importKey(
         'pkcs8',
         keyData,
@@ -74,7 +58,10 @@ async function generateVapidHeaders(endpoint: string, publicKey: string, private
         new TextEncoder().encode(signingInput)
     );
 
-    const token = `${signingInput}.${btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')}`;
+    const token = `${signingInput}.${
+        btoa(String.fromCharCode(...new Uint8Array(signature)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+    }`;
 
     return {
         Authorization: `vapid t=${token}, k=${publicKey}`,
@@ -83,7 +70,7 @@ async function generateVapidHeaders(endpoint: string, publicKey: string, private
     };
 }
 
-// ── Send push to a single subscription ───────────────────────────────────────
+// ── Send push to one subscription ────────────────────────────────────────────
 async function sendPushToSubscription(
     subscription: { endpoint: string; p256dh: string; auth: string },
     payload: object
@@ -103,7 +90,6 @@ async function sendPushToSubscription(
         });
 
         if (response.status === 410 || response.status === 404) {
-            // Subscription expired/invalid
             return { success: false, error: 'subscription_expired' };
         }
 
@@ -119,6 +105,7 @@ async function sendPushToSubscription(
 
 // ── Main Handler ──────────────────────────────────────────────────────────────
 serve(async (req) => {
+    // Handle CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response(null, {
             headers: {
@@ -130,45 +117,66 @@ serve(async (req) => {
 
     try {
         const body = await req.json();
-        const { recipient_id, title, message, url, icon, tag } = body;
 
-        if (!recipient_id || !title) {
-            return new Response(JSON.stringify({ error: 'recipient_id and title are required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
+        // ── Parse payload: support both Webhook format and manual format ──────
+        let recipient_id: string;
+        let title: string;
+        let message: string;
+        let url: string = '/';
+
+        if (body.type === 'INSERT' && body.record) {
+            // Format dari Database Webhook Supabase
+            const record = body.record;
+            recipient_id = record.recipient_id;
+            title = record.title || 'Notifikasi Baru';
+            message = record.content || record.title || '';
+            url = '/';
+        } else {
+            // Format manual
+            recipient_id = body.recipient_id;
+            title = body.title;
+            message = body.message || body.content || title;
+            url = body.url || '/';
         }
 
-        // Initialize Supabase with service role
+        if (!recipient_id || !title) {
+            return new Response(
+                JSON.stringify({ error: 'recipient_id and title are required' }),
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // ── Get push subscriptions for this user ──────────────────────────────
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-        // Get all push subscriptions for this user
         const { data: subscriptions, error } = await supabase
             .from('push_subscriptions')
             .select('endpoint, p256dh, auth')
             .eq('user_id', recipient_id);
 
         if (error || !subscriptions || subscriptions.length === 0) {
-            return new Response(JSON.stringify({ sent: 0, message: 'No subscriptions found' }), {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            return new Response(
+                JSON.stringify({ sent: 0, message: 'No subscriptions found' }),
+                { headers: { 'Content-Type': 'application/json' } }
+            );
         }
 
+        // ── Build push payload ────────────────────────────────────────────────
         const pushPayload = {
             title,
-            body: message || title,
-            icon: icon || '/icon-192.png',
+            body: message,
+            icon: '/icon-192.png',
             badge: '/icon-72.png',
-            tag: tag || 'contentflow',
-            data: { url: url || '/' }
+            tag: 'contentflow',
+            data: { url }
         };
 
-        // Send to all subscriptions (user may have multiple devices)
+        // ── Send to all devices ───────────────────────────────────────────────
         const results = await Promise.all(
             subscriptions.map(sub => sendPushToSubscription(sub, pushPayload))
         );
 
-        // Clean up expired subscriptions
+        // ── Clean up expired subscriptions ────────────────────────────────────
         const expiredEndpoints = subscriptions
             .filter((_, i) => results[i].error === 'subscription_expired')
             .map(s => s.endpoint);
@@ -183,15 +191,16 @@ serve(async (req) => {
 
         const sent = results.filter(r => r.success).length;
 
-        return new Response(JSON.stringify({ sent, total: subscriptions.length }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(
+            JSON.stringify({ sent, total: subscriptions.length }),
+            { headers: { 'Content-Type': 'application/json' } }
+        );
 
     } catch (err) {
         console.error('[send-push] Error:', err);
-        return new Response(JSON.stringify({ error: String(err) }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(
+            JSON.stringify({ error: String(err) }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
     }
 });
