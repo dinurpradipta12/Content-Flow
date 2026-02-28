@@ -52,10 +52,11 @@ export const useAppConfig = () => useContext(AppConfigContext);
 
 export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
     const [config, setConfig] = useState<AppConfig | null>(() => {
-        const cached = localStorage.getItem('app_config');
-        return cached ? JSON.parse(cached) : null;
+        // Don't load from localStorage to avoid quota exceeded
+        // Config will be fetched fresh from database immediately
+        return null;
     });
-    const [loading, setLoading] = useState(!localStorage.getItem('app_config'));
+    const [loading, setLoading] = useState(true);
 
     // Version Check
     const [currentVersion, setCurrentVersion] = useState<string | null>(null);
@@ -67,7 +68,8 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
             const { data, error } = await supabase.from('app_config').select('*').single();
             if (data) {
                 setConfig(data);
-                localStorage.setItem('app_config', JSON.stringify(data));
+                // Store only app_name as a key identifier, not the whole config
+                localStorage.setItem('app_name_cached', data.app_name);
 
                 if (currentVersion === null) {
                     setCurrentVersion(data.app_version); // Initial version mount
@@ -94,7 +96,8 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
                 (payload) => {
                     const newConfig = payload.new as AppConfig;
                     setConfig(newConfig);
-                    localStorage.setItem('app_config', JSON.stringify(newConfig));
+                    // Store only app_name, not entire config
+                    localStorage.setItem('app_name_cached', newConfig.app_name);
                     setCurrentVersion(prev => {
                         if (prev && newConfig.app_version !== prev) {
                             setChangelog(newConfig.changelog);

@@ -36,10 +36,9 @@ export const CarouselMaker: React.FC = () => {
         if (savedTheme) setCurrentTheme(savedTheme);
         const savedColor = localStorage.getItem('carousel_custom_color');
         if (savedColor) setCustomColor(savedColor);
-        const favicon = localStorage.getItem('app_favicon') || '';
-        const logo = localStorage.getItem('app_logo') || '';
+        // Don't try to load URLs from localStorage - they may not be stored anymore
+        // Only load from context/config which fetches fresh from database
         const name = localStorage.getItem('app_name') || 'Arunika';
-        setBrandLogo(favicon || logo);
         setBrandName(name);
 
         loadFonts();

@@ -832,15 +832,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 appLogoLight: config.app_logo_light || '',
                 appFavicon: config.app_favicon || ''
             });
-            // Update cache for next refresh
+            // Update cache for next refresh - only store small text values, not long URLs
             localStorage.setItem('app_name', config.app_name);
-            localStorage.setItem('app_logo', config.app_logo);
-            localStorage.setItem('app_logo_light', config.app_logo_light);
-            localStorage.setItem('app_favicon', config.app_favicon);
-            localStorage.setItem('app_icon_192', config.app_icon_192 || '');
-            localStorage.setItem('app_icon_512', config.app_icon_512 || '');
-            localStorage.setItem('app_icon_mask', config.app_icon_mask || '');
-            localStorage.setItem('icon_updated_at', config.icon_updated_at || '');
+            // Don't store long image URLs in localStorage to avoid quota exceeded
+            // These are fetched fresh from config which is already cached in memory
         }
     }, [config]);
 
