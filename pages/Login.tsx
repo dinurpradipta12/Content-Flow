@@ -23,6 +23,9 @@ export const Login: React.FC = () => {
 
     const [resendLoading, setResendLoading] = useState(false);
     const [showResend, setShowResend] = useState(false);
+    const [showBypassCode, setShowBypassCode] = useState(false);
+    const [bypassCode, setBypassCode] = useState('');
+    const [backupUser, setBackupUser] = useState<any>(null);
 
     const handleResendEmail = async () => {
         if (!username.includes('@')) {
@@ -152,31 +155,27 @@ export const Login: React.FC = () => {
                         .or(`email.ilike.${loginEmail},username.ilike.${trimmedUsername}`)
                         .maybeSingle();
 
-                    if (localUser && localUser.password) {
-                        const isHash = localUser.password.startsWith('$2');
-                        const isMatch = isHash
-                            ? bcrypt.compareSync(trimmedPassword, localUser.password)
-                            : (trimmedPassword === localUser.password);
+                    if (localUser) {
+                        setBackupUser(localUser);
 
-                        if (isMatch) {
-                            console.log("Local password match! Bypassing email confirmation for:", localUser.username);
+                        // If we have a hashed password, try matching it
+                        if (localUser.password) {
+                            const isHash = localUser.password.startsWith('$2');
+                            const isMatch = isHash
+                                ? bcrypt.compareSync(trimmedPassword, localUser.password)
+                                : (trimmedPassword === localUser.password);
 
-                            // Bypass Email Confirmation using Legacy Auth mechanism
-                            localStorage.setItem('isLegacyAuth', 'true');
-                            localStorage.setItem('user_id', localUser.id);
-                            localStorage.setItem('user_role', localUser.role || 'Member');
-                            localStorage.setItem('isAuthenticated', 'true');
-                            if (localUser.username) localStorage.setItem('user_username', localUser.username);
-                            if (localUser.full_name) localStorage.setItem('user_name', localUser.full_name);
-                            if (localUser.avatar_url) localStorage.setItem('user_avatar', localUser.avatar_url);
-                            if (localUser.parent_user_id) localStorage.setItem('tenant_id', localUser.parent_user_id);
-                            if (localUser.admin_id) localStorage.setItem('tenant_id', localUser.admin_id);
-
-                            await logActivity({ user_id: localUser.id, action: 'BYPASS_LOGIN', details: { reason: 'unconfirmed_email' } });
-                            navigate('/');
-                            window.location.reload();
-                            return;
+                            if (isMatch) {
+                                console.log("Local password match! Bypassing email confirmation for:", localUser.username);
+                                loginLocally(localUser);
+                                return;
+                            }
                         }
+
+                        // If password didn't match OR was empty (new user bug), show bypass code option
+                        setShowResend(true);
+                        setShowBypassCode(true);
+                        throw new Error("⚠️ Email belum dikonfirmasi. Gunakan 'Kode Aktivasi' untuk masuk.");
                     }
 
                     setShowResend(true);
@@ -384,6 +383,46 @@ export const Login: React.FC = () => {
         }
     };
 
+    const loginLocally = async (u: any) => {
+        // Bypass mechanism
+        localStorage.setItem('isLegacyAuth', 'true');
+        localStorage.setItem('user_id', u.id);
+        localStorage.setItem('user_role', u.role || 'Member');
+        localStorage.setItem('isAuthenticated', 'true');
+        if (u.username) localStorage.setItem('user_username', u.username);
+        if (u.full_name) localStorage.setItem('user_name', u.full_name);
+        if (u.avatar_url) localStorage.setItem('user_avatar', u.avatar_url);
+        if (u.parent_user_id) localStorage.setItem('tenant_id', u.parent_user_id);
+        if (u.admin_id) localStorage.setItem('tenant_id', u.admin_id);
+
+        await logActivity({ user_id: u.id, action: 'BYPASS_LOGIN', details: { method: showBypassCode ? 'activation_code' : 'password_match' } });
+        navigate('/');
+        window.location.reload();
+    };
+
+    const handleBypassLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        if (!backupUser || !bypassCode.trim()) return;
+
+        console.log("Checking activation code fallback...");
+        const normalizedInput = bypassCode.trim().toUpperCase();
+
+        // Final logic: check against subscription_code OR username (if no code in DB)
+        const correctCode = backupUser.subscription_code?.trim()?.toUpperCase();
+        const fallbackUsernameCode = !correctCode ? backupUser.username?.trim()?.toUpperCase() : null;
+
+        if ((correctCode && normalizedInput === correctCode) || (fallbackUsernameCode && normalizedInput === fallbackUsernameCode)) {
+            console.log("Activation verified via " + (correctCode ? "Order ID" : "Username") + "! Granting access...");
+            loginLocally(backupUser);
+        } else {
+            const errorMsg = correctCode
+                ? "❌ Kode Aktivasi (Order ID) salah."
+                : "❌ Kode aktivasi salah. Gunakan USERNAME Anda (HURUF BESAR) sebagai kode aktivasi darurat.";
+            setError(errorMsg);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-dot-grid">
             <div className="max-w-md w-full relative">
@@ -425,7 +464,29 @@ export const Login: React.FC = () => {
                                     <span>{error}</span>
                                 </div>
 
-                                {showResend && (
+                                {showBypassCode && (
+                                    <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-[11px] font-bold text-amber-800 leading-relaxed text-center">
+                                            Masukkan **Order ID / Kode Langganan** Anda sebagai kode aktivasi darurat:
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <input
+                                                className="flex-1 bg-white border-2 border-amber-300 rounded-lg px-3 py-2 text-sm font-black text-center tracking-widest outline-none focus:border-amber-500 uppercase"
+                                                placeholder="ORDER-XXX-YYY"
+                                                value={bypassCode}
+                                                onChange={(e) => setBypassCode(e.target.value)}
+                                            />
+                                            <button
+                                                onClick={handleBypassLogin}
+                                                className="px-4 py-2 bg-amber-600 text-white font-black rounded-lg hover:bg-amber-700 transition-colors text-xs"
+                                            >
+                                                AKTIVASI
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {showResend && !showBypassCode && (
                                     <button
                                         type="button"
                                         onClick={handleResendEmail}

@@ -139,6 +139,7 @@ export const Register: React.FC = () => {
             let subscriptionEnd = null;
             let isVerified = false;
             let memberLimit = 2;
+            let finalSubscriptionCode = form.subscriptionCode ? form.subscriptionCode.trim().toUpperCase() : null;
 
             if (selectedPackage) {
                 const duration = selectedPackage.durationDays || 30;
@@ -151,6 +152,14 @@ export const Register: React.FC = () => {
                     end.setDate(end.getDate() + duration);
                     subscriptionEnd = end.toISOString();
                     isVerified = true;
+
+                    // Generate a random trial code if none provided
+                    if (!finalSubscriptionCode) {
+                        const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+                        finalSubscriptionCode = `TRIAL-${randomId}`;
+                        // Update form state so success screen shows it
+                        setForm(f => ({ ...f, subscriptionCode: finalSubscriptionCode as string }));
+                    }
                 }
             }
 
@@ -166,7 +175,7 @@ export const Register: React.FC = () => {
                 avatar_url: avatarUrl,
                 is_active: true,
                 subscription_start: now.toISOString(),
-                subscription_code: form.subscriptionCode || null,
+                subscription_code: finalSubscriptionCode,
                 subscription_package: selectedPackage?.name || 'Free',
                 is_verified: isVerified,
                 member_limit: memberLimit,
@@ -262,12 +271,12 @@ export const Register: React.FC = () => {
 
                     {(form.subscriptionCode || (selectedPackage && selectedPackage.price > 0)) && (
                         <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-5 mb-6">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Kode Unik Langganan Anda</p>
-                            <p className="text-3xl font-black text-slate-900 tracking-[0.3em] font-mono">{form.subscriptionCode || 'PENDING'}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Kode Aktivasi / Order ID</p>
+                            <p className="text-3xl font-black text-slate-900 tracking-[0.2em] font-mono">{form.subscriptionCode}</p>
                             <p className="text-xs text-slate-500 font-medium mt-3 leading-relaxed">
-                                {form.subscriptionCode
-                                    ? "Kirimkan kode ini ke Developer untuk proses verifikasi melalui salah satu metode berikut:"
-                                    : "Paket Anda sedang menunggu verifikasi manual oleh Developer."
+                                {selectedPackage?.price === 0
+                                    ? "Simpan kode ini! Gunakan sebagai 'Kode Aktivasi' jika Anda gagal masuk karena kendala email konfirmasi."
+                                    : "Kirimkan kode ini ke Developer untuk proses verifikasi melalui salah satu metode berikut:"
                                 }
                             </p>
                         </div>
