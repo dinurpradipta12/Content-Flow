@@ -311,14 +311,21 @@
   }
 }
 
-/* ─── Top Safe Area (Status Bar / Notch) ──────────────────────────────────── */
+/* ─── Top Safe Area Spacer (Status Bar / Notch) ───────────────────────────── */
 @media (max-width: 767px) {
-  /* Main app container: add padding-top for status bar on mobile
-   * Uses max() to ensure at least 44px even when safe-area-inset-top is 0
-   * (e.g., when running in browser mode, not PWA)
+  /* Dedicated spacer div that pushes header below the status bar.
+   * Using a separate div (not padding on h-screen wrapper) avoids
+   * height calculation issues with overflow-hidden containers.
+   * height = max(status bar height, safe-area-inset-top)
    */
+  .mobile-safe-top-spacer {
+    height: max(44px, env(safe-area-inset-top, 44px));
+    min-height: 44px;
+  }
+
+  /* Keep old class for other uses */
   .mobile-safe-top {
-    padding-top: max(44px, env(safe-area-inset-top, 44px)) !important;
+    padding-top: max(44px, env(safe-area-inset-top, 44px));
   }
 }
 
