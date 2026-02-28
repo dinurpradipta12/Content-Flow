@@ -4,6 +4,7 @@ import { notifyDevelopers } from '../services/notificationService';
 import { supabase } from '../services/supabaseClient';
 import { UserPlus, User, Mail, Lock, Key, ArrowLeft, Loader2, Info, Rocket } from 'lucide-react';
 import { logActivity } from '../services/activityService';
+import bcrypt from 'bcryptjs';
 
 export const Register: React.FC = () => {
     const navigate = useNavigate();
@@ -100,16 +101,16 @@ export const Register: React.FC = () => {
 
             if (authError) {
                 // Check for 429 Too Many Requests (generic rate limit)
-                const isRateLimitError = authError.message?.includes('429') || 
-                                       authError.message?.includes('Too Many Requests');
-                
+                const isRateLimitError = authError.message?.includes('429') ||
+                    authError.message?.includes('Too Many Requests');
+
                 // Handle email rate limit (typically 15-60 minutes)
                 if (authError.message?.includes('email rate limit') || (isRateLimitError && normalizedEmail)) {
                     const waitTime = 900; // 15 minutes for email rate limit
                     setRateLimitCooldown(waitTime);
                     throw new Error(`Email Anda terlalu banyak digunakan untuk signup dalam waktu singkat. Silakan tunggu 15 menit dan coba lagi dengan email yang berbeda, atau hubungi support jika masalah berlanjut.`);
                 }
-                
+
                 // Handle general rate limit error
                 if (authError.message?.includes('only request this after')) {
                     const match = authError.message.match(/after (\d+) seconds/);
@@ -117,14 +118,14 @@ export const Register: React.FC = () => {
                     setRateLimitCooldown(waitTime);
                     throw new Error(`Terlalu banyak percobaan. Silakan tunggu ${waitTime} detik sebelum mencoba lagi.`);
                 }
-                
+
                 // Handle other rate limits
                 if (isRateLimitError) {
                     const waitTime = 600; // 10 minutes default for any 429
                     setRateLimitCooldown(waitTime);
                     throw new Error(`Server sedang sibuk (429 - Too Many Requests). Silakan tunggu 10 menit dan coba lagi.`);
                 }
-                
+
                 throw authError;
             }
 
@@ -153,6 +154,9 @@ export const Register: React.FC = () => {
                 }
             }
 
+            const salt = bcrypt.genSaltSync(10);
+            const hashedPassword = bcrypt.hashSync(trimmedPassword, salt);
+
             const insertData: any = {
                 id: authUserId,
                 full_name: trimmedFullName,
@@ -167,14 +171,14 @@ export const Register: React.FC = () => {
                 is_verified: isVerified,
                 member_limit: memberLimit,
                 last_activity_at: null,
-                password: '' // Password stored in Supabase Auth, set empty string here to satisfy DB constraint
+                password: hashedPassword
             };
 
             if (subscriptionEnd) insertData.subscription_end = subscriptionEnd;
 
             // 3. Sync to public profile table
-            const { error: profileError } = await supabase.from('app_users').upsert([insertData], { 
-                onConflict: 'id' 
+            const { error: profileError } = await supabase.from('app_users').upsert([insertData], {
+                onConflict: 'id'
             });
             if (profileError) {
                 // If password constraint error, show helpful message
@@ -471,11 +475,10 @@ export const Register: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading || rateLimitCooldown > 0}
-                        className={`w-full font-black text-lg p-4 rounded-xl border-4 flex items-center justify-center gap-2 mt-4 transition-all ${
-                            loading || rateLimitCooldown > 0
-                                ? 'bg-slate-400 text-white border-slate-400 cursor-not-allowed opacity-75'
-                                : 'bg-slate-900 text-white border-slate-900 hover:-translate-y-1 shadow-[4px_4px_0px_0px_#334155] hover:shadow-[6px_6px_0px_0px_#334155] active:translate-y-1 active:shadow-none'
-                        }`}
+                        className={`w-full font-black text-lg p-4 rounded-xl border-4 flex items-center justify-center gap-2 mt-4 transition-all ${loading || rateLimitCooldown > 0
+                            ? 'bg-slate-400 text-white border-slate-400 cursor-not-allowed opacity-75'
+                            : 'bg-slate-900 text-white border-slate-900 hover:-translate-y-1 shadow-[4px_4px_0px_0px_#334155] hover:shadow-[6px_6px_0px_0px_#334155] active:translate-y-1 active:shadow-none'
+                            }`}
                     >
                         {loading ? (
                             <><Loader2 size={24} className="animate-spin" /> Memproses...</>

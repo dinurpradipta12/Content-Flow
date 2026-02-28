@@ -143,39 +143,42 @@ export const Login: React.FC = () => {
             if (authError) {
                 // Specific Check for Email Not Confirmed
                 if (authError.message.toLowerCase().includes('email not confirmed') || authError.message.toLowerCase().includes('confirm your email')) {
-                    // Check if this is a synthetic email (invited user) - bypass confirmation
-                    if (loginEmail.endsWith('@aruneeka.id')) {
-                        // Try legacy auth for invited users with unconfirmed synthetic email
-                        const { data: invitedUserData } = await supabase
-                            .from('app_users')
-                            .select('*')
-                            .ilike('username', trimmedUsername)
-                            .maybeSingle();
+                    console.log("Email not confirmed in Supabase, checking local database fallback...");
 
-                        if (invitedUserData && invitedUserData.password) {
-                            const isHash = invitedUserData.password.startsWith('$2');
-                            const isMatch = isHash
-                                ? bcrypt.compareSync(trimmedPassword, invitedUserData.password)
-                                : (trimmedPassword === invitedUserData.password);
+                    // Try to find user in app_users to see if we can do a local bypass
+                    const { data: localUser } = await supabase
+                        .from('app_users')
+                        .select('*')
+                        .or(`email.ilike.${loginEmail},username.ilike.${trimmedUsername}`)
+                        .maybeSingle();
 
-                            if (isMatch) {
-                                localStorage.setItem('isLegacyAuth', 'true');
-                                localStorage.setItem('user_id', invitedUserData.id);
-                                localStorage.setItem('user_role', invitedUserData.role || 'Member');
-                                localStorage.setItem('isAuthenticated', 'true');
-                                if (invitedUserData.username) localStorage.setItem('user_username', invitedUserData.username);
-                                if (invitedUserData.full_name) localStorage.setItem('user_name', invitedUserData.full_name);
-                                if (invitedUserData.avatar_url) localStorage.setItem('user_avatar', invitedUserData.avatar_url);
-                                if (invitedUserData.parent_user_id) localStorage.setItem('tenant_id', invitedUserData.parent_user_id);
-                                if (invitedUserData.admin_id) localStorage.setItem('tenant_id', invitedUserData.admin_id);
+                    if (localUser && localUser.password) {
+                        const isHash = localUser.password.startsWith('$2');
+                        const isMatch = isHash
+                            ? bcrypt.compareSync(trimmedPassword, localUser.password)
+                            : (trimmedPassword === localUser.password);
 
-                                await logActivity({ user_id: invitedUserData.id, action: 'LOGIN' });
-                                navigate('/');
-                                window.location.reload();
-                                return;
-                            }
+                        if (isMatch) {
+                            console.log("Local password match! Bypassing email confirmation for:", localUser.username);
+
+                            // Bypass Email Confirmation using Legacy Auth mechanism
+                            localStorage.setItem('isLegacyAuth', 'true');
+                            localStorage.setItem('user_id', localUser.id);
+                            localStorage.setItem('user_role', localUser.role || 'Member');
+                            localStorage.setItem('isAuthenticated', 'true');
+                            if (localUser.username) localStorage.setItem('user_username', localUser.username);
+                            if (localUser.full_name) localStorage.setItem('user_name', localUser.full_name);
+                            if (localUser.avatar_url) localStorage.setItem('user_avatar', localUser.avatar_url);
+                            if (localUser.parent_user_id) localStorage.setItem('tenant_id', localUser.parent_user_id);
+                            if (localUser.admin_id) localStorage.setItem('tenant_id', localUser.admin_id);
+
+                            await logActivity({ user_id: localUser.id, action: 'BYPASS_LOGIN', details: { reason: 'unconfirmed_email' } });
+                            navigate('/');
+                            window.location.reload();
+                            return;
                         }
                     }
+
                     setShowResend(true);
                     throw new Error("⚠️ Email Anda belum dikonfirmasi. Periksa inbox email Anda untuk memverifikasi akun.");
                 }

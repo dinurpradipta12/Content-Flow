@@ -13,7 +13,8 @@ export type ActivityAction =
     | 'RENEWAL_REQUEST'
     | 'UPDATE_WORKSPACE'
     | 'UPDATE_CONFIG'
-    | 'REGISTER';
+    | 'REGISTER'
+    | 'BYPASS_LOGIN';
 
 export interface ActivityLog {
     user_id?: string;
