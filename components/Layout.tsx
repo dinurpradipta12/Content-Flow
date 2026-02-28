@@ -751,7 +751,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (seenBroadcast) localStorage.setItem('seen_broadcast_id', seenBroadcast);
     };
 
-    // --- BRANDING EFFECT (Title & Favicon) ---
+    // --- BRANDING EFFECT (Title & Favicon & Icons) ---
     useEffect(() => {
         document.title = branding.appName;
         let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
@@ -762,9 +762,68 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
         if (branding.appFavicon) link.href = branding.appFavicon;
         else if (branding.appLogo) link.href = branding.appLogo;
-    }, [branding]);
 
-    // Sync local branding state with global config
+        // Update Web App Icon meta tags for mobile/PWA
+        if (config?.app_icon_192 || config?.app_icon_512 || config?.app_icon_mask) {
+            // Remove old manifest if exists
+            let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
+            if (manifestLink) manifestLink.remove();
+
+            // Create new manifest with icons
+            const manifest = {
+                name: config.app_name || 'Aruneeka',
+                short_name: config.app_name || 'Aruneeka',
+                icons: [
+                    ...(config.app_icon_192 ? [{
+                        src: config.app_icon_192,
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'any'
+                    }] : []),
+                    ...(config.app_icon_512 ? [{
+                        src: config.app_icon_512,
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'any'
+                    }] : []),
+                    ...(config.app_icon_mask ? [{
+                        src: config.app_icon_mask,
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'maskable'
+                    }] : [])
+                ],
+                theme_color: currentTheme === 'dark' || currentTheme === 'midnight' ? '#0f172a' : '#f8fafc',
+                background_color: currentTheme === 'dark' || currentTheme === 'midnight' ? '#0f172a' : '#ffffff',
+                display: 'standalone',
+                scope: '/',
+                start_url: '/'
+            };
+
+            // Create blob and URL
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+            const manifestUrl = URL.createObjectURL(blob);
+
+            // Add manifest link
+            manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = manifestUrl;
+            document.head.appendChild(manifestLink);
+
+            // Update apple-touch-icon if available
+            let appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
+            if (config.app_icon_192) {
+                if (!appleLink) {
+                    appleLink = document.createElement('link');
+                    appleLink.rel = 'apple-touch-icon';
+                    document.head.appendChild(appleLink);
+                }
+                appleLink.href = config.app_icon_192;
+            }
+        }
+    }, [branding, config?.app_icon_192, config?.app_icon_512, config?.app_icon_mask, currentTheme]);
+
+    // Sync local branding state with global config (including icons)
     useEffect(() => {
         if (config) {
             setBranding({
@@ -778,6 +837,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             localStorage.setItem('app_logo', config.app_logo);
             localStorage.setItem('app_logo_light', config.app_logo_light);
             localStorage.setItem('app_favicon', config.app_favicon);
+            localStorage.setItem('app_icon_192', config.app_icon_192 || '');
+            localStorage.setItem('app_icon_512', config.app_icon_512 || '');
+            localStorage.setItem('app_icon_mask', config.app_icon_mask || '');
+            localStorage.setItem('icon_updated_at', config.icon_updated_at || '');
         }
     }, [config]);
 

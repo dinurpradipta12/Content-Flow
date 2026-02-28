@@ -25,6 +25,10 @@ interface AppConfig {
     app_logo: string;
     app_logo_light: string;
     app_favicon: string;
+    app_icon_192?: string;
+    app_icon_512?: string;
+    app_icon_mask?: string;
+    icon_updated_at?: string;
     page_titles: Record<string, PageConfig>;
     hidden_pages: string[];
     app_version: string;

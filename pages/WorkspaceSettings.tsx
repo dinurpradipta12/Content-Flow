@@ -55,6 +55,10 @@ interface AppConfig {
     app_logo: string;
     app_logo_light: string;
     app_favicon: string;
+    app_icon_192?: string;
+    app_icon_512?: string;
+    app_icon_mask?: string;
+    icon_updated_at?: string;
     page_titles: Record<string, PageConfig>;
     hidden_pages: string[];
     app_version: string;
@@ -129,11 +133,27 @@ export const WorkspaceSettings: React.FC = () => {
                 app_name: config.app_name,
                 app_logo: config.app_logo,
                 app_logo_light: config.app_logo_light,
-                app_favicon: config.app_favicon
+                app_favicon: config.app_favicon,
+                app_icon_192: config.app_icon_192,
+                app_icon_512: config.app_icon_512,
+                app_icon_mask: config.app_icon_mask,
+                icon_updated_at: new Date().toISOString()
             }).eq('id', 1);
 
             if (error) throw error;
-            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Konfigurasi antarmuka berhasil disimpan secara global!' } }));
+            
+            // Log icon change to history
+            const userId = localStorage.getItem('user_id');
+            await supabase.from('app_icons_history').insert({
+                favicon_url: config.app_favicon,
+                icon_192_url: config.app_icon_192,
+                icon_512_url: config.app_icon_512,
+                icon_mask_url: config.app_icon_mask,
+                changed_by: userId,
+                notes: 'Icon configuration updated via WorkspaceSettings'
+            });
+            
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Konfigurasi antarmuka dan icon berhasil disimpan secara global!' } }));
         } catch (err: any) {
             console.error('Save Interface Error:', err);
             window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: `Gagal menyimpan konfigurasi: ${err.message || JSON.stringify(err)}` } }));
@@ -372,6 +392,51 @@ export const WorkspaceSettings: React.FC = () => {
                                         {config?.app_logo_light && (
                                             <div className="mt-2 p-4 bg-slate-900 rounded-xl border-2 border-slate-800 flex items-center justify-center">
                                                 <img src={config.app_logo_light} className="max-h-12 object-contain" alt="Preview Dark" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Web App Icon 192×192 (Home Screen)</label>
+                                        <input
+                                            value={config?.app_icon_192 || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_icon_192: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="https://... (192×192)"
+                                        />
+                                        {config?.app_icon_192 && (
+                                            <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                                <img src={config.app_icon_192} className="w-24 h-24 object-contain" alt="Icon 192" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Web App Icon 512×512 (PWA)</label>
+                                        <input
+                                            value={config?.app_icon_512 || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_icon_512: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="https://... (512×512)"
+                                        />
+                                        {config?.app_icon_512 && (
+                                            <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                                <img src={config.app_icon_512} className="w-24 h-24 object-contain" alt="Icon 512" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Maskable Icon (Adaptive)</label>
+                                        <input
+                                            value={config?.app_icon_mask || ''}
+                                            onChange={e => setConfig(prev => prev ? { ...prev, app_icon_mask: e.target.value } : null)}
+                                            className="w-full bg-card border-4 border-border rounded-xl px-4 py-3 text-sm font-black text-foreground focus:border-accent outline-none"
+                                            placeholder="https://... (Maskable)"
+                                        />
+                                        {config?.app_icon_mask && (
+                                            <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                                <img src={config.app_icon_mask} className="w-24 h-24 object-contain rounded-full border-2 border-accent" alt="Maskable" />
                                             </div>
                                         )}
                                     </div>
