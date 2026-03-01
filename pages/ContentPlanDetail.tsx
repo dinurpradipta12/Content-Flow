@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
-import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive } from 'lucide-react';
+import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
@@ -394,7 +394,7 @@ export const ContentPlanDetail: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [errorState, setErrorState] = useState<string | null>(null);
     // Default to table view on mobile for better readability
-    const [viewMode, setViewMode] = useState<'kanban' | 'table'>(() => {
+    const [viewMode, setViewMode] = useState<'kanban' | 'table' | 'brand_asset'>(() => {
         return window.innerWidth < 768 ? 'table' : 'kanban';
     });
     // Mobile: active status tab for Trello-style view
@@ -461,6 +461,97 @@ export const ContentPlanDetail: React.FC = () => {
     const [currentUserRole, setCurrentUserRole] = useState<string>('Member');
     const [currentUserPackage, setCurrentUserPackage] = useState<string>('');
     const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+
+    // Date Period Filter State
+    const [filterDateFrom, setFilterDateFrom] = useState<string>('');
+    const [filterDateTo, setFilterDateTo] = useState<string>('');
+
+    // Brand Assets State
+    interface BrandAssetItem {
+        id: string;
+        type: 'note' | 'link' | 'file' | 'image' | 'pdf' | 'color';
+        title: string;
+        content: string; // text for note, url for link, base64/url for file/image
+        created_at: string;
+        fileName?: string;
+    }
+    const [brandAssets, setBrandAssets] = useState<BrandAssetItem[]>([]);
+    const [isAddAssetModalOpen, setIsAddAssetModalOpen] = useState(false);
+    const [newAssetType, setNewAssetType] = useState<BrandAssetItem['type']>('note');
+    const [newAssetTitle, setNewAssetTitle] = useState('');
+    const [newAssetContent, setNewAssetContent] = useState('');
+    const [newAssetFileName, setNewAssetFileName] = useState('');
+    const [brandPdfPreviewUrl, setBrandPdfPreviewUrl] = useState<string | null>(null);
+    const brandFileInputRef = useRef<HTMLInputElement>(null);
+
+    // Load brand assets from localStorage (persisted per workspace)
+    useEffect(() => {
+        if (id) {
+            const saved = localStorage.getItem(`brand_assets_${id}`);
+            if (saved) {
+                try { setBrandAssets(JSON.parse(saved)); } catch { }
+            }
+        }
+    }, [id]);
+
+    // Save brand assets to localStorage whenever they change
+    useEffect(() => {
+        if (id && brandAssets.length > 0) {
+            localStorage.setItem(`brand_assets_${id}`, JSON.stringify(brandAssets));
+        }
+    }, [brandAssets, id]);
+
+    const handleAddBrandAsset = () => {
+        if (!newAssetTitle.trim() && !newAssetContent.trim()) return;
+        const asset: BrandAssetItem = {
+            id: `ba-${Date.now()}`,
+            type: newAssetType,
+            title: newAssetTitle.trim() || (newAssetType === 'note' ? 'Note' : newAssetType === 'link' ? 'Link' : 'File'),
+            content: newAssetContent,
+            created_at: new Date().toISOString(),
+            fileName: newAssetFileName || undefined
+        };
+        setBrandAssets(prev => [...prev, asset]);
+        setNewAssetTitle('');
+        setNewAssetContent('');
+        setNewAssetFileName('');
+        setIsAddAssetModalOpen(false);
+    };
+
+    const handleDeleteBrandAsset = (assetId: string) => {
+        setBrandAssets(prev => {
+            const updated = prev.filter(a => a.id !== assetId);
+            if (id) localStorage.setItem(`brand_assets_${id}`, JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    const handleBrandFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File terlalu besar (Max 10MB)');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result as string;
+            setNewAssetContent(base64);
+            setNewAssetFileName(file.name);
+            // Auto-detect type
+            if (file.type.startsWith('image/')) {
+                setNewAssetType('image');
+            } else if (file.type === 'application/pdf') {
+                setNewAssetType('pdf');
+            } else {
+                setNewAssetType('file');
+            }
+            if (!newAssetTitle.trim()) {
+                setNewAssetTitle(file.name);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -713,11 +804,22 @@ export const ContentPlanDetail: React.FC = () => {
         }
     }, [tasks]);
 
+    // Date filter helper
+    const matchesDateFilter = (taskDate: string | undefined) => {
+        if (!filterDateFrom && !filterDateTo) return true;
+        if (!taskDate) return false;
+        const d = new Date(taskDate).getTime();
+        if (filterDateFrom && d < new Date(filterDateFrom).getTime()) return false;
+        if (filterDateTo && d > new Date(filterDateTo + 'T23:59:59').getTime()) return false;
+        return true;
+    };
+
     // Filter Logic for Table View
     const filteredTableTasks = tasks.filter(task => {
         const matchPlatform = filterPlatform === 'all' || task.platform === filterPlatform;
         const matchStatus = filterStatus === 'all' || task.status === filterStatus;
-        return matchPlatform && matchStatus;
+        const matchDate = matchesDateFilter(task.date);
+        return matchPlatform && matchStatus && matchDate;
     });
 
     // --- ACTIONS (Create/Edit/Delete/Update) ---
@@ -1189,14 +1291,14 @@ export const ContentPlanDetail: React.FC = () => {
                         const platformMatch = filterPlatform === 'all' || t.platform === filterPlatform;
                         return statusMatch && platformMatch;
                     }).length === 0 && (
-                        <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
-                            <Layers size={28} className="text-accent/40 mx-auto mb-2" />
-                            <p className="text-sm font-bold text-foreground mb-1">Belum ada konten</p>
-                            <button onClick={handleOpenCreateModal} className="mt-2 px-4 py-2 bg-accent text-white rounded-xl text-xs font-bold">
-                                + Tambah Konten
-                            </button>
-                        </div>
-                    )}
+                            <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
+                                <Layers size={28} className="text-accent/40 mx-auto mb-2" />
+                                <p className="text-sm font-bold text-foreground mb-1">Belum ada konten</p>
+                                <button onClick={handleOpenCreateModal} className="mt-2 px-4 py-2 bg-accent text-white rounded-xl text-xs font-bold">
+                                    + Tambah Konten
+                                </button>
+                            </div>
+                        )}
                 </div>
             </div>
 
@@ -1339,6 +1441,13 @@ export const ContentPlanDetail: React.FC = () => {
                                     <Table size={16} />
                                     <span>Table</span>
                                 </button>
+                                <button
+                                    onClick={() => setViewMode('brand_asset')}
+                                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'brand_asset' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
+                                >
+                                    <Palette size={16} />
+                                    <span>Brand Asset</span>
+                                </button>
                             </div>
 
                             <Button
@@ -1391,59 +1500,95 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
 
                 {/* Global Filters */}
-                <div className="flex flex-wrap items-center gap-3 mt-6 mb-8 px-2">
-                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
-                        <Filter size={14} /> Filter Platform
-                    </div>
-
-                    <button
-                        onClick={() => setFilterPlatform('all')}
-                        className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
-                    >
-                        <Layers size={14} />
-                        All Platforms
-                    </button>
-
-                    {Object.values(Platform).filter(p => {
-                        // Only show platforms that are selected in workspace settings
-                        const code = p === Platform.INSTAGRAM ? 'IG' :
-                            p === Platform.TIKTOK ? 'TK' :
-                                p === Platform.YOUTUBE ? 'YT' :
-                                    p === Platform.LINKEDIN ? 'LI' :
-                                        p === Platform.FACEBOOK ? 'FB' :
-                                            p === Platform.THREADS ? 'TH' : '';
-                        return workspaceData.platforms.includes(code);
-                    }).map(p => (
-                        <button
-                            key={p}
-                            onClick={() => setFilterPlatform(p)}
-                            className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === p ? 'bg-accent text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
-                        >
-                            {getPlatformIcon(p)}
-                            {p}
-                        </button>
-                    ))}
-
-                    {/* Status Filter for Table View - Kept for utility */}
-                    {viewMode === 'table' && (
-                        <div className="ml-auto flex items-center gap-3">
-                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
-                                Status
-                            </div>
-                            <div className="relative">
-                                <select
-                                    value={filterStatus}
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                    className={`appearance-none pl-4 pr-10 py-2.5 rounded-2xl border-2 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini ${filterStatus !== 'all' ? 'bg-blue-50 border-slate-900 text-blue-700' : 'bg-white border-slate-900 text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    <option value="all">All Status</option>
-                                    {Object.values(ContentStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-900" />
-                            </div>
+                {viewMode !== 'brand_asset' && (
+                    <div className="flex flex-wrap items-center gap-3 mt-6 mb-8 px-2">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
+                            <Filter size={14} /> Filter Platform
                         </div>
-                    )}
-                </div>
+
+                        <button
+                            onClick={() => setFilterPlatform('all')}
+                            className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
+                        >
+                            <Layers size={14} />
+                            All Platforms
+                        </button>
+
+                        {Object.values(Platform).filter(p => {
+                            // Only show platforms that are selected in workspace settings
+                            const code = p === Platform.INSTAGRAM ? 'IG' :
+                                p === Platform.TIKTOK ? 'TK' :
+                                    p === Platform.YOUTUBE ? 'YT' :
+                                        p === Platform.LINKEDIN ? 'LI' :
+                                            p === Platform.FACEBOOK ? 'FB' :
+                                                p === Platform.THREADS ? 'TH' : '';
+                            return workspaceData.platforms.includes(code);
+                        }).map(p => (
+                            <button
+                                key={p}
+                                onClick={() => setFilterPlatform(p)}
+                                className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === p ? 'bg-accent text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
+                            >
+                                {getPlatformIcon(p)}
+                                {p}
+                            </button>
+                        ))}
+
+                        {/* Date Period Filter - Right Side */}
+                        <div className="ml-auto flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-1 uppercase tracking-[0.2em]">
+                                <Calendar size={14} /> Periode
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="date"
+                                    value={filterDateFrom}
+                                    onChange={(e) => setFilterDateFrom(e.target.value)}
+                                    className="px-3 py-2 rounded-xl border-2 border-slate-900 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini bg-white text-slate-900 hover:bg-slate-50 focus:ring-2 focus:ring-accent/30"
+                                    title="Dari tanggal"
+                                />
+                                <span className="text-xs font-black text-slate-400">—</span>
+                                <input
+                                    type="date"
+                                    value={filterDateTo}
+                                    onChange={(e) => setFilterDateTo(e.target.value)}
+                                    className="px-3 py-2 rounded-xl border-2 border-slate-900 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini bg-white text-slate-900 hover:bg-slate-50 focus:ring-2 focus:ring-accent/30"
+                                    title="Sampai tanggal"
+                                />
+                                {(filterDateFrom || filterDateTo) && (
+                                    <button
+                                        onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
+                                        className="p-1.5 rounded-lg border-2 border-red-300 bg-red-50 text-red-500 hover:bg-red-100 transition-all"
+                                        title="Reset filter tanggal"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Status Filter for Table View */}
+                            {viewMode === 'table' && (
+                                <>
+                                    <div className="w-px h-8 bg-slate-200 mx-1" />
+                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
+                                        Status
+                                    </div>
+                                    <div className="relative">
+                                        <select
+                                            value={filterStatus}
+                                            onChange={(e) => setFilterStatus(e.target.value)}
+                                            className={`appearance-none pl-4 pr-10 py-2.5 rounded-2xl border-2 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini ${filterStatus !== 'all' ? 'bg-blue-50 border-slate-900 text-blue-700' : 'bg-white border-slate-900 text-slate-600 hover:bg-slate-50'}`}
+                                        >
+                                            <option value="all">All Status</option>
+                                            {Object.values(ContentStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-900" />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Content Area */}
                 {viewMode === 'kanban' ? (
@@ -1453,14 +1598,14 @@ export const ContentPlanDetail: React.FC = () => {
                                 <KanbanColumn
                                     key={status}
                                     status={status}
-                                    items={tasks.filter(t => t.status === status && (filterPlatform === 'all' || t.platform === filterPlatform))}
+                                    items={tasks.filter(t => t.status === status && (filterPlatform === 'all' || t.platform === filterPlatform) && matchesDateFilter(t.date))}
                                     textColor={
                                         status === ContentStatus.TODO ? 'text-slate-900' :
                                             status === ContentStatus.IN_PROGRESS ? 'text-blue-500' :
                                                 status === ContentStatus.REVIEW ? 'text-pink-500' :
                                                     status === ContentStatus.SCHEDULED ? 'text-purple-500' : 'text-emerald-500'
                                     }
-                                    members={teamMembers} // Pass members
+                                    members={teamMembers}
                                     onEdit={handleOpenEditModal}
                                     onDelete={handleDeleteContent}
                                     onDragStart={handleDragStart}
@@ -1470,6 +1615,172 @@ export const ContentPlanDetail: React.FC = () => {
                             ))}
 
                         </div>
+                    </div>
+                ) : viewMode === 'brand_asset' ? (
+                    /* ═══ BRAND ASSET VIEW ═══ */
+                    <div className="flex-1 w-full pb-8 px-2">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-8 mt-6">
+                            <div>
+                                <h3 className="text-2xl font-heading font-black text-foreground flex items-center gap-3">
+                                    <Palette size={28} className="text-accent" />
+                                    Brand Assets
+                                </h3>
+                                <p className="text-sm font-bold text-mutedForeground mt-1">
+                                    Kelola semua aset brand, catatan, dan referensi di satu tempat
+                                </p>
+                            </div>
+                            <Button
+                                icon={<Plus size={18} />}
+                                onClick={() => {
+                                    setNewAssetType('note');
+                                    setNewAssetTitle('');
+                                    setNewAssetContent('');
+                                    setNewAssetFileName('');
+                                    setIsAddAssetModalOpen(true);
+                                }}
+                            >
+                                Tambah Asset
+                            </Button>
+                        </div>
+
+                        {/* Gallery Grid */}
+                        {brandAssets.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-border rounded-3xl bg-card/50">
+                                <div className="w-20 h-20 bg-accent/10 rounded-3xl flex items-center justify-center mb-6">
+                                    <Palette size={36} className="text-accent" />
+                                </div>
+                                <h4 className="text-xl font-black text-foreground mb-2">Belum ada Brand Asset</h4>
+                                <p className="text-sm font-bold text-mutedForeground mb-6 max-w-md text-center">
+                                    Tambahkan logo, catatan brand, warna, file panduan, link referensi, dan aset lainnya.
+                                </p>
+                                <Button
+                                    icon={<Plus size={18} />}
+                                    onClick={() => {
+                                        setNewAssetType('note');
+                                        setNewAssetTitle('');
+                                        setNewAssetContent('');
+                                        setNewAssetFileName('');
+                                        setIsAddAssetModalOpen(true);
+                                    }}
+                                >
+                                    Tambah Asset Pertama
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                {brandAssets.map(asset => (
+                                    <div key={asset.id} className="bg-card border-2 border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-hard hover:-translate-y-1 transition-all group relative">
+                                        {/* Delete Button */}
+                                        <button
+                                            onClick={() => handleDeleteBrandAsset(asset.id)}
+                                            className="absolute top-3 right-3 p-1.5 rounded-lg bg-card/90 border border-border text-mutedForeground hover:text-red-500 hover:border-red-300 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all z-10"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+
+                                        {/* Preview Area */}
+                                        {asset.type === 'image' && (
+                                            <div className="aspect-video bg-muted overflow-hidden">
+                                                <img src={asset.content} alt={asset.title} className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        {asset.type === 'pdf' && (
+                                            <div
+                                                className="aspect-video bg-red-50 flex flex-col items-center justify-center cursor-pointer hover:bg-red-100 transition-colors relative"
+                                                onClick={() => setBrandPdfPreviewUrl(asset.content)}
+                                            >
+                                                <div className="absolute inset-0 opacity-30">
+                                                    <iframe src={asset.content} className="w-full h-full pointer-events-none" title="PDF Mini Preview" />
+                                                </div>
+                                                <div className="relative z-10 flex flex-col items-center">
+                                                    <FileText size={36} className="text-red-500 mb-2" />
+                                                    <span className="text-xs font-black text-red-600 uppercase">PDF Preview</span>
+                                                    <span className="text-[10px] font-bold text-red-400 mt-1 flex items-center gap-1">
+                                                        <Eye size={10} /> Klik untuk buka
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {asset.type === 'color' && (
+                                            <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: asset.content || '#6366f1' }}>
+                                                <span className="text-white font-black text-lg drop-shadow-lg">{asset.content || '#6366f1'}</span>
+                                            </div>
+                                        )}
+                                        {asset.type === 'link' && (
+                                            <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col items-center justify-center">
+                                                <Globe size={36} className="text-blue-500 mb-2" />
+                                                <span className="text-[10px] font-bold text-blue-500 truncate max-w-[80%] px-2">{asset.content}</span>
+                                            </div>
+                                        )}
+                                        {asset.type === 'note' && (
+                                            <div className="aspect-video bg-gradient-to-br from-yellow-50 to-amber-50 p-4 flex flex-col">
+                                                <StickyNote size={20} className="text-amber-500 mb-2 shrink-0" />
+                                                <p className="text-xs font-bold text-slate-700 line-clamp-4 flex-1 overflow-hidden">{asset.content}</p>
+                                            </div>
+                                        )}
+                                        {asset.type === 'file' && (
+                                            <div className="aspect-video bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center">
+                                                <File size={36} className="text-slate-500 mb-2" />
+                                                <span className="text-[10px] font-bold text-slate-500 truncate max-w-[80%] px-2">{asset.fileName || 'File'}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Info Area */}
+                                        <div className="p-4">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-foreground text-sm truncate">{asset.title}</h4>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${asset.type === 'note' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                            asset.type === 'link' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                                                asset.type === 'image' ? 'bg-pink-100 text-pink-700 border-pink-200' :
+                                                                    asset.type === 'pdf' ? 'bg-red-100 text-red-700 border-red-200' :
+                                                                        asset.type === 'color' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                                                            'bg-slate-100 text-slate-600 border-slate-200'
+                                                            }`}>
+                                                            {asset.type}
+                                                        </span>
+                                                        <span className="text-[9px] font-bold text-mutedForeground">
+                                                            {new Date(asset.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {asset.type === 'link' && (
+                                                    <a href={asset.content.startsWith('http') ? asset.content : `https://${asset.content}`} target="_blank" rel="noreferrer"
+                                                        className="p-2 rounded-lg border border-border hover:border-accent hover:bg-accent/10 transition-all text-mutedForeground hover:text-accent shrink-0">
+                                                        <ExternalLink size={14} />
+                                                    </a>
+                                                )}
+                                                {(asset.type === 'file' || asset.type === 'image') && (
+                                                    <a href={asset.content} download={asset.fileName || asset.title}
+                                                        className="p-2 rounded-lg border border-border hover:border-accent hover:bg-accent/10 transition-all text-mutedForeground hover:text-accent shrink-0">
+                                                        <Download size={14} />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* Add New Card */}
+                                <button
+                                    onClick={() => {
+                                        setNewAssetType('note');
+                                        setNewAssetTitle('');
+                                        setNewAssetContent('');
+                                        setNewAssetFileName('');
+                                        setIsAddAssetModalOpen(true);
+                                    }}
+                                    className="border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center py-16 hover:border-accent hover:bg-accent/5 transition-all group/add"
+                                >
+                                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-3 group-hover/add:bg-accent/10 transition-colors">
+                                        <Plus size={24} className="text-mutedForeground group-hover/add:text-accent" />
+                                    </div>
+                                    <span className="text-xs font-bold text-mutedForeground group-hover/add:text-accent">Tambah Asset</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="flex-1 w-full flex flex-col pt-2 pb-6 px-1">
@@ -2414,6 +2725,182 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </Modal>
 
+
+            {/* Add Brand Asset Modal */}
+            <Modal
+                isOpen={isAddAssetModalOpen}
+                onClose={() => setIsAddAssetModalOpen(false)}
+                title="Tambah Brand Asset"
+                maxWidth="max-w-lg"
+            >
+                <div className="space-y-5">
+                    {/* Type Selector */}
+                    <div>
+                        <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Tipe Asset</label>
+                        <div className="flex flex-wrap gap-2">
+                            {([
+                                { value: 'note', label: 'Catatan', icon: <StickyNote size={14} />, color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+                                { value: 'link', label: 'Link', icon: <Globe size={14} />, color: 'bg-blue-100 text-blue-700 border-blue-300' },
+                                { value: 'image', label: 'Gambar', icon: <ImageIcon size={14} />, color: 'bg-pink-100 text-pink-700 border-pink-300' },
+                                { value: 'pdf', label: 'PDF', icon: <FileText size={14} />, color: 'bg-red-100 text-red-700 border-red-300' },
+                                { value: 'file', label: 'File', icon: <File size={14} />, color: 'bg-slate-100 text-slate-700 border-slate-300' },
+                                { value: 'color', label: 'Warna', icon: <Palette size={14} />, color: 'bg-purple-100 text-purple-700 border-purple-300' }
+                            ] as { value: typeof newAssetType, label: string, icon: React.ReactNode, color: string }[]).map(t => (
+                                <button
+                                    key={t.value}
+                                    type="button"
+                                    onClick={() => setNewAssetType(t.value)}
+                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${newAssetType === t.value ? t.color + ' shadow-sm' : 'bg-card border-border text-mutedForeground hover:border-slate-300'}`}
+                                >
+                                    {t.icon} {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                        <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Judul</label>
+                        <input
+                            type="text"
+                            value={newAssetTitle}
+                            onChange={e => setNewAssetTitle(e.target.value)}
+                            placeholder="Nama asset..."
+                            className="w-full px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card"
+                        />
+                    </div>
+
+                    {/* Content - Dynamic based on type */}
+                    {newAssetType === 'note' && (
+                        <div>
+                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Catatan</label>
+                            <textarea
+                                value={newAssetContent}
+                                onChange={e => setNewAssetContent(e.target.value)}
+                                placeholder="Tulis catatan brand..."
+                                rows={4}
+                                className="w-full px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card resize-none"
+                            />
+                        </div>
+                    )}
+
+                    {newAssetType === 'link' && (
+                        <div>
+                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">URL</label>
+                            <input
+                                type="url"
+                                value={newAssetContent}
+                                onChange={e => setNewAssetContent(e.target.value)}
+                                placeholder="https://example.com"
+                                className="w-full px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card"
+                            />
+                        </div>
+                    )}
+
+                    {newAssetType === 'color' && (
+                        <div>
+                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Kode Warna</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={newAssetContent || '#6366f1'}
+                                    onChange={e => setNewAssetContent(e.target.value)}
+                                    className="w-12 h-12 rounded-xl border-2 border-border cursor-pointer"
+                                />
+                                <input
+                                    type="text"
+                                    value={newAssetContent}
+                                    onChange={e => setNewAssetContent(e.target.value)}
+                                    placeholder="#6366f1"
+                                    className="flex-1 px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card font-mono"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {(newAssetType === 'image' || newAssetType === 'pdf' || newAssetType === 'file') && (
+                        <div>
+                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">
+                                Upload {newAssetType === 'image' ? 'Gambar' : newAssetType === 'pdf' ? 'PDF' : 'File'}
+                            </label>
+                            <div
+                                onClick={() => brandFileInputRef.current?.click()}
+                                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all"
+                            >
+                                {newAssetContent ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        {newAssetType === 'image' && (
+                                            <img src={newAssetContent} alt="Preview" className="w-32 h-32 object-cover rounded-xl border-2 border-border" />
+                                        )}
+                                        {newAssetType === 'pdf' && (
+                                            <div className="flex items-center gap-2 text-red-600">
+                                                <FileText size={24} />
+                                                <span className="font-bold text-sm">{newAssetFileName}</span>
+                                            </div>
+                                        )}
+                                        {newAssetType === 'file' && (
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <File size={24} />
+                                                <span className="font-bold text-sm">{newAssetFileName}</span>
+                                            </div>
+                                        )}
+                                        <span className="text-[10px] font-bold text-accent">Klik untuk ganti file</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Upload size={28} className="text-mutedForeground" />
+                                        <span className="text-sm font-bold text-mutedForeground">Klik untuk upload file</span>
+                                        <span className="text-[10px] text-mutedForeground">Max 10MB</span>
+                                    </div>
+                                )}
+                            </div>
+                            <input
+                                ref={brandFileInputRef}
+                                type="file"
+                                className="hidden"
+                                accept={newAssetType === 'image' ? 'image/*' : newAssetType === 'pdf' ? '.pdf,application/pdf' : '*'}
+                                onChange={handleBrandFileUpload}
+                            />
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-2">
+                        <Button
+                            onClick={handleAddBrandAsset}
+                            className="flex-1"
+                            icon={<Plus size={18} />}
+                        >
+                            Tambah Asset
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setIsAddAssetModalOpen(false)}
+                            className="flex-1"
+                        >
+                            Batal
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Brand PDF Preview Popup */}
+            <Modal
+                isOpen={!!brandPdfPreviewUrl}
+                onClose={() => setBrandPdfPreviewUrl(null)}
+                title="PDF Preview"
+                maxWidth="max-w-5xl"
+            >
+                <div className="h-[80vh]">
+                    {brandPdfPreviewUrl && (
+                        <iframe
+                            src={brandPdfPreviewUrl}
+                            className="w-full h-full rounded-xl border-2 border-border"
+                            title="Brand PDF Preview"
+                        />
+                    )}
+                </div>
+            </Modal>
 
             <style>{`
                 .wipe-mask {

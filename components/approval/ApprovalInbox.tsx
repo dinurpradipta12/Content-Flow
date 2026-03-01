@@ -23,7 +23,7 @@ export const ApprovalInbox: React.FC<ApprovalInboxProps> = ({ requests, onSelect
     const [selectedStatus, setSelectedStatus] = useState<ApprovalStatus | 'All'>('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTemplate, setSelectedTemplate] = useState<string>('All');
-    const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({ 'Semua Akun': true });
+    const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
     const workspaces = ['Semua Akun', ...Array.from(new Set(requests.map(r => r.form_data.workspace as string).filter(Boolean)))];
     const statuses: (ApprovalStatus | 'All')[] = ['All', 'Pending', 'Approved', 'Rejected', 'Returned'];
