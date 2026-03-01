@@ -4,7 +4,7 @@ import {
     MessageSquare, X, Users, Send, Smile, Reply, Check, CheckCheck,
     Plus, AtSign, Image as ImageIcon, Search, Trash2, Lock, Hash,
     MessageCircle, ChevronDown, Circle, Bell, BellOff, Edit2, UserMinus,
-    MoreVertical, Volume2, VolumeX, Eraser
+    MoreVertical, Volume2, VolumeX, Eraser, Info, ExternalLink
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -46,6 +46,7 @@ interface ChatMessage {
     metadata: any;
     created_at: string;
     read_by?: string[];
+    is_read?: boolean;
     reactions?: any[];
     is_deleted?: boolean;
 }
@@ -179,6 +180,7 @@ export const Messages: React.FC = () => {
     const [activeDM, setActiveDM] = useState<DMConversation | null>(null);
     const [dmMessages, setDmMessages] = useState<ChatMessage[]>([]);
     const [dmUnread, setDmUnread] = useState<Record<string, number>>({});
+    const [dmLatestMessages, setDmLatestMessages] = useState<Record<string, { content: string, time: string, isRead: boolean, isMine: boolean }>>({});
 
     // Typing
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -202,6 +204,18 @@ export const Messages: React.FC = () => {
     const [showChatMoreMenu, setShowChatMoreMenu] = useState(false);
     const [showClearChatConfirm, setShowClearChatConfirm] = useState(false);
     const chatMoreMenuRef = useRef<HTMLDivElement>(null);
+
+    // Workspace dropdown
+    const [showWsDropdown, setShowWsDropdown] = useState(false);
+    const wsDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Content detail modal & clear DM
+    const [contentDetailId, setContentDetailId] = useState<string | null>(null);
+    const [clearDMTarget, setClearDMTarget] = useState<WorkspaceMember | null>(null);
+
+    // DM user context menu
+    const [dmUserMenu, setDmUserMenu] = useState<string | null>(null);
+    const dmUserMenuRef = useRef<HTMLDivElement>(null);
 
     // Group management state
     const [groupMenuOpen, setGroupMenuOpen] = useState<string | null>(null); // group id
@@ -261,16 +275,31 @@ export const Messages: React.FC = () => {
                 setGroupMenuOpen(null);
             }
             if (chatMoreMenuRef.current && !chatMoreMenuRef.current.contains(e.target as Node)) {
-                setShowChatMoreMenu(false);
+                // Use setTimeout to avoid race condition with click handlers on dropdown items
+                setTimeout(() => setShowChatMoreMenu(false), 0);
+            }
+            if (wsDropdownRef.current && !wsDropdownRef.current.contains(e.target as Node)) {
+                setShowWsDropdown(false);
+            }
+            if (dmUserMenuRef.current && !dmUserMenuRef.current.contains(e.target as Node)) {
+                setDmUserMenu(null);
             }
         };
         document.addEventListener('mousedown', handleClick);
         return () => document.removeEventListener('mousedown', handleClick);
     }, []);
 
+    // ── Persist workspace selection ────────────────────────────────────────────
+    useEffect(() => {
+        if (selectedWorkspace?.id) {
+            localStorage.setItem('selected_workspace_id', selectedWorkspace.id);
+        }
+    }, [selectedWorkspace]);
+
     // ── Initial Fetch ──────────────────────────────────────────────────────────
     useEffect(() => {
         fetchWorkspaces();
+        fetchDMSummaries();
         setupDMRealtime();
         setupTypingRealtime();
 
@@ -299,7 +328,11 @@ export const Messages: React.FC = () => {
 
     useEffect(() => { if (activeGroup) fetchMessages(activeGroup.id); }, [activeGroup]);
     useEffect(() => { if (activeDM) fetchDMMessages(activeDM.userId); }, [activeDM]);
-    useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, dmMessages]);
+    useEffect(() => {
+        setTimeout(() => {
+            chatEndRef.current?.scrollIntoView({ behavior: 'auto' });
+        }, 100);
+    }, [messages.length, dmMessages.length, chatMode, activeGroup?.id, activeDM?.userId]);
 
     // ── Fetch Functions ────────────────────────────────────────────────────────
     const fetchWorkspaces = async () => {
@@ -321,7 +354,11 @@ export const Messages: React.FC = () => {
             });
             setWorkspaces(myWorkspaces);
             setupGlobalRealtime(myWorkspaces);
-            if (myWorkspaces.length > 0) setSelectedWorkspace(myWorkspaces[0]);
+            // Restore last selected workspace from localStorage, or use first
+            const savedWsId = localStorage.getItem('selected_workspace_id');
+            const savedWs = savedWsId ? myWorkspaces.find(ws => ws.id === savedWsId) : null;
+            if (savedWs) setSelectedWorkspace(savedWs);
+            else if (myWorkspaces.length > 0) setSelectedWorkspace(myWorkspaces[0]);
             setIsLoaded(true);
         }
     };
@@ -373,10 +410,43 @@ export const Messages: React.FC = () => {
             .order('created_at', { ascending: true });
         if (data) {
             const key = getDMKey(currentUser.id, otherUserId);
-            const decrypted = data.map(msg => ({ ...msg, content: msg.type === 'text' ? decryptDM(msg.content, key) : msg.content }));
+            const decrypted = data.map(msg => ({ ...msg, content: msg.type === 'image' ? msg.content : decryptDM(msg.content, key) }));
             setDmMessages(decrypted);
             await supabase.from('direct_messages').update({ is_read: true }).eq('recipient_id', currentUser.id).eq('sender_id', otherUserId).eq('is_read', false);
             setDmUnread(prev => ({ ...prev, [otherUserId]: 0 }));
+            setDmLatestMessages(prev => {
+                if (prev[otherUserId] && !prev[otherUserId].isRead && !prev[otherUserId].isMine) {
+                    return { ...prev, [otherUserId]: { ...prev[otherUserId], isRead: true } };
+                }
+                return prev;
+            });
+        }
+    };
+
+    const fetchDMSummaries = async () => {
+        const { data } = await supabase
+            .from('direct_messages')
+            .select('*')
+            .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
+            .eq('is_deleted', false)
+            .order('created_at', { ascending: false });
+
+        if (data) {
+            const latest: Record<string, { content: string, time: string, isRead: boolean, isMine: boolean }> = {};
+            data.forEach(msg => {
+                const otherUser = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
+                if (!latest[otherUser]) {
+                    const key = getDMKey(currentUser.id, otherUser);
+                    const content = msg.type === 'image' ? '🖼️ Photo' : decryptDM(msg.content, key);
+                    latest[otherUser] = {
+                        content,
+                        time: msg.created_at,
+                        isRead: msg.is_read || false,
+                        isMine: msg.sender_id === currentUser.id
+                    };
+                }
+            });
+            setDmLatestMessages(latest);
         }
     };
 
@@ -411,14 +481,24 @@ export const Messages: React.FC = () => {
                 if (msg.recipient_id === currentUser.id || msg.sender_id === currentUser.id) {
                     const otherUserId = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
                     const key = getDMKey(currentUser.id, otherUserId);
-                    const decryptedMsg = { ...msg, content: msg.type === 'text' ? decryptDM(msg.content, key) : msg.content };
+                    const decryptedMsg = { ...msg, content: msg.type === 'image' ? msg.content : decryptDM(msg.content, key) };
+
+                    setDmLatestMessages(prev => ({
+                        ...prev,
+                        [otherUserId]: {
+                            content: decryptedMsg.type === 'image' ? '🖼️ Photo' : decryptedMsg.content,
+                            time: msg.created_at,
+                            isRead: msg.is_read || false,
+                            isMine: msg.sender_id === currentUser.id
+                        }
+                    }));
+
                     if (activeDMRef.current?.userId === otherUserId) {
                         setDmMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, decryptedMsg]);
                         if (msg.sender_id !== currentUser.id) supabase.from('direct_messages').update({ is_read: true }).eq('id', msg.id);
                     } else if (msg.sender_id !== currentUser.id) {
                         setDmUnread(prev => ({ ...prev, [otherUserId]: (prev[otherUserId] || 0) + 1 }));
                         playChatSound();
-                        // Show DM notification popup
                         showChatNotifPopup({
                             id: msg.id,
                             senderName: msg.sender_name || 'Seseorang',
@@ -429,6 +509,19 @@ export const Messages: React.FC = () => {
                             recipientId: msg.recipient_id,
                         });
                     }
+                }
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'direct_messages' }, (payload) => {
+                const msg = payload.new as any;
+                if (msg.recipient_id === currentUser.id || msg.sender_id === currentUser.id) {
+                    const otherUserId = msg.sender_id === currentUser.id ? msg.recipient_id : msg.sender_id;
+                    setDmLatestMessages(prev => {
+                        if (prev[otherUserId] && prev[otherUserId].time <= msg.created_at) {
+                            return { ...prev, [otherUserId]: { ...prev[otherUserId], isRead: msg.is_read || false } };
+                        }
+                        return prev;
+                    });
+                    setDmMessages(prev => prev.map(m => m.id === msg.id ? { ...m, is_read: msg.is_read } : m));
                 }
             })
             .subscribe();
@@ -617,20 +710,32 @@ export const Messages: React.FC = () => {
 
     const handleAddReaction = async (messageId: string, emoji: string) => {
         setShowEmojiPicker(null);
-        const existingReaction = messages.find(m => m.id === messageId)?.reactions?.find(r => r.user_id === currentUser.id && r.emoji === emoji);
+        // Determine which message list to use based on chat mode
+        const msgList = chatMode === 'dm' ? dmMessages : messages;
+        const setMsgList = chatMode === 'dm' ? setDmMessages : setMessages;
+        const existingReaction = msgList.find(m => m.id === messageId)?.reactions?.find(r => r.user_id === currentUser.id && r.emoji === emoji);
         if (existingReaction) {
-            setMessages(prev => prev.map(msg =>
+            // Remove reaction
+            setMsgList(prev => prev.map(msg =>
                 msg.id === messageId ? { ...msg, reactions: (msg.reactions || []).filter(r => !(r.user_id === currentUser.id && r.emoji === emoji)) } : msg
             ));
             await supabase.from('workspace_chat_reactions').delete().eq('message_id', messageId).eq('user_id', currentUser.id).eq('emoji', emoji);
         } else {
+            // Add reaction — first try to delete any existing one to avoid 409 conflict
+            await supabase.from('workspace_chat_reactions').delete().eq('message_id', messageId).eq('user_id', currentUser.id).eq('emoji', emoji);
             const newReaction = { id: `temp-${Date.now()}`, message_id: messageId, user_id: currentUser.id, emoji, group_id: activeGroup?.id };
-            setMessages(prev => prev.map(msg =>
+            setMsgList(prev => prev.map(msg =>
                 msg.id === messageId ? { ...msg, reactions: [...(msg.reactions || []), newReaction] } : msg
             ));
-            const { error } = await supabase.from('workspace_chat_reactions').insert({ message_id: messageId, user_id: currentUser.id, emoji, group_id: activeGroup?.id });
-            if (error) {
-                setMessages(prev => prev.map(msg =>
+            // Use upsert with ignoreDuplicates to silently handle 'already exists' without HTTP 409
+            const { error: insertErr } = await supabase.from('workspace_chat_reactions').upsert(
+                { message_id: messageId, user_id: currentUser.id, emoji, group_id: activeGroup?.id },
+                { onConflict: 'message_id,user_id,emoji', ignoreDuplicates: true }
+            );
+
+            if (insertErr) {
+                // Rollback on other errors
+                setMsgList(prev => prev.map(msg =>
                     msg.id === messageId ? { ...msg, reactions: (msg.reactions || []).filter(r => r.id !== newReaction.id) } : msg
                 ));
             }
@@ -675,19 +780,34 @@ export const Messages: React.FC = () => {
 
     // ── Clear Chat ─────────────────────────────────────────────────────────────
     const handleClearChat = async () => {
-        if (chatMode === 'dm' && activeDM) {
-            // Clear DM messages (soft delete for current user's view)
-            await supabase.from('direct_messages')
-                .update({ is_deleted: true })
-                .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${activeDM.userId}),and(sender_id.eq.${activeDM.userId},recipient_id.eq.${currentUser.id})`);
-            setDmMessages([]);
-        } else if (chatMode === 'workspace' && activeGroup) {
-            // Clear all messages in group
-            await supabase.from('workspace_chat_messages').delete().eq('group_id', activeGroup.id);
-            setMessages([]);
-        }
         setShowClearChatConfirm(false);
         setShowChatMoreMenu(false);
+        if (chatMode === 'dm' && activeDM) {
+            // Delete DM messages from DB
+            const { error } = await supabase.from('direct_messages')
+                .delete()
+                .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${activeDM.userId}),and(sender_id.eq.${activeDM.userId},recipient_id.eq.${currentUser.id})`);
+            if (!error) setDmMessages([]);
+        } else if (chatMode === 'workspace' && activeGroup) {
+            // Clear all messages in group
+            const { error } = await supabase.from('workspace_chat_messages').delete().eq('group_id', activeGroup.id);
+            if (!error) setMessages([]);
+        }
+    };
+
+    const handleClearSpecificDM = async (user: WorkspaceMember) => {
+        setClearDMTarget(null);
+        const { error } = await supabase.from('direct_messages')
+            .delete()
+            .or(`and(sender_id.eq.${currentUser.id},recipient_id.eq.${user.id}),and(sender_id.eq.${user.id},recipient_id.eq.${currentUser.id})`);
+        if (!error) {
+            if (activeDM?.userId === user.id) setDmMessages([]);
+            setDmLatestMessages(prev => {
+                const next = { ...prev };
+                delete next[user.id];
+                return next;
+            });
+        }
     };
 
     // ── Group Management ───────────────────────────────────────────────────────
@@ -780,25 +900,42 @@ export const Messages: React.FC = () => {
     const filteredMembers = workspaceMembers.filter(m => m.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
     const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const renderMessageContent = (content: string) => {
-        const parts = content.split(/(#\[[^\]]+\]\(content:[^)]+\))/g);
+    const renderMessageContent = (content: string, isMe?: boolean) => {
+        const parts = content.split(/(#\[[^\]]+\]\(content:[^)]+\)|https?:\/\/[^\s]+)/g);
         return parts.map((part, i) => {
-            const match = part.match(/^#\[([^\]]+)\]\(content:([^)]+)\)$/);
-            if (match) {
+            const contentMatch = part.match(/^#\[([^\]]+)\]\(content:([^)]+)\)$/);
+            if (contentMatch) {
+                const contentId = contentMatch[2];
                 return (
                     <button
                         key={i}
-                        onClick={() => {
-                            const wsId = selectedWorkspace?.id;
-                            if (wsId) navigate(`/plan/${wsId}`);
-                        }}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent/20 text-accent rounded font-bold text-xs hover:bg-accent/30 transition-colors"
+                        onClick={() => setContentDetailId(contentId)}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 rounded font-bold text-xs transition-colors ${isMe ? 'bg-amber-400/20 text-amber-200 hover:bg-amber-400/30' : 'bg-accent/20 text-accent hover:bg-accent/30'}`}
                     >
-                        <Hash size={10} /> {match[1]}
+                        <Hash size={10} /> {contentMatch[1]}
                     </button>
                 );
             }
-            return <span key={i}>{part}</span>;
+            if (part.match(/^https?:\/\//)) {
+                return (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline font-medium ${isMe ? 'text-blue-200 hover:text-blue-100' : 'text-blue-500 hover:text-blue-600'}`}>
+                        {part}
+                    </a>
+                );
+            }
+
+            // Detect basic @ mentions for styling
+            const mentionParts = part.split(/(@\w+)/g);
+            return (
+                <span key={i}>
+                    {mentionParts.map((mp, j) => {
+                        if (mp.startsWith('@')) {
+                            return <span key={j} className={`font-bold px-1 rounded-md ${isMe ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'}`}>{mp}</span>;
+                        }
+                        return <span key={j}>{mp}</span>;
+                    })}
+                </span>
+            );
         });
     };
 
@@ -840,113 +977,181 @@ export const Messages: React.FC = () => {
                         {/* Header */}
                         <div className="flex items-center justify-between px-1 pb-2 flex-shrink-0">
                             <h2 className="text-base font-black text-foreground">Pesan</h2>
-                            <div className="flex items-center gap-1">
-                                <button onClick={() => setSidebarTab('groups')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'groups' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Groups</button>
-                                <button onClick={() => setSidebarTab('dm')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'dm' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>DM</button>
-                                <button onClick={() => setSidebarTab('members')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'members' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Anggota</button>
-                            </div>
                         </div>
 
-                        {/* Workspace filter - horizontal scroll */}
-                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 flex-shrink-0">
-                            {workspaces.map(ws => {
-                                const isSelected = selectedWorkspace?.id === ws.id;
-                                const wsUnread = unreadCounts[ws.id] || 0;
-                                return (
-                                    <button key={ws.id} onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
-                                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${isSelected ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
-                                        {ws.logo_url ? <img src={ws.logo_url} alt="" className="w-3.5 h-3.5 rounded object-contain" /> : null}
-                                        <span className="truncate max-w-[80px]">{ws.name}</span>
-                                        {wsUnread > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{wsUnread > 9 ? '9+' : wsUnread}</span>}
-                                    </button>
-                                );
-                            })}
+                        {/* Workspace name header */}
+                        <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0">
+                            <h3 className="text-sm font-black text-foreground truncate">{selectedWorkspace?.name || 'Workspace'}</h3>
+                            <span className="text-[9px] text-mutedForeground font-bold">{workspaceMembers.length} anggota</span>
+                        </div>
+
+                        {/* Workspace dropdown capsule */}
+                        <div className="relative mb-2 flex-shrink-0" ref={wsDropdownRef}>
+                            <button
+                                onClick={() => setShowWsDropdown(!showWsDropdown)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-xs font-bold text-foreground hover:border-accent/50 transition-all w-full"
+                            >
+                                {selectedWorkspace?.logo_url ? <img src={selectedWorkspace.logo_url} alt="" className="w-4 h-4 rounded object-contain" /> : null}
+                                <span className="truncate flex-1 text-left">{selectedWorkspace?.name || 'Pilih Workspace'}</span>
+                                <ChevronDown size={12} className={`text-mutedForeground transition-transform ${showWsDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+                            {showWsDropdown && (
+                                <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard overflow-hidden">
+                                    {workspaces.map(ws => {
+                                        const isSelected = selectedWorkspace?.id === ws.id;
+                                        const wsUnread = unreadCounts[ws.id] || 0;
+                                        return (
+                                            <button key={ws.id} onClick={() => {
+                                                setSelectedWorkspace(ws); setChatMode('workspace');
+                                                const wsGroups = groups.filter(g => g.workspace_id === ws.id);
+                                                if (wsGroups.length > 0) { setActiveGroup(wsGroups[0]); setMobileView('chat'); }
+                                                setShowWsDropdown(false);
+                                            }}
+                                                className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-bold transition-colors ${isSelected ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-muted'}`}>
+                                                {ws.logo_url ? <img src={ws.logo_url} alt="" className="w-5 h-5 rounded object-contain" /> : <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[9px] font-black text-mutedForeground">{ws.name.charAt(0)}</div>}
+                                                <span className="truncate flex-1">{ws.name}</span>
+                                                {isSelected && <span className="text-accent text-[10px]">✓</span>}
+                                                {wsUnread > 0 && <span className="min-w-[16px] h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1">{wsUnread > 9 ? '9+' : wsUnread}</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Search */}
                         <div className="relative mb-2 flex-shrink-0">
                             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
-                            <input type="text" placeholder="Cari..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                            <input type="text" placeholder="Cari chat..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                                 className="w-full bg-muted border border-border rounded-xl py-2 pl-8 pr-3 text-xs font-medium outline-none focus:border-accent text-foreground" />
                         </div>
 
-                        {/* Conversation List */}
+                        {/* Unified Conversation List */}
                         <div className="flex-1 overflow-y-auto space-y-0.5">
-                            {sidebarTab === 'groups' && (
-                                <>
-                                    {filteredGroups.map(g => {
-                                        const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
-                                        const unread = unreadCounts[g.id] || 0;
-                                        const isMuted = mutedGroups.has(g.id);
-                                        return (
-                                            <button key={g.id} onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
-                                                className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
-                                                <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                                                    {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover rounded-xl" /> : <Hash size={16} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
-                                                </div>
-                                                <div className="flex-1 min-w-0 text-left">
-                                                    <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{g.name}</p>
-                                                    <p className="text-[10px] text-mutedForeground">{workspaceMembers.length} anggota</p>
-                                                </div>
-                                                <div className="flex items-center gap-1 flex-shrink-0">
-                                                    {isMuted && <VolumeX size={10} className="text-mutedForeground" />}
-                                                    {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center">{unread}</span>}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                    <button onClick={() => setShowGroupModal(true)}
-                                        className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl text-mutedForeground hover:text-accent hover:bg-muted transition-all">
-                                        <div className="w-10 h-10 rounded-xl border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={16} /></div>
-                                        <span className="text-sm font-bold">Buat Group Baru</span>
+                            {/* Channels Section */}
+                            <div className="mb-3">
+                                <div className="flex items-center justify-between px-1 py-1">
+                                    <span className="text-[9px] font-black text-mutedForeground uppercase tracking-widest">Channels</span>
+                                    <button onClick={() => setShowGroupModal(true)} className="p-0.5 rounded hover:bg-muted text-mutedForeground hover:text-accent transition-colors">
+                                        <Plus size={12} />
                                     </button>
-                                </>
-                            )}
-
-                            {sidebarTab === 'dm' && dmConversations
-                                .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
-                                .map(dm => {
-                                    const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
-                                    const unread = dmUnread[dm.userId] || 0;
+                                </div>
+                                {filteredGroups.map(g => {
+                                    const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
+                                    const unread = unreadCounts[g.id] || 0;
+                                    const isMuted = mutedGroups.has(g.id);
                                     return (
-                                        <button key={dm.userId} onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
+                                        <button key={g.id} onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
                                             className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
-                                            <div className="relative flex-shrink-0">
-                                                <img src={dm.userAvatar} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
-                                                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(dm.userStatus)}`} />
+                                            <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                                                {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover rounded-xl" /> : <Hash size={16} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
                                             </div>
                                             <div className="flex-1 min-w-0 text-left">
-                                                <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
-                                                <p className="text-[10px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
+                                                <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{g.name}</p>
                                             </div>
-                                            {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                {isMuted && <VolumeX size={10} className="text-mutedForeground" />}
+                                                {unread > 0 && !isMuted && <span className="min-w-[18px] h-[18px] bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">{unread}</span>}
+                                            </div>
                                         </button>
                                     );
                                 })}
+                            </div>
 
-                            {sidebarTab === 'members' && filteredMembers
-                                .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
-                                .map(u => (
-                                    <button key={u.id} onClick={() => {
-                                        if (u.id === currentUser.id) return;
-                                        const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
-                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
-                                    }}
-                                        className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted transition-all">
-                                        <div className="relative flex-shrink-0">
-                                            <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
-                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(u.online_status)}`} />
+                            {/* Direct Messages Section */}
+                            <div>
+                                <div className="px-1 py-1">
+                                    <span className="text-[9px] font-black text-mutedForeground uppercase tracking-widest">Direct Messages</span>
+                                </div>
+                                {(() => {
+                                    const dmEntries = workspaceMembers
+                                        .filter(u => u.id !== currentUser.id)
+                                        .filter(u => u.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                        .map(u => {
+                                            const isActive = activeDM?.userId === u.id && chatMode === 'dm';
+                                            const unread = dmUnread[u.id] || 0;
+                                            const isOnline = u.online_status === 'online';
+                                            const isBusy = u.online_status === 'busy';
+                                            const isIdle = u.online_status === 'idle';
+                                            return { ...u, isActive, unread, isOnline, isBusy, isIdle };
+                                        })
+                                        .sort((a, b) => {
+                                            if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+                                            if ((a.unread > 0) !== (b.unread > 0)) return a.unread > 0 ? -1 : 1;
+                                            if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+                                            if ((a.isBusy || a.isIdle) !== (b.isBusy || b.isIdle)) return (a.isBusy || a.isIdle) ? -1 : 1;
+                                            return a.full_name.localeCompare(b.full_name);
+                                        });
+
+                                    return dmEntries.map(u => (
+                                        <div key={u.id} className={`w-full relative group rounded-xl transition-all ${u.isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
+                                            <button onClick={() => {
+                                                const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
+                                                setActiveDM(dm); setChatMode('dm'); setMobileView('chat');
+                                            }}
+                                                className="w-full flex items-center gap-3 px-2 py-2 text-left">
+                                                <div className="relative flex-shrink-0">
+                                                    <img src={u.avatar_url} alt="" className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-border object-cover bg-muted" />
+                                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(u.online_status)}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0 py-0.5 flex flex-col justify-center">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className={`text-sm font-bold truncate ${u.isActive ? 'text-accent' : 'text-foreground'}`}>{u.full_name}</p>
+                                                        {dmLatestMessages[u.id] && <span className="text-[9px] text-mutedForeground font-medium ml-2 flex-shrink-0 flex items-center gap-1">{new Date(dmLatestMessages[u.id].time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                                                    </div>
+                                                    {dmLatestMessages[u.id] ? (
+                                                        <div className="flex items-center gap-1 mt-0.5 max-w-[85%]">
+                                                            {dmLatestMessages[u.id].isMine && (
+                                                                <div className="flex-shrink-0">
+                                                                    {dmLatestMessages[u.id].isRead ? <CheckCheck size={12} className="text-accent" /> : <Check size={12} className="text-mutedForeground" />}
+                                                                </div>
+                                                            )}
+                                                            <p className={`text-xs truncate ${!dmLatestMessages[u.id].isRead && !dmLatestMessages[u.id].isMine ? 'font-black text-foreground' : 'text-mutedForeground font-medium'}`}>
+                                                                {dmLatestMessages[u.id].content}
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-[10px] font-bold text-mutedForeground mt-0.5">Ketuk untuk mulai chat</p>
+                                                    )}
+                                                </div>
+                                                {u.unread > 0 && (
+                                                    <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                                                        <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                                                            {u.unread > 99 ? '99+' : u.unread}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </button>
+
+                                            {/* Context Menu Button Mobile */}
+                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 transition-opacity">
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDmUserMenu(dmUserMenu === u.id ? null : u.id); }}
+                                                    className="p-2 mr-2 rounded bg-card/80 backdrop-blur-sm text-mutedForeground hover:text-foreground shadow-sm border border-border"
+                                                >
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                                {dmUserMenu === u.id && (
+                                                    <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 w-40 bg-card border-2 border-border rounded-xl shadow-hard z-[9999] overflow-hidden" ref={dmUserMenuRef}>
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setUserInfoModal(u); setDmUserMenu(null); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-left hover:bg-muted text-foreground"
+                                                        >
+                                                            <Info size={12} /> Info User
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setClearDMTarget(u); setDmUserMenu(null); }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-left hover:bg-red-50 text-red-500"
+                                                        >
+                                                            <Trash2 size={12} /> Kosongkan Chat
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0 text-left">
-                                            <p className="text-sm font-bold text-foreground truncate">
-                                                {u.full_name}{u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
-                                            </p>
-                                            <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
-                                                {u.online_status === 'online' ? 'Online' : u.online_status === 'idle' ? 'Away' : u.online_status === 'busy' ? 'Sibuk' : 'Offline'}
-                                            </p>
-                                        </div>
-                                    </button>
-                                ))}
+                                    ));
+                                })()}
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -1024,19 +1229,19 @@ export const Messages: React.FC = () => {
                                                     <span className="text-[9px] font-black text-mutedForeground mb-0.5 px-1">{msg.sender_name}</span>
                                                 )}
                                                 {replyData && (
-                                                    <div className={`text-[9px] px-2 py-0.5 rounded-lg mb-0.5 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
+                                                    <div className={`text-[9px] px-2 py-0.5 rounded-lg mb-0.5 border-l-2 border-accent/70 bg-accent/5 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
                                                         <span className="font-black text-accent">{replyData.name}: </span>
                                                         <span className="text-mutedForeground">{replyData.content?.slice(0, 40)}</span>
                                                     </div>
                                                 )}
                                                 <div className="relative">
-                                                    <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe ? 'bg-accent text-white rounded-br-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'}`}>
+                                                    <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words ${isMe ? 'bg-accent text-white rounded-br-sm shadow-sm' : 'bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-sm shadow-sm'}`}>
                                                         {msg.type === 'image' ? (
                                                             <button onClick={() => setPreviewImage(msg.content)}>
                                                                 <img src={msg.content} alt="img" className="max-w-[160px] max-h-[160px] rounded-xl object-cover" />
                                                             </button>
                                                         ) : (
-                                                            <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
+                                                            <span className="whitespace-pre-wrap">{renderMessageContent(msg.content, isMe)}</span>
                                                         )}
                                                     </div>
                                                     {/* Actions on long press / hover */}
@@ -1059,7 +1264,7 @@ export const Messages: React.FC = () => {
                                                     <div className="flex flex-wrap gap-0.5 mt-0.5">
                                                         {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
                                                             <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)}
-                                                                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground'}`}>
+                                                                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all hover:scale-105 ${data.hasMe ? 'bg-accent/10 border-accent text-accent shadow-sm' : 'bg-white border-border text-foreground'}`}>
                                                                 <span>{emoji}</span><span className="font-bold">{data.count}</span>
                                                             </button>
                                                         ))}
@@ -1097,7 +1302,7 @@ export const Messages: React.FC = () => {
 
                         {/* Input */}
                         <div className="px-2 py-2 border-t border-border flex-shrink-0 bg-card">
-                            <div className="flex items-end gap-1.5 bg-muted border border-border rounded-2xl px-3 py-2 focus-within:border-accent transition-colors">
+                            <div className="flex items-end gap-1.5 bg-white border border-border rounded-2xl px-3 py-2 focus-within:border-accent focus-within:shadow-sm transition-all">
                                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
                                 <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><ImageIcon size={18} /></button>
                                 <input type="text" value={input} onChange={handleInputChange}
@@ -1106,7 +1311,7 @@ export const Messages: React.FC = () => {
                                     className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground py-0.5" />
                                 <button onClick={() => setShowInputEmoji(!showInputEmoji)} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><Smile size={18} /></button>
                                 <button onClick={() => handleSendMessage()} disabled={!input.trim()}
-                                    className="w-8 h-8 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 flex-shrink-0">
+                                    className="w-8 h-8 bg-gradient-to-br from-accent to-accent/90 text-white rounded-xl flex items-center justify-center hover:shadow-md hover:shadow-accent/30 disabled:opacity-40 flex-shrink-0">
                                     <Send size={14} />
                                 </button>
                             </div>
@@ -1197,115 +1402,86 @@ export const Messages: React.FC = () => {
                     </div>
                 )}
 
-                {/* ── Stats Cards ── (Desktop only) */}
-                <div className="hidden md:grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 flex-shrink-0">
-                    <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
-                        <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Online</p>
-                            <p className="text-xl font-black text-foreground">{onlineCount}</p>
-                        </div>
-                    </div>
-                    <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
-                        <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center">
-                            <MessageCircle size={18} className="text-accent" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Unread</p>
-                            <p className="text-xl font-black text-foreground">{totalUnread}</p>
-                        </div>
-                    </div>
-                    <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
-                        <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <Hash size={18} className="text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Groups</p>
-                            <p className="text-xl font-black text-foreground">{groups.length}</p>
-                        </div>
-                    </div>
-                </div>
-
                 {/* ── Main Chat Layout ── */}
                 <div className="flex flex-1 bg-card border-2 border-border rounded-2xl overflow-hidden min-h-0">
 
-                    {/* ── Workspace Selector (Left) ── */}
-                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-12 md:w-16 bg-muted/30 border-r-2 border-border flex-col items-center py-4 gap-2 flex-shrink-0 overflow-y-auto`}>
-                        {workspaces.map(ws => {
-                            const isSelected = selectedWorkspace?.id === ws.id;
-                            const wsUnread = unreadCounts[ws.id] || 0;
-                            return (
-                                <button
-                                    key={ws.id}
-                                    onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
-                                    className={`relative w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden ${isSelected ? 'border-accent shadow-hard-mini scale-105' : 'border-border hover:border-accent/50 hover:scale-105'}`}
-                                    style={{ backgroundColor: '#ffffff' }}
-                                    title={ws.name}
-                                >
-                                    {ws.logo_url ? (
-                                        <img src={ws.logo_url} alt="" className="w-full h-full object-contain p-1" />
-                                    ) : (
-                                        <div className={`w-full h-full flex items-center justify-center text-sm font-black ${isSelected ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                            {ws.name.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
-                                    {wsUnread > 0 && (
-                                        <div className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1">
-                                            {wsUnread > 9 ? '9+' : wsUnread}
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* ── Channel/DM List ── */}
-                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-64 border-r-2 border-border flex-col flex-shrink-0`}>
-                        {/* Workspace name + status */}
-                        <div className="p-3 border-b-2 border-border flex-shrink-0">
-                            <div className="flex items-center justify-between">
+                    {/* ── Unified Sidebar ── */}
+                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-72 border-r border-border flex-col flex-shrink-0 bg-white/50`}>
+                        {/* Sidebar Header — Workspace name + status */}
+                        <div className="px-4 py-3 border-b border-border flex-shrink-0">
+                            <div className="flex items-center justify-between mb-2">
                                 <div>
-                                    <h3 className="font-black text-foreground text-sm truncate">{selectedWorkspace?.name}</h3>
-                                    <p className="text-[10px] text-mutedForeground font-bold">{workspaceMembers.length} anggota</p>
+                                    <h2 className="font-black text-foreground text-base truncate">{selectedWorkspace?.name || 'Pesan'}</h2>
+                                    <p className="text-[9px] text-mutedForeground font-bold">{workspaceMembers.length} anggota · {groups.length} channels</p>
                                 </div>
-                                {/* Status picker */}
-                                <div className="relative" ref={statusPickerRef}>
-                                    <button
-                                        onClick={() => setShowStatusPicker(!showStatusPicker)}
-                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                                        title="Ubah status"
-                                    >
-                                        <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(currentStatus)}`} />
-                                        <ChevronDown size={10} className="text-mutedForeground" />
-                                    </button>
-                                    {showStatusPicker && (
-                                        <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-40 overflow-hidden">
-                                            {STATUS_OPTIONS.map(s => (
-                                                <button
-                                                    key={s.value}
-                                                    onClick={() => handleUpdateStatus(s.value)}
-                                                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left ${currentStatus === s.value ? 'bg-muted' : ''}`}
-                                                >
-                                                    <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
-                                                    <span className="text-xs font-bold text-foreground">{s.label}</span>
-                                                    {currentStatus === s.value && <span className="ml-auto text-accent text-[10px]">✓</span>}
-                                                </button>
-                                            ))}
-                                            <div className="border-t border-border px-3 py-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Status kustom..."
-                                                    value={customStatus}
-                                                    onChange={e => setCustomStatus(e.target.value)}
-                                                    onKeyDown={e => { if (e.key === 'Enter' && customStatus.trim()) { handleUpdateStatus(customStatus.trim()); setCustomStatus(''); } }}
-                                                    className="w-full text-xs bg-muted border border-border rounded-lg px-2 py-1 outline-none focus:border-accent text-foreground"
-                                                />
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-mutedForeground">
+                                        <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />{onlineCount}</span>
+                                        {totalUnread > 0 && <span className="bg-red-500 text-white px-1.5 py-0.5 rounded-full">{totalUnread}</span>}
+                                    </div>
+                                    <div className="relative" ref={statusPickerRef}>
+                                        <button
+                                            onClick={() => setShowStatusPicker(!showStatusPicker)}
+                                            className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors relative"
+                                            title="Ubah status"
+                                        >
+                                            <img src={currentUser.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                            <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${getStatusColor(currentStatus)}`} />
+                                        </button>
+                                        {showStatusPicker && (
+                                            <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
+                                                {STATUS_OPTIONS.map(s => (
+                                                    <button
+                                                        key={s.value}
+                                                        onClick={() => handleUpdateStatus(s.value)}
+                                                        className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left ${currentStatus === s.value ? 'bg-muted' : ''}`}
+                                                    >
+                                                        <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
+                                                        <span className="text-xs font-bold text-foreground">{s.label}</span>
+                                                        {currentStatus === s.value && <span className="ml-auto text-accent text-[10px]">✓</span>}
+                                                    </button>
+                                                ))}
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
+                            </div>
+                            {/* Workspace dropdown capsule */}
+                            <div className="relative" ref={wsDropdownRef}>
+                                <button
+                                    onClick={() => setShowWsDropdown(!showWsDropdown)}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-white text-xs font-bold text-foreground hover:border-accent/50 transition-all w-full"
+                                >
+                                    {selectedWorkspace?.logo_url ? <img src={selectedWorkspace.logo_url} alt="" className="w-4 h-4 rounded object-contain" /> : null}
+                                    <span className="truncate flex-1 text-left">{selectedWorkspace?.name || 'Pilih Workspace'}</span>
+                                    <ChevronDown size={12} className={`text-mutedForeground transition-transform ${showWsDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+                                {showWsDropdown && (
+                                    <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard overflow-hidden">
+                                        {workspaces.map(ws => {
+                                            const isSelected = selectedWorkspace?.id === ws.id;
+                                            const wsUnread = unreadCounts[ws.id] || 0;
+                                            return (
+                                                <button
+                                                    key={ws.id}
+                                                    onClick={() => {
+                                                        setSelectedWorkspace(ws);
+                                                        setChatMode('workspace');
+                                                        const wsGroups = groups.filter(g => g.workspace_id === ws.id);
+                                                        if (wsGroups.length > 0) setActiveGroup(wsGroups[0]);
+                                                        setShowWsDropdown(false);
+                                                    }}
+                                                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-bold transition-colors ${isSelected ? 'bg-accent/10 text-accent' : 'text-foreground hover:bg-muted'}`}
+                                                >
+                                                    {ws.logo_url ? <img src={ws.logo_url} alt="" className="w-5 h-5 rounded object-contain" /> : <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[9px] font-black text-mutedForeground">{ws.name.charAt(0)}</div>}
+                                                    <span className="truncate flex-1">{ws.name}</span>
+                                                    {isSelected && <span className="text-accent text-[10px]">✓</span>}
+                                                    {wsUnread > 0 && <span className="min-w-[16px] h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1">{wsUnread > 9 ? '9+' : wsUnread}</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -1315,7 +1491,7 @@ export const Messages: React.FC = () => {
                                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mutedForeground" />
                                 <input
                                     type="text"
-                                    placeholder="Cari..."
+                                    placeholder="Cari chat..."
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     className="w-full bg-muted border border-border rounded-lg py-1.5 pl-7 pr-3 text-xs font-medium outline-none focus:border-accent transition-colors text-foreground"
@@ -1323,23 +1499,17 @@ export const Messages: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Tabs */}
-                        <div className="flex px-3 gap-1 mb-2 flex-shrink-0">
-                            {(['groups', 'dm', 'members'] as const).map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setSidebarTab(tab)}
-                                    className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${sidebarTab === tab ? 'bg-accent text-white' : 'text-mutedForeground hover:text-foreground'}`}
-                                >
-                                    {tab === 'groups' ? 'Groups' : tab === 'dm' ? 'DM' : 'Members'}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* List */}
-                        <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5 custom-scrollbar">
-                            {sidebarTab === 'groups' && (
-                                <>
+                        {/* Unified Chat List */}
+                        <div className="flex-1 overflow-y-auto px-2 pb-4 custom-scrollbar">
+                            {/* ── Channels Section ── */}
+                            <div className="mb-3">
+                                <div className="flex items-center justify-between px-2 py-1.5">
+                                    <span className="text-[9px] font-black text-mutedForeground uppercase tracking-widest">Channels</span>
+                                    <button onClick={() => setShowGroupModal(true)} className="p-0.5 rounded hover:bg-muted text-mutedForeground hover:text-accent transition-colors" title="Buat group baru">
+                                        <Plus size={12} />
+                                    </button>
+                                </div>
+                                <div className="space-y-0.5">
                                     {filteredGroups.map(g => {
                                         const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
                                         const unread = unreadCounts[g.id] || 0;
@@ -1348,18 +1518,15 @@ export const Messages: React.FC = () => {
                                             <div key={g.id} className="relative group/item">
                                                 <button
                                                     onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
-                                                    className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
+                                                    className={`w-full px-2.5 py-2 rounded-xl flex items-center gap-2 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
                                                 >
-                                                    <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                        {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover" /> : <Hash size={14} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
+                                                    <div className="w-7 h-7 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover" /> : <Hash size={13} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
                                                     </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs font-bold truncate">{g.name}</p>
-                                                    </div>
+                                                    <p className={`text-xs font-bold truncate flex-1 ${isActive ? 'text-accent' : ''}`}>{g.name}</p>
                                                     {isMuted && <VolumeX size={10} className="text-mutedForeground flex-shrink-0" />}
-                                                    {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                                                    {unread > 0 && !isMuted && <span className="min-w-[18px] h-[18px] bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center px-1 flex-shrink-0">{unread}</span>}
                                                 </button>
-                                                {/* Group context menu button */}
                                                 <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity" ref={groupMenuOpen === g.id ? groupMenuRef : undefined}>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); setGroupMenuOpen(groupMenuOpen === g.id ? null : g.id); }}
@@ -1369,24 +1536,15 @@ export const Messages: React.FC = () => {
                                                     </button>
                                                     {groupMenuOpen === g.id && (
                                                         <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
-                                                            <button
-                                                                onClick={() => handleOpenEditGroup(g)}
-                                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
-                                                            >
+                                                            <button onClick={() => handleOpenEditGroup(g)} className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground">
                                                                 <Edit2 size={12} className="text-accent" /> Edit Group
                                                             </button>
-                                                            <button
-                                                                onClick={() => toggleMuteGroup(g.id)}
-                                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
-                                                            >
+                                                            <button onClick={() => toggleMuteGroup(g.id)} className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground">
                                                                 {isMuted ? <Volume2 size={12} className="text-emerald-500" /> : <VolumeX size={12} className="text-amber-500" />}
                                                                 {isMuted ? 'Unmute Notifikasi' : 'Mute Notifikasi'}
                                                             </button>
                                                             <div className="border-t border-border" />
-                                                            <button
-                                                                onClick={() => { setShowDeleteGroupConfirm(g); setGroupMenuOpen(null); }}
-                                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
-                                                            >
+                                                            <button onClick={() => { setShowDeleteGroupConfirm(g); setGroupMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500">
                                                                 <Trash2 size={12} /> Hapus Group
                                                             </button>
                                                         </div>
@@ -1395,67 +1553,107 @@ export const Messages: React.FC = () => {
                                             </div>
                                         );
                                     })}
-                                    <button
-                                        onClick={() => setShowGroupModal(true)}
-                                        className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-mutedForeground hover:text-accent hover:bg-muted transition-all mt-2"
-                                    >
-                                        <div className="w-8 h-8 rounded-lg border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={14} /></div>
-                                        <span className="text-xs font-bold">Buat Group</span>
-                                    </button>
-                                </>
-                            )}
+                                </div>
+                            </div>
 
-                            {sidebarTab === 'dm' && dmConversations
-                                .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
-                                .map(dm => {
-                                    const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
-                                    const unread = dmUnread[dm.userId] || 0;
-                                    return (
-                                        <button
-                                            key={dm.userId}
-                                            onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
-                                            className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}
-                                        >
-                                            <div className="relative flex-shrink-0">
-                                                <img src={dm.userAvatar} alt="" className="w-8 h-8 rounded-full border border-border object-cover bg-muted" />
-                                                <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${getStatusColor(dm.userStatus)}`} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={`text-xs font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
-                                                <p className="text-[9px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
-                                            </div>
-                                            {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
-                                        </button>
-                                    );
-                                })}
+                            {/* ── Direct Messages Section ── */}
+                            <div>
+                                <div className="flex items-center px-2 py-1.5">
+                                    <span className="text-[9px] font-black text-mutedForeground uppercase tracking-widest">Direct Messages</span>
+                                </div>
+                                <div className="space-y-0.5">
+                                    {(() => {
+                                        // Build DM entries from workspace members (exclude self), sorted by activity + online
+                                        const dmEntries = workspaceMembers
+                                            .filter(u => u.id !== currentUser.id)
+                                            .filter(u => u.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                            .map(u => {
+                                                const isActive = activeDM?.userId === u.id && chatMode === 'dm';
+                                                const unread = dmUnread[u.id] || 0;
+                                                const isOnline = u.online_status === 'online';
+                                                const isBusy = u.online_status === 'busy';
+                                                const isIdle = u.online_status === 'idle';
+                                                return { ...u, isActive, unread, isOnline, isBusy, isIdle };
+                                            })
+                                            .sort((a, b) => {
+                                                // Active chat first, then unread, then online, then idle/busy, then offline
+                                                if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+                                                if ((a.unread > 0) !== (b.unread > 0)) return a.unread > 0 ? -1 : 1;
+                                                if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+                                                if ((a.isBusy || a.isIdle) !== (b.isBusy || b.isIdle)) return (a.isBusy || a.isIdle) ? -1 : 1;
+                                                return a.full_name.localeCompare(b.full_name);
+                                            });
 
-                            {sidebarTab === 'members' && filteredMembers
-                                .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
-                                .map(u => (
-                                    <button
-                                        key={u.id}
-                                        onClick={() => {
-                                            if (u.id === currentUser.id) return; // Don't DM yourself
-                                            const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
-                                            setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
-                                        }}
-                                        className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 hover:bg-muted transition-all text-left"
-                                    >
-                                        <div className="relative flex-shrink-0">
-                                            <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border-2 border-border object-cover bg-muted" />
-                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(u.online_status)}`} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-foreground truncate">
-                                                {u.full_name}
-                                                {u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
-                                            </p>
-                                            <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
-                                                {u.online_status === 'online' ? '● Online' : u.online_status === 'idle' ? '● Away' : u.online_status === 'busy' ? '● Sibuk' : '● Offline'}
-                                            </p>
-                                        </div>
-                                    </button>
-                                ))}
+                                        return dmEntries.map(u => (
+                                            <div key={u.id} className={`w-full relative group rounded-xl transition-all ${u.isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
+                                                <button onClick={() => {
+                                                    const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
+                                                    setActiveDM(dm); setChatMode('dm'); setMobileView('chat');
+                                                }}
+                                                    className="w-full px-2 py-2 flex items-center gap-3 text-left">
+                                                    <div className="relative flex-shrink-0">
+                                                        <img src={u.avatar_url} alt="" className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-border object-cover bg-muted" />
+                                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(u.online_status)}`} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 py-0.5 flex flex-col justify-center">
+                                                        <div className="flex items-center justify-between">
+                                                            <p className={`text-sm font-bold truncate ${u.isActive ? 'text-accent' : 'text-foreground'}`}>{u.full_name}</p>
+                                                            {dmLatestMessages[u.id] && <span className="text-[9px] text-mutedForeground font-medium ml-2 flex-shrink-0 flex items-center gap-1">{new Date(dmLatestMessages[u.id].time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                                                        </div>
+                                                        {dmLatestMessages[u.id] ? (
+                                                            <div className="flex items-center gap-1 mt-0.5 max-w-[85%]">
+                                                                {dmLatestMessages[u.id].isMine && (
+                                                                    <div className="flex-shrink-0">
+                                                                        {dmLatestMessages[u.id].isRead ? <CheckCheck size={12} className="text-accent" /> : <Check size={12} className="text-mutedForeground" />}
+                                                                    </div>
+                                                                )}
+                                                                <p className={`text-xs truncate ${!dmLatestMessages[u.id].isRead && !dmLatestMessages[u.id].isMine ? 'font-black text-foreground' : 'text-mutedForeground font-medium'}`}>
+                                                                    {dmLatestMessages[u.id].content}
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-[10px] font-bold text-mutedForeground mt-0.5">Mulai obrolan</p>
+                                                        )}
+                                                    </div>
+                                                    {u.unread > 0 && (
+                                                        <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                                                            <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1 shadow-sm">
+                                                                {u.unread > 99 ? '99+' : u.unread}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </button>
+
+                                                {/* Context Menu Button Desktop */}
+                                                <div className="absolute right-0 top-1/2 -translate-y-1/2 md:opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                    <button
+                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDmUserMenu(dmUserMenu === u.id ? null : u.id); }}
+                                                        className="p-2 mr-2 rounded bg-card/80 backdrop-blur-sm text-mutedForeground hover:text-foreground shadow-sm border border-border"
+                                                    >
+                                                        <MoreVertical size={14} />
+                                                    </button>
+                                                    {dmUserMenu === u.id && (
+                                                        <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 w-40 bg-card border-2 border-border rounded-xl shadow-hard z-[9999] overflow-hidden" ref={dmUserMenuRef}>
+                                                            <button
+                                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setUserInfoModal(u); setDmUserMenu(null); }}
+                                                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-left hover:bg-muted text-foreground"
+                                                            >
+                                                                <Info size={12} /> Info User
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setClearDMTarget(u); setDmUserMenu(null); }}
+                                                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-left hover:bg-red-50 text-red-500"
+                                                            >
+                                                                <Trash2 size={12} /> Kosongkan Chat
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1464,7 +1662,7 @@ export const Messages: React.FC = () => {
                         {(activeGroup && chatMode === 'workspace') || (activeDM && chatMode === 'dm') ? (
                             <>
                                 {/* Chat Header */}
-                                <div className="h-14 border-b-2 border-border flex items-center justify-between px-3 md:px-5 flex-shrink-0 bg-card">
+                                <div className="h-14 border-b border-border flex items-center justify-between px-3 md:px-5 flex-shrink-0 bg-gradient-to-r from-card to-card/95">
                                     <div className="flex items-center gap-2 md:gap-3">
                                         {/* Mobile back button */}
                                         <button
@@ -1549,8 +1747,7 @@ export const Messages: React.FC = () => {
 
                                         return (
                                             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
-                                                <div className={`flex gap-2 max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                    {/* No avatar shown next to bubble — removed per request */}
+                                                <div className={`flex gap-1.5 max-w-[75%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
 
                                                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                                                         {!isMe && showSenderName && (
@@ -1559,7 +1756,7 @@ export const Messages: React.FC = () => {
 
                                                         {/* Reply preview */}
                                                         {replyData && (
-                                                            <div className={`text-[10px] px-2 py-1 rounded-lg mb-1 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
+                                                            <div className={`text-[10px] px-2.5 py-1 rounded-lg mb-1 border-l-2 border-accent/70 bg-accent/5 max-w-full backdrop-blur-sm ${isMe ? 'text-right' : 'text-left'}`}>
                                                                 <span className="font-black text-accent">{replyData.name}: </span>
                                                                 <span className="text-mutedForeground">{replyData.content?.slice(0, 60)}</span>
                                                             </div>
@@ -1567,16 +1764,16 @@ export const Messages: React.FC = () => {
 
                                                         {/* Message bubble */}
                                                         <div className="relative">
-                                                            <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe
-                                                                ? 'bg-accent text-white rounded-br-sm'
-                                                                : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'
+                                                            <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium max-w-full break-words ${isMe
+                                                                ? 'bg-accent text-white rounded-br-sm shadow-sm'
+                                                                : 'bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-sm shadow-sm'
                                                                 }`}>
                                                                 {msg.type === 'image' ? (
                                                                     <button onClick={() => setPreviewImage(msg.content)}>
                                                                         <img src={msg.content} alt="img" className="max-w-[200px] max-h-[200px] rounded-xl object-cover hover:opacity-90 transition-opacity" />
                                                                     </button>
                                                                 ) : (
-                                                                    <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
+                                                                    <span className="whitespace-pre-wrap">{renderMessageContent(msg.content, isMe)}</span>
                                                                 )}
                                                             </div>
 
@@ -1628,7 +1825,7 @@ export const Messages: React.FC = () => {
                                                                     <button
                                                                         key={emoji}
                                                                         onClick={() => handleAddReaction(msg.id, emoji)}
-                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border-2 transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground hover:border-accent'}`}
+                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all hover:scale-105 ${data.hasMe ? 'bg-accent/10 border-accent text-accent shadow-sm' : 'bg-white border-border text-foreground hover:border-accent/50'}`}
                                                                     >
                                                                         <span>{emoji}</span>
                                                                         <span className="font-bold">{data.count}</span>
@@ -1734,10 +1931,10 @@ export const Messages: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-3 bg-muted border-2 border-border rounded-2xl px-4 py-2.5 focus-within:border-accent transition-colors min-h-[52px]">
+                                    <div className="flex items-center gap-3 bg-white border border-border rounded-2xl px-4 py-2.5 focus-within:border-accent focus-within:shadow-sm transition-all min-h-[52px]">
                                         <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
                                         <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0" title="Upload foto">
-                                            <ImageIcon size={24} />
+                                            <ImageIcon size={22} />
                                         </button>
                                         <input
                                             type="text"
@@ -1752,12 +1949,12 @@ export const Messages: React.FC = () => {
                                             className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0"
                                             title="Emoji"
                                         >
-                                            <Smile size={22} />
+                                            <Smile size={20} />
                                         </button>
                                         <button
                                             onClick={() => handleSendMessage()}
                                             disabled={!input.trim()}
-                                            className="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                                            className="w-10 h-10 bg-gradient-to-br from-accent to-accent/90 text-white rounded-xl flex items-center justify-center hover:shadow-md hover:shadow-accent/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
                                         >
                                             <Send size={18} />
                                         </button>
@@ -1765,31 +1962,47 @@ export const Messages: React.FC = () => {
                                 </div>
                             </>
                         ) : (
-                            <div className="flex-1 flex items-center justify-center text-center p-8">
-                                <div className="space-y-3">
-                                    <div className="w-16 h-16 mx-auto bg-accent/10 rounded-2xl flex items-center justify-center">
-                                        <MessageSquare size={32} className="text-accent opacity-60" />
+                            <div className="flex-1 flex items-center justify-center text-center p-8 bg-gradient-to-br from-slate-50 to-white">
+                                <div className="space-y-4">
+                                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-accent/10 to-accent/5 rounded-3xl flex items-center justify-center shadow-inner">
+                                        <MessageSquare size={36} className="text-accent opacity-70" />
                                     </div>
-                                    <h3 className="font-black text-foreground">Pilih channel atau DM</h3>
-                                    <p className="text-mutedForeground text-sm">Pilih group atau mulai percakapan baru</p>
+                                    <div>
+                                        <h3 className="font-black text-foreground text-lg">Pilih channel atau DM</h3>
+                                        <p className="text-mutedForeground text-sm mt-1">Pilih group atau mulai percakapan baru untuk mulai berkolaborasi</p>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-4 text-[10px] text-mutedForeground">
+                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-400" />{onlineCount} online</span>
+                                        <span>·</span>
+                                        <span>{groups.length} channels</span>
+                                        <span>·</span>
+                                        <span>{workspaceMembers.length} anggota</span>
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
-                </div>
+                </div >
 
-                {/* ── Modals ── */}
+            </div >
 
-                {/* Image Preview */}
-                {previewImage && (
+            {/* ═══════════════════════════════════════════════════════════════════
+            GLOBAL MODALS — outside desktop/mobile containers so they work everywhere
+            ═══════════════════════════════════════════════════════════════════ */}
+
+            {/* Image Preview */}
+            {
+                previewImage && (
                     <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
                         <img src={previewImage} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
                         <button className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"><X size={20} /></button>
                     </div>
-                )}
+                )
+            }
 
-                {/* Delete Message Confirm */}
-                {showDeleteConfirm && (
+            {/* Delete Message Confirm */}
+            {
+                showDeleteConfirm && (
                     <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(null)}>
                         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
                             <h3 className="font-black text-foreground mb-2">Hapus Pesan?</h3>
@@ -1800,10 +2013,12 @@ export const Messages: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+            }
 
-                {/* Clear Chat Confirm */}
-                {showClearChatConfirm && (
+            {/* Clear Chat Confirm */}
+            {
+                showClearChatConfirm && (
                     <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowClearChatConfirm(false)}>
                         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
                             <h3 className="font-black text-foreground mb-2">Hapus Semua Chat?</h3>
@@ -1816,10 +2031,50 @@ export const Messages: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+            }
 
-                {/* Delete Group Confirm */}
-                {showDeleteGroupConfirm && (
+            {/* Specific User Clear Chat Confirm */}
+            {
+                clearDMTarget && (
+                    <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setClearDMTarget(null)}>
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                            <h3 className="font-black text-foreground mb-2">Kosongkan Chat dengan {clearDMTarget.full_name}?</h3>
+                            <p className="text-mutedForeground text-sm mb-4">Semua pesan DM dengan pengguna ini akan dihapus permanen.</p>
+                            <div className="flex gap-3">
+                                <Button variant="secondary" onClick={() => setClearDMTarget(null)} className="flex-1">Batal</Button>
+                                <Button onClick={() => handleClearSpecificDM(clearDMTarget)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Semua</Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Content Detail Popup Modal */}
+            {contentDetailId && (
+                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setContentDetailId(null)}>
+                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-black text-foreground text-base flex items-center gap-2"><Hash size={18} className="text-accent" /> Buka Detail Konten</h3>
+                            <button onClick={() => setContentDetailId(null)} className="p-1.5 rounded-lg hover:bg-muted text-mutedForeground transition-colors"><X size={16} /></button>
+                        </div>
+                        <div className="py-2 text-center space-y-4">
+                            <p className="text-sm font-medium text-mutedForeground">Dialihkan ke halaman Rencana Konten untuk melihat detail spesifik konten ini.</p>
+                            <Button onClick={() => {
+                                setContentDetailId(null);
+                                const wsId = selectedWorkspace?.id;
+                                if (wsId) navigate(`/plan/${wsId}?content=${contentDetailId}`);
+                            }} className="w-full">
+                                Lanjutkan Buka <ExternalLink size={14} className="ml-2" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Group Confirm */}
+            {
+                showDeleteGroupConfirm && (
                     <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteGroupConfirm(null)}>
                         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
                             <h3 className="font-black text-foreground mb-2">Hapus Group?</h3>
@@ -1831,10 +2086,12 @@ export const Messages: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+            }
 
-                {/* Edit Group Modal */}
-                {showEditGroupModal && (
+            {/* Edit Group Modal */}
+            {
+                showEditGroupModal && (
                     <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEditGroupModal(null)}>
                         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-md w-full" onClick={e => e.stopPropagation()}>
                             <h3 className="font-black text-foreground text-lg mb-4">Edit Group</h3>
@@ -1885,10 +2142,12 @@ export const Messages: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+            }
 
-                {/* User Info Modal */}
-                {userInfoModal && (
+            {/* User Info Modal */}
+            {
+                userInfoModal && (
                     <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setUserInfoModal(null)}>
                         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
                             <div className="flex items-start gap-4 mb-4">
@@ -1909,7 +2168,7 @@ export const Messages: React.FC = () => {
                                     icon={<MessageCircle size={16} />}
                                     onClick={() => {
                                         const dm: DMConversation = { userId: userInfoModal.id, userName: userInfoModal.full_name, userAvatar: userInfoModal.avatar_url, userStatus: userInfoModal.online_status, unread: 0 };
-                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setUserInfoModal(null);
+                                        setActiveDM(dm); setChatMode('dm'); setUserInfoModal(null);
                                     }}
                                     className="flex-1"
                                 >
@@ -1919,30 +2178,30 @@ export const Messages: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+            }
 
-                {/* Create Group Modal */}
-                <Modal isOpen={showGroupModal} onClose={() => setShowGroupModal(false)} title="Buat Group Baru">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
-                            <input
-                                type="text"
-                                value={newGroupName}
-                                onChange={e => setNewGroupName(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') handleCreateGroup(); }}
-                                placeholder="Contoh: Tim Konten IG"
-                                className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
-                                autoFocus
-                            />
-                        </div>
-                        <div className="flex gap-3 pt-2">
-                            <Button variant="secondary" onClick={() => setShowGroupModal(false)} className="flex-1">Batal</Button>
-                            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()} className="flex-1">Buat Group</Button>
-                        </div>
+            {/* Create Group Modal */}
+            <Modal isOpen={showGroupModal} onClose={() => setShowGroupModal(false)} title="Buat Group Baru">
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
+                        <input
+                            type="text"
+                            value={newGroupName}
+                            onChange={e => setNewGroupName(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleCreateGroup(); }}
+                            placeholder="Contoh: Tim Konten IG"
+                            className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
+                            autoFocus
+                        />
                     </div>
-                </Modal>
-            </div>
+                    <div className="flex gap-3 pt-2">
+                        <Button variant="secondary" onClick={() => setShowGroupModal(false)} className="flex-1">Batal</Button>
+                        <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()} className="flex-1">Buat Group</Button>
+                    </div>
+                </div>
+            </Modal>
         </>
     );
 };
