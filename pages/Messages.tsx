@@ -775,7 +775,7 @@ export const Messages: React.FC = () => {
 
     // ── Computed ───────────────────────────────────────────────────────────────
     const onlineCount = workspaceMembers.filter(m => m.online_status === 'online').length;
-    const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0) + Object.values(dmUnread).reduce((a, b) => a + b, 0);
+    const totalUnread = (Object.values(unreadCounts) as number[]).reduce((a, b) => a + b, 0) + (Object.values(dmUnread) as number[]).reduce((a, b) => a + b, 0);
     const currentMessages = chatMode === 'dm' ? dmMessages : messages;
     const filteredMembers = workspaceMembers.filter(m => m.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
     const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -830,1119 +830,1119 @@ export const Messages: React.FC = () => {
 
     return (
         <>
-        {/* ═══════════════════════════════════════════════════════════════════
+            {/* ═══════════════════════════════════════════════════════════════════
             MOBILE VIEW (< md) - Telegram/Slack Style
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="block md:hidden flex flex-col h-[calc(100vh-140px)] overflow-hidden animate-in fade-in duration-300">
-            {mobileView === 'list' ? (
-                /* ── Conversation List ── */
-                <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-1 pb-2 flex-shrink-0">
-                        <h2 className="text-base font-black text-foreground">Pesan</h2>
-                        <div className="flex items-center gap-1">
-                            <button onClick={() => setSidebarTab('groups')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'groups' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Groups</button>
-                            <button onClick={() => setSidebarTab('dm')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'dm' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>DM</button>
-                            <button onClick={() => setSidebarTab('members')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'members' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Anggota</button>
+            <div className="block md:hidden flex flex-col h-[calc(100vh-140px)] overflow-hidden animate-in fade-in duration-300">
+                {mobileView === 'list' ? (
+                    /* ── Conversation List ── */
+                    <div className="flex flex-col h-full">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-1 pb-2 flex-shrink-0">
+                            <h2 className="text-base font-black text-foreground">Pesan</h2>
+                            <div className="flex items-center gap-1">
+                                <button onClick={() => setSidebarTab('groups')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'groups' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Groups</button>
+                                <button onClick={() => setSidebarTab('dm')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'dm' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>DM</button>
+                                <button onClick={() => setSidebarTab('members')} className={`px-2.5 py-1 rounded-full text-[10px] font-black transition-all ${sidebarTab === 'members' ? 'bg-accent text-white' : 'bg-muted text-mutedForeground'}`}>Anggota</button>
+                            </div>
+                        </div>
+
+                        {/* Workspace filter - horizontal scroll */}
+                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 flex-shrink-0">
+                            {workspaces.map(ws => {
+                                const isSelected = selectedWorkspace?.id === ws.id;
+                                const wsUnread = unreadCounts[ws.id] || 0;
+                                return (
+                                    <button key={ws.id} onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
+                                        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${isSelected ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
+                                        {ws.logo_url ? <img src={ws.logo_url} alt="" className="w-3.5 h-3.5 rounded object-contain" /> : null}
+                                        <span className="truncate max-w-[80px]">{ws.name}</span>
+                                        {wsUnread > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{wsUnread > 9 ? '9+' : wsUnread}</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative mb-2 flex-shrink-0">
+                            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
+                            <input type="text" placeholder="Cari..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                                className="w-full bg-muted border border-border rounded-xl py-2 pl-8 pr-3 text-xs font-medium outline-none focus:border-accent text-foreground" />
+                        </div>
+
+                        {/* Conversation List */}
+                        <div className="flex-1 overflow-y-auto space-y-0.5">
+                            {sidebarTab === 'groups' && (
+                                <>
+                                    {filteredGroups.map(g => {
+                                        const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
+                                        const unread = unreadCounts[g.id] || 0;
+                                        const isMuted = mutedGroups.has(g.id);
+                                        return (
+                                            <button key={g.id} onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
+                                                className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
+                                                <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                                                    {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover rounded-xl" /> : <Hash size={16} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
+                                                </div>
+                                                <div className="flex-1 min-w-0 text-left">
+                                                    <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{g.name}</p>
+                                                    <p className="text-[10px] text-mutedForeground">{workspaceMembers.length} anggota</p>
+                                                </div>
+                                                <div className="flex items-center gap-1 flex-shrink-0">
+                                                    {isMuted && <VolumeX size={10} className="text-mutedForeground" />}
+                                                    {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center">{unread}</span>}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                    <button onClick={() => setShowGroupModal(true)}
+                                        className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl text-mutedForeground hover:text-accent hover:bg-muted transition-all">
+                                        <div className="w-10 h-10 rounded-xl border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={16} /></div>
+                                        <span className="text-sm font-bold">Buat Group Baru</span>
+                                    </button>
+                                </>
+                            )}
+
+                            {sidebarTab === 'dm' && dmConversations
+                                .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
+                                .map(dm => {
+                                    const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
+                                    const unread = dmUnread[dm.userId] || 0;
+                                    return (
+                                        <button key={dm.userId} onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
+                                            className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
+                                            <div className="relative flex-shrink-0">
+                                                <img src={dm.userAvatar} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
+                                                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(dm.userStatus)}`} />
+                                            </div>
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
+                                                <p className="text-[10px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
+                                            </div>
+                                            {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                                        </button>
+                                    );
+                                })}
+
+                            {sidebarTab === 'members' && filteredMembers
+                                .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
+                                .map(u => (
+                                    <button key={u.id} onClick={() => {
+                                        if (u.id === currentUser.id) return;
+                                        const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
+                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
+                                    }}
+                                        className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted transition-all">
+                                        <div className="relative flex-shrink-0">
+                                            <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
+                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(u.online_status)}`} />
+                                        </div>
+                                        <div className="flex-1 min-w-0 text-left">
+                                            <p className="text-sm font-bold text-foreground truncate">
+                                                {u.full_name}{u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
+                                            </p>
+                                            <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
+                                                {u.online_status === 'online' ? 'Online' : u.online_status === 'idle' ? 'Away' : u.online_status === 'busy' ? 'Sibuk' : 'Offline'}
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))}
                         </div>
                     </div>
+                ) : (
+                    /* ── Chat View (Full Screen) ── */
+                    <div className="flex flex-col h-full">
+                        {/* Chat Header */}
+                        <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0 border-b border-border">
+                            <button onClick={() => setMobileView('list')} className="p-1.5 rounded-xl bg-muted text-foreground flex-shrink-0">
+                                <X size={16} />
+                            </button>
+                            {chatMode === 'dm' && activeDM ? (
+                                <>
+                                    <div className="relative flex-shrink-0">
+                                        <img src={activeDM.userAvatar} alt="" className="w-8 h-8 rounded-full border border-border object-cover" />
+                                        <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background ${getStatusColor(activeDM.userStatus)}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-black text-foreground text-sm truncate">{activeDM.userName}</h4>
+                                        <p className="text-[9px] text-mutedForeground flex items-center gap-1"><Lock size={7} /> Terenkripsi</p>
+                                    </div>
+                                </>
+                            ) : activeGroup ? (
+                                <>
+                                    <div className="w-8 h-8 bg-muted rounded-lg border border-border flex items-center justify-center flex-shrink-0">
+                                        {activeGroup.icon?.startsWith('data:') ? <img src={activeGroup.icon} className="w-full h-full object-cover rounded-lg" /> : <Hash size={14} className="text-accent" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-black text-foreground text-sm truncate">{activeGroup.name}</h4>
+                                        <p className="text-[9px] text-mutedForeground">{workspaceMembers.length} anggota · {onlineCount} online</p>
+                                    </div>
+                                </>
+                            ) : null}
+                            {/* Mute + More */}
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                                {chatMode === 'workspace' && activeGroup && (
+                                    <button onClick={() => toggleMuteGroup(activeGroup.id)}
+                                        className={`p-1.5 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50' : 'text-mutedForeground hover:bg-muted'}`}>
+                                        {mutedGroups.has(activeGroup.id) ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                                    </button>
+                                )}
+                                <div className="relative" ref={chatMoreMenuRef}>
+                                    <button onClick={() => setShowChatMoreMenu(!showChatMoreMenu)} className="p-1.5 rounded-xl text-mutedForeground hover:bg-muted transition-colors">
+                                        <MoreVertical size={14} />
+                                    </button>
+                                    {showChatMoreMenu && (
+                                        <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
+                                            <button onClick={() => { setShowClearChatConfirm(true); setShowChatMoreMenu(false); }}
+                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500">
+                                                <Eraser size={12} /> Hapus Semua Chat
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
 
-                    {/* Workspace filter - horizontal scroll */}
-                    <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 flex-shrink-0">
+                        {/* Messages */}
+                        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5" style={CHAT_BG_STYLE}>
+                            {currentMessages.map((msg, idx) => {
+                                const isMe = msg.sender_id === currentUser.id;
+                                const prevMsg = currentMessages[idx - 1];
+                                const showSenderName = !prevMsg || prevMsg.sender_id !== msg.sender_id;
+                                const replyData = msg.metadata?.reply_to;
+                                const reactionGroups = (msg.reactions || []).reduce((acc: any, r: any) => {
+                                    if (!acc[r.emoji]) acc[r.emoji] = { count: 0, hasMe: false };
+                                    acc[r.emoji].count++;
+                                    if (r.user_id === currentUser.id) acc[r.emoji].hasMe = true;
+                                    return acc;
+                                }, {});
+                                return (
+                                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
+                                        <div className={`flex gap-1.5 max-w-[80%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                            <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                                {!isMe && showSenderName && (
+                                                    <span className="text-[9px] font-black text-mutedForeground mb-0.5 px-1">{msg.sender_name}</span>
+                                                )}
+                                                {replyData && (
+                                                    <div className={`text-[9px] px-2 py-0.5 rounded-lg mb-0.5 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
+                                                        <span className="font-black text-accent">{replyData.name}: </span>
+                                                        <span className="text-mutedForeground">{replyData.content?.slice(0, 40)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="relative">
+                                                    <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe ? 'bg-accent text-white rounded-br-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'}`}>
+                                                        {msg.type === 'image' ? (
+                                                            <button onClick={() => setPreviewImage(msg.content)}>
+                                                                <img src={msg.content} alt="img" className="max-w-[160px] max-h-[160px] rounded-xl object-cover" />
+                                                            </button>
+                                                        ) : (
+                                                            <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
+                                                        )}
+                                                    </div>
+                                                    {/* Actions on long press / hover */}
+                                                    <div className={`absolute top-0 ${isMe ? 'right-full mr-1' : 'left-full ml-1'} hidden group-hover:flex items-center gap-0.5 bg-card border border-border rounded-xl px-1 py-0.5 shadow-sm z-10`}>
+                                                        <button onClick={() => setReplyTo(msg)} className="p-1 hover:text-accent text-mutedForeground"><Reply size={11} /></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id); }} className="p-1 hover:text-accent text-mutedForeground"><Smile size={11} /></button>
+                                                        {isMe && <button onClick={() => setShowDeleteConfirm(msg.id)} className="p-1 hover:text-red-500 text-mutedForeground"><Trash2 size={11} /></button>}
+                                                    </div>
+                                                    {showEmojiPicker === msg.id && (
+                                                        <div ref={emojiPickerRef} className={`absolute z-50 ${isMe ? 'right-0' : 'left-0'} top-full mt-1 bg-card border-2 border-border rounded-2xl p-2 shadow-hard w-48`} onClick={e => e.stopPropagation()}>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {COMMON_EMOJIS.map(e => (
+                                                                    <button key={e} onClick={() => handleAddReaction(msg.id, e)} className={`text-base hover:scale-125 transition-transform p-0.5 rounded ${reactionGroups[e]?.hasMe ? 'bg-accent/20' : ''}`}>{e}</button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {Object.keys(reactionGroups).length > 0 && (
+                                                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                                                        {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
+                                                            <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)}
+                                                                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground'}`}>
+                                                                <span>{emoji}</span><span className="font-bold">{data.count}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <div className={`flex items-center gap-0.5 mt-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                    <span className="text-[8px] text-mutedForeground/60">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    {isMe && ((msg.read_by?.length || 0) > 1 ? <CheckCheck size={9} className="text-accent" /> : <Check size={9} className="text-mutedForeground/60" />)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {typingUsers.length > 0 && (
+                                <div className="flex items-center gap-1.5 px-2">
+                                    <div className="flex gap-0.5">{[0, 150, 300].map(d => <div key={d} className="w-1.5 h-1.5 bg-mutedForeground rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />)}</div>
+                                    <span className="text-[9px] text-mutedForeground italic">{typingUsers.join(', ')} mengetik...</span>
+                                </div>
+                            )}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Reply preview */}
+                        {replyTo && (
+                            <div className="px-3 py-1.5 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center gap-1.5 text-xs">
+                                    <Reply size={11} className="text-accent" />
+                                    <span className="font-black text-accent">{replyTo.sender_name}:</span>
+                                    <span className="text-mutedForeground truncate max-w-[150px]">{replyTo.content}</span>
+                                </div>
+                                <button onClick={() => setReplyTo(null)} className="text-mutedForeground"><X size={12} /></button>
+                            </div>
+                        )}
+
+                        {/* Input */}
+                        <div className="px-2 py-2 border-t border-border flex-shrink-0 bg-card">
+                            <div className="flex items-end gap-1.5 bg-muted border border-border rounded-2xl px-3 py-2 focus-within:border-accent transition-colors">
+                                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                                <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><ImageIcon size={18} /></button>
+                                <input type="text" value={input} onChange={handleInputChange}
+                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                    placeholder={chatMode === 'dm' ? `Pesan ke ${activeDM?.userName}...` : `Pesan ke #${activeGroup?.name}...`}
+                                    className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground py-0.5" />
+                                <button onClick={() => setShowInputEmoji(!showInputEmoji)} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><Smile size={18} /></button>
+                                <button onClick={() => handleSendMessage()} disabled={!input.trim()}
+                                    className="w-8 h-8 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 flex-shrink-0">
+                                    <Send size={14} />
+                                </button>
+                            </div>
+                            {showInputEmoji && (
+                                <div ref={inputEmojiRef} className="absolute bottom-full right-2 mb-2 bg-card border-2 border-border rounded-2xl p-2 shadow-hard w-48 z-50">
+                                    <div className="flex flex-wrap gap-1">{COMMON_EMOJIS.map(e => <button key={e} onClick={() => { setInput(prev => prev + e); setShowInputEmoji(false); }} className="text-base hover:scale-125 transition-transform p-0.5">{e}</button>)}</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════════
+            DESKTOP VIEW (≥ md) - Original Layout
+            ═══════════════════════════════════════════════════════════════════ */}
+            <div className="hidden md:flex flex-col h-[calc(100vh-120px)] gap-0 overflow-hidden">
+
+                {/* ── Chat Notification Popup ── */}
+                {chatNotifPopup && (
+                    <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-md px-4 animate-in slide-in-from-top-3 duration-300">
+                        <div className="bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden">
+                            <div className="flex items-start gap-3 p-4">
+                                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    {chatNotifPopup.senderAvatar ? (
+                                        <img src={chatNotifPopup.senderAvatar} alt="" className="w-full h-full object-cover rounded-xl" />
+                                    ) : (
+                                        <MessageSquare size={18} className="text-accent" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="font-black text-foreground text-sm">{chatNotifPopup.senderName}</span>
+                                        {chatNotifPopup.groupName && (
+                                            <span className="text-[10px] text-mutedForeground font-bold bg-muted px-1.5 py-0.5 rounded-full">#{chatNotifPopup.groupName}</span>
+                                        )}
+                                        {chatNotifPopup.isDM && (
+                                            <span className="text-[10px] text-accent font-bold bg-accent/10 px-1.5 py-0.5 rounded-full flex items-center gap-1"><Lock size={8} /> DM</span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-mutedForeground truncate">{chatNotifPopup.content}</p>
+                                </div>
+                                <button onClick={() => setChatNotifPopup(null)} className="text-mutedForeground hover:text-foreground flex-shrink-0 mt-0.5">
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            {chatNotifPopup.isDM && (
+                                <div className="px-4 pb-4 flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={notifReplyInput}
+                                        onChange={e => setNotifReplyInput(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleNotifReply(); }}
+                                        placeholder="Balas pesan..."
+                                        className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-accent transition-colors text-foreground"
+                                        autoFocus
+                                    />
+                                    <button
+                                        onClick={handleNotifReply}
+                                        disabled={!notifReplyInput.trim()}
+                                        className="w-9 h-9 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 transition-all flex-shrink-0"
+                                    >
+                                        <Send size={14} />
+                                    </button>
+                                </div>
+                            )}
+                            {!chatNotifPopup.isDM && (
+                                <div className="px-4 pb-4 flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const group = groups.find(g => g.id === chatNotifPopup.groupId);
+                                            if (group) { setActiveGroup(group); setChatMode('workspace'); }
+                                            setChatNotifPopup(null);
+                                        }}
+                                        className="flex-1 py-2 bg-accent text-white rounded-xl text-sm font-bold hover:bg-accent/90 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Reply size={14} /> Buka Chat
+                                    </button>
+                                    <button
+                                        onClick={() => setChatNotifPopup(null)}
+                                        className="px-4 py-2 bg-muted text-foreground rounded-xl text-sm font-bold hover:bg-muted/80 transition-colors"
+                                    >
+                                        Tutup
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Stats Cards ── (Desktop only) */}
+                <div className="hidden md:grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 flex-shrink-0">
+                    <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
+                        <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
+                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Online</p>
+                            <p className="text-xl font-black text-foreground">{onlineCount}</p>
+                        </div>
+                    </div>
+                    <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
+                        <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center">
+                            <MessageCircle size={18} className="text-accent" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Unread</p>
+                            <p className="text-xl font-black text-foreground">{totalUnread}</p>
+                        </div>
+                    </div>
+                    <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
+                        <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <Hash size={18} className="text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Groups</p>
+                            <p className="text-xl font-black text-foreground">{groups.length}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Main Chat Layout ── */}
+                <div className="flex flex-1 bg-card border-2 border-border rounded-2xl overflow-hidden min-h-0">
+
+                    {/* ── Workspace Selector (Left) ── */}
+                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-12 md:w-16 bg-muted/30 border-r-2 border-border flex-col items-center py-4 gap-2 flex-shrink-0 overflow-y-auto`}>
                         {workspaces.map(ws => {
                             const isSelected = selectedWorkspace?.id === ws.id;
                             const wsUnread = unreadCounts[ws.id] || 0;
                             return (
-                                <button key={ws.id} onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
-                                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${isSelected ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
-                                    {ws.logo_url ? <img src={ws.logo_url} alt="" className="w-3.5 h-3.5 rounded object-contain" /> : null}
-                                    <span className="truncate max-w-[80px]">{ws.name}</span>
-                                    {wsUnread > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{wsUnread > 9 ? '9+' : wsUnread}</span>}
+                                <button
+                                    key={ws.id}
+                                    onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
+                                    className={`relative w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden ${isSelected ? 'border-accent shadow-hard-mini scale-105' : 'border-border hover:border-accent/50 hover:scale-105'}`}
+                                    style={{ backgroundColor: '#ffffff' }}
+                                    title={ws.name}
+                                >
+                                    {ws.logo_url ? (
+                                        <img src={ws.logo_url} alt="" className="w-full h-full object-contain p-1" />
+                                    ) : (
+                                        <div className={`w-full h-full flex items-center justify-center text-sm font-black ${isSelected ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                            {ws.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    {wsUnread > 0 && (
+                                        <div className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1">
+                                            {wsUnread > 9 ? '9+' : wsUnread}
+                                        </div>
+                                    )}
                                 </button>
                             );
                         })}
                     </div>
 
-                    {/* Search */}
-                    <div className="relative mb-2 flex-shrink-0">
-                        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" />
-                        <input type="text" placeholder="Cari..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full bg-muted border border-border rounded-xl py-2 pl-8 pr-3 text-xs font-medium outline-none focus:border-accent text-foreground" />
-                    </div>
-
-                    {/* Conversation List */}
-                    <div className="flex-1 overflow-y-auto space-y-0.5">
-                        {sidebarTab === 'groups' && (
-                            <>
-                                {filteredGroups.map(g => {
-                                    const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
-                                    const unread = unreadCounts[g.id] || 0;
-                                    const isMuted = mutedGroups.has(g.id);
-                                    return (
-                                        <button key={g.id} onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
-                                            className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
-                                            <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center flex-shrink-0">
-                                                {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover rounded-xl" /> : <Hash size={16} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
-                                            </div>
-                                            <div className="flex-1 min-w-0 text-left">
-                                                <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{g.name}</p>
-                                                <p className="text-[10px] text-mutedForeground">{workspaceMembers.length} anggota</p>
-                                            </div>
-                                            <div className="flex items-center gap-1 flex-shrink-0">
-                                                {isMuted && <VolumeX size={10} className="text-mutedForeground" />}
-                                                {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center">{unread}</span>}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                                <button onClick={() => setShowGroupModal(true)}
-                                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl text-mutedForeground hover:text-accent hover:bg-muted transition-all">
-                                    <div className="w-10 h-10 rounded-xl border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={16} /></div>
-                                    <span className="text-sm font-bold">Buat Group Baru</span>
-                                </button>
-                            </>
-                        )}
-
-                        {sidebarTab === 'dm' && dmConversations
-                            .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
-                            .map(dm => {
-                                const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
-                                const unread = dmUnread[dm.userId] || 0;
-                                return (
-                                    <button key={dm.userId} onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
-                                        className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-xl transition-all ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}>
-                                        <div className="relative flex-shrink-0">
-                                            <img src={dm.userAvatar} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
-                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(dm.userStatus)}`} />
-                                        </div>
-                                        <div className="flex-1 min-w-0 text-left">
-                                            <p className={`text-sm font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
-                                            <p className="text-[10px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
-                                        </div>
-                                        {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                    {/* ── Channel/DM List ── */}
+                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-64 border-r-2 border-border flex-col flex-shrink-0`}>
+                        {/* Workspace name + status */}
+                        <div className="p-3 border-b-2 border-border flex-shrink-0">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-black text-foreground text-sm truncate">{selectedWorkspace?.name}</h3>
+                                    <p className="text-[10px] text-mutedForeground font-bold">{workspaceMembers.length} anggota</p>
+                                </div>
+                                {/* Status picker */}
+                                <div className="relative" ref={statusPickerRef}>
+                                    <button
+                                        onClick={() => setShowStatusPicker(!showStatusPicker)}
+                                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                                        title="Ubah status"
+                                    >
+                                        <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(currentStatus)}`} />
+                                        <ChevronDown size={10} className="text-mutedForeground" />
                                     </button>
-                                );
-                            })}
-
-                        {sidebarTab === 'members' && filteredMembers
-                            .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
-                            .map(u => (
-                                <button key={u.id} onClick={() => {
-                                    if (u.id === currentUser.id) return;
-                                    const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
-                                    setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
-                                }}
-                                    className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-muted transition-all">
-                                    <div className="relative flex-shrink-0">
-                                        <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover bg-muted" />
-                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(u.online_status)}`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0 text-left">
-                                        <p className="text-sm font-bold text-foreground truncate">
-                                            {u.full_name}{u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
-                                        </p>
-                                        <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
-                                            {u.online_status === 'online' ? 'Online' : u.online_status === 'idle' ? 'Away' : u.online_status === 'busy' ? 'Sibuk' : 'Offline'}
-                                        </p>
-                                    </div>
-                                </button>
-                            ))}
-                    </div>
-                </div>
-            ) : (
-                /* ── Chat View (Full Screen) ── */
-                <div className="flex flex-col h-full">
-                    {/* Chat Header */}
-                    <div className="flex items-center gap-2 px-1 pb-2 flex-shrink-0 border-b border-border">
-                        <button onClick={() => setMobileView('list')} className="p-1.5 rounded-xl bg-muted text-foreground flex-shrink-0">
-                            <X size={16} />
-                        </button>
-                        {chatMode === 'dm' && activeDM ? (
-                            <>
-                                <div className="relative flex-shrink-0">
-                                    <img src={activeDM.userAvatar} alt="" className="w-8 h-8 rounded-full border border-border object-cover" />
-                                    <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background ${getStatusColor(activeDM.userStatus)}`} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-black text-foreground text-sm truncate">{activeDM.userName}</h4>
-                                    <p className="text-[9px] text-mutedForeground flex items-center gap-1"><Lock size={7} /> Terenkripsi</p>
-                                </div>
-                            </>
-                        ) : activeGroup ? (
-                            <>
-                                <div className="w-8 h-8 bg-muted rounded-lg border border-border flex items-center justify-center flex-shrink-0">
-                                    {activeGroup.icon?.startsWith('data:') ? <img src={activeGroup.icon} className="w-full h-full object-cover rounded-lg" /> : <Hash size={14} className="text-accent" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-black text-foreground text-sm truncate">{activeGroup.name}</h4>
-                                    <p className="text-[9px] text-mutedForeground">{workspaceMembers.length} anggota · {onlineCount} online</p>
-                                </div>
-                            </>
-                        ) : null}
-                        {/* Mute + More */}
-                        <div className="flex items-center gap-0.5 flex-shrink-0">
-                            {chatMode === 'workspace' && activeGroup && (
-                                <button onClick={() => toggleMuteGroup(activeGroup.id)}
-                                    className={`p-1.5 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50' : 'text-mutedForeground hover:bg-muted'}`}>
-                                    {mutedGroups.has(activeGroup.id) ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                                </button>
-                            )}
-                            <div className="relative" ref={chatMoreMenuRef}>
-                                <button onClick={() => setShowChatMoreMenu(!showChatMoreMenu)} className="p-1.5 rounded-xl text-mutedForeground hover:bg-muted transition-colors">
-                                    <MoreVertical size={14} />
-                                </button>
-                                {showChatMoreMenu && (
-                                    <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
-                                        <button onClick={() => { setShowClearChatConfirm(true); setShowChatMoreMenu(false); }}
-                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500">
-                                            <Eraser size={12} /> Hapus Semua Chat
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5" style={CHAT_BG_STYLE}>
-                        {currentMessages.map((msg, idx) => {
-                            const isMe = msg.sender_id === currentUser.id;
-                            const prevMsg = currentMessages[idx - 1];
-                            const showSenderName = !prevMsg || prevMsg.sender_id !== msg.sender_id;
-                            const replyData = msg.metadata?.reply_to;
-                            const reactionGroups = (msg.reactions || []).reduce((acc: any, r: any) => {
-                                if (!acc[r.emoji]) acc[r.emoji] = { count: 0, hasMe: false };
-                                acc[r.emoji].count++;
-                                if (r.user_id === currentUser.id) acc[r.emoji].hasMe = true;
-                                return acc;
-                            }, {});
-                            return (
-                                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
-                                    <div className={`flex gap-1.5 max-w-[80%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                        <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                            {!isMe && showSenderName && (
-                                                <span className="text-[9px] font-black text-mutedForeground mb-0.5 px-1">{msg.sender_name}</span>
-                                            )}
-                                            {replyData && (
-                                                <div className={`text-[9px] px-2 py-0.5 rounded-lg mb-0.5 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
-                                                    <span className="font-black text-accent">{replyData.name}: </span>
-                                                    <span className="text-mutedForeground">{replyData.content?.slice(0, 40)}</span>
-                                                </div>
-                                            )}
-                                            <div className="relative">
-                                                <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe ? 'bg-accent text-white rounded-br-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'}`}>
-                                                    {msg.type === 'image' ? (
-                                                        <button onClick={() => setPreviewImage(msg.content)}>
-                                                            <img src={msg.content} alt="img" className="max-w-[160px] max-h-[160px] rounded-xl object-cover" />
-                                                        </button>
-                                                    ) : (
-                                                        <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
-                                                    )}
-                                                </div>
-                                                {/* Actions on long press / hover */}
-                                                <div className={`absolute top-0 ${isMe ? 'right-full mr-1' : 'left-full ml-1'} hidden group-hover:flex items-center gap-0.5 bg-card border border-border rounded-xl px-1 py-0.5 shadow-sm z-10`}>
-                                                    <button onClick={() => setReplyTo(msg)} className="p-1 hover:text-accent text-mutedForeground"><Reply size={11} /></button>
-                                                    <button onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id); }} className="p-1 hover:text-accent text-mutedForeground"><Smile size={11} /></button>
-                                                    {isMe && <button onClick={() => setShowDeleteConfirm(msg.id)} className="p-1 hover:text-red-500 text-mutedForeground"><Trash2 size={11} /></button>}
-                                                </div>
-                                                {showEmojiPicker === msg.id && (
-                                                    <div ref={emojiPickerRef} className={`absolute z-50 ${isMe ? 'right-0' : 'left-0'} top-full mt-1 bg-card border-2 border-border rounded-2xl p-2 shadow-hard w-48`} onClick={e => e.stopPropagation()}>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {COMMON_EMOJIS.map(e => (
-                                                                <button key={e} onClick={() => handleAddReaction(msg.id, e)} className={`text-base hover:scale-125 transition-transform p-0.5 rounded ${reactionGroups[e]?.hasMe ? 'bg-accent/20' : ''}`}>{e}</button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {Object.keys(reactionGroups).length > 0 && (
-                                                <div className="flex flex-wrap gap-0.5 mt-0.5">
-                                                    {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
-                                                        <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)}
-                                                            className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground'}`}>
-                                                            <span>{emoji}</span><span className="font-bold">{data.count}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            <div className={`flex items-center gap-0.5 mt-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                <span className="text-[8px] text-mutedForeground/60">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                {isMe && ((msg.read_by?.length || 0) > 1 ? <CheckCheck size={9} className="text-accent" /> : <Check size={9} className="text-mutedForeground/60" />)}
+                                    {showStatusPicker && (
+                                        <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-40 overflow-hidden">
+                                            {STATUS_OPTIONS.map(s => (
+                                                <button
+                                                    key={s.value}
+                                                    onClick={() => handleUpdateStatus(s.value)}
+                                                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left ${currentStatus === s.value ? 'bg-muted' : ''}`}
+                                                >
+                                                    <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
+                                                    <span className="text-xs font-bold text-foreground">{s.label}</span>
+                                                    {currentStatus === s.value && <span className="ml-auto text-accent text-[10px]">✓</span>}
+                                                </button>
+                                            ))}
+                                            <div className="border-t border-border px-3 py-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Status kustom..."
+                                                    value={customStatus}
+                                                    onChange={e => setCustomStatus(e.target.value)}
+                                                    onKeyDown={e => { if (e.key === 'Enter' && customStatus.trim()) { handleUpdateStatus(customStatus.trim()); setCustomStatus(''); } }}
+                                                    className="w-full text-xs bg-muted border border-border rounded-lg px-2 py-1 outline-none focus:border-accent text-foreground"
+                                                />
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {typingUsers.length > 0 && (
-                            <div className="flex items-center gap-1.5 px-2">
-                                <div className="flex gap-0.5">{[0, 150, 300].map(d => <div key={d} className="w-1.5 h-1.5 bg-mutedForeground rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />)}</div>
-                                <span className="text-[9px] text-mutedForeground italic">{typingUsers.join(', ')} mengetik...</span>
-                            </div>
-                        )}
-                        <div ref={chatEndRef} />
-                    </div>
-
-                    {/* Reply preview */}
-                    {replyTo && (
-                        <div className="px-3 py-1.5 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
-                            <div className="flex items-center gap-1.5 text-xs">
-                                <Reply size={11} className="text-accent" />
-                                <span className="font-black text-accent">{replyTo.sender_name}:</span>
-                                <span className="text-mutedForeground truncate max-w-[150px]">{replyTo.content}</span>
-                            </div>
-                            <button onClick={() => setReplyTo(null)} className="text-mutedForeground"><X size={12} /></button>
-                        </div>
-                    )}
-
-                    {/* Input */}
-                    <div className="px-2 py-2 border-t border-border flex-shrink-0 bg-card">
-                        <div className="flex items-end gap-1.5 bg-muted border border-border rounded-2xl px-3 py-2 focus-within:border-accent transition-colors">
-                            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                            <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><ImageIcon size={18} /></button>
-                            <input type="text" value={input} onChange={handleInputChange}
-                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                                placeholder={chatMode === 'dm' ? `Pesan ke ${activeDM?.userName}...` : `Pesan ke #${activeGroup?.name}...`}
-                                className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground py-0.5" />
-                            <button onClick={() => setShowInputEmoji(!showInputEmoji)} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><Smile size={18} /></button>
-                            <button onClick={() => handleSendMessage()} disabled={!input.trim()}
-                                className="w-8 h-8 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 flex-shrink-0">
-                                <Send size={14} />
-                            </button>
-                        </div>
-                        {showInputEmoji && (
-                            <div ref={inputEmojiRef} className="absolute bottom-full right-2 mb-2 bg-card border-2 border-border rounded-2xl p-2 shadow-hard w-48 z-50">
-                                <div className="flex flex-wrap gap-1">{COMMON_EMOJIS.map(e => <button key={e} onClick={() => { setInput(prev => prev + e); setShowInputEmoji(false); }} className="text-base hover:scale-125 transition-transform p-0.5">{e}</button>)}</div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════════════
-            DESKTOP VIEW (≥ md) - Original Layout
-            ═══════════════════════════════════════════════════════════════════ */}
-        <div className="hidden md:flex flex-col h-[calc(100vh-120px)] gap-0 overflow-hidden">
-
-            {/* ── Chat Notification Popup ── */}
-            {chatNotifPopup && (
-                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-md px-4 animate-in slide-in-from-top-3 duration-300">
-                    <div className="bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden">
-                        <div className="flex items-start gap-3 p-4">
-                            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                {chatNotifPopup.senderAvatar ? (
-                                    <img src={chatNotifPopup.senderAvatar} alt="" className="w-full h-full object-cover rounded-xl" />
-                                ) : (
-                                    <MessageSquare size={18} className="text-accent" />
-                                )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="font-black text-foreground text-sm">{chatNotifPopup.senderName}</span>
-                                    {chatNotifPopup.groupName && (
-                                        <span className="text-[10px] text-mutedForeground font-bold bg-muted px-1.5 py-0.5 rounded-full">#{chatNotifPopup.groupName}</span>
-                                    )}
-                                    {chatNotifPopup.isDM && (
-                                        <span className="text-[10px] text-accent font-bold bg-accent/10 px-1.5 py-0.5 rounded-full flex items-center gap-1"><Lock size={8} /> DM</span>
                                     )}
                                 </div>
-                                <p className="text-sm text-mutedForeground truncate">{chatNotifPopup.content}</p>
                             </div>
-                            <button onClick={() => setChatNotifPopup(null)} className="text-mutedForeground hover:text-foreground flex-shrink-0 mt-0.5">
-                                <X size={16} />
-                            </button>
                         </div>
-                        {chatNotifPopup.isDM && (
-                            <div className="px-4 pb-4 flex gap-2">
+
+                        {/* Search */}
+                        <div className="px-3 py-2 flex-shrink-0">
+                            <div className="relative">
+                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mutedForeground" />
                                 <input
                                     type="text"
-                                    value={notifReplyInput}
-                                    onChange={e => setNotifReplyInput(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') handleNotifReply(); }}
-                                    placeholder="Balas pesan..."
-                                    className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-sm outline-none focus:border-accent transition-colors text-foreground"
-                                    autoFocus
+                                    placeholder="Cari..."
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    className="w-full bg-muted border border-border rounded-lg py-1.5 pl-7 pr-3 text-xs font-medium outline-none focus:border-accent transition-colors text-foreground"
                                 />
-                                <button
-                                    onClick={handleNotifReply}
-                                    disabled={!notifReplyInput.trim()}
-                                    className="w-9 h-9 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 transition-all flex-shrink-0"
-                                >
-                                    <Send size={14} />
-                                </button>
-                            </div>
-                        )}
-                        {!chatNotifPopup.isDM && (
-                            <div className="px-4 pb-4 flex gap-2">
-                                <button
-                                    onClick={() => {
-                                        const group = groups.find(g => g.id === chatNotifPopup.groupId);
-                                        if (group) { setActiveGroup(group); setChatMode('workspace'); }
-                                        setChatNotifPopup(null);
-                                    }}
-                                    className="flex-1 py-2 bg-accent text-white rounded-xl text-sm font-bold hover:bg-accent/90 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Reply size={14} /> Buka Chat
-                                </button>
-                                <button
-                                    onClick={() => setChatNotifPopup(null)}
-                                    className="px-4 py-2 bg-muted text-foreground rounded-xl text-sm font-bold hover:bg-muted/80 transition-colors"
-                                >
-                                    Tutup
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* ── Stats Cards ── (Desktop only) */}
-            <div className="hidden md:grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 flex-shrink-0">
-                <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Online</p>
-                        <p className="text-xl font-black text-foreground">{onlineCount}</p>
-                    </div>
-                </div>
-                <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center">
-                        <MessageCircle size={18} className="text-accent" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Unread</p>
-                        <p className="text-xl font-black text-foreground">{totalUnread}</p>
-                    </div>
-                </div>
-                <div className="bg-card border-2 border-border rounded-2xl p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <Hash size={18} className="text-blue-600" />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black uppercase text-mutedForeground tracking-wider">Groups</p>
-                        <p className="text-xl font-black text-foreground">{groups.length}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Main Chat Layout ── */}
-            <div className="flex flex-1 bg-card border-2 border-border rounded-2xl overflow-hidden min-h-0">
-
-                {/* ── Workspace Selector (Left) ── */}
-                <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-12 md:w-16 bg-muted/30 border-r-2 border-border flex-col items-center py-4 gap-2 flex-shrink-0 overflow-y-auto`}>
-                    {workspaces.map(ws => {
-                        const isSelected = selectedWorkspace?.id === ws.id;
-                        const wsUnread = unreadCounts[ws.id] || 0;
-                        return (
-                            <button
-                                key={ws.id}
-                                onClick={() => { setSelectedWorkspace(ws); setChatMode('workspace'); }}
-                                className={`relative w-12 h-12 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden ${isSelected ? 'border-accent shadow-hard-mini scale-105' : 'border-border hover:border-accent/50 hover:scale-105'}`}
-                                style={{ backgroundColor: '#ffffff' }}
-                                title={ws.name}
-                            >
-                                {ws.logo_url ? (
-                                    <img src={ws.logo_url} alt="" className="w-full h-full object-contain p-1" />
-                                ) : (
-                                    <div className={`w-full h-full flex items-center justify-center text-sm font-black ${isSelected ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                        {ws.name.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
-                                {wsUnread > 0 && (
-                                    <div className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1">
-                                        {wsUnread > 9 ? '9+' : wsUnread}
-                                    </div>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* ── Channel/DM List ── */}
-                <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-64 border-r-2 border-border flex-col flex-shrink-0`}>
-                    {/* Workspace name + status */}
-                    <div className="p-3 border-b-2 border-border flex-shrink-0">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="font-black text-foreground text-sm truncate">{selectedWorkspace?.name}</h3>
-                                <p className="text-[10px] text-mutedForeground font-bold">{workspaceMembers.length} anggota</p>
-                            </div>
-                            {/* Status picker */}
-                            <div className="relative" ref={statusPickerRef}>
-                                <button
-                                    onClick={() => setShowStatusPicker(!showStatusPicker)}
-                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                                    title="Ubah status"
-                                >
-                                    <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(currentStatus)}`} />
-                                    <ChevronDown size={10} className="text-mutedForeground" />
-                                </button>
-                                {showStatusPicker && (
-                                    <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-40 overflow-hidden">
-                                        {STATUS_OPTIONS.map(s => (
-                                            <button
-                                                key={s.value}
-                                                onClick={() => handleUpdateStatus(s.value)}
-                                                className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left ${currentStatus === s.value ? 'bg-muted' : ''}`}
-                                            >
-                                                <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
-                                                <span className="text-xs font-bold text-foreground">{s.label}</span>
-                                                {currentStatus === s.value && <span className="ml-auto text-accent text-[10px]">✓</span>}
-                                            </button>
-                                        ))}
-                                        <div className="border-t border-border px-3 py-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Status kustom..."
-                                                value={customStatus}
-                                                onChange={e => setCustomStatus(e.target.value)}
-                                                onKeyDown={e => { if (e.key === 'Enter' && customStatus.trim()) { handleUpdateStatus(customStatus.trim()); setCustomStatus(''); } }}
-                                                className="w-full text-xs bg-muted border border-border rounded-lg px-2 py-1 outline-none focus:border-accent text-foreground"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Search */}
-                    <div className="px-3 py-2 flex-shrink-0">
-                        <div className="relative">
-                            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-mutedForeground" />
-                            <input
-                                type="text"
-                                placeholder="Cari..."
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full bg-muted border border-border rounded-lg py-1.5 pl-7 pr-3 text-xs font-medium outline-none focus:border-accent transition-colors text-foreground"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex px-3 gap-1 mb-2 flex-shrink-0">
-                        {(['groups', 'dm', 'members'] as const).map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setSidebarTab(tab)}
-                                className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${sidebarTab === tab ? 'bg-accent text-white' : 'text-mutedForeground hover:text-foreground'}`}
-                            >
-                                {tab === 'groups' ? 'Groups' : tab === 'dm' ? 'DM' : 'Members'}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* List */}
-                    <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5 custom-scrollbar">
-                        {sidebarTab === 'groups' && (
-                            <>
-                                {filteredGroups.map(g => {
-                                    const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
-                                    const unread = unreadCounts[g.id] || 0;
-                                    const isMuted = mutedGroups.has(g.id);
-                                    return (
-                                        <div key={g.id} className="relative group/item">
-                                            <button
-                                                onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
-                                                className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
-                                            >
-                                                <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                    {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover" /> : <Hash size={14} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-bold truncate">{g.name}</p>
-                                                </div>
-                                                {isMuted && <VolumeX size={10} className="text-mutedForeground flex-shrink-0" />}
-                                                {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
-                                            </button>
-                                            {/* Group context menu button */}
-                                            <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity" ref={groupMenuOpen === g.id ? groupMenuRef : undefined}>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); setGroupMenuOpen(groupMenuOpen === g.id ? null : g.id); }}
-                                                    className="p-1 rounded-lg hover:bg-muted text-mutedForeground hover:text-foreground transition-colors"
-                                                >
-                                                    <MoreVertical size={12} />
-                                                </button>
-                                                {groupMenuOpen === g.id && (
-                                                    <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
-                                                        <button
-                                                            onClick={() => handleOpenEditGroup(g)}
-                                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
-                                                        >
-                                                            <Edit2 size={12} className="text-accent" /> Edit Group
-                                                        </button>
-                                                        <button
-                                                            onClick={() => toggleMuteGroup(g.id)}
-                                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
-                                                        >
-                                                            {isMuted ? <Volume2 size={12} className="text-emerald-500" /> : <VolumeX size={12} className="text-amber-500" />}
-                                                            {isMuted ? 'Unmute Notifikasi' : 'Mute Notifikasi'}
-                                                        </button>
-                                                        <div className="border-t border-border" />
-                                                        <button
-                                                            onClick={() => { setShowDeleteGroupConfirm(g); setGroupMenuOpen(null); }}
-                                                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
-                                                        >
-                                                            <Trash2 size={12} /> Hapus Group
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                        {/* Tabs */}
+                        <div className="flex px-3 gap-1 mb-2 flex-shrink-0">
+                            {(['groups', 'dm', 'members'] as const).map(tab => (
                                 <button
-                                    onClick={() => setShowGroupModal(true)}
-                                    className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-mutedForeground hover:text-accent hover:bg-muted transition-all mt-2"
+                                    key={tab}
+                                    onClick={() => setSidebarTab(tab)}
+                                    className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${sidebarTab === tab ? 'bg-accent text-white' : 'text-mutedForeground hover:text-foreground'}`}
                                 >
-                                    <div className="w-8 h-8 rounded-lg border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={14} /></div>
-                                    <span className="text-xs font-bold">Buat Group</span>
-                                </button>
-                            </>
-                        )}
-
-                        {sidebarTab === 'dm' && dmConversations
-                            .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
-                            .map(dm => {
-                                const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
-                                const unread = dmUnread[dm.userId] || 0;
-                                return (
-                                    <button
-                                        key={dm.userId}
-                                        onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
-                                        className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}
-                                    >
-                                        <div className="relative flex-shrink-0">
-                                            <img src={dm.userAvatar} alt="" className="w-8 h-8 rounded-full border border-border object-cover bg-muted" />
-                                            <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${getStatusColor(dm.userStatus)}`} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className={`text-xs font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
-                                            <p className="text-[9px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
-                                        </div>
-                                        {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
-                                    </button>
-                                );
-                            })}
-
-                        {sidebarTab === 'members' && filteredMembers
-                            .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
-                            .map(u => (
-                                <button
-                                    key={u.id}
-                                    onClick={() => {
-                                        if (u.id === currentUser.id) return; // Don't DM yourself
-                                        const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
-                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
-                                    }}
-                                    className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 hover:bg-muted transition-all text-left"
-                                >
-                                    <div className="relative flex-shrink-0">
-                                        <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border-2 border-border object-cover bg-muted" />
-                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(u.online_status)}`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-foreground truncate">
-                                            {u.full_name}
-                                            {u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
-                                        </p>
-                                        <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
-                                            {u.online_status === 'online' ? '● Online' : u.online_status === 'idle' ? '● Away' : u.online_status === 'busy' ? '● Sibuk' : '● Offline'}
-                                        </p>
-                                    </div>
+                                    {tab === 'groups' ? 'Groups' : tab === 'dm' ? 'DM' : 'Members'}
                                 </button>
                             ))}
-                    </div>
-                </div>
+                        </div>
 
-                {/* ── Chat Area ── */}
-                <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
-                    {(activeGroup && chatMode === 'workspace') || (activeDM && chatMode === 'dm') ? (
-                        <>
-                            {/* Chat Header */}
-                            <div className="h-14 border-b-2 border-border flex items-center justify-between px-3 md:px-5 flex-shrink-0 bg-card">
-                                <div className="flex items-center gap-2 md:gap-3">
-                                    {/* Mobile back button */}
-                                    <button
-                                        onClick={() => setMobileView('list')}
-                                        className="md:hidden p-1.5 rounded-lg hover:bg-muted text-mutedForeground hover:text-foreground transition-colors flex-shrink-0"
-                                    >
-                                        <X size={18} />
-                                    </button>
-                                    {chatMode === 'dm' && activeDM ? (
-                                        <>
-                                            <div className="relative">
-                                                <img src={activeDM.userAvatar} alt="" className="w-8 h-8 rounded-full border-2 border-border object-cover" />
-                                                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(activeDM.userStatus)}`} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-black text-foreground text-sm">{activeDM.userName}</h4>
-                                                <p className="text-[10px] text-mutedForeground flex items-center gap-1"><Lock size={9} /> Terenkripsi</p>
-                                            </div>
-                                        </>
-                                    ) : activeGroup ? (
-                                        <>
-                                            <div className="w-8 h-8 bg-muted rounded-lg border-2 border-border flex items-center justify-center overflow-hidden">
-                                                {activeGroup.icon?.startsWith('data:') ? <img src={activeGroup.icon} className="w-full h-full object-cover" /> : <Hash size={14} className="text-accent" />}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-black text-foreground text-sm">{activeGroup.name}</h4>
-                                                <p className="text-[10px] text-mutedForeground">{workspaceMembers.length} anggota · {onlineCount} online</p>
-                                            </div>
-                                        </>
-                                    ) : null}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    {/* Mute button in header for active group */}
-                                    {chatMode === 'workspace' && activeGroup && (
-                                        <button
-                                            onClick={() => toggleMuteGroup(activeGroup.id)}
-                                            className={`p-2 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-mutedForeground hover:bg-muted hover:text-foreground'}`}
-                                            title={mutedGroups.has(activeGroup.id) ? 'Unmute notifikasi' : 'Mute notifikasi'}
-                                        >
-                                            {mutedGroups.has(activeGroup.id) ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                                        </button>
-                                    )}
-                                    {/* More menu button */}
-                                    <div className="relative" ref={chatMoreMenuRef}>
-                                        <button
-                                            onClick={() => setShowChatMoreMenu(!showChatMoreMenu)}
-                                            className="p-2 rounded-xl text-mutedForeground hover:bg-muted hover:text-foreground transition-colors"
-                                            title="Opsi lainnya"
-                                        >
-                                            <MoreVertical size={16} />
-                                        </button>
-                                        {showChatMoreMenu && (
-                                            <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-48 overflow-hidden">
+                        {/* List */}
+                        <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5 custom-scrollbar">
+                            {sidebarTab === 'groups' && (
+                                <>
+                                    {filteredGroups.map(g => {
+                                        const isActive = activeGroup?.id === g.id && chatMode === 'workspace';
+                                        const unread = unreadCounts[g.id] || 0;
+                                        const isMuted = mutedGroups.has(g.id);
+                                        return (
+                                            <div key={g.id} className="relative group/item">
                                                 <button
-                                                    onClick={() => { setShowClearChatConfirm(true); setShowChatMoreMenu(false); }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
+                                                    onClick={() => { setActiveGroup(g); setChatMode('workspace'); setMobileView('chat'); }}
+                                                    className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10 text-accent' : 'hover:bg-muted text-foreground'}`}
                                                 >
-                                                    <Eraser size={12} /> Hapus Semua Chat
+                                                    <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        {g.icon?.startsWith('data:') ? <img src={g.icon} className="w-full h-full object-cover" /> : <Hash size={14} className={isActive ? 'text-accent' : 'text-mutedForeground'} />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold truncate">{g.name}</p>
+                                                    </div>
+                                                    {isMuted && <VolumeX size={10} className="text-mutedForeground flex-shrink-0" />}
+                                                    {unread > 0 && !isMuted && <span className="w-5 h-5 bg-accent text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
                                                 </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Messages with background pattern */}
-                            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2 custom-scrollbar" style={CHAT_BG_STYLE}>
-                                {currentMessages.map((msg, idx) => {
-                                    const isMe = msg.sender_id === currentUser.id;
-                                    const prevMsg = currentMessages[idx - 1];
-                                    const showSenderName = !prevMsg || prevMsg.sender_id !== msg.sender_id;
-                                    const replyData = msg.metadata?.reply_to;
-
-                                    // Group reactions by emoji
-                                    const reactionGroups = (msg.reactions || []).reduce((acc: any, r: any) => {
-                                        if (!acc[r.emoji]) acc[r.emoji] = { count: 0, users: [], hasMe: false };
-                                        acc[r.emoji].count++;
-                                        acc[r.emoji].users.push(r.user_id);
-                                        if (r.user_id === currentUser.id) acc[r.emoji].hasMe = true;
-                                        return acc;
-                                    }, {});
-
-                                    return (
-                                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
-                                            <div className={`flex gap-2 max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                {/* No avatar shown next to bubble — removed per request */}
-
-                                                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                                    {!isMe && showSenderName && (
-                                                        <span className="text-[10px] font-black text-mutedForeground mb-1 px-1">{msg.sender_name}</span>
-                                                    )}
-
-                                                    {/* Reply preview */}
-                                                    {replyData && (
-                                                        <div className={`text-[10px] px-2 py-1 rounded-lg mb-1 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
-                                                            <span className="font-black text-accent">{replyData.name}: </span>
-                                                            <span className="text-mutedForeground">{replyData.content?.slice(0, 60)}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Message bubble */}
-                                                    <div className="relative">
-                                                        <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe
-                                                            ? 'bg-accent text-white rounded-br-sm'
-                                                            : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'
-                                                        }`}>
-                                                            {msg.type === 'image' ? (
-                                                                <button onClick={() => setPreviewImage(msg.content)}>
-                                                                    <img src={msg.content} alt="img" className="max-w-[200px] max-h-[200px] rounded-xl object-cover hover:opacity-90 transition-opacity" />
-                                                                </button>
-                                                            ) : (
-                                                                <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Message actions */}
-                                                        <div className={`absolute top-0 ${isMe ? 'right-full mr-1' : 'left-full ml-1'} hidden group-hover:flex items-center gap-0.5 bg-card border border-border rounded-xl px-1.5 py-1 shadow-sm z-10`}>
-                                                            <button onClick={() => setReplyTo(msg)} className="p-1 hover:text-accent text-mutedForeground transition-colors" title="Reply">
-                                                                <Reply size={12} />
+                                                {/* Group context menu button */}
+                                                <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 transition-opacity" ref={groupMenuOpen === g.id ? groupMenuRef : undefined}>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setGroupMenuOpen(groupMenuOpen === g.id ? null : g.id); }}
+                                                        className="p-1 rounded-lg hover:bg-muted text-mutedForeground hover:text-foreground transition-colors"
+                                                    >
+                                                        <MoreVertical size={12} />
+                                                    </button>
+                                                    {groupMenuOpen === g.id && (
+                                                        <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-44 overflow-hidden">
+                                                            <button
+                                                                onClick={() => handleOpenEditGroup(g)}
+                                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
+                                                            >
+                                                                <Edit2 size={12} className="text-accent" /> Edit Group
                                                             </button>
                                                             <button
-                                                                onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id); }}
-                                                                className="p-1 hover:text-accent text-mutedForeground transition-colors"
-                                                                title="React"
+                                                                onClick={() => toggleMuteGroup(g.id)}
+                                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted transition-colors text-left text-xs font-bold text-foreground"
                                                             >
-                                                                <Smile size={12} />
+                                                                {isMuted ? <Volume2 size={12} className="text-emerald-500" /> : <VolumeX size={12} className="text-amber-500" />}
+                                                                {isMuted ? 'Unmute Notifikasi' : 'Mute Notifikasi'}
                                                             </button>
-                                                            {isMe && (
-                                                                <button onClick={() => setShowDeleteConfirm(msg.id)} className="p-1 hover:text-red-500 text-mutedForeground transition-colors" title="Delete">
-                                                                    <Trash2 size={12} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Emoji picker */}
-                                                        {showEmojiPicker === msg.id && (
-                                                            <div
-                                                                ref={emojiPickerRef}
-                                                                className={`absolute z-50 ${isMe ? 'right-0' : 'left-0'} top-full mt-1 bg-card border-2 border-border rounded-2xl p-3 shadow-hard w-52`}
-                                                                onClick={e => e.stopPropagation()}
+                                                            <div className="border-t border-border" />
+                                                            <button
+                                                                onClick={() => { setShowDeleteGroupConfirm(g); setGroupMenuOpen(null); }}
+                                                                className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
                                                             >
-                                                                <div className="flex flex-wrap gap-1.5">
-                                                                    {COMMON_EMOJIS.map(e => (
-                                                                        <button
-                                                                            key={e}
-                                                                            onClick={() => handleAddReaction(msg.id, e)}
-                                                                            className={`text-lg hover:scale-125 transition-transform p-0.5 rounded ${reactionGroups[e]?.hasMe ? 'bg-accent/20' : ''}`}
-                                                                        >
-                                                                            {e}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Reactions display */}
-                                                    {Object.keys(reactionGroups).length > 0 && (
-                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                            {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
-                                                                <button
-                                                                    key={emoji}
-                                                                    onClick={() => handleAddReaction(msg.id, emoji)}
-                                                                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border-2 transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground hover:border-accent'}`}
-                                                                >
-                                                                    <span>{emoji}</span>
-                                                                    <span className="font-bold">{data.count}</span>
-                                                                </button>
-                                                            ))}
+                                                                <Trash2 size={12} /> Hapus Group
+                                                            </button>
                                                         </div>
                                                     )}
-
-                                                    {/* Time + read */}
-                                                    <div className={`flex items-center gap-1 mt-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                        <span className="text-[9px] text-mutedForeground/60">
-                                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                        {isMe && (
-                                                            (msg.read_by?.length || 0) > 1
-                                                                ? <CheckCheck size={10} className="text-accent" />
-                                                                : <Check size={10} className="text-mutedForeground/60" />
-                                                        )}
-                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        );
+                                    })}
+                                    <button
+                                        onClick={() => setShowGroupModal(true)}
+                                        className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-mutedForeground hover:text-accent hover:bg-muted transition-all mt-2"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg border-2 border-dashed border-border flex items-center justify-center flex-shrink-0"><Plus size={14} /></div>
+                                        <span className="text-xs font-bold">Buat Group</span>
+                                    </button>
+                                </>
+                            )}
+
+                            {sidebarTab === 'dm' && dmConversations
+                                .filter(dm => dm.userName.toLowerCase().includes(searchQuery.toLowerCase()))
+                                .map(dm => {
+                                    const isActive = activeDM?.userId === dm.userId && chatMode === 'dm';
+                                    const unread = dmUnread[dm.userId] || 0;
+                                    return (
+                                        <button
+                                            key={dm.userId}
+                                            onClick={() => { setActiveDM(dm); setChatMode('dm'); setMobileView('chat'); }}
+                                            className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 transition-all text-left ${isActive ? 'bg-accent/10' : 'hover:bg-muted'}`}
+                                        >
+                                            <div className="relative flex-shrink-0">
+                                                <img src={dm.userAvatar} alt="" className="w-8 h-8 rounded-full border border-border object-cover bg-muted" />
+                                                <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card ${getStatusColor(dm.userStatus)}`} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`text-xs font-bold truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>{dm.userName}</p>
+                                                <p className="text-[9px] text-mutedForeground flex items-center gap-1"><Lock size={8} /> Encrypted</p>
+                                            </div>
+                                            {unread > 0 && <span className="w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center flex-shrink-0">{unread}</span>}
+                                        </button>
                                     );
                                 })}
 
-                                {/* Typing indicator */}
-                                {typingUsers.length > 0 && (
-                                    <div className="flex items-center gap-2 px-2">
-                                        <div className="flex gap-1">
-                                            {[0, 150, 300].map(delay => (
-                                                <div key={delay} className="w-2 h-2 bg-mutedForeground rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                                            ))}
+                            {sidebarTab === 'members' && filteredMembers
+                                .sort((a, b) => (a.online_status === 'online' ? -1 : 1))
+                                .map(u => (
+                                    <button
+                                        key={u.id}
+                                        onClick={() => {
+                                            if (u.id === currentUser.id) return; // Don't DM yourself
+                                            const dm: DMConversation = { userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status, unread: 0 };
+                                            setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setMobileView('chat');
+                                        }}
+                                        className="w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 hover:bg-muted transition-all text-left"
+                                    >
+                                        <div className="relative flex-shrink-0">
+                                            <img src={u.avatar_url} alt="" className="w-10 h-10 rounded-full border-2 border-border object-cover bg-muted" />
+                                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(u.online_status)}`} />
                                         </div>
-                                        <span className="text-[10px] text-mutedForeground font-bold italic">
-                                            {typingUsers.join(', ')} sedang mengetik...
-                                        </span>
-                                    </div>
-                                )}
-                                <div ref={chatEndRef} />
-                            </div>
-
-                            {/* Reply preview */}
-                            {replyTo && (
-                                <div className="px-5 py-2 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
-                                    <div className="flex items-center gap-2 text-xs">
-                                        <Reply size={12} className="text-accent" />
-                                        <span className="font-black text-accent">{replyTo.sender_name}:</span>
-                                        <span className="text-mutedForeground truncate max-w-[200px]">{replyTo.content}</span>
-                                    </div>
-                                    <button onClick={() => setReplyTo(null)} className="text-mutedForeground hover:text-foreground"><X size={14} /></button>
-                                </div>
-                            )}
-
-                            {/* Input Area */}
-                            <div className="px-4 py-3 border-t-2 border-border flex-shrink-0 relative bg-card">
-                                {/* Mention list */}
-                                {showMentionList && (
-                                    <div className="absolute bottom-full left-4 mb-2 bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden w-56 z-50">
-                                        {workspaceMembers
-                                            .filter(m => m.full_name.toLowerCase().includes(mentionSearch.toLowerCase()))
-                                            .slice(0, 5)
-                                            .map(m => (
-                                                <button key={m.id} onClick={() => insertMention(m.full_name)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left">
-                                                    <img src={m.avatar_url} alt="" className="w-6 h-6 rounded-full border border-border object-cover" />
-                                                    <span className="text-xs font-bold text-foreground">{m.full_name}</span>
-                                                    <div className={`ml-auto w-2 h-2 rounded-full ${getStatusColor(m.online_status)}`} />
-                                                </button>
-                                            ))}
-                                    </div>
-                                )}
-
-                                {/* Content mention list */}
-                                {showContentMentionList && (
-                                    <div className="absolute bottom-full left-4 mb-2 bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden w-64 z-50">
-                                        <div className="px-3 py-1.5 border-b border-border">
-                                            <p className="text-[10px] font-black text-mutedForeground uppercase tracking-wider">Mention Konten</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-foreground truncate">
+                                                {u.full_name}
+                                                {u.id === currentUser.id && <span className="ml-1 text-[9px] text-accent">(Anda)</span>}
+                                            </p>
+                                            <p className={`text-[10px] font-bold ${u.online_status === 'online' ? 'text-emerald-500' : u.online_status === 'busy' ? 'text-red-500' : u.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
+                                                {u.online_status === 'online' ? '● Online' : u.online_status === 'idle' ? '● Away' : u.online_status === 'busy' ? '● Sibuk' : '● Offline'}
+                                            </p>
                                         </div>
-                                        {contentItems
-                                            .filter(c => c.title.toLowerCase().includes(contentMentionSearch.toLowerCase()))
-                                            .slice(0, 6)
-                                            .map(c => (
-                                                <button key={c.id} onClick={() => insertContentMention(c)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left">
-                                                    <Hash size={12} className="text-accent flex-shrink-0" />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs font-bold text-foreground truncate">{c.title}</p>
-                                                        <p className="text-[9px] text-mutedForeground">{c.platform} · {c.status}</p>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                    </div>
-                                )}
-
-                                {/* Input emoji picker */}
-                                {showInputEmoji && (
-                                    <div ref={inputEmojiRef} className="absolute bottom-full right-4 mb-2 bg-card border-2 border-border rounded-2xl p-3 shadow-hard w-52 z-50">
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {COMMON_EMOJIS.map(e => (
-                                                <button key={e} onClick={() => { setInput(prev => prev + e); setShowInputEmoji(false); }} className="text-lg hover:scale-125 transition-transform p-0.5">
-                                                    {e}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex items-center gap-3 bg-muted border-2 border-border rounded-2xl px-4 py-2.5 focus-within:border-accent transition-colors min-h-[52px]">
-                                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-                                    <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0" title="Upload foto">
-                                        <ImageIcon size={24} />
                                     </button>
+                                ))}
+                        </div>
+                    </div>
+
+                    {/* ── Chat Area ── */}
+                    <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-w-0`}>
+                        {(activeGroup && chatMode === 'workspace') || (activeDM && chatMode === 'dm') ? (
+                            <>
+                                {/* Chat Header */}
+                                <div className="h-14 border-b-2 border-border flex items-center justify-between px-3 md:px-5 flex-shrink-0 bg-card">
+                                    <div className="flex items-center gap-2 md:gap-3">
+                                        {/* Mobile back button */}
+                                        <button
+                                            onClick={() => setMobileView('list')}
+                                            className="md:hidden p-1.5 rounded-lg hover:bg-muted text-mutedForeground hover:text-foreground transition-colors flex-shrink-0"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                        {chatMode === 'dm' && activeDM ? (
+                                            <>
+                                                <div className="relative">
+                                                    <img src={activeDM.userAvatar} alt="" className="w-8 h-8 rounded-full border-2 border-border object-cover" />
+                                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(activeDM.userStatus)}`} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-black text-foreground text-sm">{activeDM.userName}</h4>
+                                                    <p className="text-[10px] text-mutedForeground flex items-center gap-1"><Lock size={9} /> Terenkripsi</p>
+                                                </div>
+                                            </>
+                                        ) : activeGroup ? (
+                                            <>
+                                                <div className="w-8 h-8 bg-muted rounded-lg border-2 border-border flex items-center justify-center overflow-hidden">
+                                                    {activeGroup.icon?.startsWith('data:') ? <img src={activeGroup.icon} className="w-full h-full object-cover" /> : <Hash size={14} className="text-accent" />}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-black text-foreground text-sm">{activeGroup.name}</h4>
+                                                    <p className="text-[10px] text-mutedForeground">{workspaceMembers.length} anggota · {onlineCount} online</p>
+                                                </div>
+                                            </>
+                                        ) : null}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        {/* Mute button in header for active group */}
+                                        {chatMode === 'workspace' && activeGroup && (
+                                            <button
+                                                onClick={() => toggleMuteGroup(activeGroup.id)}
+                                                className={`p-2 rounded-xl transition-colors ${mutedGroups.has(activeGroup.id) ? 'text-amber-500 bg-amber-50 hover:bg-amber-100' : 'text-mutedForeground hover:bg-muted hover:text-foreground'}`}
+                                                title={mutedGroups.has(activeGroup.id) ? 'Unmute notifikasi' : 'Mute notifikasi'}
+                                            >
+                                                {mutedGroups.has(activeGroup.id) ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                                            </button>
+                                        )}
+                                        {/* More menu button */}
+                                        <div className="relative" ref={chatMoreMenuRef}>
+                                            <button
+                                                onClick={() => setShowChatMoreMenu(!showChatMoreMenu)}
+                                                className="p-2 rounded-xl text-mutedForeground hover:bg-muted hover:text-foreground transition-colors"
+                                                title="Opsi lainnya"
+                                            >
+                                                <MoreVertical size={16} />
+                                            </button>
+                                            {showChatMoreMenu && (
+                                                <div className="absolute right-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard w-48 overflow-hidden">
+                                                    <button
+                                                        onClick={() => { setShowClearChatConfirm(true); setShowChatMoreMenu(false); }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-red-50 transition-colors text-left text-xs font-bold text-red-500"
+                                                    >
+                                                        <Eraser size={12} /> Hapus Semua Chat
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Messages with background pattern */}
+                                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2 custom-scrollbar" style={CHAT_BG_STYLE}>
+                                    {currentMessages.map((msg, idx) => {
+                                        const isMe = msg.sender_id === currentUser.id;
+                                        const prevMsg = currentMessages[idx - 1];
+                                        const showSenderName = !prevMsg || prevMsg.sender_id !== msg.sender_id;
+                                        const replyData = msg.metadata?.reply_to;
+
+                                        // Group reactions by emoji
+                                        const reactionGroups = (msg.reactions || []).reduce((acc: any, r: any) => {
+                                            if (!acc[r.emoji]) acc[r.emoji] = { count: 0, users: [], hasMe: false };
+                                            acc[r.emoji].count++;
+                                            acc[r.emoji].users.push(r.user_id);
+                                            if (r.user_id === currentUser.id) acc[r.emoji].hasMe = true;
+                                            return acc;
+                                        }, {});
+
+                                        return (
+                                            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
+                                                <div className={`flex gap-2 max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                    {/* No avatar shown next to bubble — removed per request */}
+
+                                                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                                        {!isMe && showSenderName && (
+                                                            <span className="text-[10px] font-black text-mutedForeground mb-1 px-1">{msg.sender_name}</span>
+                                                        )}
+
+                                                        {/* Reply preview */}
+                                                        {replyData && (
+                                                            <div className={`text-[10px] px-2 py-1 rounded-lg mb-1 border-l-2 border-accent bg-muted/60 max-w-full ${isMe ? 'text-right' : 'text-left'}`}>
+                                                                <span className="font-black text-accent">{replyData.name}: </span>
+                                                                <span className="text-mutedForeground">{replyData.content?.slice(0, 60)}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Message bubble */}
+                                                        <div className="relative">
+                                                            <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium max-w-full break-words shadow-sm ${isMe
+                                                                ? 'bg-accent text-white rounded-br-sm'
+                                                                : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm'
+                                                                }`}>
+                                                                {msg.type === 'image' ? (
+                                                                    <button onClick={() => setPreviewImage(msg.content)}>
+                                                                        <img src={msg.content} alt="img" className="max-w-[200px] max-h-[200px] rounded-xl object-cover hover:opacity-90 transition-opacity" />
+                                                                    </button>
+                                                                ) : (
+                                                                    <span className="whitespace-pre-wrap">{renderMessageContent(msg.content)}</span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Message actions */}
+                                                            <div className={`absolute top-0 ${isMe ? 'right-full mr-1' : 'left-full ml-1'} hidden group-hover:flex items-center gap-0.5 bg-card border border-border rounded-xl px-1.5 py-1 shadow-sm z-10`}>
+                                                                <button onClick={() => setReplyTo(msg)} className="p-1 hover:text-accent text-mutedForeground transition-colors" title="Reply">
+                                                                    <Reply size={12} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id); }}
+                                                                    className="p-1 hover:text-accent text-mutedForeground transition-colors"
+                                                                    title="React"
+                                                                >
+                                                                    <Smile size={12} />
+                                                                </button>
+                                                                {isMe && (
+                                                                    <button onClick={() => setShowDeleteConfirm(msg.id)} className="p-1 hover:text-red-500 text-mutedForeground transition-colors" title="Delete">
+                                                                        <Trash2 size={12} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Emoji picker */}
+                                                            {showEmojiPicker === msg.id && (
+                                                                <div
+                                                                    ref={emojiPickerRef}
+                                                                    className={`absolute z-50 ${isMe ? 'right-0' : 'left-0'} top-full mt-1 bg-card border-2 border-border rounded-2xl p-3 shadow-hard w-52`}
+                                                                    onClick={e => e.stopPropagation()}
+                                                                >
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        {COMMON_EMOJIS.map(e => (
+                                                                            <button
+                                                                                key={e}
+                                                                                onClick={() => handleAddReaction(msg.id, e)}
+                                                                                className={`text-lg hover:scale-125 transition-transform p-0.5 rounded ${reactionGroups[e]?.hasMe ? 'bg-accent/20' : ''}`}
+                                                                            >
+                                                                                {e}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Reactions display */}
+                                                        {Object.keys(reactionGroups).length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
+                                                                    <button
+                                                                        key={emoji}
+                                                                        onClick={() => handleAddReaction(msg.id, emoji)}
+                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border-2 transition-all ${data.hasMe ? 'bg-accent/10 border-accent text-accent' : 'bg-muted border-border text-foreground hover:border-accent'}`}
+                                                                    >
+                                                                        <span>{emoji}</span>
+                                                                        <span className="font-bold">{data.count}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Time + read */}
+                                                        <div className={`flex items-center gap-1 mt-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                            <span className="text-[9px] text-mutedForeground/60">
+                                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                            {isMe && (
+                                                                (msg.read_by?.length || 0) > 1
+                                                                    ? <CheckCheck size={10} className="text-accent" />
+                                                                    : <Check size={10} className="text-mutedForeground/60" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Typing indicator */}
+                                    {typingUsers.length > 0 && (
+                                        <div className="flex items-center gap-2 px-2">
+                                            <div className="flex gap-1">
+                                                {[0, 150, 300].map(delay => (
+                                                    <div key={delay} className="w-2 h-2 bg-mutedForeground rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                                                ))}
+                                            </div>
+                                            <span className="text-[10px] text-mutedForeground font-bold italic">
+                                                {typingUsers.join(', ')} sedang mengetik...
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div ref={chatEndRef} />
+                                </div>
+
+                                {/* Reply preview */}
+                                {replyTo && (
+                                    <div className="px-5 py-2 bg-muted/50 border-t border-border flex items-center justify-between flex-shrink-0">
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <Reply size={12} className="text-accent" />
+                                            <span className="font-black text-accent">{replyTo.sender_name}:</span>
+                                            <span className="text-mutedForeground truncate max-w-[200px]">{replyTo.content}</span>
+                                        </div>
+                                        <button onClick={() => setReplyTo(null)} className="text-mutedForeground hover:text-foreground"><X size={14} /></button>
+                                    </div>
+                                )}
+
+                                {/* Input Area */}
+                                <div className="px-4 py-3 border-t-2 border-border flex-shrink-0 relative bg-card">
+                                    {/* Mention list */}
+                                    {showMentionList && (
+                                        <div className="absolute bottom-full left-4 mb-2 bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden w-56 z-50">
+                                            {workspaceMembers
+                                                .filter(m => m.full_name.toLowerCase().includes(mentionSearch.toLowerCase()))
+                                                .slice(0, 5)
+                                                .map(m => (
+                                                    <button key={m.id} onClick={() => insertMention(m.full_name)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left">
+                                                        <img src={m.avatar_url} alt="" className="w-6 h-6 rounded-full border border-border object-cover" />
+                                                        <span className="text-xs font-bold text-foreground">{m.full_name}</span>
+                                                        <div className={`ml-auto w-2 h-2 rounded-full ${getStatusColor(m.online_status)}`} />
+                                                    </button>
+                                                ))}
+                                        </div>
+                                    )}
+
+                                    {/* Content mention list */}
+                                    {showContentMentionList && (
+                                        <div className="absolute bottom-full left-4 mb-2 bg-card border-2 border-border rounded-2xl shadow-hard overflow-hidden w-64 z-50">
+                                            <div className="px-3 py-1.5 border-b border-border">
+                                                <p className="text-[10px] font-black text-mutedForeground uppercase tracking-wider">Mention Konten</p>
+                                            </div>
+                                            {contentItems
+                                                .filter(c => c.title.toLowerCase().includes(contentMentionSearch.toLowerCase()))
+                                                .slice(0, 6)
+                                                .map(c => (
+                                                    <button key={c.id} onClick={() => insertContentMention(c)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left">
+                                                        <Hash size={12} className="text-accent flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-foreground truncate">{c.title}</p>
+                                                            <p className="text-[9px] text-mutedForeground">{c.platform} · {c.status}</p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                        </div>
+                                    )}
+
+                                    {/* Input emoji picker */}
+                                    {showInputEmoji && (
+                                        <div ref={inputEmojiRef} className="absolute bottom-full right-4 mb-2 bg-card border-2 border-border rounded-2xl p-3 shadow-hard w-52 z-50">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {COMMON_EMOJIS.map(e => (
+                                                    <button key={e} onClick={() => { setInput(prev => prev + e); setShowInputEmoji(false); }} className="text-lg hover:scale-125 transition-transform p-0.5">
+                                                        {e}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-3 bg-muted border-2 border-border rounded-2xl px-4 py-2.5 focus-within:border-accent transition-colors min-h-[52px]">
+                                        <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+                                        <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0" title="Upload foto">
+                                            <ImageIcon size={24} />
+                                        </button>
+                                        <input
+                                            type="text"
+                                            value={input}
+                                            onChange={handleInputChange}
+                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                                            placeholder={chatMode === 'dm' ? `Pesan ke ${activeDM?.userName}... (@ mention, # konten)` : `Pesan ke #${activeGroup?.name}... (@ mention, # konten)`}
+                                            className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground"
+                                        />
+                                        <button
+                                            onClick={() => setShowInputEmoji(!showInputEmoji)}
+                                            className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0"
+                                            title="Emoji"
+                                        >
+                                            <Smile size={22} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleSendMessage()}
+                                            disabled={!input.trim()}
+                                            className="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                                        >
+                                            <Send size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center text-center p-8">
+                                <div className="space-y-3">
+                                    <div className="w-16 h-16 mx-auto bg-accent/10 rounded-2xl flex items-center justify-center">
+                                        <MessageSquare size={32} className="text-accent opacity-60" />
+                                    </div>
+                                    <h3 className="font-black text-foreground">Pilih channel atau DM</h3>
+                                    <p className="text-mutedForeground text-sm">Pilih group atau mulai percakapan baru</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Modals ── */}
+
+                {/* Image Preview */}
+                {previewImage && (
+                    <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
+                        <img src={previewImage} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
+                        <button className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"><X size={20} /></button>
+                    </div>
+                )}
+
+                {/* Delete Message Confirm */}
+                {showDeleteConfirm && (
+                    <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(null)}>
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                            <h3 className="font-black text-foreground mb-2">Hapus Pesan?</h3>
+                            <p className="text-mutedForeground text-sm mb-4">Pesan ini akan dihapus permanen.</p>
+                            <div className="flex gap-3">
+                                <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)} className="flex-1">Batal</Button>
+                                <Button onClick={() => handleDeleteMessage(showDeleteConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Clear Chat Confirm */}
+                {showClearChatConfirm && (
+                    <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowClearChatConfirm(false)}>
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                            <h3 className="font-black text-foreground mb-2">Hapus Semua Chat?</h3>
+                            <p className="text-mutedForeground text-sm mb-4">
+                                {chatMode === 'dm' ? 'Semua pesan DM ini akan dihapus permanen.' : `Semua pesan di #${activeGroup?.name} akan dihapus permanen.`}
+                            </p>
+                            <div className="flex gap-3">
+                                <Button variant="secondary" onClick={() => setShowClearChatConfirm(false)} className="flex-1">Batal</Button>
+                                <Button onClick={handleClearChat} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Semua</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Delete Group Confirm */}
+                {showDeleteGroupConfirm && (
+                    <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteGroupConfirm(null)}>
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                            <h3 className="font-black text-foreground mb-2">Hapus Group?</h3>
+                            <p className="text-mutedForeground text-sm mb-1">Group <span className="font-black text-foreground">#{showDeleteGroupConfirm.name}</span> akan dihapus permanen.</p>
+                            <p className="text-mutedForeground text-xs mb-4">Semua pesan di dalam group ini juga akan terhapus.</p>
+                            <div className="flex gap-3">
+                                <Button variant="secondary" onClick={() => setShowDeleteGroupConfirm(null)} className="flex-1">Batal</Button>
+                                <Button onClick={() => handleDeleteGroup(showDeleteGroupConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Group</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Group Modal */}
+                {showEditGroupModal && (
+                    <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEditGroupModal(null)}>
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-md w-full" onClick={e => e.stopPropagation()}>
+                            <h3 className="font-black text-foreground text-lg mb-4">Edit Group</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
                                     <input
                                         type="text"
-                                        value={input}
-                                        onChange={handleInputChange}
-                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                                        placeholder={chatMode === 'dm' ? `Pesan ke ${activeDM?.userName}... (@ mention, # konten)` : `Pesan ke #${activeGroup?.name}... (@ mention, # konten)`}
-                                        className="flex-1 bg-transparent outline-none text-sm font-medium text-foreground placeholder:text-mutedForeground"
+                                        value={editGroupName}
+                                        onChange={e => setEditGroupName(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleSaveEditGroup(); }}
+                                        placeholder="Nama group..."
+                                        className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
+                                        autoFocus
                                     />
-                                    <button
-                                        onClick={() => setShowInputEmoji(!showInputEmoji)}
-                                        className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0"
-                                        title="Emoji"
-                                    >
-                                        <Smile size={22} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleSendMessage()}
-                                        disabled={!input.trim()}
-                                        className="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center hover:bg-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex-shrink-0"
-                                    >
-                                        <Send size={18} />
-                                    </button>
                                 </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 flex items-center justify-center text-center p-8">
-                            <div className="space-y-3">
-                                <div className="w-16 h-16 mx-auto bg-accent/10 rounded-2xl flex items-center justify-center">
-                                    <MessageSquare size={32} className="text-accent opacity-60" />
+                                <div>
+                                    <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-2">Anggota Group</label>
+                                    <div className="max-h-48 overflow-y-auto space-y-1 border-2 border-border rounded-xl p-2">
+                                        {workspaceMembers.map(m => (
+                                            <label key={m.id} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted cursor-pointer transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editGroupMembers.includes(m.id)}
+                                                    onChange={e => {
+                                                        if (e.target.checked) setEditGroupMembers(prev => [...prev, m.id]);
+                                                        else setEditGroupMembers(prev => prev.filter(id => id !== m.id));
+                                                    }}
+                                                    className="w-4 h-4 accent-accent rounded"
+                                                />
+                                                <div className="relative flex-shrink-0">
+                                                    <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full border border-border object-cover bg-muted" />
+                                                    <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-card ${getStatusColor(m.online_status)}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-foreground truncate">{m.full_name}</p>
+                                                    <p className="text-[9px] text-mutedForeground">{m.role}</p>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-[10px] text-mutedForeground mt-1">{editGroupMembers.length} anggota dipilih</p>
                                 </div>
-                                <h3 className="font-black text-foreground">Pilih channel atau DM</h3>
-                                <p className="text-mutedForeground text-sm">Pilih group atau mulai percakapan baru</p>
+                                <div className="flex gap-3 pt-2">
+                                    <Button variant="secondary" onClick={() => setShowEditGroupModal(null)} className="flex-1">Batal</Button>
+                                    <Button onClick={handleSaveEditGroup} disabled={!editGroupName.trim()} className="flex-1">Simpan</Button>
+                                </div>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
+
+                {/* User Info Modal */}
+                {userInfoModal && (
+                    <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setUserInfoModal(null)}>
+                        <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-start gap-4 mb-4">
+                                <div className="relative">
+                                    <img src={userInfoModal.avatar_url} alt="" className="w-16 h-16 rounded-2xl border-2 border-border object-cover" />
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${getStatusColor(userInfoModal.online_status)}`} />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-black text-foreground text-lg">{userInfoModal.full_name}</h3>
+                                    <p className="text-sm text-mutedForeground font-bold">{userInfoModal.role}</p>
+                                    <p className={`text-xs font-bold mt-1 ${userInfoModal.online_status === 'online' ? 'text-emerald-500' : userInfoModal.online_status === 'busy' ? 'text-red-500' : 'text-mutedForeground'}`}>
+                                        {userInfoModal.online_status === 'online' ? '● Online' : userInfoModal.online_status === 'idle' ? '● Away' : userInfoModal.online_status === 'busy' ? '● Sibuk' : '● Offline'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button
+                                    icon={<MessageCircle size={16} />}
+                                    onClick={() => {
+                                        const dm: DMConversation = { userId: userInfoModal.id, userName: userInfoModal.full_name, userAvatar: userInfoModal.avatar_url, userStatus: userInfoModal.online_status, unread: 0 };
+                                        setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setUserInfoModal(null);
+                                    }}
+                                    className="flex-1"
+                                >
+                                    Kirim Pesan
+                                </Button>
+                                <Button variant="secondary" onClick={() => setUserInfoModal(null)} className="flex-1">Tutup</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Create Group Modal */}
+                <Modal isOpen={showGroupModal} onClose={() => setShowGroupModal(false)} title="Buat Group Baru">
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
+                            <input
+                                type="text"
+                                value={newGroupName}
+                                onChange={e => setNewGroupName(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleCreateGroup(); }}
+                                placeholder="Contoh: Tim Konten IG"
+                                className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <Button variant="secondary" onClick={() => setShowGroupModal(false)} className="flex-1">Batal</Button>
+                            <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()} className="flex-1">Buat Group</Button>
+                        </div>
+                    </div>
+                </Modal>
             </div>
-
-            {/* ── Modals ── */}
-
-            {/* Image Preview */}
-            {previewImage && (
-                <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
-                    <img src={previewImage} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
-                    <button className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"><X size={20} /></button>
-                </div>
-            )}
-
-            {/* Delete Message Confirm */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(null)}>
-                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
-                        <h3 className="font-black text-foreground mb-2">Hapus Pesan?</h3>
-                        <p className="text-mutedForeground text-sm mb-4">Pesan ini akan dihapus permanen.</p>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)} className="flex-1">Batal</Button>
-                            <Button onClick={() => handleDeleteMessage(showDeleteConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Clear Chat Confirm */}
-            {showClearChatConfirm && (
-                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowClearChatConfirm(false)}>
-                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
-                        <h3 className="font-black text-foreground mb-2">Hapus Semua Chat?</h3>
-                        <p className="text-mutedForeground text-sm mb-4">
-                            {chatMode === 'dm' ? 'Semua pesan DM ini akan dihapus permanen.' : `Semua pesan di #${activeGroup?.name} akan dihapus permanen.`}
-                        </p>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" onClick={() => setShowClearChatConfirm(false)} className="flex-1">Batal</Button>
-                            <Button onClick={handleClearChat} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Semua</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Group Confirm */}
-            {showDeleteGroupConfirm && (
-                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowDeleteGroupConfirm(null)}>
-                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
-                        <h3 className="font-black text-foreground mb-2">Hapus Group?</h3>
-                        <p className="text-mutedForeground text-sm mb-1">Group <span className="font-black text-foreground">#{showDeleteGroupConfirm.name}</span> akan dihapus permanen.</p>
-                        <p className="text-mutedForeground text-xs mb-4">Semua pesan di dalam group ini juga akan terhapus.</p>
-                        <div className="flex gap-3">
-                            <Button variant="secondary" onClick={() => setShowDeleteGroupConfirm(null)} className="flex-1">Batal</Button>
-                            <Button onClick={() => handleDeleteGroup(showDeleteGroupConfirm)} className="flex-1 bg-red-500 hover:bg-red-600">Hapus Group</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Edit Group Modal */}
-            {showEditGroupModal && (
-                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEditGroupModal(null)}>
-                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-md w-full" onClick={e => e.stopPropagation()}>
-                        <h3 className="font-black text-foreground text-lg mb-4">Edit Group</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
-                                <input
-                                    type="text"
-                                    value={editGroupName}
-                                    onChange={e => setEditGroupName(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') handleSaveEditGroup(); }}
-                                    placeholder="Nama group..."
-                                    className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-2">Anggota Group</label>
-                                <div className="max-h-48 overflow-y-auto space-y-1 border-2 border-border rounded-xl p-2">
-                                    {workspaceMembers.map(m => (
-                                        <label key={m.id} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted cursor-pointer transition-colors">
-                                            <input
-                                                type="checkbox"
-                                                checked={editGroupMembers.includes(m.id)}
-                                                onChange={e => {
-                                                    if (e.target.checked) setEditGroupMembers(prev => [...prev, m.id]);
-                                                    else setEditGroupMembers(prev => prev.filter(id => id !== m.id));
-                                                }}
-                                                className="w-4 h-4 accent-accent rounded"
-                                            />
-                                            <div className="relative flex-shrink-0">
-                                                <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full border border-border object-cover bg-muted" />
-                                                <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-card ${getStatusColor(m.online_status)}`} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-foreground truncate">{m.full_name}</p>
-                                                <p className="text-[9px] text-mutedForeground">{m.role}</p>
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                                <p className="text-[10px] text-mutedForeground mt-1">{editGroupMembers.length} anggota dipilih</p>
-                            </div>
-                            <div className="flex gap-3 pt-2">
-                                <Button variant="secondary" onClick={() => setShowEditGroupModal(null)} className="flex-1">Batal</Button>
-                                <Button onClick={handleSaveEditGroup} disabled={!editGroupName.trim()} className="flex-1">Simpan</Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* User Info Modal */}
-            {userInfoModal && (
-                <div className="fixed inset-0 bg-black/40 z-[9999] flex items-center justify-center p-4" onClick={() => setUserInfoModal(null)}>
-                    <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-start gap-4 mb-4">
-                            <div className="relative">
-                                <img src={userInfoModal.avatar_url} alt="" className="w-16 h-16 rounded-2xl border-2 border-border object-cover" />
-                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${getStatusColor(userInfoModal.online_status)}`} />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-black text-foreground text-lg">{userInfoModal.full_name}</h3>
-                                <p className="text-sm text-mutedForeground font-bold">{userInfoModal.role}</p>
-                                <p className={`text-xs font-bold mt-1 ${userInfoModal.online_status === 'online' ? 'text-emerald-500' : userInfoModal.online_status === 'busy' ? 'text-red-500' : 'text-mutedForeground'}`}>
-                                    {userInfoModal.online_status === 'online' ? '● Online' : userInfoModal.online_status === 'idle' ? '● Away' : userInfoModal.online_status === 'busy' ? '● Sibuk' : '● Offline'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex gap-3">
-                            <Button
-                                icon={<MessageCircle size={16} />}
-                                onClick={() => {
-                                    const dm: DMConversation = { userId: userInfoModal.id, userName: userInfoModal.full_name, userAvatar: userInfoModal.avatar_url, userStatus: userInfoModal.online_status, unread: 0 };
-                                    setActiveDM(dm); setChatMode('dm'); setSidebarTab('dm'); setUserInfoModal(null);
-                                }}
-                                className="flex-1"
-                            >
-                                Kirim Pesan
-                            </Button>
-                            <Button variant="secondary" onClick={() => setUserInfoModal(null)} className="flex-1">Tutup</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Create Group Modal */}
-            <Modal isOpen={showGroupModal} onClose={() => setShowGroupModal(false)} title="Buat Group Baru">
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-xs font-black text-mutedForeground uppercase tracking-wider block mb-1.5">Nama Group</label>
-                        <input
-                            type="text"
-                            value={newGroupName}
-                            onChange={e => setNewGroupName(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') handleCreateGroup(); }}
-                            placeholder="Contoh: Tim Konten IG"
-                            className="w-full px-4 py-3 bg-muted border-2 border-border rounded-xl text-sm font-medium text-foreground outline-none focus:border-accent transition-colors"
-                            autoFocus
-                        />
-                    </div>
-                    <div className="flex gap-3 pt-2">
-                        <Button variant="secondary" onClick={() => setShowGroupModal(false)} className="flex-1">Batal</Button>
-                        <Button onClick={handleCreateGroup} disabled={!newGroupName.trim()} className="flex-1">Buat Group</Button>
-                    </div>
-                </div>
-            </Modal>
-        </div>
         </>
     );
 };

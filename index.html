@@ -54,6 +54,7 @@
     #root {
       width: 100%;
       height: 100%;
+      height: 100dvh;
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -126,10 +127,21 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Apply zoom ONLY on desktop. Using zoom on mobile Safari breaks 'fixed bottom-0' */
+    /* Apply zoom ONLY on desktop/tablet. 
+       When zoom 0.9 is applied, we must scale the physical height to 111.11% (1/0.9)
+       so the visual layout still fills 100% of the viewport. */
     @media (min-width: 768px) {
       body {
         zoom: 0.9;
+        min-height: calc(100dvh / 0.9);
+      }
+
+      /* Scale root and h-screen utility to fill the zoomed body physically */
+      #root,
+      .h-screen,
+      .min-h-screen {
+        height: calc(100dvh / 0.9) !important;
+        min-height: calc(100dvh / 0.9) !important;
       }
     }
 
@@ -143,8 +155,14 @@
     }
 
     .mobile-safe-top-spacer {
-      height: env(safe-area-inset-top, 24px);
+      height: max(env(safe-area-inset-top, 0px), 24px);
       flex-shrink: 0;
+    }
+
+    @media (max-width: 767px) {
+      .mobile-safe-top-spacer {
+        height: max(env(safe-area-inset-top, 0px), 32px);
+      }
     }
 
     /* Fallback for standalone/PWA on Android where safe-area is 0 but status bar covers content */
@@ -359,17 +377,7 @@
 
     }
 
-    /* Override min-h-screen and h-screen to fill viewport correctly. 
-       On desktop, we use 100% to fill the zoomed body physically.
-       On mobile, we use 100dvh to handle dynamic status bars. */
-    .min-h-screen {
-      min-height: 100% !important;
-    }
-
-    .h-screen {
-      height: 100% !important;
-    }
-
+    /* Handle mobile dynamic viewport height specifically */
     @media (max-width: 767px) {
       .min-h-screen {
         min-height: 100dvh !important;

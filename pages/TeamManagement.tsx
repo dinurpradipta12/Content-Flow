@@ -716,7 +716,7 @@ export const TeamManagement: React.FC = () => {
                 <div className="hidden lg:flex w-full lg:w-1/3 flex-col gap-2 sm:gap-3 md:gap-4 min-h-0">
                     <div className="bg-card rounded-xl sm:rounded-2xl border-3 sm:border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
                         <div className="p-2 sm:p-3 md:p-4 bg-primary flex items-center gap-2 sm:gap-3">
-                            <Layers className="text-white" size={20} className="sm:w-6 sm:h-6" />
+                            <Layers className="text-white sm:w-6 sm:h-6" size={20} />
                             <h3 className="font-heading font-black text-white text-sm sm:text-base md:text-lg">Workspace</h3>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 space-y-1.5 sm:space-y-2 md:space-y-3 bg-slate-500/5">
@@ -743,7 +743,7 @@ export const TeamManagement: React.FC = () => {
                                                 />
                                             ) : (
                                                 <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg bg-pink-500/10 border-2 border-pink-500/20 flex items-center justify-center flex-shrink-0">
-                                                    <Globe className="text-pink-500" size={16} className="sm:w-5 sm:h-5" />
+                                                    <Globe className="text-pink-500 sm:w-5 sm:h-5" size={16} />
                                                 </div>
                                             )}
                                             <div className="min-w-0">
@@ -778,7 +778,7 @@ export const TeamManagement: React.FC = () => {
                             {/* SEARCH BAR */}
                             <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 md:gap-3 w-full sm:w-auto z-10 flex-1 sm:flex-none">
                                 <div className="relative w-full sm:w-40 md:w-48 lg:w-64">
-                                    <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} className="sm:w-4 sm:h-4" />
+                                    <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 text-slate-400 sm:w-4 sm:h-4" size={12} />
                                     <input
                                         type="text"
                                         placeholder="Cari..."

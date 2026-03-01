@@ -43,7 +43,7 @@
 import { supabase } from './supabaseClient';
 
 // VAPID public key from environment (generate with: npx web-push generate-vapid-keys)
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+const VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY || '';
 
 /**
  * Convert VAPID public key from base64 to Uint8Array
@@ -126,7 +126,7 @@ export const registerPushNotifications = async (userId: string): Promise<boolean
 
         // 3. Update app badge if supported
         if ('setAppBadge' in navigator) {
-            (navigator as any).setAppBadge(0).catch(() => {});
+            (navigator as any).setAppBadge(0).catch(() => { });
         }
 
         // 4. Listen for messages from service worker
@@ -225,9 +225,8 @@ export const showLocalNotification = async (title: string, options?: Notificatio
             await registration.showNotification(title, {
                 icon: '/icon-192.png',
                 badge: '/icon-72.png',
-                vibrate: [100, 50, 100],
-                ...options
-            });
+                ...(options as any)
+            } as any);
         }
     } catch (err) {
         // Fallback to basic Notification API

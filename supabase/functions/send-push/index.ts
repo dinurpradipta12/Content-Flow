@@ -13,13 +13,20 @@
  *    { "recipient_id": "...", "title": "...", "message": "...", "url": "/" }
  */
 
+// @ts-ignore
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+// @ts-ignore
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// @ts-ignore
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') || '';
+// @ts-ignore
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+// @ts-ignore
 const VAPID_EMAIL = Deno.env.get('VAPID_EMAIL') || 'mailto:admin@example.com';
+// @ts-ignore
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+// @ts-ignore
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
 // ── VAPID JWT Signing ─────────────────────────────────────────────────────────
@@ -58,10 +65,9 @@ async function generateVapidHeaders(endpoint: string, publicKey: string, private
         new TextEncoder().encode(signingInput)
     );
 
-    const token = `${signingInput}.${
-        btoa(String.fromCharCode(...new Uint8Array(signature)))
+    const token = `${signingInput}.${btoa(String.fromCharCode(...new Uint8Array(signature)))
             .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-    }`;
+        }`;
 
     return {
         Authorization: `vapid t=${token}, k=${publicKey}`,

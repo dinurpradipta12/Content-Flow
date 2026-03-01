@@ -25,7 +25,7 @@ import {
     Users,
     Palette,
     Upload,
-    Loader
+    Loader2
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 import { uploadToCloudinary } from '../services/cloudinaryService';
@@ -113,10 +113,10 @@ export const WorkspaceSettings: React.FC = () => {
         setUploading(iconType);
         try {
             const url = await uploadToCloudinary(file, 'aruneeka-icons');
-            
+
             // Update config dengan URL dari Cloudinary
             setConfig(prev => prev ? { ...prev, [iconType]: url } : null);
-            
+
             sendNotification({
                 type: 'success',
                 title: 'Upload Berhasil',
@@ -181,7 +181,7 @@ export const WorkspaceSettings: React.FC = () => {
             }).eq('id', 1);
 
             if (error) throw error;
-            
+
             // Log icon change to history
             const userId = localStorage.getItem('user_id');
             await supabase.from('app_icons_history').insert({
@@ -192,7 +192,7 @@ export const WorkspaceSettings: React.FC = () => {
                 changed_by: userId,
                 notes: 'Icon configuration updated via WorkspaceSettings'
             });
-            
+
             window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Konfigurasi antarmuka dan icon berhasil disimpan secara global!' } }));
         } catch (err: any) {
             console.error('Save Interface Error:', err);
@@ -460,7 +460,7 @@ export const WorkspaceSettings: React.FC = () => {
                                                     className="bg-accent hover:bg-accent/90 text-white px-4 py-3 rounded-xl flex items-center gap-2"
                                                 >
                                                     {uploading === 'app_icon_192' ? (
-                                                        <Loader className="w-4 h-4 animate-spin" />
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
                                                     ) : (
                                                         <Upload className="w-4 h-4" />
                                                     )}
@@ -495,7 +495,7 @@ export const WorkspaceSettings: React.FC = () => {
                                                     className="bg-accent hover:bg-accent/90 text-white px-4 py-3 rounded-xl flex items-center gap-2"
                                                 >
                                                     {uploading === 'app_icon_512' ? (
-                                                        <Loader className="w-4 h-4 animate-spin" />
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
                                                     ) : (
                                                         <Upload className="w-4 h-4" />
                                                     )}
@@ -530,7 +530,7 @@ export const WorkspaceSettings: React.FC = () => {
                                                     className="bg-accent hover:bg-accent/90 text-white px-4 py-3 rounded-xl flex items-center gap-2"
                                                 >
                                                     {uploading === 'app_icon_mask' ? (
-                                                        <Loader className="w-4 h-4 animate-spin" />
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
                                                     ) : (
                                                         <Upload className="w-4 h-4" />
                                                     )}

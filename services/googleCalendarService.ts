@@ -7,7 +7,7 @@ import { supabase } from './supabaseClient';
 // 3. OAuth 2.0 Client ID (Web Application)
 // 4. Authorized Redirect URI: http://localhost:5173 (or your production URL)
 
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const CLIENT_ID = (import.meta as any).env.VITE_GOOGLE_CLIENT_ID;
 const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
 
 export const googleCalendarService = {

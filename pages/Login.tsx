@@ -514,6 +514,21 @@ export const Login: React.FC = () => {
                         </div>
                     </form>
 
+                    {/* Emergency Notes for Unconfirmed Emails */}
+                    <div className="mt-6 p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm shrink-0">
+                                <AlertCircle size={16} className="text-accent" />
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Kendala Konfirmasi Email?</h4>
+                                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                                    Jika email konfirmasi belum masuk, tetap coba login. Jika muncul pesan "Email belum dikonfirmasi", gunakan **Username** Anda (HURUF BESAR) sebagai kode aktivasi darurat di kolom yang disediakan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     {!isSupabaseConfigured() && (
                         <div className="mt-4 p-3 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg border border-yellow-200 text-center">
                             ⚠️ Database belum terhubung. Konfigurasi di dalam aplikasi (Settings) atau cek file .env.

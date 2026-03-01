@@ -275,7 +275,7 @@ export const Register: React.FC = () => {
                             <p className="text-3xl font-black text-slate-900 tracking-[0.2em] font-mono">{form.subscriptionCode}</p>
                             <p className="text-xs text-slate-500 font-medium mt-3 leading-relaxed">
                                 {selectedPackage?.price === 0
-                                    ? "Simpan kode ini! Gunakan sebagai 'Kode Aktivasi' jika Anda gagal masuk karena kendala email konfirmasi."
+                                    ? <><strong>Simpan kode ini!</strong> Gunakan kode di atas (atau <strong>Username</strong> Anda dalam <strong>HURUF BESAR</strong>) sebagai 'Kode Aktivasi' jika email konfirmasi tidak kunjung masuk di halaman Login.</>
                                     : "Kirimkan kode ini ke Developer untuk proses verifikasi melalui salah satu metode berikut:"
                                 }
                             </p>

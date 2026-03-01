@@ -1308,6 +1308,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <aside
                     className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 translate-x-0'}`}
                 >
+                    <div className="flex-shrink-0 mobile-safe-top-spacer"></div>
                     <div className={`h-auto flex flex-col shrink-0 py-10 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
                         <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'} `}>
                             {(() => {
@@ -1475,8 +1476,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <PresenceToast />
                     <ChatNotificationListener />
                     {/* Mobile & Tablet top safe area spacer - pushes header below status bar */}
-                    <div className="lg:hidden flex-shrink-0 mobile-safe-top-spacer"></div>
-                    <header className={`mt-0 sm:mt-0 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-3 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-16 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 sm:px-4 md:px-6 py-2 sm:py-2 md:py-3 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                    <div className="flex-shrink-0 mobile-safe-top-spacer"></div>
+                    <header className={`mt-0 md:mt-4 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-3 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-16 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 sm:px-4 md:px-6 py-2 sm:py-2 md:py-3 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
 
                         {/* ── MOBILE HEADER (< md) ── */}
                         <div className="flex md:hidden items-center justify-between w-full gap-1 pb-2">
