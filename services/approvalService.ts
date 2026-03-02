@@ -94,7 +94,7 @@ values
     {"id": "tanggal_posting", "label": "Tanggal Posting", "type": "date", "required": true},
     {"id": "platform", "label": "Channel / Platform", "type": "select", "required": true, "options": ["Instagram", "TikTok", "YouTube", "LinkedIn", "Facebook"]},
     {"id": "workspace", "label": "Akun / Workspace", "type": "workspace_select", "required": true},
-    {"id": "content_files", "label": "Upload Konten (Max 15 JPG, 30MB)", "type": "file_multiple", "required": true}
+    {"id": "content_files", "label": "Upload Konten (Foto/Video, Max 15 File, 30MB)", "type": "file_multiple", "required": true}
   ]',
   '[
     {"id": "step_1", "name": "Content Review", "type": "approval", "approver_role": "Manager"},

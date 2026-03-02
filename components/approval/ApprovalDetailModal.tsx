@@ -52,7 +52,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     // Side Preview States (Side-by-side)
     const [isSidePreviewOpen, setIsSidePreviewOpen] = useState(false);
     const [sidePreviewUrl, setSidePreviewUrl] = useState<string | null>(null);
-    const [sidePreviewType, setSidePreviewType] = useState<'image' | 'pdf'>('pdf');
+    const [sidePreviewType, setSidePreviewType] = useState<'image' | 'pdf' | 'video'>('pdf');
     const [sidePreviewTitle, setSidePreviewTitle] = useState('');
 
     const { sendNotification } = useNotifications();
@@ -183,6 +183,35 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
         try {
             await processApproval(request, activeAction, comment, currentUser);
 
+            // Immediately update the request status locally on the client
+            // This ensures the UI updates immediately on first click without waiting for server response
+            const steps = request.template?.workflow_steps || [];
+            let updatedStatus = request.status;
+            let updatedStepIndex = request.current_step_index;
+
+            if (activeAction === 'Approve') {
+                const nextStep = steps[request.current_step_index + 1];
+                if (nextStep) {
+                    updatedStepIndex = request.current_step_index + 1;
+                    updatedStatus = 'Pending';
+                } else {
+                    updatedStatus = 'Approved';
+                }
+            } else if (activeAction === 'Reject') {
+                updatedStatus = 'Rejected';
+            } else if (activeAction === 'Return') {
+                updatedStatus = 'Returned';
+                updatedStepIndex = Math.max(0, request.current_step_index - 1);
+            }
+
+            // Update the local request state immediately
+            const updatedRequest = {
+                ...request,
+                status: updatedStatus,
+                current_step_index: updatedStepIndex,
+                updated_at: new Date().toISOString()
+            };
+
             // 1. Notify Requester with personalized message
             if (request.requester_id !== currentUser.id) {
                 const formTitle = request.form_data.judul_konten || request.template?.name || 'Untitled';
@@ -217,7 +246,8 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
             }
 
             onUpdate();
-            // We don't close the modal automatically so user can see the updated status
+            // Update local state immediately for instant UI feedback
+            // Then onUpdate will refetch the full data from server
             setActiveAction(null);
             setComment('');
             fetchLogs(); // Refresh logs
@@ -328,6 +358,13 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
     };
 
     // Helper to render files
+    const openVideoPreview = (title: string, url: string) => {
+        setSidePreviewUrl(url);
+        setSidePreviewType('video');
+        setSidePreviewTitle(title);
+        setIsSidePreviewOpen(true);
+    };
+
     const renderFiles = () => {
         const filesString = request.form_data.content_files || request.form_data.script_file;
         const linkString = request.form_data.script_link;
@@ -380,6 +417,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             return files.map((file, i) => {
                                 const isImage = file.url.startsWith('data:image') || file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i);
                                 const isPdf = file.url.startsWith('data:application/pdf') || file.name.endsWith('.pdf');
+                                const isVideo = file.url.startsWith('data:video') || file.name.match(/\.(mp4|webm|mpeg|avi|mov|quicktime)$/i);
 
                                 if (isImage) {
                                     return (
@@ -389,6 +427,18 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                                             className="shrink-0 w-32 h-32 bg-slate-200 border-4 border-slate-900 rounded-xl overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform shadow-[4px_4px_0px_0px_#0f172a]"
                                         >
                                             <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                        </div>
+                                    );
+                                }
+
+                                if (isVideo) {
+                                    return (
+                                        <div
+                                            key={i}
+                                            onClick={() => openVideoPreview(file.name, file.url)}
+                                            className="shrink-0 w-32 h-32 bg-slate-900 border-4 border-slate-900 rounded-xl overflow-hidden cursor-pointer hover:-translate-y-2 transition-transform shadow-[4px_4px_0px_0px_#0f172a] flex items-center justify-center"
+                                        >
+                                            <div className="text-white text-3xl">▶</div>
                                         </div>
                                     );
                                 }
@@ -802,7 +852,7 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                 title={
                     <div className="flex items-center gap-2">
                         <div className="p-1 bg-white/20 rounded">
-                            {sidePreviewType === 'pdf' ? <FileText size={18} /> : <ImageIcon size={18} />}
+                            {sidePreviewType === 'pdf' ? <FileText size={18} /> : sidePreviewType === 'video' ? <span className="text-lg">▶</span> : <ImageIcon size={18} />}
                         </div>
                         <span className="truncate max-w-[300px] font-heading font-black">{sidePreviewTitle}</span>
                     </div>
@@ -819,6 +869,13 @@ export const ApprovalDetailModal: React.FC<ApprovalDetailModalProps> = ({ isOpen
                             src={sidePreviewUrl || ''}
                             className="w-full h-full border-none"
                             title="PDF Content"
+                        />
+                    ) : sidePreviewType === 'video' ? (
+                        <video
+                            src={sidePreviewUrl || ''}
+                            className="w-full h-full object-contain animate-in fade-in zoom-in duration-500 shadow-2xl border-4 border-white bg-slate-900"
+                            controls
+                            autoPlay
                         />
                     ) : (
                         <div className="w-full h-full p-4 flex items-center justify-center bg-slate-900">

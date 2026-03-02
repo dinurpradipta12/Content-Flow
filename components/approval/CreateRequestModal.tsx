@@ -304,7 +304,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, 
                                 type="file"
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 multiple={field.type === 'file_multiple'}
-                                accept={field.type === 'file_multiple' ? "image/jpeg, image/png" : ".pdf"}
+                                accept={field.type === 'file_multiple' ? "image/jpeg, image/png, video/mp4, video/mpeg, video/quicktime, video/x-msvideo, video/webm" : ".pdf"}
                                 onChange={(e) => handleFileUpload(field.id, e, field.type === 'file_multiple')}
                                 required={field.required && !formData[field.id]}
                             />
