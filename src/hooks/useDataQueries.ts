@@ -12,10 +12,10 @@ export const useWorkspaces = (userId: string | null) => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID required');
       
-      // OPTIMIZED: Hanya select kolom yang diperlukan
+      // OPTIMIZED: Select all columns needed for dashboard display
       const { data, error } = await supabase
         .from('workspaces')
-        .select('id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type')
+        .select('id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type, period, description, members')
         .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`)
         .order('created_at', { ascending: false });
       
@@ -118,5 +118,29 @@ export const useAppConfig = () => {
       return data;
     },
     staleTime: 1000 * 60 * 5,
+  });
+};
+
+/**
+ * Hook untuk fetch team KPIs untuk user tertentu
+ * Digunakan di Dashboard untuk menampilkan KPI metrics
+ */
+export const useTeamKpis = (memberId: string | null) => {
+  return useQuery({
+    queryKey: ['team-kpis', memberId],
+    queryFn: async () => {
+      if (!memberId) throw new Error('Member ID required');
+      
+      const { data, error } = await supabase
+        .from('team_kpis')
+        .select('*')
+        .eq('member_id', memberId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!memberId,
+    staleTime: 1000 * 60 * 2,  // Cache 2 menit (stats sering berubah)
   });
 };

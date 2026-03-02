@@ -6,6 +6,7 @@ import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, C
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../components/NotificationProvider';
+import { useUserPreferences, useTeamKpis, useWorkspaces } from '../src/hooks/useDataQueries';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -54,6 +55,7 @@ export const Dashboard: React.FC = () => {
     const { notifications, handleNotificationClick, unreadCount, markAllAsRead, clearAllNotifications } = useNotifications();
     const [showNotifSidebar, setShowNotifSidebar] = useState(false);
     const userName = localStorage.getItem('user_name') || 'Aditya';
+    const userId = localStorage.getItem('user_id');
 
     // 1. Time Info
     const [timeInfo, setTimeInfo] = useState(getGreetingInfo());
@@ -64,7 +66,8 @@ export const Dashboard: React.FC = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // 2. Religion Settings & Prayer Times
+    // 2. Religion Settings & Prayer Times - Using React Query for caching
+    const { data: userPrefs } = useUserPreferences(userId);
     const [religion, setReligion] = useState<string | null>(localStorage.getItem('user_religion'));
     const [isSelectingReligion, setIsSelectingReligion] = useState(!localStorage.getItem('user_religion'));
     const [manualCity, setManualCity] = useState(localStorage.getItem('user_city') || '');
@@ -77,36 +80,26 @@ export const Dashboard: React.FC = () => {
     const [tzLabel, setTzLabel] = useState('WIB');
     const [nextPrayerState, setNextPrayerState] = useState({ name: '-', time: '-', countdown: '-' });
 
-    // Sync from DB
+    // Sync preferences from React Query hook
     useEffect(() => {
-        const syncPreferences = async () => {
-            const userId = localStorage.getItem('user_id');
-            if (!userId) return;
+        if (!userPrefs) return;
 
-            const { data, error } = await supabase
-                .from('app_users')
-                .select('religion, city, timezone')
-                .eq('id', userId)
-                .single();
+        const { religion: dbReligion, city: dbCity, timezone: dbTz } = userPrefs;
 
-            if (data && !error) {
-                if (data.religion) {
-                    setReligion(data.religion);
-                    localStorage.setItem('user_religion', data.religion);
-                    setIsSelectingReligion(false);
-                }
-                if (data.city) {
-                    setManualCity(data.city);
-                    localStorage.setItem('user_city', data.city);
-                }
-                if (data.timezone) {
-                    setManualTz(data.timezone);
-                    localStorage.setItem('user_tz', data.timezone);
-                }
-            }
-        };
-        syncPreferences();
-    }, []);
+        if (dbReligion && dbReligion !== religion) {
+            setReligion(dbReligion);
+            localStorage.setItem('user_religion', dbReligion);
+            setIsSelectingReligion(false);
+        }
+        if (dbCity && dbCity !== manualCity) {
+            setManualCity(dbCity);
+            localStorage.setItem('user_city', dbCity);
+        }
+        if (dbTz && dbTz !== manualTz) {
+            setManualTz(dbTz);
+            localStorage.setItem('user_tz', dbTz);
+        }
+    }, [userPrefs]);
 
     useEffect(() => {
         let isCancelled = false;
@@ -312,39 +305,32 @@ export const Dashboard: React.FC = () => {
     const [checklists, setChecklists] = useState<{ id: string, text: string, done: boolean }[]>([]);
     const [newChecklist, setNewChecklist] = useState('');
 
-    // 5. KPI Data
-    const [kpis, setKpis] = useState<any[]>([]);
-    useEffect(() => {
-        const fetchKPIs = async () => {
-            try {
-                const userFullName = localStorage.getItem('user_name');
-                const userAvatar = localStorage.getItem('user_avatar');
+    // 5. KPI Data - Using React Query for caching
+    const userFullName = localStorage.getItem('user_name');
+    const userAvatar = localStorage.getItem('user_avatar');
+    const [memberId, setMemberId] = useState<string | null>(null);
 
+    // First, fetch all team members to get current user's member_id
+    useEffect(() => {
+        const fetchMemberId = async () => {
+            try {
                 if (!userFullName && !userAvatar) return;
 
-                let tmData = null;
                 const { data: allMembers } = await supabase.from('team_members').select('id, full_name, avatar_url');
 
                 if (allMembers) {
-                    tmData = allMembers.find(m => m.full_name === userFullName || m.avatar_url === userAvatar);
-                }
-
-                if (tmData) {
-                    const { data: kData, error } = await supabase
-                        .from('team_kpis')
-                        .select('*')
-                        .eq('member_id', tmData.id)
-                        .order('created_at', { ascending: false });
-
-                    if (error) throw error;
-                    if (kData) setKpis(kData);
+                    const tmData = allMembers.find(m => m.full_name === userFullName || m.avatar_url === userAvatar);
+                    if (tmData) setMemberId(tmData.id);
                 }
             } catch (err) {
-                console.error("Error fetching KPIs:", err);
+                console.error("Error fetching member ID:", err);
             }
         };
-        fetchKPIs();
-    }, []);
+        fetchMemberId();
+    }, [userFullName, userAvatar]);
+
+    // Then fetch KPIs using the hook with automatic caching
+    const { data: kpis = [] } = useTeamKpis(memberId);
 
     useEffect(() => {
         const saved = localStorage.getItem('daily_checklists');
@@ -374,41 +360,9 @@ export const Dashboard: React.FC = () => {
         saveChecklists(newList);
     };
 
-    const [workspaces, setWorkspaces] = useState<any[]>([]);
-    useEffect(() => {
-        const fetchWs = async () => {
-            const userId = localStorage.getItem('user_id');
-            const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
-
-            // OPTIMIZATION: Select only needed columns for the dropdown
-            let query = supabase.from('workspaces').select('id, name, owner_id, members');
-
-            // Construct OR condition safely: Avoid massive base64 strings in URL
-            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
-            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
-                // Backward compatibility for URL-based avatars
-                orCond += `,members.cs.{"${currentUserAvatar}"}`;
-            }
-            query = query.or(orCond);
-
-            const { data: wsData } = await query.order('name');
-
-            // Optional secondary safety filter (already handled by DB query above but for absolute certainty)
-            let myWorkspaces = (wsData || []).filter(ws => {
-                const isOwner = ws.owner_id === userId;
-                if (isOwner) return true;
-
-                return (ws.members && ws.members.some((m: string) => {
-                    if (m === userId) return true;
-                    try { return decodeURIComponent(m) === decodeURIComponent(currentUserAvatar) || m === currentUserAvatar; }
-                    catch { return m === currentUserAvatar; }
-                }));
-            });
-
-            setWorkspaces(myWorkspaces);
-        };
-        fetchWs();
-    }, []);
+    // Fetch workspaces using React Query for automatic caching
+    const { data: workspacesData = [] } = useWorkspaces(userId);
+    const workspaces = workspacesData;
 
     // 6. Analytics Metrics
     const [filterWs, setFilterWs] = useState('all');
