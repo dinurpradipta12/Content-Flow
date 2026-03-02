@@ -30,6 +30,7 @@ import {
 import { supabase } from '../services/supabaseClient';
 import { ContentStatus, Platform } from '../types';
 import { useAppConfig } from '../components/AppConfigProvider';
+import { useWorkspaces, useContentItems } from '../src/hooks/useDataQueries';
 
 // --- TYPES ---
 interface FlowItem {
@@ -268,118 +269,79 @@ const FlowColumn: React.FC<{
 export const ContentFlow: React.FC = () => {
     const navigate = useNavigate();
     const { config } = useAppConfig();
+    const userId = localStorage.getItem('user_id');
+
+    // Fetch workspaces and content items using React Query hooks
+    const { data: workspacesData = [], isLoading: workspacesLoading } = useWorkspaces(userId);
+    const workspaceIds = workspacesData.map((ws: any) => ws.id);
+    const { data: contentItemsData = [], isLoading: contentItemsLoading } = useContentItems(workspaceIds.length > 0 ? workspaceIds : undefined);
 
     const [allItems, setAllItems] = useState<FlowItem[]>([]);
     const [workspaceSummaries, setWorkspaceSummaries] = useState<WorkspaceSummary[]>([]);
-    const [loading, setLoading] = useState(true);
+    const loading = workspacesLoading || contentItemsLoading;
     const [selectedWorkspace, setSelectedWorkspace] = useState<string>('all');
     const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
     const [selectedItem, setSelectedItem] = useState<FlowItem | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const userId = localStorage.getItem('user_id');
-            const userRole = localStorage.getItem('user_role') || 'Member';
-            const userAvatar = localStorage.getItem('user_avatar') || '';
-            const tenantId = localStorage.getItem('tenant_id') || userId;
-
-            // 1. Fetch workspaces
-            // FIX: Only fetch workspaces where user is owner OR explicitly a member
-            // REMOVED: owner_id.eq.${tenantId} — this was causing invited users to see ALL admin workspaces
-            let wsQuery = supabase
-                .from('workspaces')
-                .select('id, name, platforms, color, logo_url, members, owner_id');
-
-            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
-            if (userAvatar && !userAvatar.startsWith('data:')) {
-                orCond += `,members.cs.{"${userAvatar}"}`;
-            }
-            wsQuery = wsQuery.or(orCond);
-
-            const { data: wsData, error: wsError } = await wsQuery.order('created_at', { ascending: false });
-            if (wsError) throw wsError;
-
-            const workspaces = wsData || [];
-            if (workspaces.length === 0) {
-                setAllItems([]);
-                setWorkspaceSummaries([]);
-                setLoading(false);
-                return;
-            }
-
-            // 2. Fetch all content items for these workspaces
-            const wsIds = workspaces.map((ws: any) => ws.id);
-            const { data: contentData, error: contentError } = await supabase
-                .from('content_items')
-                .select('id, title, status, platform, date, pillar, type, pic, priority, workspace_id')
-                .in('workspace_id', wsIds)
-                .order('date', { ascending: true });
-
-            if (contentError) throw contentError;
-
-            const items = contentData || [];
-
-            // 3. Build workspace map
-            const wsMap: Record<string, any> = {};
-            workspaces.forEach((ws: any) => {
-                wsMap[ws.id] = ws;
-            });
-
-            // 4. Map items to FlowItem
-            const flowItems: FlowItem[] = items.map((item: any) => {
-                const ws = wsMap[item.workspace_id] || {};
-                return {
-                    id: item.id,
-                    title: item.title,
-                    status: item.status as ContentStatus,
-                    platform: item.platform as Platform,
-                    date: item.date,
-                    pillar: item.pillar || '',
-                    type: item.type || 'Post',
-                    pic: item.pic || '',
-                    priority: item.priority || 'Medium',
-                    workspace_id: item.workspace_id,
-                    workspace_name: ws.name || 'Unknown',
-                    workspace_color: ws.color || 'violet',
-                    workspace_logo: ws.logo_url || ''
-                };
-            });
-
-            setAllItems(flowItems);
-
-            // 5. Build workspace summaries
-            const summaries: WorkspaceSummary[] = workspaces.map((ws: any) => {
-                const wsItems = items.filter((i: any) => i.workspace_id === ws.id);
-                const byStatus: Record<string, number> = {};
-                Object.values(ContentStatus).forEach(s => { byStatus[s] = 0; });
-                wsItems.forEach((i: any) => {
-                    if (byStatus[i.status] !== undefined) byStatus[i.status]++;
-                });
-                return {
-                    id: ws.id,
-                    name: ws.name,
-                    color: ws.color || 'violet',
-                    logo_url: ws.logo_url || '',
-                    platforms: ws.platforms || [],
-                    totalContent: wsItems.length,
-                    byStatus
-                };
-            });
-
-            setWorkspaceSummaries(summaries);
-
-        } catch (err) {
-            console.error('ContentFlow fetch error:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
+    // Transform React Query hook data into FlowItem and WorkspaceSummary format
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (!workspacesData.length || !contentItemsData.length) {
+            setAllItems([]);
+            setWorkspaceSummaries([]);
+            return;
+        }
+
+        // Build workspace map
+        const wsMap: Record<string, any> = {};
+        workspacesData.forEach((ws: any) => {
+            wsMap[ws.id] = ws;
+        });
+
+        // Map content items to FlowItem with workspace enrichment
+        const flowItems: FlowItem[] = contentItemsData.map((item: any) => {
+            const ws = wsMap[item.workspace_id] || {};
+            return {
+                id: item.id,
+                title: item.title,
+                status: item.status as ContentStatus,
+                platform: item.platform as Platform,
+                date: item.date,
+                pillar: item.pillar || '',
+                type: item.type || 'Post',
+                pic: item.pic || '',
+                priority: item.priority || 'Medium',
+                workspace_id: item.workspace_id,
+                workspace_name: ws.name || 'Unknown',
+                workspace_color: ws.color || 'violet',
+                workspace_logo: ws.logo_url || ''
+            };
+        });
+
+        setAllItems(flowItems);
+
+        // Build workspace summaries with status counts
+        const summaries: WorkspaceSummary[] = workspacesData.map((ws: any) => {
+            const wsItems = contentItemsData.filter((i: any) => i.workspace_id === ws.id);
+            const byStatus: Record<string, number> = {};
+            Object.values(ContentStatus).forEach(s => { byStatus[s] = 0; });
+            wsItems.forEach((i: any) => {
+                if (byStatus[i.status] !== undefined) byStatus[i.status]++;
+            });
+            return {
+                id: ws.id,
+                name: ws.name,
+                color: ws.color || 'violet',
+                logo_url: ws.logo_url || '',
+                platforms: ws.platforms || [],
+                totalContent: wsItems.length,
+                byStatus
+            };
+        });
+
+        setWorkspaceSummaries(summaries);
+        console.log(`Transformed ${flowItems.length} content items for flow view`);
+    }, [workspacesData, contentItemsData]);
 
     // Filtered items
     const filteredItems = allItems.filter(item => {

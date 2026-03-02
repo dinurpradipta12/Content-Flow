@@ -144,3 +144,27 @@ export const useTeamKpis = (memberId: string | null) => {
     staleTime: 1000 * 60 * 2,  // Cache 2 menit (stats sering berubah)
   });
 };
+
+/**
+ * Hook untuk fetch content items dengan workspace enrichment
+ * Digunakan di ContentFlow untuk menampilkan content pipeline
+ */
+export const useContentItems = (workspaceIds: string[] | undefined) => {
+  return useQuery({
+    queryKey: ['content-items', workspaceIds],
+    queryFn: async () => {
+      if (!workspaceIds?.length) return [];
+      
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('id, title, status, platform, date, pillar, type, pic, priority, workspace_id')
+        .in('workspace_id', workspaceIds)
+        .order('date', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!workspaceIds?.length,
+    staleTime: 1000 * 60 * 2,  // Cache 2 min (content data changes often)
+  });
+};
