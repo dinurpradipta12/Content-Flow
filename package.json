@@ -15,6 +15,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@google/genai": "^1.41.0",
     "@supabase/supabase-js": "^2.97.0",
+    "@tanstack/react-query": "^5.51.23",
+    "@tanstack/react-query-devtools": "^5.51.23",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "fabric": "^6.9.1",
