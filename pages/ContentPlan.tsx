@@ -9,6 +9,8 @@ import { Search, Plus, Instagram, Video, ArrowRight, MoreHorizontal, Linkedin, Y
 import { Workspace } from '../types';
 import { supabase } from '../services/supabaseClient';
 import { useAppConfig } from '../components/AppConfigProvider';
+import { useWorkspaces, useContentStats } from '../src/hooks/useDataQueries';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface WorkspaceData extends Workspace {
     totalContent: number;
@@ -93,8 +95,16 @@ export const ContentPlan: React.FC = () => {
     const navigate = useNavigate();
     const { sendNotification } = useNotifications();
     const { config } = useAppConfig();
+    const queryClient = useQueryClient();
+    const userId = localStorage.getItem('user_id');
+
+    // Fetch workspaces and content stats using React Query hooks
+    const { data: workspacesData = [], isLoading } = useWorkspaces(userId);
+    const workspaceIds = workspacesData.map(ws => ws.id);
+    const { data: contentStats = {} } = useContentStats(workspaceIds.length > 0 ? workspaceIds : undefined);
+
+    // Transform hook data into the format needed by the component
     const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
-    const [loading, setLoading] = useState(true);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -124,127 +134,53 @@ export const ContentPlan: React.FC = () => {
 
     const [currentUserName, setCurrentUserName] = useState('Anda');
 
-    // --- SUPABASE INTEGRATION ---
+    // Sync current user name from localStorage
+    useEffect(() => {
+        const freshName = localStorage.getItem('user_name') || 'Anda';
+        setCurrentUserName(freshName);
+    }, []);
 
-    const fetchWorkspaces = async () => {
-        setLoading(true);
-        try {
-            const userId = localStorage.getItem('user_id');
-            const userRole = localStorage.getItem('user_role') || 'Member';
-
-            // 1. Fetch User Data & Workspaces in Parallel
-            const currentUserAvatar = localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40';
-            // NOTE: tenantId is only used for owner check, NOT for fetching all admin workspaces
-            // This prevents invited users from seeing ALL admin workspaces
-            const tenantId = localStorage.getItem('tenant_id') || userId;
-
-            // OPTIMIZATION: Select ONLY needed columns to avoid huge payload size (from unused columns)
-            // Include workspace_type for personal/team filtering
-            let wsQuery = supabase.from('workspaces').select('id, name, platforms, color, account_name, logo_url, members, owner_id, role, created_at, description, period, profile_links, account_names, workspace_type');
-
-            // FIX: Only fetch workspaces where user is owner OR explicitly a member
-            // REMOVED: owner_id.eq.${tenantId} — this was causing invited users to see ALL admin workspaces
-            // Now invited users only see workspaces they are explicitly added to (members array)
-            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
-            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
-                // Backward compatibility for URL-based avatars
-                orCond += `,members.cs.{"${currentUserAvatar}"}`;
-            }
-            wsQuery = wsQuery.or(orCond);
-
-            const [userRes, wsRes] = await Promise.all([
-                supabase.from('app_users').select('avatar_url, full_name').eq('id', userId || '').single(),
-                wsQuery.order('created_at', { ascending: false })
-            ]);
-
-            if (wsRes.error) throw wsRes.error;
-
-            const userData = userRes.data;
-            const wsData = wsRes.data || [];
-
-            const currentAvatar = userData?.avatar_url || currentUserAvatar;
-            const freshName = userData?.full_name || localStorage.getItem('user_name') || 'Anda';
-            setCurrentUserName(freshName);
-
-            if (wsData.length === 0) {
-                setWorkspaces([]);
-                return;
-            }
-
-            // 2. Fetch Content Stats — ONLY needed columns for counting
-            const wsIds = wsData.map(ws => ws.id);
-            const { data: contentData, error: contentError } = await supabase
-                .from('content_items')
-                .select('workspace_id, status') // Fetch ONLY these 2 columns
-                .in('workspace_id', wsIds);
-
-            if (contentError) throw contentError;
-
-            // 3. Optimize Merging: Pre-calculate counts in O(N) using a map
-            const statsMap: Record<string, { total: number, published: number }> = {};
-            (contentData || []).forEach(item => {
-                if (!statsMap[item.workspace_id]) statsMap[item.workspace_id] = { total: 0, published: 0 };
-                statsMap[item.workspace_id].total++;
-                if (item.status === 'Published') statsMap[item.workspace_id].published++;
-            });
-
-            // 4. Merge & Access Control — check membership by user ID, avatar, or ownership
-            // WORKSPACE TYPE RULES:
-            // - 'personal': Only visible if user is owner OR explicitly in members array
-            // - 'team': Visible if user is owner OR in members array (same as personal, but semantically different)
-            // The key fix: we no longer include ALL admin workspaces for invited users
-            const mergedData: WorkspaceData[] = wsData
-                .filter(ws => {
-                    const isOwner = ws.owner_id === userId;
-                    if (isOwner) return true;
-
-                    const members: string[] = ws.members || [];
-                    // Check by user ID first (most reliable)
-                    if (members.includes(userId || '')) return true;
-                    // Then check by avatar URL
-                    if (!currentAvatar) return false;
-                    return members.some(m => {
-                        try { return decodeURIComponent(m) === decodeURIComponent(currentAvatar) || m === currentAvatar; }
-                        catch { return m === currentAvatar; }
-                    });
-                })
-                .map(ws => ({
-                    id: ws.id,
-                    name: ws.name,
-                    role: ws.role || 'Owner',
-                    platforms: ws.platforms || [],
-                    color: ws.color || 'violet',
-                    description: ws.description,
-                    period: ws.period,
-                    accountName: ws.account_name,
-                    logoUrl: ws.logo_url,
-                    members: ws.members || [],
-                    profile_links: ws.profile_links || {},
-                    account_names: ws.account_names || {},
-                    workspace_type: (ws.workspace_type as 'personal' | 'team') || 'team',
-                    owner_id: ws.owner_id,
-                    totalContent: statsMap[ws.id]?.total || 0,
-                    publishedCount: statsMap[ws.id]?.published || 0
-                }));
-
-            setWorkspaces(mergedData);
-            console.log(`Fetched ${mergedData.length} workspaces for user ${userId}`);
-        } catch (error) {
-            console.error("Error fetching workspaces:", error);
-        } finally {
-            setLoading(false);
+    // Transform React Query hook data into WorkspaceData format
+    useEffect(() => {
+        if (!workspacesData.length) {
+            setWorkspaces([]);
+            return;
         }
-    };
+
+        // Transform workspaces + merge with content stats
+        const transformed: WorkspaceData[] = workspacesData.map(ws => ({
+            id: ws.id,
+            name: ws.name,
+            role: ws.role || 'Owner',
+            platforms: ws.platforms || [],
+            color: ws.color || 'violet',
+            description: ws.description,
+            period: ws.period,
+            accountName: ws.account_name,
+            logoUrl: ws.logo_url,
+            members: ws.members || [],
+            profile_links: ws.profile_links || {},
+            account_names: ws.account_names || {},
+            workspace_type: (ws.workspace_type as 'personal' | 'team') || 'team',
+            owner_id: ws.owner_id,
+            // Merge with content stats from useContentStats hook
+            totalContent: contentStats[ws.id]?.total || 0,
+            publishedCount: contentStats[ws.id]?.published || 0
+        }));
+
+        setWorkspaces(transformed);
+        console.log(`Transformed ${transformed.length} workspaces with content stats`);
+    }, [workspacesData, contentStats]);
 
     useEffect(() => {
-        fetchWorkspaces();
-
         const handleClickOutside = () => setActiveMenu(null);
         document.addEventListener('click', handleClickOutside);
 
         // LISTEN FOR USER UPDATES (Profile Photo Sync)
         const handleUserUpdate = () => {
-            fetchWorkspaces();
+            // React Query hooks will automatically refetch due to cache invalidation
+            // No need to manually call fetchWorkspaces anymore
+            console.log('User updated, React Query will refresh data');
         };
         window.addEventListener('user_updated', handleUserUpdate);
 
@@ -300,8 +236,9 @@ export const ContentPlan: React.FC = () => {
             try {
                 const { error } = await supabase.from('workspaces').delete().eq('id', id);
                 if (error) throw error;
-                // Remove from local state
-                setWorkspaces(prev => prev.filter(w => w.id !== id));
+                // Invalidate cache so React Query refetches data
+                await queryClient.invalidateQueries({ queryKey: ['workspaces', userId] });
+                await queryClient.invalidateQueries({ queryKey: ['content-stats'] });
             } catch (error) {
                 console.error("Error deleting:", error);
                 alert("Gagal menghapus data.");
@@ -363,7 +300,9 @@ export const ContentPlan: React.FC = () => {
                 ]).select('id'); // Only select id to minimize response size (prevents "Failed to fetch" on large rows)
 
                 if (error) throw error;
-                fetchWorkspaces();
+                // Invalidate cache so React Query refetches data
+                await queryClient.invalidateQueries({ queryKey: ['workspaces', userId] });
+                await queryClient.invalidateQueries({ queryKey: ['content-stats'] });
 
             } else if (modalMode === 'edit' && editingId) {
                 const { error } = await supabase.from('workspaces').update({
@@ -379,7 +318,9 @@ export const ContentPlan: React.FC = () => {
                 }).eq('id', editingId);
 
                 if (error) throw error;
-                fetchWorkspaces();
+                // Invalidate cache so React Query refetches data
+                await queryClient.invalidateQueries({ queryKey: ['workspaces', userId] });
+                await queryClient.invalidateQueries({ queryKey: ['content-stats'] });
             }
             setIsModalOpen(false);
         } catch (error) {
@@ -438,7 +379,9 @@ export const ContentPlan: React.FC = () => {
             alert(`Berhasil bergabung ke workspace: ${data.name}`);
             setJoinCode('');
             setIsJoinModalOpen(false);
-            fetchWorkspaces();
+            // Invalidate cache so React Query refetches data
+            await queryClient.invalidateQueries({ queryKey: ['workspaces', userId] });
+            await queryClient.invalidateQueries({ queryKey: ['content-stats'] });
 
         } catch (err) {
             console.error(err);
@@ -517,7 +460,7 @@ export const ContentPlan: React.FC = () => {
                 </div>
             </div>
 
-            {loading ? (
+            {isLoading ? (
                 <div className="flex items-center justify-center h-32">
                     <Loader2 className="animate-spin w-6 h-6 text-accent" />
                 </div>
@@ -614,7 +557,7 @@ export const ContentPlan: React.FC = () => {
                 </div>
             </div>
 
-            {loading ? (
+            {isLoading ? (
                 <div className="flex items-center justify-center h-32 sm:h-40 md:h-48 text-slate-400">
                     <div className="flex flex-col items-center gap-2">
                         <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />

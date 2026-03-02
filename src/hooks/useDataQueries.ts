@@ -15,7 +15,7 @@ export const useWorkspaces = (userId: string | null) => {
       // OPTIMIZED: Select all columns needed for dashboard display
       const { data, error } = await supabase
         .from('workspaces')
-        .select('id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type, period, description, members')
+        .select('id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type, period, description, members, profile_links, account_names')
         .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`)
         .order('created_at', { ascending: false });
       
