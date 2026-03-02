@@ -60,6 +60,7 @@ import { supabase } from '../services/supabaseClient';
 import { ContentItem, Platform } from '../types';
 import { analyzeContentLink } from '../services/scraperService';
 import { useAppConfig } from '../components/AppConfigProvider';
+import { AudienceGrowthTracker } from '../components/AudienceGrowthTracker';
 
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -825,6 +826,11 @@ export const ContentDataInsight: React.FC = () => {
                 )}
             </div>
 
+            {/* Audience Growth Tracker (Mobile) */}
+            <div className="mb-6">
+                <AudienceGrowthTracker account={filterAccount} platform={filterPlatform} />
+            </div>
+
             {/* ═══════════════════════════════════════════════════════════════════
             DESKTOP VIEW (≥ md) - Original Layout
             ═══════════════════════════════════════════════════════════════════ */}
@@ -1026,6 +1032,9 @@ export const ContentDataInsight: React.FC = () => {
                         </div>
                     </Modal>
                 )}
+
+                {/* Audience Growth Tracker (Desktop) */}
+                <AudienceGrowthTracker account={filterAccount} platform={filterPlatform} />
 
                 <div className="bg-card rounded-lg sm:rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
                     {/* Toolbar */}
