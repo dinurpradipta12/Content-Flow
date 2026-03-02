@@ -207,7 +207,8 @@ export const Messages: React.FC = () => {
 
     // Workspace dropdown
     const [showWsDropdown, setShowWsDropdown] = useState(false);
-    const wsDropdownRef = useRef<HTMLDivElement>(null);
+    const mobileWsDropdownRef = useRef<HTMLDivElement>(null);
+    const desktopWsDropdownRef = useRef<HTMLDivElement>(null);
 
     // Content detail modal & clear DM
     const [contentDetailId, setContentDetailId] = useState<string | null>(null);
@@ -278,7 +279,9 @@ export const Messages: React.FC = () => {
                 // Use setTimeout to avoid race condition with click handlers on dropdown items
                 setTimeout(() => setShowChatMoreMenu(false), 0);
             }
-            if (wsDropdownRef.current && !wsDropdownRef.current.contains(e.target as Node)) {
+            const clickedMobile = mobileWsDropdownRef.current?.contains(e.target as Node);
+            const clickedDesktop = desktopWsDropdownRef.current?.contains(e.target as Node);
+            if (!clickedMobile && !clickedDesktop) {
                 setShowWsDropdown(false);
             }
             if (dmUserMenuRef.current && !dmUserMenuRef.current.contains(e.target as Node)) {
@@ -986,7 +989,7 @@ export const Messages: React.FC = () => {
                         </div>
 
                         {/* Workspace dropdown capsule */}
-                        <div className="relative mb-2 flex-shrink-0" ref={wsDropdownRef}>
+                        <div className="relative mb-2 flex-shrink-0" ref={mobileWsDropdownRef}>
                             <button
                                 onClick={() => setShowWsDropdown(!showWsDropdown)}
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-xs font-bold text-foreground hover:border-accent/50 transition-all w-full"
@@ -1447,7 +1450,7 @@ export const Messages: React.FC = () => {
                                 </div>
                             </div>
                             {/* Workspace dropdown capsule */}
-                            <div className="relative" ref={wsDropdownRef}>
+                            <div className="relative" ref={desktopWsDropdownRef}>
                                 <button
                                     onClick={() => setShowWsDropdown(!showWsDropdown)}
                                     className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-white text-xs font-bold text-foreground hover:border-accent/50 transition-all w-full"
