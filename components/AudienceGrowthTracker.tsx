@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Save, Users, Calendar, Plus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { supabase } from '../services/supabaseClient';
 
 export const AudienceGrowthTracker = ({ account, platform }: { account: string; platform: string }) => {
     const [data, setData] = useState<{ month: string; followers: number; connections: number }[]>([]);
@@ -9,53 +10,70 @@ export const AudienceGrowthTracker = ({ account, platform }: { account: string; 
     const [inputConnections, setInputConnections] = useState<number | ''>('');
     const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const storageKey = `audience_growth_${account}_${platform}`;
-
     useEffect(() => {
         const d = new Date();
         setInputMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
 
-        try {
-            const stored = localStorage.getItem(storageKey);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                setData(parsed.sort((a: any, b: any) => a.month.localeCompare(b.month)));
+        const fetchMetricsData = async () => {
+            const { data: metricsData, error } = await supabase
+                .from('audience_metrics')
+                .select('month, followers, connections')
+                .eq('account_name', account)
+                .eq('platform', platform)
+                .order('month', { ascending: true });
+
+            if (!error && metricsData) {
+                setData(metricsData);
             } else {
                 setData([]);
             }
-        } catch {
-            setData([]);
-        }
-    }, [storageKey]);
+        };
 
-    const handleSave = (e: React.FormEvent) => {
+        fetchMetricsData();
+
+        const channel = supabase.channel(`audience_metrics_${account}_${platform}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'audience_metrics',
+                filter: `account_name=eq.${account}`
+            }, () => {
+                fetchMetricsData();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [account, platform]);
+
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!inputMonth) return;
-
-        const newData = [...data];
-        const existingIdx = newData.findIndex(d => d.month === inputMonth);
 
         const flw = typeof inputFollowers === 'number' ? inputFollowers : 0;
         const cnx = typeof inputConnections === 'number' ? inputConnections : 0;
 
-        if (existingIdx >= 0) {
-            newData[existingIdx] = { month: inputMonth, followers: flw, connections: cnx };
-        } else {
-            newData.push({ month: inputMonth, followers: flw, connections: cnx });
-        }
-
-        newData.sort((a, b) => a.month.localeCompare(b.month));
-        setData(newData);
-        localStorage.setItem(storageKey, JSON.stringify(newData));
         setIsFormOpen(false);
+
+        await supabase.from('audience_metrics').upsert({
+            account_name: account,
+            platform: platform,
+            month: inputMonth,
+            followers: flw,
+            connections: cnx
+        }, { onConflict: 'account_name,platform,month' });
+
         setInputFollowers('');
         setInputConnections('');
     };
 
-    const deleteEntry = (month: string) => {
-        const newData = data.filter(d => d.month !== month);
-        setData(newData);
-        localStorage.setItem(storageKey, JSON.stringify(newData));
+    const deleteEntry = async (month: string) => {
+        setData(prev => prev.filter(d => d.month !== month));
+        await supabase.from('audience_metrics').delete()
+            .eq('account_name', account)
+            .eq('platform', platform)
+            .eq('month', month);
     }
 
     const showConnections = platform === 'all' || platform === 'LinkedIn';
