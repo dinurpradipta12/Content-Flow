@@ -60,7 +60,6 @@ import { supabase } from '../services/supabaseClient';
 import { ContentItem, Platform } from '../types';
 import { analyzeContentLink } from '../services/scraperService';
 import { useAppConfig } from '../components/AppConfigProvider';
-import { AudienceGrowthTracker } from '../components/AudienceGrowthTracker';
 
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -127,29 +126,21 @@ export const ContentDataInsight: React.FC = () => {
     });
     const [reportNotes, setReportNotes] = useState<string>('');
     const [reportNextPlan, setReportNextPlan] = useState<string>('');
-    const [reportFollowers, setReportFollowers] = useState<string>('');
-    const [reportConnections, setReportConnections] = useState<string>('');
     const [savingReportNotes, setSavingReportNotes] = useState(false);
 
     // Load report notes from localStorage
     useEffect(() => {
         const savedNotes = localStorage.getItem(`report_notes_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`);
         const savedPlan = localStorage.getItem(`report_plan_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`);
-        const savedFollowers = localStorage.getItem(`report_followers_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`);
-        const savedConnections = localStorage.getItem(`report_connections_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`);
 
         if (savedNotes) setReportNotes(savedNotes); else setReportNotes('');
         if (savedPlan) setReportNextPlan(savedPlan); else setReportNextPlan('');
-        if (savedFollowers) setReportFollowers(savedFollowers); else setReportFollowers('');
-        if (savedConnections) setReportConnections(savedConnections); else setReportConnections('');
     }, [reportFilterAccount, reportFilterPlatform, reportStartDate]);
 
     const saveReportNotesToStorage = () => {
         setSavingReportNotes(true);
         localStorage.setItem(`report_notes_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`, reportNotes);
         localStorage.setItem(`report_plan_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`, reportNextPlan);
-        localStorage.setItem(`report_followers_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`, reportFollowers);
-        localStorage.setItem(`report_connections_${reportFilterAccount}_${reportFilterPlatform}_${reportStartDate}`, reportConnections);
         setTimeout(() => setSavingReportNotes(false), 800);
     };
 
@@ -826,11 +817,6 @@ export const ContentDataInsight: React.FC = () => {
                 )}
             </div>
 
-            {/* Audience Growth Tracker (Mobile) */}
-            <div className="mb-6">
-                <AudienceGrowthTracker account={filterAccount} platform={filterPlatform} />
-            </div>
-
             {/* ═══════════════════════════════════════════════════════════════════
             DESKTOP VIEW (≥ md) - Original Layout
             ═══════════════════════════════════════════════════════════════════ */}
@@ -1032,9 +1018,6 @@ export const ContentDataInsight: React.FC = () => {
                         </div>
                     </Modal>
                 )}
-
-                {/* Audience Growth Tracker (Desktop) */}
-                <AudienceGrowthTracker account={filterAccount} platform={filterPlatform} />
 
                 <div className="bg-card rounded-lg sm:rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
                     {/* Toolbar */}
@@ -1450,46 +1433,6 @@ export const ContentDataInsight: React.FC = () => {
                         <div className="ml-auto text-xs font-bold text-slate-500">
                             {reportData.totalPosts} konten ditemukan
                         </div>
-                    </div>
-
-                    {/* ── Section: Audience Growth Input ── */}
-                    <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-sm">
-                        <h4 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
-                            <Users size={18} className="text-teal-500" />
-                            Pertumbuhan Audiens (Manual Input)
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex-1 min-w-[200px]">
-                                <label className="text-xs font-bold text-slate-500 mb-1.5 block flex items-center gap-1"><TrendingUp size={12} /> Pertumbuhan Followers</label>
-                                <div className="flex items-center bg-slate-50 border-2 border-slate-300 rounded-xl px-3 py-2 focus-within:border-teal-500 focus-within:shadow-[3px_3px_0px_0px_#14b8a6] transition-all">
-                                    <span className="text-slate-400 font-bold mr-2 text-sm">+</span>
-                                    <input
-                                        type="number"
-                                        value={reportFollowers}
-                                        onChange={e => setReportFollowers(e.target.value)}
-                                        placeholder="Contoh: 1500"
-                                        className="bg-transparent outline-none w-full text-sm font-black text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
-                                    />
-                                </div>
-                            </div>
-
-                            {(reportFilterPlatform === 'all' || reportFilterPlatform === Platform.LINKEDIN) && (
-                                <div className="flex-1 min-w-[200px]">
-                                    <label className="text-xs font-bold text-slate-500 mb-1.5 block flex items-center gap-1"><Users size={12} /> Pertumbuhan Connections (LinkedIn)</label>
-                                    <div className="flex items-center bg-slate-50 border-2 border-slate-300 rounded-xl px-3 py-2 focus-within:border-blue-500 focus-within:shadow-[3px_3px_0px_0px_#3b82f6] transition-all">
-                                        <span className="text-slate-400 font-bold mr-2 text-sm">+</span>
-                                        <input
-                                            type="number"
-                                            value={reportConnections}
-                                            onChange={e => setReportConnections(e.target.value)}
-                                            placeholder="Contoh: 300"
-                                            className="bg-transparent outline-none w-full text-sm font-black text-slate-800 placeholder:text-slate-300 placeholder:font-medium"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <p className="text-[10px] text-slate-400 font-medium mt-3 italic">* Jangan lupa klik tombol "Simpan Catatan & Plan" di bawah untuk menyimpan data input ini.</p>
                     </div>
 
                     {/* ── Section 1: Total Metrics Cards ── */}
