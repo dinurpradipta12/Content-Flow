@@ -62,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className={`fixed inset-0 flex items-center justify-center p-2 sm:p-3 md:p-4 transition-all duration-500 ${isOpen ? 'opacity-100 bg-slate-900/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none'} ${overlayClassName}`}
+      className={`fixed inset-0 flex items-center justify-center p-2 sm:p-3 md:p-4 transition-all duration-500 ${isOpen ? 'opacity-100 bg-slate-900/60' : 'opacity-0 pointer-events-none'} ${!overlayClassName.includes('backdrop-blur-none') && isOpen ? 'backdrop-blur-sm' : ''} ${overlayClassName}`}
       style={{ zIndex, transitionDuration: isOpen ? '200ms' : `${duration}ms` }}
     >
       <div
