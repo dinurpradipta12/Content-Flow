@@ -2,12 +2,21 @@
 -- Migrasi Inline Approval: Memindahkan Approval ke Content Items
 -- ================================================================
 
--- 1. Tambah kolom approval ke tabel content_items
+-- 1. Tambah kolom approval ke tabel content_items (dan betulkan referensi FK ke app_users)
+-- Hapus FK jika sebelumnya menunjuk ke tempat yang salah (auth.users)
+ALTER TABLE public.content_items DROP CONSTRAINT IF EXISTS content_items_approved_by_fkey;
+
 ALTER TABLE public.content_items 
 ADD COLUMN IF NOT EXISTS approval_status text DEFAULT 'pending' CHECK (approval_status IN ('pending', 'approved', 'revision')),
-ADD COLUMN IF NOT EXISTS approved_by uuid REFERENCES auth.users(id),
+ADD COLUMN IF NOT EXISTS approved_by uuid REFERENCES public.app_users(id),
 ADD COLUMN IF NOT EXISTS approved_at timestamptz,
 ADD COLUMN IF NOT EXISTS approval_notes text;
+
+-- Tambahkan ulang constraint eksplisit untuk keamanan
+ALTER TABLE public.content_items 
+DROP CONSTRAINT IF EXISTS content_items_approved_by_fkey,
+ADD CONSTRAINT content_items_approved_by_fkey 
+FOREIGN KEY (approved_by) REFERENCES public.app_users(id) ON DELETE SET NULL;
 
 -- 2. Update data lama: set status pending untuk yang kosong
 UPDATE public.content_items 
