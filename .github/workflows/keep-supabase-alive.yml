@@ -1,0 +1,19 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Jalankan setiap 3 hari sekali (Supabase pause setelah 7 hari tidak aktif)
+    - cron: "0 8 */3 * *"
+  workflow_dispatch: # Bisa dijalankan manual juga
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase to prevent pause
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/app_config?select=id&limit=1"
+          echo "Supabase ping sent successfully!"
