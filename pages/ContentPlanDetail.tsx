@@ -669,6 +669,10 @@ export const ContentPlanDetail: React.FC = () => {
         }
     }, [isDrivePreviewOpen]);
 
+    // Image Preview States
+    const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
     // Content Result States
     const [isResultModalOpen, setIsResultModalOpen] = useState(false);
     const resultInputRef = useRef<HTMLInputElement>(null);
@@ -2231,7 +2235,7 @@ export const ContentPlanDetail: React.FC = () => {
                     maxWidth={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? "max-w-full md:max-w-[48vw]" : "max-w-4xl"}
                     duration={800}
                     zIndex={9990}
-                    overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-slate-900/40 backdrop-blur-none transition-all' : ''}
+                    overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-slate-900/20 backdrop-blur-none transition-all' : 'bg-slate-900/60 backdrop-blur-sm'}
                     className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[50.5%] shadow-2xl' : 'translate-x-0'}
                 >
                     <div className="space-y-4 md:space-y-8 px-1 md:px-2 h-[80vh] md:h-[75vh] overflow-y-auto no-scrollbar">
@@ -2751,7 +2755,14 @@ export const ContentPlanDetail: React.FC = () => {
                                         <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Pratinjau Galeri</h5>
                                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                             {(selectedTask.result_assets as string[]).map((asset, idx) => (
-                                                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-200 group shadow-sm hover:shadow-md transition-shadow">
+                                                <div
+                                                    key={idx}
+                                                    className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-200 group shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                                    onClick={() => {
+                                                        setImagePreviewUrl(asset);
+                                                        setIsImagePreviewOpen(true);
+                                                    }}
+                                                >
                                                     <img src={asset} className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                         <button
@@ -2860,6 +2871,33 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </Modal>
             )}
+
+            {/* --- IMAGE PREVIEW MODAL --- */}
+            <Modal
+                isOpen={isImagePreviewOpen}
+                onClose={() => setIsImagePreviewOpen(false)}
+                title="Pratinjau Foto"
+                maxWidth="max-w-5xl"
+                zIndex={10020}
+            >
+                <div className="flex items-center justify-center p-2 bg-slate-900/5 rounded-2xl">
+                    {imagePreviewUrl && (
+                        <img
+                            src={imagePreviewUrl}
+                            alt="Full Preview"
+                            className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-2xl"
+                        />
+                    )}
+                </div>
+                <div className="mt-6 flex justify-center">
+                    <button
+                        onClick={() => setIsImagePreviewOpen(false)}
+                        className="px-8 py-3 bg-slate-900 text-white font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                    >
+                        Tutup Pratinjau
+                    </button>
+                </div>
+            </Modal>
 
             {/* Modal Create/Edit Content */}
             <Modal
