@@ -530,914 +530,914 @@ export const Dashboard: React.FC = () => {
 
     return (
         <>
-        {/* ═══════════════════════════════════════════════════════════════════
+            {/* ═══════════════════════════════════════════════════════════════════
             MOBILE VIEW (< md) - Native App Style
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="block md:hidden w-full pb-24 animate-in fade-in duration-300">
-            {/* 1. Banner Welcome */}
-            <div className={`bg-gradient-to-br ${timeInfo.theme} rounded-2xl p-4 mb-3 text-white relative overflow-hidden`}>
-                <div className="absolute -right-4 -top-4 opacity-20">{timeInfo.icon}</div>
-                <p className="text-xs font-bold text-white/80 mb-0.5">{timeInfo.text}</p>
-                <h1 className="text-xl font-black font-heading leading-tight">{userName}!</h1>
-                <p className="text-xs text-white/80 mt-1 line-clamp-1">{timeInfo.quote}</p>
-            </div>
-
-            {/* 2. Religion/Quote Card */}
-            {religion && !isSelectingReligion && (
-                <div className={`bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-800' : getReligionStyles(religion)} rounded-2xl p-4 mb-3 text-white`}>
-                    {religion === 'Islam' && prayerData ? (
-                        <>
-                            <p className="text-[10px] font-bold text-white/80 mb-0.5">{nextPrayerState.countdown} menit lagi</p>
-                            <h3 className="text-2xl font-black font-heading">{nextPrayerState.name}</h3>
-                            <p className="text-xs text-white/80">{nextPrayerState.time} {tzLabel}</p>
-                        </>
-                    ) : (
-                        <p className="text-sm font-bold italic line-clamp-3">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
-                    )}
-                    <button onClick={() => setIsSelectingReligion(true)} className="mt-2 text-[10px] text-white/60 underline">Ubah preferensi</button>
+            <div className="block md:hidden w-full pb-24 animate-in fade-in duration-300">
+                {/* 1. Banner Welcome */}
+                <div className={`bg-gradient-to-br ${timeInfo.theme} rounded-2xl p-4 mb-3 text-white relative overflow-hidden`}>
+                    <div className="absolute -right-4 -top-4 opacity-20">{timeInfo.icon}</div>
+                    <p className="text-xs font-bold text-white/80 mb-0.5">{timeInfo.text}</p>
+                    <h1 className="text-xl font-black font-heading leading-tight">{userName}!</h1>
+                    <p className="text-xs text-white/80 mt-1 line-clamp-1">{timeInfo.quote}</p>
                 </div>
-            )}
-            {isSelectingReligion && (
-                <div className="bg-card border border-border rounded-2xl p-4 mb-3">
-                    <h3 className="text-sm font-black text-foreground mb-3">Pilih Preferensi</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                        {Object.keys(RELIGION_CONTENT).map(rel => (
-                            <button key={rel} onClick={() => handleSetReligion(rel)}
-                                className={`py-2 rounded-xl border-2 font-bold text-xs transition-all ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-border text-foreground'}`}>
-                                {rel}
-                            </button>
-                        ))}
+
+                {/* 2. Religion/Quote Card */}
+                {religion && !isSelectingReligion && (
+                    <div className={`bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-800' : getReligionStyles(religion)} rounded-2xl p-4 mb-3 text-white`}>
+                        {religion === 'Islam' && prayerData ? (
+                            <>
+                                <p className="text-[10px] font-bold text-white/80 mb-0.5">{nextPrayerState.countdown} menit lagi</p>
+                                <h3 className="text-2xl font-black font-heading">{nextPrayerState.name}</h3>
+                                <p className="text-xs text-white/80">{nextPrayerState.time} {tzLabel}</p>
+                            </>
+                        ) : (
+                            <p className="text-sm font-bold italic line-clamp-3">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
+                        )}
+                        <button onClick={() => setIsSelectingReligion(true)} className="mt-2 text-[10px] text-white/60 underline">Ubah preferensi</button>
                     </div>
-                </div>
-            )}
-
-            {/* 3. Daily Checklist */}
-            <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle size={14} className="text-accent" />
-                    <h3 className="text-xs font-black text-foreground">Checklist Hari Ini</h3>
-                </div>
-                <div className="space-y-1.5 mb-2 max-h-[150px] overflow-y-auto">
-                    {checklists.length === 0 ? (
-                        <p className="text-xs text-mutedForeground text-center py-3">Belum ada checklist</p>
-                    ) : checklists.map(c => (
-                        <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg border border-border">
-                            <button onClick={() => toggleChecklist(c.id)}
-                                className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300'}`}>
-                                {c.done && <Check size={10} />}
-                            </button>
-                            <p className={`flex-1 text-xs font-bold ${c.done ? 'line-through text-mutedForeground' : 'text-foreground'}`}>{c.text}</p>
-                            <button onClick={() => deleteChecklist(c.id)} className="text-mutedForeground hover:text-red-500"><Trash2 size={12} /></button>
+                )}
+                {isSelectingReligion && (
+                    <div className="bg-card border border-border rounded-2xl p-4 mb-3">
+                        <h3 className="text-sm font-black text-foreground mb-3">Pilih Preferensi</h3>
+                        <div className="grid grid-cols-3 gap-2">
+                            {Object.keys(RELIGION_CONTENT).map(rel => (
+                                <button key={rel} onClick={() => handleSetReligion(rel)}
+                                    className={`py-2 rounded-xl border-2 font-bold text-xs transition-all ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-border text-foreground'}`}>
+                                    {rel}
+                                </button>
+                            ))}
                         </div>
-                    ))}
-                </div>
-                <form onSubmit={addChecklist} className="flex gap-2">
-                    <input className="flex-1 bg-muted border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:border-accent"
-                        placeholder="Tambah tugas..." value={newChecklist} onChange={e => setNewChecklist(e.target.value)} />
-                    <button type="submit" className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0"><Plus size={14} /></button>
-                </form>
-            </div>
+                    </div>
+                )}
 
-            {/* 4. Notifications */}
-            {notifications.length > 0 && (
+                {/* 3. Daily Checklist */}
                 <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <Bell size={14} className="text-accent" />
-                            <h3 className="text-xs font-black text-foreground">Notifikasi</h3>
-                            {unreadCount > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{unreadCount}</span>}
-                        </div>
-                        <button onClick={() => setShowNotifSidebar(true)} className="text-[10px] font-bold text-accent">Lihat →</button>
+                    <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle size={14} className="text-accent" />
+                        <h3 className="text-xs font-black text-foreground">Checklist Hari Ini</h3>
                     </div>
-                    <div className="space-y-1.5">
-                        {notifications.slice(0, 3).map(n => (
-                            <div key={n.id} onClick={() => handleNotificationClick(n)}
-                                className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${n.is_read ? 'border-border opacity-60' : 'border-accent/30 bg-accent/5'}`}>
-                                <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    {n.actor?.avatar_url ? <img src={n.actor.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : <Bell size={10} className="text-accent" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[9px] font-black text-accent uppercase tracking-wider truncate">{n.title}</p>
-                                    <p className="text-[10px] font-bold text-foreground line-clamp-1">{n.content}</p>
-                                </div>
+                    <div className="space-y-1.5 mb-2 max-h-[150px] overflow-y-auto">
+                        {checklists.length === 0 ? (
+                            <p className="text-xs text-mutedForeground text-center py-3">Belum ada checklist</p>
+                        ) : checklists.map(c => (
+                            <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg border border-border">
+                                <button onClick={() => toggleChecklist(c.id)}
+                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300'}`}>
+                                    {c.done && <Check size={10} />}
+                                </button>
+                                <p className={`flex-1 text-xs font-bold ${c.done ? 'line-through text-mutedForeground' : 'text-foreground'}`}>{c.text}</p>
+                                <button onClick={() => deleteChecklist(c.id)} className="text-mutedForeground hover:text-red-500"><Trash2 size={12} /></button>
                             </div>
                         ))}
                     </div>
+                    <form onSubmit={addChecklist} className="flex gap-2">
+                        <input className="flex-1 bg-muted border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:border-accent"
+                            placeholder="Tambah tugas..." value={newChecklist} onChange={e => setNewChecklist(e.target.value)} />
+                        <button type="submit" className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0"><Plus size={14} /></button>
+                    </form>
                 </div>
-            )}
 
-            {/* 5. KPI Preview */}
-            {kpis.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp size={14} className="text-accent" />
-                            <h3 className="text-xs font-black text-foreground">KPI Saya</h3>
+                {/* 4. Notifications */}
+                {notifications.length > 0 && (
+                    <div className="bg-card border border-border rounded-2xl p-3 mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <Bell size={14} className="text-accent" />
+                                <h3 className="text-xs font-black text-foreground">Notifikasi</h3>
+                                {unreadCount > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{unreadCount}</span>}
+                            </div>
+                            <button onClick={() => setShowNotifSidebar(true)} className="text-[10px] font-bold text-accent">Lihat →</button>
                         </div>
-                        <button onClick={() => navigate('/script')} className="text-[10px] font-bold text-accent">Lihat →</button>
-                    </div>
-                    <div className="space-y-2">
-                        {kpis.slice(0, 3).map(k => {
-                            const rate = k.target_value > 0 ? Math.min((k.actual_value / k.target_value) * 100, 100) : 0;
-                            return (
-                                <div key={k.id} className="flex items-center gap-2">
+                        <div className="space-y-1.5">
+                            {notifications.slice(0, 3).map(n => (
+                                <div key={n.id} onClick={() => handleNotificationClick(n)}
+                                    className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${n.is_read ? 'border-border opacity-60' : 'border-accent/30 bg-accent/5'}`}>
+                                    <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        {n.actor?.avatar_url ? <img src={n.actor.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : <Bell size={10} className="text-accent" />}
+                                    </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-bold text-foreground truncate">{k.metric_name}</p>
-                                        <div className="flex items-center gap-1 mt-0.5">
-                                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                <div className="h-full bg-accent rounded-full" style={{ width: `${rate}%` }} />
-                                            </div>
-                                            <span className="text-[9px] font-bold text-mutedForeground">{rate.toFixed(0)}%</span>
-                                        </div>
+                                        <p className="text-[9px] font-black text-accent uppercase tracking-wider truncate">{n.title}</p>
+                                        <p className="text-[10px] font-bold text-foreground line-clamp-1">{n.content}</p>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* 5. KPI Preview */}
+                {kpis.length > 0 && (
+                    <div className="bg-card border border-border rounded-2xl p-3 mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp size={14} className="text-accent" />
+                                <h3 className="text-xs font-black text-foreground">KPI Saya</h3>
+                            </div>
+                            <button onClick={() => navigate('/script')} className="text-[10px] font-bold text-accent">Lihat →</button>
+                        </div>
+                        <div className="space-y-2">
+                            {kpis.slice(0, 3).map(k => {
+                                const rate = k.target_value > 0 ? Math.min((k.actual_value / k.target_value) * 100, 100) : 0;
+                                return (
+                                    <div key={k.id} className="flex items-center gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] font-bold text-foreground truncate">{k.metric_name}</p>
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                    <div className="h-full bg-accent rounded-full" style={{ width: `${rate}%` }} />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-mutedForeground">{rate.toFixed(0)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* 6. Metrics Cards */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-card border border-border rounded-xl p-2.5 text-center">
+                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Views</p>
+                        <p className="text-lg font-black text-foreground">{formatShortNumber(metricsCurrent.views)}</p>
+                        <div className="mt-0.5">{renderMetricCompare(metricsCurrent.views, metricsPrev.views)}</div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-2.5 text-center">
+                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">ER</p>
+                        <p className="text-lg font-black text-foreground">{metricsCurrent.er.toFixed(1)}%</p>
+                        <div className="mt-0.5">{renderMetricCompare(metricsCurrent.er, metricsPrev.er)}</div>
+                    </div>
+                    <div className="bg-card border border-border rounded-xl p-2.5 text-center">
+                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Post</p>
+                        <p className="text-lg font-black text-foreground">{metricsCurrent.published}</p>
+                        <div className="mt-0.5">{renderMetricCompare(metricsCurrent.published, metricsPrev.published)}</div>
                     </div>
                 </div>
-            )}
 
-            {/* 6. Metrics Cards */}
-            <div className="grid grid-cols-3 gap-2 mb-3">
-                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Views</p>
-                    <p className="text-lg font-black text-foreground">{formatShortNumber(metricsCurrent.views)}</p>
-                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.views, metricsPrev.views)}</div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">ER</p>
-                    <p className="text-lg font-black text-foreground">{metricsCurrent.er.toFixed(1)}%</p>
-                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.er, metricsPrev.er)}</div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                    <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Post</p>
-                    <p className="text-lg font-black text-foreground">{metricsCurrent.published}</p>
-                    <div className="mt-0.5">{renderMetricCompare(metricsCurrent.published, metricsPrev.published)}</div>
-                </div>
-            </div>
-
-            {/* 7. Performance Trend Chart */}
-            <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-black text-foreground">Performance Trend</h3>
-                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                        {['views', 'likes', 'interactions'].map(m => (
-                            <button key={m} onClick={() => setSelectedMetric(m)}
-                                className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border transition-all flex-shrink-0 ${selectedMetric === m ? 'bg-slate-900 border-slate-900 text-white' : 'bg-card border-slate-200 text-mutedForeground'}`}>
-                                {m === 'interactions' ? 'Eng' : m}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="h-[120px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData}>
-                            <defs>
-                                <linearGradient id="mobileColorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#94a3b8' }} minTickGap={40} />
-                            <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 1 }} />
-                            <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={2} fillOpacity={1} fill="url(#mobileColorValue)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* 8. Workspaces */}
-            {workspaces.length > 0 && (
-                <div className="mb-3">
+                {/* 7. Performance Trend Chart */}
+                <div className="bg-card border border-border rounded-2xl p-3 mb-3">
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs font-black text-foreground uppercase tracking-wider">Workspaces</h3>
-                        <button onClick={() => navigate('/plan')} className="text-[10px] font-bold text-accent">Lihat Semua →</button>
+                        <h3 className="text-xs font-black text-foreground">Performance Trend</h3>
+                        <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                            {['views', 'likes', 'interactions'].map(m => (
+                                <button key={m} onClick={() => setSelectedMetric(m)}
+                                    className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border transition-all flex-shrink-0 ${selectedMetric === m ? 'bg-slate-900 border-slate-900 text-white' : 'bg-card border-slate-200 text-mutedForeground'}`}>
+                                    {m === 'interactions' ? 'Eng' : m}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                        {workspaces.slice(0, 5).map(ws => (
-                            <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
-                                className="flex-shrink-0 bg-card border border-border rounded-xl p-3 w-32 text-left hover:border-accent transition-colors">
-                                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center mb-2 overflow-hidden">
-                                    <Layers size={16} className="text-accent" />
-                                </div>
-                                <p className="text-xs font-bold text-foreground truncate">{ws.name}</p>
-                                <p className="text-[9px] text-mutedForeground">Workspace</p>
-                            </button>
-                        ))}
+                    <div className="h-[120px] w-full">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="mobileColorValue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#94a3b8' }} minTickGap={40} />
+                                <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 1 }} />
+                                <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={2} fillOpacity={1} fill="url(#mobileColorValue)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
-            )}
-        </div>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+                {/* 8. Workspaces */}
+                {workspaces.length > 0 && (
+                    <div className="mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-xs font-black text-foreground uppercase tracking-wider">Workspaces</h3>
+                            <button onClick={() => navigate('/plan')} className="text-[10px] font-bold text-accent">Lihat Semua →</button>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                            {workspaces.slice(0, 5).map(ws => (
+                                <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
+                                    className="flex-shrink-0 bg-card border border-border rounded-xl p-3 w-32 text-left hover:border-accent transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center mb-2 overflow-hidden">
+                                        <Layers size={16} className="text-accent" />
+                                    </div>
+                                    <p className="text-xs font-bold text-foreground truncate">{ws.name}</p>
+                                    <p className="text-[9px] text-mutedForeground">Workspace</p>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════════════
             DESKTOP VIEW (≥ md) - Original Layout
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="hidden md:block w-full px-2 sm:px-4 md:px-6 lg:px-10 space-y-4 sm:space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12 sm:pb-20">
-            {/* GRID LAYOUT */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8">
+            <div className="hidden md:block w-full px-2 sm:px-4 md:px-6 lg:px-10 space-y-4 sm:space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12 sm:pb-20">
+                {/* GRID LAYOUT */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8">
 
-                {/* --- LEFT DESKTOP COLUMN (8 of 12) --- */}
-                <div className="lg:col-span-8 space-y-2 sm:space-y-4 md:space-y-6 lg:space-y-8">
+                    {/* --- LEFT DESKTOP COLUMN (8 of 12) --- */}
+                    <div className="lg:col-span-8 space-y-2 sm:space-y-4 md:space-y-6 lg:space-y-8">
 
-                    {/* Welcome Banner */}
-                    <div className="mb-0 sm:mb-1 md:mb-2 pt-2 sm:pt-4 md:pt-6 lg:pt-8">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-[1.1] pb-2">
-                            {timeInfo.text}, {userName}!
-                        </h1>
-                        <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-slate-500 font-bold mt-0.5 sm:mt-1 md:mt-2 max-w-2xl leading-snug line-clamp-2">
-                            {timeInfo.quote}
-                        </p>
-                    </div>
-
-                    {/* Analytics Filtering & Cards */}
-                    <div>
-                        <div className="mb-4 sm:mb-6">
-                            <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
+                        {/* Welcome Banner */}
+                        <div className="mb-0 sm:mb-1 md:mb-2 pt-2 sm:pt-4 md:pt-6 lg:pt-8">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-[1.1] pb-2">
+                                {timeInfo.text}, {userName}!
+                            </h1>
+                            <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-slate-500 font-bold mt-0.5 sm:mt-1 md:mt-2 max-w-2xl leading-snug line-clamp-2">
+                                {timeInfo.quote}
+                            </p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-                            {/* Total Views Card */}
-                            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-8 sm:h-10 md:h-14 bg-accent px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <Eye size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-foreground" strokeWidth={2.5} />
+                        {/* Analytics Filtering & Cards */}
+                        <div>
+                            <div className="mb-4 sm:mb-6">
+                                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+                                {/* Total Views Card */}
+                                <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
+                                    <div className="h-8 sm:h-10 md:h-14 bg-accent px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                            <Eye size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-foreground" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="font-black text-white text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Views</span>
                                     </div>
-                                    <span className="font-black text-white text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Views</span>
-                                </div>
-                                <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
-                                    {renderMetricCompare(metricsCurrent.views, metricsPrev.views)}
-                                </div>
-                            </div>
-
-                            {/* Engagement Card */}
-                            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-8 sm:h-10 md:h-14 bg-tertiary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <MousePointerClick size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
+                                    <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
+                                        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
+                                        {renderMetricCompare(metricsCurrent.views, metricsPrev.views)}
                                     </div>
-                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Engagement</span>
                                 </div>
-                                <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
-                                    {renderMetricCompare(metricsCurrent.er, metricsPrev.er)}
-                                </div>
-                            </div>
 
-                            {/* Published Card */}
-                            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
-                                <div className="h-8 sm:h-10 md:h-14 bg-quaternary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                    <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                        <CalendarCheck size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
+                                {/* Engagement Card */}
+                                <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
+                                    <div className="h-8 sm:h-10 md:h-14 bg-tertiary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                            <MousePointerClick size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Engagement</span>
                                     </div>
-                                    <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Published Content</span>
+                                    <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
+                                        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
+                                        {renderMetricCompare(metricsCurrent.er, metricsPrev.er)}
+                                    </div>
                                 </div>
-                                <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
-                                    <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.published}</h3>
-                                    {renderMetricCompare(metricsCurrent.published, metricsPrev.published)}
+
+                                {/* Published Card */}
+                                <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
+                                    <div className="h-8 sm:h-10 md:h-14 bg-quaternary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
+                                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
+                                            <CalendarCheck size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Published Content</span>
+                                    </div>
+                                    <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
+                                        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.published}</h3>
+                                        {renderMetricCompare(metricsCurrent.published, metricsPrev.published)}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Minimalist Analytics Chart */}
-                    <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-[32px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] p-2 sm:p-3 md:p-4 lg:p-6 lg:p-8">
-                        <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-8">
-                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
-                                <TrendingUp size={16} className="sm:w-5 md:w-6 text-slate-800" />
-                                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 md:gap-2">
-                                {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
-                                    <button
-                                        key={metric}
-                                        onClick={() => setSelectedMetric(metric)}
-                                        className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[7px] sm:text-xs font-black uppercase tracking-wider border-2 transition-all ${selectedMetric === metric
-                                            ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                                            : 'bg-card border-slate-200 text-mutedForeground hover:border-slate-400'
-                                            }`}
-                                    >
-                                        {metric === 'interactions' ? 'Eng' : metric}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
-                            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                <AreaChart data={chartData}>
-                                    <defs>
-                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#A855F7" stopOpacity={0.1} />
-                                            <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis
-                                        dataKey="formattedDate"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
-                                        minTickGap={30}
-                                    />
-                                    <YAxis
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
-                                        tickFormatter={formatShortNumber}
-                                    />
-                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 2 }} />
-                                    <Area
-                                        type="monotone"
-                                        dataKey={selectedMetric}
-                                        stroke="#A855F7"
-                                        strokeWidth={4}
-                                        fillOpacity={1}
-                                        fill="url(#colorValue)"
-                                        animationDuration={1500}
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Distribution Pie Charts */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                        {/* Status Distribution */}
-                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
-                            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
-                                <CheckCircle size={18} className="md:w-6 md:h-6 text-foreground" />
-                                <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Status Distribution</h3>
-                            </div>
-                            <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
-                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                    <PieChart>
-                                        <Pie
-                                            data={statusDistribution}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={100}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            animationDuration={1500}
+                        {/* Minimalist Analytics Chart */}
+                        <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-[32px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] p-2 sm:p-3 md:p-4 lg:p-6 lg:p-8">
+                            <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-8">
+                                <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+                                    <TrendingUp size={16} className="sm:w-5 md:w-6 text-slate-800" />
+                                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 md:gap-2">
+                                    {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
+                                        <button
+                                            key={metric}
+                                            onClick={() => setSelectedMetric(metric)}
+                                            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[7px] sm:text-xs font-black uppercase tracking-wider border-2 transition-all ${selectedMetric === metric
+                                                ? 'bg-slate-900 border-slate-900 text-white shadow-md'
+                                                : 'bg-card border-slate-200 text-mutedForeground hover:border-slate-400'
+                                                }`}
                                         >
-                                            {statusDistribution.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={['#A855F7', '#34D399', '#FBBF24', '#F43F5E', '#3B82F6'][index % 5]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip content={<ChartTooltip />} />
-                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                    </PieChart>
+                                            {metric === 'interactions' ? 'Eng' : metric}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                    <AreaChart data={chartData}>
+                                        <defs>
+                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#A855F7" stopOpacity={0.1} />
+                                                <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis
+                                            dataKey="formattedDate"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
+                                            minTickGap={30}
+                                        />
+                                        <YAxis
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
+                                            tickFormatter={formatShortNumber}
+                                        />
+                                        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 2 }} />
+                                        <Area
+                                            type="monotone"
+                                            dataKey={selectedMetric}
+                                            stroke="#A855F7"
+                                            strokeWidth={4}
+                                            fillOpacity={1}
+                                            fill="url(#colorValue)"
+                                            animationDuration={1500}
+                                        />
+                                    </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        {/* Pillar Distribution */}
-                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
-                            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
-                                <Layers size={18} className="md:w-6 md:h-6 text-foreground" />
-                                <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Content Pillars</h3>
+                        {/* Distribution Pie Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                            {/* Status Distribution */}
+                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
+                                <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
+                                    <CheckCircle size={18} className="md:w-6 md:h-6 text-foreground" />
+                                    <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Status Distribution</h3>
+                                </div>
+                                <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                        <PieChart>
+                                            <Pie
+                                                data={statusDistribution}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={100}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                animationDuration={1500}
+                                            >
+                                                {statusDistribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={['#A855F7', '#34D399', '#FBBF24', '#F43F5E', '#3B82F6'][index % 5]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<ChartTooltip />} />
+                                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
-                            <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
-                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                    <PieChart>
-                                        <Pie
-                                            data={pillarDistribution}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={100}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            animationDuration={1500}
+
+                            {/* Pillar Distribution */}
+                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
+                                <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
+                                    <Layers size={18} className="md:w-6 md:h-6 text-foreground" />
+                                    <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Content Pillars</h3>
+                                </div>
+                                <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                        <PieChart>
+                                            <Pie
+                                                data={pillarDistribution}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={100}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                animationDuration={1500}
+                                            >
+                                                {pillarDistribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={['#FBBF24', '#34D399', '#A855F7', '#3B82F6', '#F43F5E'][index % 5]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<ChartTooltip />} />
+                                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        {/* Workspace Gallery */}
+                        <div className="space-y-3 sm:space-y-4 lg:space-y-6">
+                            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                                <Layers size={20} className="sm:w-7 sm:h-7 text-foreground" strokeWidth={2.5} />
+                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
+                                {workspaces.length === 0 ? (
+                                    <p className="text-xs sm:text-sm text-slate-500 font-bold col-span-full">Belum ada workspace yang tersedia.</p>
+                                ) : (
+                                    workspaces.map(ws => (
+                                        <div
+                                            key={ws.id}
+                                            onClick={() => navigate(`/plan/${ws.id}`)}
+                                            className="group cursor-pointer bg-card rounded-2xl sm:rounded-[32px] border-2 sm:border-[3px] border-slate-900 p-4 sm:p-5 lg:p-6 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[2px_4px_0px_#0f172a] sm:hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[180px] sm:min-h-[220px]"
                                         >
-                                            {pillarDistribution.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={['#FBBF24', '#34D399', '#A855F7', '#3B82F6', '#F43F5E'][index % 5]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip content={<ChartTooltip />} />
-                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    {/* Workspace Gallery */}
-                    <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                            <Layers size={20} className="sm:w-7 sm:h-7 text-foreground" strokeWidth={2.5} />
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
-                            {workspaces.length === 0 ? (
-                                <p className="text-xs sm:text-sm text-slate-500 font-bold col-span-full">Belum ada workspace yang tersedia.</p>
-                            ) : (
-                                workspaces.map(ws => (
-                                    <div
-                                        key={ws.id}
-                                        onClick={() => navigate(`/plan/${ws.id}`)}
-                                        className="group cursor-pointer bg-card rounded-2xl sm:rounded-[32px] border-2 sm:border-[3px] border-slate-900 p-4 sm:p-5 lg:p-6 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[2px_4px_0px_#0f172a] sm:hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[180px] sm:min-h-[220px]"
-                                    >
-                                        {/* Top Section */}
-                                        <div className="flex justify-between items-start gap-2 sm:gap-3 lg:gap-4 mb-2 sm:mb-3">
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 font-heading leading-tight truncate w-full mb-1.5 sm:mb-2 lg:mb-3" title={ws.name}>
-                                                    {ws.name}
-                                                </h3>
-                                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                                    <span className="inline-block px-1.5 sm:px-2 py-0.5 rounded text-[8px] sm:text-[10px] font-black bg-slate-900 text-white border-2 border-slate-900 uppercase tracking-widest leading-none">
-                                                        {ws.role || 'OWNER'}
-                                                    </span>
-                                                    <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                                        GENERAL • {ws.period || 'PERSONAL'}
-                                                    </span>
+                                            {/* Top Section */}
+                                            <div className="flex justify-between items-start gap-2 sm:gap-3 lg:gap-4 mb-2 sm:mb-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 font-heading leading-tight truncate w-full mb-1.5 sm:mb-2 lg:mb-3" title={ws.name}>
+                                                        {ws.name}
+                                                    </h3>
+                                                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                        <span className="inline-block px-1.5 sm:px-2 py-0.5 rounded text-[8px] sm:text-[10px] font-black bg-slate-900 text-white border-2 border-slate-900 uppercase tracking-widest leading-none">
+                                                            {ws.role || 'OWNER'}
+                                                        </span>
+                                                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                            GENERAL • {ws.period || 'PERSONAL'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl border-2 border-slate-900 bg-background flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
+                                                    {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers size={18} className="sm:w-6 sm:h-6 text-slate-400" />}
                                                 </div>
                                             </div>
-                                            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl border-2 border-slate-900 bg-background flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
-                                                {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers size={18} className="sm:w-6 sm:h-6 text-slate-400" />}
-                                            </div>
-                                        </div>
 
-                                        {/* Middle Section */}
-                                        <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6 line-clamp-2 leading-relaxed flex-1">
-                                            {ws.description || "Content Plan Workspace yang akan membantu memanajemen konten kamu secara tersistem"}
-                                        </p>
-
-                                        {/* Divider */}
-                                        <div className="w-full h-[1px] bg-slate-100 mb-3 sm:mb-4 lg:mb-5 relative overflow-hidden">
-                                            {/* decorative dashed effect */}
-                                            <div className="absolute top-0 left-0 w-full border-t-2 border-dashed border-slate-200"></div>
-                                        </div>
-
-                                        {/* Bottom Section */}
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex -space-x-2 sm:-space-x-4">
-                                                {(ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 0) ? (
-                                                    ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url: string, i: number) => (
-                                                        <img key={i} src={url} className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 bg-slate-200 object-cover" />
-                                                    ))
-                                                ) : (
-                                                    <>
-                                                        <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
-                                                        <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
-                                                    </>
-                                                )}
-                                                {ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 3 && (
-                                                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md font-black text-[10px] sm:text-[14px] flex items-center justify-center bg-slate-100 text-slate-900 z-10 relative">
-                                                        +{ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length - 3}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-900 bg-slate-900 text-white flex items-center justify-center group-hover:bg-slate-800 transition-all group-hover:-translate-y-1">
-                                                <ArrowUpRight strokeWidth={2.5} size={16} className="sm:w-5 sm:h-5" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* --- RIGHT DESKTOP COLUMN (4 of 12) --- */}
-                <div className="lg:col-span-4 space-y-4 sm:space-y-6 lg:pt-[115px]">
-
-                    {/* Analytics Filtering shifted here */}
-                    <div className="flex flex-wrap gap-2 w-full justify-end">
-                        <select
-                            className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                            value={filterPlatform}
-                            onChange={(e) => setFilterPlatform(e.target.value)}
-                        >
-                            <option value="all">PLATFORM</option>
-                            {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
-                                <option key={p} value={p}>{p.toUpperCase()}</option>
-                            ))}
-                        </select>
-                        <select
-                            className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                            value={filterWs}
-                            onChange={(e) => setFilterWs(e.target.value)}
-                        >
-                            <option value="all">WORKSPACE</option>
-                            {workspaces.map(ws => (
-                                <option key={ws.id} value={ws.id}>{ws.name.length > 15 ? ws.name.substring(0, 12) + '...' : ws.name.toUpperCase()}</option>
-                            ))}
-                        </select>
-                        <div className="flex gap-2">
-                            <select
-                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                value={filterMonth}
-                                onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                            >
-                                {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
-                                    <option key={m} value={i}>{m.toUpperCase()}</option>
-                                ))}
-                            </select>
-                            <select
-                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                value={filterYear}
-                                onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                            >
-                                {[2024, 2025, 2026].map(y => (
-                                    <option key={y} value={y}>{y}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Religious Card */}
-                    <div className="space-y-1.5 sm:space-y-2">
-                        <div className="bg-slate-900 rounded-2xl sm:rounded-[32px] overflow-hidden border-2 sm:border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] relative">
-                            {isSelectingReligion ? (
-                                <div className="p-3 sm:p-4 lg:p-6 bg-slate-50 h-full flex flex-col justify-center overflow-y-auto custom-scrollbar">
-                                    <Book size={24} className="sm:w-8 sm:h-8 text-accent mb-3 sm:mb-4" />
-                                    <h3 className="text-base sm:text-lg lg:text-xl font-black text-slate-900 uppercase tracking-tighter mb-1 sm:mb-2">Quote Harian</h3>
-                                    <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6">Pilih preferensi Anda untuk menyesuaikan motivasi harian.</p>
-                                    <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
-                                        {Object.keys(RELIGION_CONTENT).map(rel => (
-                                            <button
-                                                key={rel}
-                                                onClick={() => handleSetReligion(rel)}
-                                                className={`px-2 sm:px-4 py-1.5 sm:py-3 border-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs transition-colors ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
-                                            >
-                                                {rel}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {religion === 'Islam' && (
-                                        <div className="bg-background p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-slate-200 mt-2">
-                                            <h4 className="font-bold text-[10px] sm:text-sm text-slate-800 mb-1.5 sm:mb-2">Lokasi Jadwal Sholat (Opsi Manual)</h4>
-                                            <p className="text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 block">Bila kosong, sistem akan menggunakan lokasi otomatis GPS device Anda.</p>
-                                            <div className="space-y-2 sm:space-y-3">
-                                                <input
-                                                    className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
-                                                    placeholder="Contoh: Banjarmasin"
-                                                    value={manualCity}
-                                                    onChange={e => setManualCity(e.target.value)}
-                                                />
-                                                <select
-                                                    className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
-                                                    value={manualTz}
-                                                    onChange={e => setManualTz(e.target.value)}
-                                                >
-                                                    <option value="WIB">WIB (Waktu Indonesia Barat)</option>
-                                                    <option value="WITA">WITA (Waktu Indonesia Tengah)</option>
-                                                    <option value="WIT">WIT (Waktu Indonesia Timur)</option>
-                                                </select>
-                                                <button
-                                                    onClick={async () => {
-                                                        localStorage.setItem('user_city', manualCity);
-                                                        localStorage.setItem('user_tz', manualTz);
-                                                        setIsSelectingReligion(false);
-
-                                                        // Save to DB
-                                                        const userId = localStorage.getItem('user_id');
-                                                        if (userId) {
-                                                            await supabase.from('app_users').update({
-                                                                city: manualCity,
-                                                                timezone: manualTz
-                                                            }).eq('id', userId);
-                                                        }
-                                                    }}
-                                                    className="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
-                                                >
-                                                    Simpan Preferensi Lokasi
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {religion !== 'Islam' && religion !== null && (
-                                        <button
-                                            onClick={() => setIsSelectingReligion(false)}
-                                            className="w-full mt-2 bg-slate-900 text-white font-bold py-3 rounded-lg text-sm hover:bg-slate-800 transition"
-                                        >
-                                            Kembali ke Dashboard
-                                        </button>
-                                    )}
-                                </div>
-                            ) : religion === 'Islam' ? (
-                                <div className="bg-gradient-to-br from-[#18B878] to-[#0D9F61] p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[240px] relative">
-                                    <button onClick={() => setIsSelectingReligion(true)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
-                                        <Settings size={20} />
-                                    </button>
-
-                                    <p className="font-bold text-white/90 text-sm md:text-base mb-1">
-                                        {nextPrayerState.countdown} menit lagi memasuki waktu
-                                    </p>
-                                    <h3 className="text-5xl md:text-6xl font-black font-heading mb-2 drop-shadow-sm">{nextPrayerState.name}</h3>
-                                    <p className="font-bold text-white/90 text-xs md:text-sm mb-4">
-                                        {nextPrayerState.time} {tzLabel} - {cityInfo}
-                                    </p>
-
-                                    <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
-                                    {dailyQuote && typeof dailyQuote === 'object' ? (
-                                        <>
-                                            {dailyQuote.arabic && (
-                                                <p className="text-2xl md:text-3xl font-bold font-heading mb-3 text-white leading-normal" dir="rtl">
-                                                    {dailyQuote.arabic}
-                                                </p>
-                                            )}
-                                            <p className="text-sm md:text-base font-bold italic mb-2 leading-relaxed">
-                                                "{dailyQuote.text}"
+                                            {/* Middle Section */}
+                                            <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6 line-clamp-2 leading-relaxed flex-1">
+                                                {ws.description || "Content Plan Workspace yang akan membantu memanajemen konten kamu secara tersistem"}
                                             </p>
-                                            <p className="text-xs font-bold text-white/80">
-                                                - {dailyQuote.surah} -
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <p className="text-sm md:text-base font-bold italic mb-2 leading-relaxed">"{String(dailyQuote)}"</p>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className={`bg-gradient-to-br ${getReligionStyles(religion)} p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[220px] relative transition-colors duration-500`}>
-                                    <button onClick={() => setIsSelectingReligion(true)} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
-                                        <Settings size={20} />
-                                    </button>
 
-                                    <Book size={32} className="text-white/20 mb-4" />
+                                            {/* Divider */}
+                                            <div className="w-full h-[1px] bg-slate-100 mb-3 sm:mb-4 lg:mb-5 relative overflow-hidden">
+                                                {/* decorative dashed effect */}
+                                                <div className="absolute top-0 left-0 w-full border-t-2 border-dashed border-slate-200"></div>
+                                            </div>
 
-                                    <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
-
-                                    <div className="flex-1 flex flex-col justify-center items-center">
-                                        <h3 className="text-xl md:text-2xl font-bold font-heading leading-relaxed italic mb-4 max-w-md drop-shadow-sm">
-                                            "{dailyQuote?.text || (typeof dailyQuote === 'string' ? dailyQuote : '')}"
-                                        </h3>
-                                        <p className="text-sm font-bold text-white/80 bg-black/10 px-4 py-2 rounded-xl backdrop-blur-sm">
-                                            - {dailyQuote?.source || 'Motivasi'} -
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Daily Checklist */}
-                    <div id="daily-checklist" className="space-y-2">
-                        <div className="flex items-center gap-3 mb-1">
-                            <CheckCircle size={22} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-lg font-bold font-heading text-slate-800">Checklist</h2>
-                        </div>
-                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
-                            <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
-                                {checklists.length === 0 ? (
-                                    <div className="text-center py-10">
-                                        <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <Check size={24} className="text-slate-300" />
-                                        </div>
-                                        <p className="text-slate-500 font-bold text-sm">Checklist Anda kosong.<br />Tambahkan tugas hari ini!</p>
-                                    </div>
-                                ) : (
-                                    checklists.map(c => (
-                                        <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-card transition-colors">
-                                            <button onClick={() => toggleChecklist(c.id)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300 text-transparent'}`}>
-                                                <Check size={14} className={c.done ? 'opacity-100' : 'opacity-0'} />
-                                            </button>
-                                            <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-mutedForeground line-through' : 'text-foreground'}`}>{c.text}</p>
-                                            <button onClick={() => deleteChecklist(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {/* Bottom Section */}
+                                            <div className="flex items-center justify-between mt-auto">
+                                                <div className="flex -space-x-2 sm:-space-x-4">
+                                                    {(ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 0) ? (
+                                                        ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url: string, i: number) => (
+                                                            <img key={i} src={url} className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 bg-slate-200 object-cover" />
+                                                        ))
+                                                    ) : (
+                                                        <>
+                                                            <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
+                                                            <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
+                                                        </>
+                                                    )}
+                                                    {ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 3 && (
+                                                        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md font-black text-[10px] sm:text-[14px] flex items-center justify-center bg-slate-100 text-slate-900 z-10 relative">
+                                                            +{ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length - 3}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-900 bg-slate-900 text-white flex items-center justify-center group-hover:bg-slate-800 transition-all group-hover:-translate-y-1">
+                                                    <ArrowUpRight strokeWidth={2.5} size={16} className="sm:w-5 sm:h-5" />
+                                                </div>
+                                            </div>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            <form onSubmit={addChecklist} className="flex gap-2">
-                                <input
-                                    className="flex-1 bg-background border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
-                                    placeholder="Tugas baru..."
-                                    value={newChecklist}
-                                    onChange={e => setNewChecklist(e.target.value)}
-                                />
-                                <button type="submit" className="w-12 h-11 bg-slate-900 border-2 border-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-800 transition-colors shadow-hard-mini shrink-0">
-                                    <Plus size={20} />
-                                </button>
-                            </form>
                         </div>
+
                     </div>
 
-                    {/* Notification Box */}
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3 mb-1">
-                            <Bell size={22} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-lg font-bold font-heading text-slate-800">Notifikasi</h2>
+                    {/* --- RIGHT DESKTOP COLUMN (4 of 12) --- */}
+                    <div className="lg:col-span-4 space-y-4 sm:space-y-6 lg:pt-[115px]">
+
+                        {/* Analytics Filtering shifted here */}
+                        <div className="flex flex-wrap gap-2 w-full justify-end">
+                            <select
+                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                value={filterPlatform}
+                                onChange={(e) => setFilterPlatform(e.target.value)}
+                            >
+                                <option value="all">PLATFORM</option>
+                                {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
+                                    <option key={p} value={p}>{p.toUpperCase()}</option>
+                                ))}
+                            </select>
+                            <select
+                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                value={filterWs}
+                                onChange={(e) => setFilterWs(e.target.value)}
+                            >
+                                <option value="all">WORKSPACE</option>
+                                {workspaces.map(ws => (
+                                    <option key={ws.id} value={ws.id}>{ws.name.length > 15 ? ws.name.substring(0, 12) + '...' : ws.name.toUpperCase()}</option>
+                                ))}
+                            </select>
+                            <div className="flex gap-2">
+                                <select
+                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    value={filterMonth}
+                                    onChange={(e) => setFilterMonth(parseInt(e.target.value))}
+                                >
+                                    {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
+                                        <option key={m} value={i}>{m.toUpperCase()}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
+                                    value={filterYear}
+                                    onChange={(e) => setFilterYear(parseInt(e.target.value))}
+                                >
+                                    {[2024, 2025, 2026].map(y => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                        <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
-                            <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                                {notifications.length === 0 ? (
-                                    <div className="text-center py-10">
-                                        <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <Bell size={24} className="text-slate-300" />
+
+                        {/* Religious Card */}
+                        <div className="space-y-1.5 sm:space-y-2">
+                            <div className="bg-slate-900 rounded-2xl sm:rounded-[32px] overflow-hidden border-2 sm:border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] relative">
+                                {isSelectingReligion ? (
+                                    <div className="p-3 sm:p-4 lg:p-6 bg-slate-50 h-full flex flex-col justify-center overflow-y-auto custom-scrollbar">
+                                        <Book size={24} className="sm:w-8 sm:h-8 text-accent mb-3 sm:mb-4" />
+                                        <h3 className="text-base sm:text-lg lg:text-xl font-black text-slate-900 uppercase tracking-tighter mb-1 sm:mb-2">Quote Harian</h3>
+                                        <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6">Pilih preferensi Anda untuk menyesuaikan motivasi harian.</p>
+                                        <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
+                                            {Object.keys(RELIGION_CONTENT).map(rel => (
+                                                <button
+                                                    key={rel}
+                                                    onClick={() => handleSetReligion(rel)}
+                                                    className={`px-2 sm:px-4 py-1.5 sm:py-3 border-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs transition-colors ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
+                                                >
+                                                    {rel}
+                                                </button>
+                                            ))}
                                         </div>
-                                        <p className="text-slate-500 font-bold text-sm">Belum ada notifikasi baru.</p>
+
+                                        {religion === 'Islam' && (
+                                            <div className="bg-background p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-slate-200 mt-2">
+                                                <h4 className="font-bold text-[10px] sm:text-sm text-slate-800 mb-1.5 sm:mb-2">Lokasi Jadwal Sholat (Opsi Manual)</h4>
+                                                <p className="text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 block">Bila kosong, sistem akan menggunakan lokasi otomatis GPS device Anda.</p>
+                                                <div className="space-y-2 sm:space-y-3">
+                                                    <input
+                                                        className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
+                                                        placeholder="Contoh: Banjarmasin"
+                                                        value={manualCity}
+                                                        onChange={e => setManualCity(e.target.value)}
+                                                    />
+                                                    <select
+                                                        className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
+                                                        value={manualTz}
+                                                        onChange={e => setManualTz(e.target.value)}
+                                                    >
+                                                        <option value="WIB">WIB (Waktu Indonesia Barat)</option>
+                                                        <option value="WITA">WITA (Waktu Indonesia Tengah)</option>
+                                                        <option value="WIT">WIT (Waktu Indonesia Timur)</option>
+                                                    </select>
+                                                    <button
+                                                        onClick={async () => {
+                                                            localStorage.setItem('user_city', manualCity);
+                                                            localStorage.setItem('user_tz', manualTz);
+                                                            setIsSelectingReligion(false);
+
+                                                            // Save to DB
+                                                            const userId = localStorage.getItem('user_id');
+                                                            if (userId) {
+                                                                await supabase.from('app_users').update({
+                                                                    city: manualCity,
+                                                                    timezone: manualTz
+                                                                }).eq('id', userId);
+                                                            }
+                                                        }}
+                                                        className="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
+                                                    >
+                                                        Simpan Preferensi Lokasi
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {religion !== 'Islam' && religion !== null && (
+                                            <button
+                                                onClick={() => setIsSelectingReligion(false)}
+                                                className="w-full mt-2 bg-slate-900 text-white font-bold py-3 rounded-lg text-sm hover:bg-slate-800 transition"
+                                            >
+                                                Kembali ke Dashboard
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : religion === 'Islam' ? (
+                                    <div className="bg-gradient-to-br from-[#18B878] to-[#0D9F61] p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[240px] relative">
+                                        <button onClick={() => setIsSelectingReligion(true)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
+                                            <Settings size={20} />
+                                        </button>
+
+                                        <p className="font-bold text-white/90 text-sm md:text-base mb-1">
+                                            {nextPrayerState.countdown} menit lagi memasuki waktu
+                                        </p>
+                                        <h3 className="text-5xl md:text-6xl font-black font-heading mb-2 drop-shadow-sm">{nextPrayerState.name}</h3>
+                                        <p className="font-bold text-white/90 text-xs md:text-sm mb-4">
+                                            {nextPrayerState.time} {tzLabel} - {cityInfo}
+                                        </p>
+
+                                        <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
+                                        {dailyQuote && typeof dailyQuote === 'object' ? (
+                                            <>
+                                                {dailyQuote.arabic && (
+                                                    <p className="text-2xl md:text-3xl font-bold font-heading mb-3 text-white leading-normal" dir="rtl">
+                                                        {dailyQuote.arabic}
+                                                    </p>
+                                                )}
+                                                <p className="text-sm md:text-base font-bold italic mb-2 leading-relaxed">
+                                                    "{dailyQuote.text}"
+                                                </p>
+                                                <p className="text-xs font-bold text-white/80">
+                                                    - {dailyQuote.surah} -
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <p className="text-sm md:text-base font-bold italic mb-2 leading-relaxed">"{String(dailyQuote)}"</p>
+                                        )}
                                     </div>
                                 ) : (
-                                    notifications.slice(0, 5).map(n => (
+                                    <div className={`bg-gradient-to-br ${getReligionStyles(religion)} p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[220px] relative transition-colors duration-500`}>
+                                        <button onClick={() => setIsSelectingReligion(true)} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+                                            <Settings size={20} />
+                                        </button>
+
+                                        <Book size={32} className="text-white/20 mb-4" />
+
+                                        <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
+
+                                        <div className="flex-1 flex flex-col justify-center items-center">
+                                            <h3 className="text-xl md:text-2xl font-bold font-heading leading-relaxed italic mb-4 max-w-md drop-shadow-sm">
+                                                "{dailyQuote?.text || (typeof dailyQuote === 'string' ? dailyQuote : '')}"
+                                            </h3>
+                                            <p className="text-sm font-bold text-white/80 bg-black/10 px-4 py-2 rounded-xl backdrop-blur-sm">
+                                                - {dailyQuote?.source || 'Motivasi'} -
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Daily Checklist */}
+                        <div id="daily-checklist" className="space-y-2">
+                            <div className="flex items-center gap-3 mb-1">
+                                <CheckCircle size={22} className="text-slate-800" strokeWidth={2.5} />
+                                <h2 className="text-lg font-bold font-heading text-slate-800">Checklist</h2>
+                            </div>
+                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
+                                <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
+                                    {checklists.length === 0 ? (
+                                        <div className="text-center py-10">
+                                            <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <Check size={24} className="text-slate-300" />
+                                            </div>
+                                            <p className="text-slate-500 font-bold text-sm">Checklist Anda kosong.<br />Tambahkan tugas hari ini!</p>
+                                        </div>
+                                    ) : (
+                                        checklists.map(c => (
+                                            <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-card transition-colors">
+                                                <button onClick={() => toggleChecklist(c.id)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300 text-transparent'}`}>
+                                                    <Check size={14} className={c.done ? 'opacity-100' : 'opacity-0'} />
+                                                </button>
+                                                <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-mutedForeground line-through' : 'text-foreground'}`}>{c.text}</p>
+                                                <button onClick={() => deleteChecklist(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <form onSubmit={addChecklist} className="flex gap-2">
+                                    <input
+                                        className="flex-1 bg-background border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
+                                        placeholder="Tugas baru..."
+                                        value={newChecklist}
+                                        onChange={e => setNewChecklist(e.target.value)}
+                                    />
+                                    <button type="submit" className="w-12 h-11 bg-slate-900 border-2 border-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-800 transition-colors shadow-hard-mini shrink-0">
+                                        <Plus size={20} />
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* Notification Box */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-3 mb-1">
+                                <Bell size={22} className="text-slate-800" strokeWidth={2.5} />
+                                <h2 className="text-lg font-bold font-heading text-slate-800">Notifikasi</h2>
+                            </div>
+                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
+                                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                    {notifications.length === 0 ? (
+                                        <div className="text-center py-10">
+                                            <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <Bell size={24} className="text-slate-300" />
+                                            </div>
+                                            <p className="text-slate-500 font-bold text-sm">Belum ada notifikasi baru.</p>
+                                        </div>
+                                    ) : (
+                                        notifications.slice(0, 5).map(n => (
+                                            <div
+                                                key={n.id}
+                                                onClick={() => handleNotificationClick(n)}
+                                                className={`group flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer ${n.is_read ? 'border-slate-100 bg-slate-50 opacity-70' : 'border-slate-200 hover:border-slate-300 bg-card shadow-sm'}`}
+                                            >
+                                                <div className="shrink-0 relative mt-1">
+                                                    {n.actor?.avatar_url ? (
+                                                        <img src={n.actor.avatar_url} className="w-8 h-8 rounded-full border border-slate-900 object-cover" alt="" />
+                                                    ) : (
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white border border-slate-900 text-[10px] font-bold ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
+                                                            {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
+                                                        </div>
+                                                    )}
+                                                    {!n.is_read && (
+                                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start mb-0.5">
+                                                        <p className="text-[9px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
+                                                        <p className="text-[8px] font-bold text-slate-400 shrink-0 ml-2">
+                                                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{n.content}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <Button className="w-full mt-6" variant="outline" size="sm" onClick={() => setShowNotifSidebar(true)}>
+                                    Lihat Semua <ArrowRight size={14} className="ml-2" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* KPI Targets Preview */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-3 mb-1">
+                                <TrendingUp size={22} className="text-slate-800" strokeWidth={2.5} />
+                                <h2 className="text-lg font-bold font-heading text-slate-800">KPI Targets</h2>
+                            </div>
+                            <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
+                                <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl mb-4">
+                                    <p className="text-xs font-bold text-yellow-800">
+                                        Berikut adalah target bulan ini yang terkoneksi pada performa kerja Anda secara personal.
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    {kpis.length === 0 ? (
+                                        <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">
+                                            <p className="text-sm font-bold text-slate-400">Belum ada target KPI yang diassign untuk profil Anda bulan ini. ✨</p>
+                                        </div>
+                                    ) : (
+                                        kpis.map((kpi, idx) => {
+                                            const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
+                                            const isCompleted = kpi.actual_value >= kpi.target_value;
+                                            return (
+                                                <div key={kpi.id || idx} className="bg-card border-2 border-border/20 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <h4 className="font-black text-slate-800 text-sm truncate pr-4">{kpi.metric_name}</h4>
+                                                        <span className="text-[10px] font-black bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                                            {kpis[idx].actual_value} / {kpis[idx].target_value} {kpi.unit}
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full bg-background h-3 rounded-full overflow-hidden border border-slate-200">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-accent'}`}
+                                                            style={{ width: `${Math.min(progress, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                                <Button className="w-full mt-6" variant="secondary" onClick={() => navigate('/script')}>
+                                    Lihat Board KPI Saya <ArrowRight size={16} className="ml-2" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notification Sidebar Overlay */}
+                {showNotifSidebar && (
+                    <div className="fixed inset-0 z-[10001] flex justify-end">
+                        {/* Backdrop */}
+                        <div
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                            onClick={() => setShowNotifSidebar(false)}
+                        />
+
+                        {/* Sidebar Content */}
+                        <div className="relative w-full max-w-[450px] bg-card h-full border-l-4 border-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+                            {/* Header */}
+                            <div className="p-6 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-hard-mini">
+                                        <Bell size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Semua Notifikasi</h2>
+                                        <p className="text-[10px] font-black text-accent uppercase tracking-widest">{unreadCount} belum dibaca</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowNotifSidebar(false)}
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            {/* Top Action Bar */}
+                            <div className="px-6 py-4 border-b-2 border-slate-50 flex items-center justify-between bg-white">
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={markAllAsRead}
+                                        className="text-[10px] font-black uppercase text-slate-600 hover:text-accent transition-colors flex items-center gap-2"
+                                    >
+                                        <CheckCheck size={14} /> Tandai Semua Terbaca
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('Hapus semua notifikasi permanen?')) {
+                                                clearAllNotifications();
+                                            }
+                                        }}
+                                        className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2"
+                                    >
+                                        <Trash2 size={14} /> Hapus Semua
+                                    </button>
+                                </div>
+                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Terbaru</span>
+                            </div>
+
+                            {/* Notification List */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/30">
+                                {notifications.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center p-12">
+                                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-slate-200">
+                                            <Bell size={32} className="text-slate-200" />
+                                        </div>
+                                        <h3 className="text-slate-900 font-black uppercase tracking-tight mb-1">Hening Sekali...</h3>
+                                        <p className="text-xs font-bold text-slate-400">Belum ada notifikasi yang masuk untuk Anda saat ini.</p>
+                                    </div>
+                                ) : (
+                                    notifications.map(n => (
                                         <div
                                             key={n.id}
-                                            onClick={() => handleNotificationClick(n)}
-                                            className={`group flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer ${n.is_read ? 'border-slate-100 bg-slate-50 opacity-70' : 'border-slate-200 hover:border-slate-300 bg-card shadow-sm'}`}
+                                            onClick={() => {
+                                                handleNotificationClick(n);
+                                            }}
+                                            className={`group flex items-start gap-4 p-5 rounded-[24px] border-2 transition-all cursor-pointer relative overflow-hidden ${n.is_read
+                                                ? 'border-slate-100 bg-white/50 opacity-60'
+                                                : 'border-slate-900 bg-white shadow-hard-mini hover:-translate-y-1'
+                                                }`}
                                         >
-                                            <div className="shrink-0 relative mt-1">
+                                            <div className="shrink-0 relative">
                                                 {n.actor?.avatar_url ? (
-                                                    <img src={n.actor.avatar_url} className="w-8 h-8 rounded-full border border-slate-900 object-cover" alt="" />
+                                                    <img src={n.actor.avatar_url} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" alt="" />
                                                 ) : (
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white border border-slate-900 text-[10px] font-bold ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white border-2 border-slate-900 font-black text-sm ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
                                                         {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
                                                     </div>
                                                 )}
                                                 {!n.is_read && (
-                                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>
+                                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-pulse shadow-sm"></div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex justify-between items-start mb-0.5">
-                                                    <p className="text-[9px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
-                                                    <p className="text-[8px] font-bold text-slate-400 shrink-0 ml-2">
-                                                        {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <p className="text-[10px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
+                                                    <p className="text-[9px] font-black text-slate-400 shrink-0 ml-2 bg-slate-50 px-2 py-0.5 rounded-full">
+                                                        {new Date(n.created_at).toLocaleDateString() === new Date().toLocaleDateString()
+                                                            ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                            : new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
+                                                        }
                                                     </p>
                                                 </div>
-                                                <p className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{n.content}</p>
+                                                <p className="text-sm font-bold text-slate-700 leading-snug">
+                                                    {n.content}
+                                                </p>
+
+                                                {/* Action Indicator on dark border cards */}
+                                                {!n.is_read && (
+                                                    <div className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-900 uppercase">
+                                                        Lihat Detail <ArrowRight size={12} strokeWidth={3} />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            <Button className="w-full mt-6" variant="outline" size="sm" onClick={() => setShowNotifSidebar(true)}>
-                                Lihat Semua <ArrowRight size={14} className="ml-2" />
-                            </Button>
                         </div>
                     </div>
-
-                    {/* KPI Targets Preview */}
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3 mb-1">
-                            <TrendingUp size={22} className="text-slate-800" strokeWidth={2.5} />
-                            <h2 className="text-lg font-bold font-heading text-slate-800">KPI Targets</h2>
-                        </div>
-                        <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
-                            <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl mb-4">
-                                <p className="text-xs font-bold text-yellow-800">
-                                    Berikut adalah target bulan ini yang terkoneksi pada performa kerja Anda secara personal.
-                                </p>
-                            </div>
-                            <div className="space-y-4">
-                                {kpis.length === 0 ? (
-                                    <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">
-                                        <p className="text-sm font-bold text-slate-400">Belum ada target KPI yang diassign untuk profil Anda bulan ini. ✨</p>
-                                    </div>
-                                ) : (
-                                    kpis.map((kpi, idx) => {
-                                        const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
-                                        const isCompleted = kpi.actual_value >= kpi.target_value;
-                                        return (
-                                            <div key={kpi.id || idx} className="bg-card border-2 border-border/20 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="font-black text-slate-800 text-sm truncate pr-4">{kpi.metric_name}</h4>
-                                                    <span className="text-[10px] font-black bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                                                        {kpis[idx].actual_value} / {kpis[idx].target_value} {kpi.unit}
-                                                    </span>
-                                                </div>
-                                                <div className="w-full bg-background h-3 rounded-full overflow-hidden border border-slate-200">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-accent'}`}
-                                                        style={{ width: `${Math.min(progress, 100)}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                            <Button className="w-full mt-6" variant="secondary" onClick={() => navigate('/script')}>
-                                Lihat Board KPI Saya <ArrowRight size={16} className="ml-2" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                )}
             </div>
-
-            {/* Notification Sidebar Overlay */}
-            {showNotifSidebar && (
-                <div className="fixed inset-0 z-[10001] flex justify-end">
-                    {/* Backdrop */}
-                    <div
-                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
-                        onClick={() => setShowNotifSidebar(false)}
-                    />
-
-                    {/* Sidebar Content */}
-                    <div className="relative w-full max-w-[450px] bg-card h-full border-l-4 border-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
-                        {/* Header */}
-                        <div className="p-6 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-hard-mini">
-                                    <Bell size={24} />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Semua Notifikasi</h2>
-                                    <p className="text-[10px] font-black text-accent uppercase tracking-widest">{unreadCount} belum dibaca</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowNotifSidebar(false)}
-                                className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* Top Action Bar */}
-                        <div className="px-6 py-4 border-b-2 border-slate-50 flex items-center justify-between bg-white">
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={markAllAsRead}
-                                    className="text-[10px] font-black uppercase text-slate-600 hover:text-accent transition-colors flex items-center gap-2"
-                                >
-                                    <CheckCheck size={14} /> Tandai Semua Terbaca
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm('Hapus semua notifikasi permanen?')) {
-                                            clearAllNotifications();
-                                        }
-                                    }}
-                                    className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2"
-                                >
-                                    <Trash2 size={14} /> Hapus Semua
-                                </button>
-                            </div>
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Terbaru</span>
-                        </div>
-
-                        {/* Notification List */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/30">
-                            {notifications.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-12">
-                                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-slate-200">
-                                        <Bell size={32} className="text-slate-200" />
-                                    </div>
-                                    <h3 className="text-slate-900 font-black uppercase tracking-tight mb-1">Hening Sekali...</h3>
-                                    <p className="text-xs font-bold text-slate-400">Belum ada notifikasi yang masuk untuk Anda saat ini.</p>
-                                </div>
-                            ) : (
-                                notifications.map(n => (
-                                    <div
-                                        key={n.id}
-                                        onClick={() => {
-                                            handleNotificationClick(n);
-                                        }}
-                                        className={`group flex items-start gap-4 p-5 rounded-[24px] border-2 transition-all cursor-pointer relative overflow-hidden ${n.is_read
-                                            ? 'border-slate-100 bg-white/50 opacity-60'
-                                            : 'border-slate-900 bg-white shadow-hard-mini hover:-translate-y-1'
-                                            }`}
-                                    >
-                                        <div className="shrink-0 relative">
-                                            {n.actor?.avatar_url ? (
-                                                <img src={n.actor.avatar_url} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" alt="" />
-                                            ) : (
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white border-2 border-slate-900 font-black text-sm ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
-                                                    {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
-                                                </div>
-                                            )}
-                                            {!n.is_read && (
-                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-pulse shadow-sm"></div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <p className="text-[10px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
-                                                <p className="text-[9px] font-black text-slate-400 shrink-0 ml-2 bg-slate-50 px-2 py-0.5 rounded-full">
-                                                    {new Date(n.created_at).toLocaleDateString() === new Date().toLocaleDateString()
-                                                        ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                                        : new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
-                                                    }
-                                                </p>
-                                            </div>
-                                            <p className="text-sm font-bold text-slate-700 leading-snug">
-                                                {n.content}
-                                            </p>
-
-                                            {/* Action Indicator on dark border cards */}
-                                            {!n.is_read && (
-                                                <div className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-900 uppercase">
-                                                    Lihat Detail <ArrowRight size={12} strokeWidth={3} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
         </>
     );
 };

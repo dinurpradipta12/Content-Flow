@@ -143,8 +143,11 @@ export const TeamKPIBoard: React.FC = () => {
             const tenantId = localStorage.getItem('tenant_id') || userId;
 
             let wsQuery = supabase.from('workspaces').select('id,name,members,admin_id,owner_id');
-            // Strict visibility: only own or invited (Applies to ALL roles)
-            wsQuery = wsQuery.or(`owner_id.eq.${userId},members.cs.{"${currentUserAvatar}"}`);
+            let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
+            if (currentUserAvatar && !currentUserAvatar.startsWith('data:')) {
+                orCond += `,members.cs.{"${currentUserAvatar}"}`;
+            }
+            wsQuery = wsQuery.or(orCond);
 
             const [membersRes, kpisRes, wsRes] = await Promise.all([
                 supabase.from('team_members').select('*').eq('admin_id', tenantId).order('full_name'),
@@ -198,6 +201,24 @@ export const TeamKPIBoard: React.FC = () => {
         const memberKPIs = getMemberKPIs(memberId);
         if (memberKPIs.length === 0) return 0;
         const total = memberKPIs.reduce((sum, k) => sum + Math.min((k.actual_value / k.target_value) * 100, 100), 0);
+        return Math.round(total / memberKPIs.length);
+    };
+
+    const getPreviousMonthMemberKPIs = (memberId: string) => {
+        let filtered = kpis.filter(k => k.member_id === memberId);
+        const now = new Date();
+        const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        filtered = filtered.filter(k => {
+            const d = new Date(k.period_date);
+            return d.getMonth() === prevMonthDate.getMonth() && d.getFullYear() === prevMonthDate.getFullYear();
+        });
+        return filtered;
+    };
+
+    const getPreviousMonthCompletionRate = (memberId: string) => {
+        const memberKPIs = getPreviousMonthMemberKPIs(memberId);
+        if (memberKPIs.length === 0) return 0;
+        const total = memberKPIs.reduce((sum, k) => sum + Math.min((k.target_value > 0 ? k.actual_value / k.target_value : 0) * 100, 100), 0);
         return Math.round(total / memberKPIs.length);
     };
 
@@ -349,6 +370,27 @@ export const TeamKPIBoard: React.FC = () => {
     const avgCompletion = totalMembers > 0 ? Math.round(filteredMembers.reduce((s, m) => s + getCompletionRate(m.id), 0) / totalMembers) : 0;
     const onTrackCount = filteredMembers.filter(m => getCompletionRate(m.id) >= 80).length;
 
+    const topPerformers = React.useMemo(() => {
+        if (filteredMembers.length === 0) return [];
+        let memberRates = filteredMembers.map(m => ({ member: m, rate: getCompletionRate(m.id) }));
+        memberRates.sort((a, b) => b.rate - a.rate);
+        return memberRates.filter(mr => mr.rate > 0).slice(0, 3);
+    }, [filteredMembers, kpis, periodFilter]);
+
+    const previousMonthBestPerformer = React.useMemo(() => {
+        if (filteredMembers.length === 0) return null;
+        let maxRate = -1;
+        let best: TeamMember | null = null;
+        filteredMembers.forEach(m => {
+            const rate = getPreviousMonthCompletionRate(m.id);
+            if (rate > maxRate) {
+                maxRate = rate;
+                best = m;
+            }
+        });
+        return best && maxRate > 0 ? { member: best, rate: maxRate } : null;
+    }, [filteredMembers, kpis]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-[60vh]">
@@ -361,40 +403,40 @@ export const TeamKPIBoard: React.FC = () => {
     }
 
     return (
-        <div className="space-y-2 sm:space-y-4 md:space-y-6">
-            {/* Mobile: Workspace filter pills */}
-            {myWorkspaces.length > 1 && (
-                <div className="flex md:hidden gap-1.5 overflow-x-auto no-scrollbar pb-1 flex-shrink-0">
-                    <button onClick={() => setSelectedWorkspaceId('all')}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white border-violet-600' : 'bg-card border-border text-foreground'}`}>
-                        Semua ({filteredMembers.length})
-                    </button>
-                    {myWorkspaces.map(ws => {
-                        const wsAvatars = new Set(ws.members || []);
-                        const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
-                        return (
-                            <button key={ws.id} onClick={() => setSelectedWorkspaceId(ws.id)}
-                                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${selectedWorkspaceId === ws.id ? 'bg-violet-600 text-white border-violet-600' : 'bg-card border-border text-foreground'}`}>
-                                {ws.name} ({count})
-                            </button>
-                        );
-                    })}
-                </div>
-            )}
-
+        <div className="space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 md:gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-base md:text-2xl lg:text-4xl font-bold text-slate-900 flex items-center gap-2">
+                    <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-slate-900 flex items-center gap-2">
                         {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
                     </h1>
                     <p className="text-slate-500 text-xs sm:text-sm mt-0.5 hidden md:block">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    {/* Workspace Filter */}
+                    {myWorkspaces.length > 1 && (
+                        <select
+                            value={selectedWorkspaceId}
+                            onChange={e => setSelectedWorkspaceId(e.target.value)}
+                            className="bg-transparent border-2 border-slate-200 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-bold focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                        >
+                            <option value="all">Semua Workspace</option>
+                            {myWorkspaces.map(ws => {
+                                const wsAvatars = new Set(ws.members || []);
+                                const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
+                                return (
+                                    <option key={ws.id} value={ws.id}>
+                                        {ws.name} ({count})
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    )}
+
                     <select
                         value={periodFilter}
                         onChange={e => setPeriodFilter(e.target.value)}
-                        className="bg-transparent border-2 border-slate-200 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                        className="bg-transparent border-2 border-slate-200 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-bold focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
                     >
                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
@@ -402,75 +444,43 @@ export const TeamKPIBoard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-                <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
-                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-violet-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Users className="text-violet-500" size={18} />
-                    </div>
-                    <div>
-                        <p className="text-xl sm:text-2xl font-bold text-foreground">{totalMembers}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Members</p>
-                    </div>
-                </div>
-                <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
-                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Target className="text-blue-500" size={18} />
-                    </div>
-                    <div>
-                        <p className="text-xl sm:text-2xl font-bold text-foreground">{avgCompletion}%</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">Completion</p>
-                    </div>
-                </div>
-                <div className="bg-card rounded-lg sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
-                    <div className="w-10 sm:w-12 h-10 sm:h-12 bg-emerald-100/10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
-                        <TrendingUp className="text-emerald-500" size={18} />
-                    </div>
-                    <div>
-                        <p className="text-xl sm:text-2xl font-bold text-foreground">{onTrackCount}/{totalMembers}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium">On Track</p>
-                    </div>
-                </div>
-            </div>
+            {/* Split Content layout */}
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
 
-            {/* Workspace Folder + Member Grid */}
-            <div className="flex gap-2 sm:gap-3 md:gap-5">
-                {/* Left: Workspace Folders — only show workspaces accessible to current user */}
-                {myWorkspaces.length > 1 && (
-                    <div className="w-40 sm:w-48 md:w-52 shrink-0 hidden sm:block">
-                        <div className="bg-card border-2 border-slate-900 rounded-lg sm:rounded-2xl shadow-[4px_4px_0px_#0f172a] overflow-hidden">
-                            <div className="p-2 sm:p-3 border-b-2 border-slate-900 bg-violet-600">
-                                <p className="text-white font-black text-[10px] sm:text-xs uppercase tracking-widest">Workspace</p>
+                {/* LEFT COLUMN: Main Stats & Member Grid */}
+                <div className="flex-1 space-y-4 md:space-y-6 min-w-0">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+                        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+                            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-violet-100/10 rounded-lg sm:rounded-xl border-2 border-violet-100 flex items-center justify-center flex-shrink-0">
+                                <Users className="text-violet-500" size={18} />
                             </div>
-                            <div className="p-1 sm:p-2 space-y-0.5 sm:space-y-1">
-                                <button
-                                    onClick={() => setSelectedWorkspaceId('all')}
-                                    className={`w-full flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all ${selectedWorkspaceId === 'all' ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
-                                >
-                                    <Users size={12} /> <span className="hidden md:inline">Semua</span>
-                                    <span className="ml-auto text-[9px] opacity-70">{filteredMembers.length}</span>
-                                </button>
-                                {myWorkspaces.map(ws => {
-                                    const wsAvatars = new Set(ws.members || []);
-                                    const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
-                                    return (
-                                        <button
-                                            key={ws.id}
-                                            onClick={() => setSelectedWorkspaceId(ws.id)}
-                                            className={`w-full flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all ${selectedWorkspaceId === ws.id ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#0f172a]' : 'text-slate-600 hover:bg-slate-100'}`}
-                                        >
-                                            <span className="truncate flex-1 text-left text-[9px] sm:text-xs">{ws.name}</span>
-                                            <span className="text-[9px] opacity-70">{count}</span>
-                                        </button>
-                                    );
-                                })}
+                            <div>
+                                <p className="text-xl sm:text-2xl font-black text-foreground">{totalMembers}</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Members</p>
+                            </div>
+                        </div>
+                        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
+                            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-100/10 rounded-lg sm:rounded-xl border-2 border-blue-100 flex items-center justify-center flex-shrink-0">
+                                <Target className="text-blue-500" size={18} />
+                            </div>
+                            <div>
+                                <p className="text-xl sm:text-2xl font-black text-foreground">{avgCompletion}%</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Completion</p>
+                            </div>
+                        </div>
+                        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4 col-span-2 sm:col-span-1">
+                            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-emerald-100/10 rounded-lg sm:rounded-xl border-2 border-emerald-100 flex items-center justify-center flex-shrink-0">
+                                <TrendingUp className="text-emerald-500" size={18} />
+                            </div>
+                            <div>
+                                <p className="text-xl sm:text-2xl font-black text-foreground">{onTrackCount}/{totalMembers}</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">On Track</p>
                             </div>
                         </div>
                     </div>
-                )}
 
-                {/* Right: Member Cards */}
-                <div className="flex-1">
+                    {/* Member Grid */}
                     {filteredMembers.length === 0 ? (
                         <div className="text-center py-12 sm:py-20 bg-card rounded-lg sm:rounded-2xl border-2 border-dashed border-border">
                             <Users className="mx-auto text-mutedForeground mb-2 sm:mb-4" size={32} sm:size={48} />
@@ -543,8 +553,137 @@ export const TeamKPIBoard: React.FC = () => {
                             })}
                         </div>
                     )}
-                </div> {/* end flex-1 member cards */}
-            </div> {/* end workspace+cards flex */}
+                </div> {/* End Left Col */}
+
+                {/* RIGHT COLUMN: Vision Board */}
+                <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4">
+                    <div className="bg-card border-3 border-slate-900 rounded-3xl shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col">
+                        <div className="bg-amber-400 p-4 border-b-3 border-slate-900 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                                <TrendingUp className="text-slate-900" size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-heading font-black text-slate-900 text-lg leading-tight uppercase tracking-wider">Vision Board</h3>
+                                <p className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">{PERIODS.find(p => p.value === periodFilter)?.label || 'Performance'}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-5 flex-1 flex flex-col items-center relative min-h-[300px]">
+                            {/* Confetti / Badge background decoration */}
+                            <div className="absolute top-4 right-4 w-16 h-16 bg-amber-400/10 rounded-full blur-xl pointer-events-none"></div>
+
+                            {topPerformers.length > 0 ? (
+                                <div className="flex flex-col items-center w-full relative z-10 animate-in fade-in slide-in-from-bottom-4 space-y-4">
+                                    {/* TOP 1 */}
+                                    <div className="flex flex-col items-center w-full pb-4 border-b-2 border-slate-100 border-dashed">
+                                        <div className="relative mb-4">
+                                            <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 shadow-lg bg-white relative z-10">
+                                                <img
+                                                    src={topPerformers[0].member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(topPerformers[0].member.full_name)}`}
+                                                    alt={topPerformers[0].member.full_name}
+                                                    className="w-full h-full rounded-full object-cover"
+                                                />
+                                            </div>
+                                            {/* Crown Icon / Badge */}
+                                            <div className="absolute -top-3 -right-2 bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-1 rounded-full border-2 border-amber-400 transform rotate-12 shadow-sm z-20">
+                                                #1 TOP
+                                            </div>
+                                        </div>
+
+                                        <h4 className="font-black text-xl text-center text-foreground">{topPerformers[0].member.full_name}</h4>
+                                        <p className="text-xs text-mutedForeground font-bold mb-4">{topPerformers[0].member.role} {topPerformers[0].member.department ? ` • ${topPerformers[0].member.department}` : ''}</p>
+
+                                        <div className="w-full bg-muted/50 rounded-2xl p-4 border-2 border-slate-900 border-dashed mb-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Completion Score</span>
+                                                <span className="text-lg font-black text-amber-500">{topPerformers[0].rate}%</span>
+                                            </div>
+                                            <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                                                <div className="h-full bg-amber-400 rounded-full" style={{ width: `${topPerformers[0].rate}%` }}></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-full text-left">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5"><Target size={12} /> Metrik Terfasilitasi</p>
+                                            <div className="space-y-2">
+                                                {getMemberKPIs(topPerformers[0].member.id).slice(0, 3).map(kpi => (
+                                                    <div key={kpi.id} className="flex flex-col gap-1 p-2 bg-card border border-border shadow-sm rounded-xl">
+                                                        <p className="text-[10px] font-bold text-foreground line-clamp-1">{kpi.metric_name}</p>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[9px] font-medium text-mutedForeground">
+                                                                {kpi.actual_value} / {kpi.target_value} {kpi.unit}
+                                                            </span>
+                                                            <span className="text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                                                {kpi.target_value > 0 ? ((kpi.actual_value / kpi.target_value) * 100).toFixed(0) : 0}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {getMemberKPIs(topPerformers[0].member.id).length > 3 && (
+                                                    <p className="text-[10px] text-center text-mutedForeground font-bold pt-1">
+                                                        + {getMemberKPIs(topPerformers[0].member.id).length - 3} metrik lainnya
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sub-leaders (Best 2 and Best 3) */}
+                                    {(topPerformers.length > 1) && (
+                                        <div className="w-full flex gap-3 mt-2">
+                                            {topPerformers.slice(1, 3).map((p, index) => (
+                                                <div key={p.member.id} className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center relative">
+                                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-slate-100 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm z-20">
+                                                        #{index + 2}
+                                                    </div>
+                                                    <img
+                                                        src={p.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.member.full_name)}`}
+                                                        alt={p.member.full_name}
+                                                        className="w-12 h-12 rounded-full border-2 border-slate-300 object-cover mt-2 mb-2 shadow-sm"
+                                                    />
+                                                    <h5 className="font-extrabold text-[10px] text-center line-clamp-1 w-full text-slate-800">{p.member.full_name}</h5>
+                                                    <p className="text-[8px] text-slate-500 font-bold mb-1 truncate w-full text-center">{p.member.role}</p>
+                                                    <div className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-xl border border-amber-200 w-full text-center">
+                                                        {p.rate}%
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* PREVIOUS MONTH MVP */}
+                                    {previousMonthBestPerformer && (
+                                        <div className="w-full mt-4 pt-4 border-t-2 border-slate-100 border-dashed">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-3">🏅 MVP Bulan Lalu</p>
+                                            <div className="bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border-2 border-violet-500/20 rounded-2xl p-3 flex items-center gap-3">
+                                                <img
+                                                    src={previousMonthBestPerformer.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(previousMonthBestPerformer.member.full_name)}`}
+                                                    alt={previousMonthBestPerformer.member.full_name}
+                                                    className="w-10 h-10 rounded-full border-2 border-violet-300 object-cover"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <h5 className="font-extrabold text-xs text-foreground truncate">{previousMonthBestPerformer.member.full_name}</h5>
+                                                    <p className="text-[9px] text-violet-600 font-black truncate">{previousMonthBestPerformer.member.role}</p>
+                                                </div>
+                                                <div className="bg-violet-600 text-white font-black text-xs px-2 py-1 flex items-center justify-center rounded-lg shadow-sm whitespace-nowrap">
+                                                    {previousMonthBestPerformer.rate}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                </div>
+                            ) : (
+                                <div className="text-center flex flex-col justify-center items-center h-full text-slate-400 mt-10">
+                                    <TrendingUp size={48} className="opacity-20 mb-3" />
+                                    <p className="font-bold text-sm">Belum Ada Data</p>
+                                    <p className="text-[10px]">Capaian KPI teratas akan muncul di sini</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* ====== DETAIL MODAL ====== */}
             <Modal isOpen={isDetailOpen} onClose={() => { setIsDetailOpen(false); setShowMemberInput(false); }} title={selectedMember?.full_name || 'Detail'} maxWidth="max-w-4xl">

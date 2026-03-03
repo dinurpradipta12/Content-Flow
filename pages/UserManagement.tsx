@@ -1242,7 +1242,7 @@ export const UserManagement: React.FC = () => {
                             <div className="lg:col-span-2 space-y-6">
                                 <div className="bg-white p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[350px]">
                                     <h4 className="font-heading font-black text-slate-900 uppercase italic mb-6">Kumulatif User Baru</h4>
-                                    <ResponsiveContainer width="100%" height="80%">
+                                    <ResponsiveContainer width="100%" height="80%" minWidth={1} minHeight={1}>
                                         <AreaChart data={growthData}>
                                             <defs>
                                                 <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">

@@ -960,7 +960,7 @@ export const ContentDataInsight: React.FC = () => {
 
                             {/* Chart Area */}
                             <div className="h-[180px] sm:h-[300px] w-full bg-white border-2 border-slate-800 rounded-xl p-3 sm:p-4 shadow-hard relative">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <AreaChart data={chartData}>
                                         <defs>
                                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -1470,7 +1470,7 @@ export const ContentDataInsight: React.FC = () => {
                                 Grafik Pertumbuhan Per Minggu
                             </h4>
                             <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <AreaChart data={reportData.growthChartData}>
                                         <defs>
                                             <linearGradient id="reportReach" x1="0" y1="0" x2="0" y2="1">
@@ -1506,7 +1506,7 @@ export const ContentDataInsight: React.FC = () => {
                                 Komparasi Metrics Engagement
                             </h4>
                             <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <BarChart data={reportData.metricsBarData}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                         <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
@@ -1611,7 +1611,7 @@ export const ContentDataInsight: React.FC = () => {
                                 Content Pillar Overview
                             </h4>
                             <div className="h-[200px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <PieChart>
                                         <Pie
                                             data={reportData.pillarPieData}
@@ -1650,7 +1650,7 @@ export const ContentDataInsight: React.FC = () => {
                                 Frekuensi Posting Per Hari
                             </h4>
                             <div className="h-[200px]">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <BarChart data={reportData.postingFreqData}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                         <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
@@ -1675,7 +1675,7 @@ export const ContentDataInsight: React.FC = () => {
                             </h4>
                             <div className="flex items-center gap-8">
                                 <div className="h-[180px] w-[180px]">
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                         <PieChart>
                                             <Pie data={reportData.platformPieData} cx="50%" cy="50%" outerRadius={80} innerRadius={40} dataKey="value" fontSize={10} fontWeight={700}>
                                                 {reportData.platformPieData.map((_, i) => (

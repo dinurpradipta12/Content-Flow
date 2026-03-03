@@ -258,7 +258,7 @@ export const DeveloperAnalytics: React.FC = () => {
                         <Download size={16} className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors md:w-5 md:h-5" />
                     </div>
                     <div className="h-80 w-full relative z-10">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                             <AreaChart data={data.monthlySales}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -300,7 +300,7 @@ export const DeveloperAnalytics: React.FC = () => {
                     </div>
                     <div className="flex-1 flex flex-col md:flex-row items-center justify-around gap-8">
                         <div className="h-64 w-64">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                 <RePieChart>
                                     <Pie
                                         data={data.packageDistribution}
