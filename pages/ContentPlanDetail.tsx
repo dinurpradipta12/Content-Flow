@@ -2228,11 +2228,11 @@ export const ContentPlanDetail: React.FC = () => {
                         setPdfUrl(null);
                     }}
                     title="Detail Konten"
-                    maxWidth={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? "max-w-[47vw] hidden md:block" : "max-w-4xl"}
+                    maxWidth={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? "max-w-full md:max-w-[48vw]" : "max-w-4xl"}
                     duration={800}
                     zIndex={9990}
-                    overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-slate-900/40 backdrop-blur-none transition-all md:block' : ''}
-                    className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[52%] shadow-2xl' : 'translate-x-0'}
+                    overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-slate-900/40 backdrop-blur-none transition-all' : ''}
+                    className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[50.5%] shadow-2xl' : 'translate-x-0'}
                 >
                     <div className="space-y-4 md:space-y-8 px-1 md:px-2 h-[80vh] md:h-[75vh] overflow-y-auto no-scrollbar">
                         {/* Header: Title & Platform */}
@@ -2607,11 +2607,11 @@ export const ContentPlanDetail: React.FC = () => {
                         isOpen={isPdfPreviewOpen}
                         onClose={() => setIsPdfPreviewOpen(false)}
                         title={<div className="flex items-center gap-2"><div className="p-1 bg-white/20 rounded"><FileText size={18} /></div><span>PDF Preview</span></div>}
-                        maxWidth="max-w-[47vw]"
-                        duration={1000}
+                        maxWidth="max-w-[95vw] md:max-w-[48vw]"
+                        duration={800}
                         zIndex={10000}
-                        overlayClassName="hidden md:block bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
-                        className={`pointer-events-auto shadow-2xl overflow-hidden ${isPdfPreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                        overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
+                        className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
                     >
                         <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
                             {pdfUrl && <iframe src={pdfUrl} className="w-full h-full border-none" title="PDF Content" />}
@@ -2648,11 +2648,11 @@ export const ContentPlanDetail: React.FC = () => {
                         isOpen={isDrivePreviewOpen}
                         onClose={() => setIsDrivePreviewOpen(false)}
                         title={<div className="flex items-center gap-2"><div className="p-1 bg-white/20 rounded"><FolderOpen size={18} /></div><span>Google Drive Preview</span></div>}
-                        maxWidth="max-w-[47vw]"
-                        duration={1000}
+                        maxWidth="max-w-[95vw] md:max-w-[48vw]"
+                        duration={800}
                         zIndex={10000}
-                        overlayClassName="hidden md:block bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
-                        className={`pointer-events-auto shadow-2xl overflow-hidden ${isDrivePreviewOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                        overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
+                        className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
                     >
                         <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
                             <div className="absolute top-2 right-2 z-10 flex gap-2">
@@ -2673,11 +2673,11 @@ export const ContentPlanDetail: React.FC = () => {
                     isOpen={isResultModalOpen}
                     onClose={() => setIsResultModalOpen(false)}
                     title={<div className="flex items-center gap-2"><div className="p-1 bg-emerald-500 rounded"><CheckCircle size={18} className="text-white" /></div><span className="text-emerald-950">Upload Hasil Konten</span></div>}
-                    maxWidth="max-w-[47vw]"
+                    maxWidth="max-w-[95vw] md:max-w-[48vw]"
                     duration={800}
                     zIndex={10000}
-                    overlayClassName="hidden md:block bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
-                    className={`pointer-events-auto shadow-2xl overflow-hidden ${isResultModalOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                    overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
+                    className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
                 >
                     <div className="h-[75vh] p-4 md:p-8 space-y-4 md:space-y-8 overflow-y-auto no-scrollbar bg-card">
                         {/* Desktop Header Info */}
