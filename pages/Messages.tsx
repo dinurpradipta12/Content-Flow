@@ -623,9 +623,6 @@ export const Messages: React.FC = () => {
                     groupId: msg.group_id,
                 });
             }
-            if (msg.content.includes(`@${currentUserRef.current.name}`) || msg.content.includes('@everyone')) {
-                sendNotification({ recipientId: currentUserRef.current.id, type: 'MENTION', title: `Disebut di workspace`, content: `${msg.sender_name}: ${msg.content}`, metadata: { workspace_id: wsId } });
-            }
         }
     };
 

@@ -117,18 +117,20 @@ export const WorkspaceSettings: React.FC = () => {
             // Update config dengan URL dari Cloudinary
             setConfig(prev => prev ? { ...prev, [iconType]: url } : null);
 
-            sendNotification({
-                type: 'success',
-                title: 'Upload Berhasil',
-                message: `Icon berhasil diupload ke Cloudinary`
-            });
+            window.dispatchEvent(new CustomEvent('app-alert', {
+                detail: {
+                    type: 'success',
+                    message: 'Icon berhasil diupload ke Cloudinary'
+                }
+            }));
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : 'Gagal upload file';
-            sendNotification({
-                type: 'error',
-                title: 'Upload Gagal',
-                message: errorMsg
-            });
+            window.dispatchEvent(new CustomEvent('app-alert', {
+                detail: {
+                    type: 'error',
+                    message: errorMsg
+                }
+            }));
             console.error('Upload error:', error);
         } finally {
             setUploading(null);

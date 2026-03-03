@@ -952,9 +952,10 @@ export const ContentPlanDetail: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleApprove = async (id: string, status: 'approved' | 'revision' | 'pending') => {
+    const handleApprove = async (contentId: string, status: 'approved' | 'revision' | 'pending') => {
         const currentUserId = localStorage.getItem('user_id');
         const currentUserName = localStorage.getItem('user_name') || 'Admin';
+        const workspaceId = id; // use workspace id from useParams
         if (!currentUserId) return;
 
         try {
@@ -965,33 +966,32 @@ export const ContentPlanDetail: React.FC = () => {
                     approved_by: status === 'approved' ? currentUserId : null,
                     approved_at: status === 'approved' ? new Date().toISOString() : null
                 })
-                .eq('id', id);
+                .eq('id', contentId);
 
             if (error) throw error;
 
             // Update local state
-            setTasks(prev => prev.map(t => t.id === id ? {
+            setTasks(prev => prev.map(t => t.id === contentId ? {
                 ...t,
                 approval_status: status,
                 approved_by: status === 'approved' ? currentUserId : undefined,
                 approved_at: status === 'approved' ? new Date().toISOString() : undefined
             } : t));
 
-            console.log(`[Approval] Content ${id} status updated to ${status}`);
+            console.log(`[Approval] Content ${contentId} status updated to ${status}`);
 
             // Send notification to PIC
-            const task = tasks.find(t => t.id === id);
+            const task = tasks.find(t => t.id === contentId);
             if (task && task.pic && status !== 'pending') {
                 const picMember = teamMembers.find(m => m.name === task.pic);
                 if (picMember && picMember.id) {
                     sendNotification({
-                        recipient_id: picMember.id,
-                        actor_id: currentUserId,
-                        workspace_id: id || null,
+                        recipientId: picMember.id,
+                        workspaceId: workspaceId || null,
                         type: status === 'approved' ? 'CONTENT_APPROVED' : 'CONTENT_REVISION',
                         title: status === 'approved' ? 'Konten Disetujui! 🎉' : 'Ada Revisi Konten 🔄',
                         content: `Konten "${task.title}" telah ${status === 'approved' ? 'disetujui' : 'diminta revisi'} oleh ${currentUserName}`,
-                        metadata: { content_id: id }
+                        metadata: { content_id: contentId }
                     });
                 }
             }
