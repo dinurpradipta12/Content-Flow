@@ -198,7 +198,7 @@ const FlowCard: React.FC<{
                 <div className="flex items-center justify-between pt-1 border-t border-border/50">
                     <div className="flex items-center gap-1 text-[10px] font-bold text-mutedForeground">
                         <Calendar size={10} />
-                        <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
+                        <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                     </div>
                     {item.pic ? (
                         <div className="w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center text-[8px] font-bold border border-slate-800 shadow-sm">
@@ -515,7 +515,7 @@ export const ContentFlow: React.FC = () => {
                                             <div className="flex items-center gap-2 mt-1">
                                                 {item.date && (
                                                     <span className="text-[9px] text-mutedForeground flex items-center gap-0.5">
-                                                        <Calendar size={9} /> {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                        <Calendar size={9} /> {new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </span>
                                                 )}
                                                 {item.pillar && <span className="text-[9px] text-mutedForeground">{item.pillar}</span>}
@@ -842,7 +842,7 @@ export const ContentFlow: React.FC = () => {
                                         <p className="text-[10px] font-bold text-mutedForeground uppercase tracking-wider mb-1">Tanggal</p>
                                         <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
                                             <Calendar size={14} className="text-mutedForeground" />
-                                            {selectedItem.date ? new Date(selectedItem.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                            {selectedItem.date ? new Date(selectedItem.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                                         </div>
                                     </div>
                                     <div className="bg-muted border border-border rounded-xl p-3">

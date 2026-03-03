@@ -494,7 +494,7 @@ export const UserManagement: React.FC = () => {
 
         let runningTotal = 0;
         sortedUsers.forEach(u => {
-            const date = new Date(u.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            const date = new Date(u.created_at).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             runningTotal++;
             countsByDate[date] = runningTotal;
         });
@@ -956,7 +956,7 @@ export const UserManagement: React.FC = () => {
                                         <div className="bg-card rounded-2xl border-2 border-border shadow-sm p-3 text-right">
                                             <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest mb-1">Terdaftar Pada</p>
                                             <p className="text-sm font-black text-foreground">
-                                                {new Date(selectedUser.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                {new Date(selectedUser.created_at).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                             </p>
                                             <p className="text-xs font-bold text-mutedForeground">
                                                 {new Date(selectedUser.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
@@ -1143,7 +1143,7 @@ export const UserManagement: React.FC = () => {
                                                     <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Mulai</p>
                                                     <p className="text-sm font-black text-foreground">
                                                         {selectedUser.subscription_start
-                                                            ? new Date(selectedUser.subscription_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                            ? new Date(selectedUser.subscription_start).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
                                                             : '-'}
                                                     </p>
                                                 </div>

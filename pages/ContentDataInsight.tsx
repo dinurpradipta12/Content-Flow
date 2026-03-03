@@ -1109,7 +1109,7 @@ export const ContentDataInsight: React.FC = () => {
                                                 <td className="p-2 sm:p-3 md:p-4 align-middle">
                                                     <div className="flex items-center gap-1 sm:gap-2 font-bold text-slate-600">
                                                         <Calendar size={12} sm:size={16} className="text-slate-400 flex-shrink-0" />
-                                                        <span className="text-[7px] sm:text-sm whitespace-nowrap">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
+                                                        <span className="text-[7px] sm:text-sm whitespace-nowrap">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="p-2 sm:p-3 md:p-4 align-middle max-w-[120px] sm:max-w-xs">
@@ -1541,7 +1541,7 @@ export const ContentDataInsight: React.FC = () => {
                                             <p className="text-xs font-bold text-slate-800 line-clamp-1">{item.title}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[9px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">{item.platform}</span>
-                                                <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
+                                                <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                                             </div>
                                             <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-600">
                                                 <span className="flex items-center gap-1"><Heart size={10} className="text-pink-500" />{(item.metrics?.likes || 0).toLocaleString()}</span>
@@ -1573,7 +1573,7 @@ export const ContentDataInsight: React.FC = () => {
                                             <p className="text-xs font-bold text-slate-800 line-clamp-1">{item.title}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[9px] font-black text-red-600 bg-red-100 px-2 py-0.5 rounded-full">{item.platform}</span>
-                                                <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
+                                                <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                                             </div>
                                             <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-600">
                                                 <span className="flex items-center gap-1"><Heart size={10} className="text-pink-500" />{(item.metrics?.likes || 0).toLocaleString()}</span>

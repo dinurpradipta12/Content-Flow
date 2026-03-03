@@ -322,7 +322,7 @@ const KanbanCard: React.FC<{
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-mutedForeground text-[11px] font-bold bg-muted/60 px-2 py-1 rounded border border-border shrink-0">
                         <Calendar size={12} className="text-mutedForeground/70" />
-                        <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
+                        <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                     </div>
 
                     {item.pic ? (
@@ -538,6 +538,7 @@ export const ContentPlanDetail: React.FC = () => {
     // Date Period Filter State
     const [filterDateFrom, setFilterDateFrom] = useState<string>('');
     const [filterDateTo, setFilterDateTo] = useState<string>('');
+    const [tableSortOrder, setTableSortOrder] = useState<'asc' | 'desc'>('asc');
 
     // Brand Assets State
     interface BrandAssetItem {
@@ -907,12 +908,18 @@ export const ContentPlanDetail: React.FC = () => {
     };
 
     // Filter Logic for Table View
-    const filteredTableTasks = tasks.filter(task => {
-        const matchPlatform = filterPlatform === 'all' || task.platform === filterPlatform;
-        const matchStatus = filterStatus === 'all' || task.status === filterStatus;
-        const matchDate = matchesDateFilter(task.date);
-        return matchPlatform && matchStatus && matchDate;
-    });
+    const filteredTableTasks = tasks
+        .filter(task => {
+            const matchPlatform = filterPlatform === 'all' || task.platform === filterPlatform;
+            const matchStatus = filterStatus === 'all' || task.status === filterStatus;
+            const matchDate = matchesDateFilter(task.date);
+            return matchPlatform && matchStatus && matchDate;
+        })
+        .sort((a, b) => {
+            const dateA = new Date(a.date || '').getTime() || 0;
+            const dateB = new Date(b.date || '').getTime() || 0;
+            return tableSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        });
 
     // --- ACTIONS (Create/Edit/Delete/Update) ---
     const handleOpenCreateModal = () => {
@@ -1486,7 +1493,7 @@ export const ContentPlanDetail: React.FC = () => {
                                             )}
                                             {task.date && (
                                                 <span className="text-[9px] font-bold text-mutedForeground flex items-center gap-0.5">
-                                                    <Calendar size={9} /> {new Date(task.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                    <Calendar size={9} /> {new Date(task.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </span>
                                             )}
                                             {task.pillar && (
@@ -2013,7 +2020,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <tr>
                                         <th className="px-4 py-3 bg-muted rounded-l-xl text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Status</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Platform</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-slate-200 transition-colors" onClick={() => setTableSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>Tanggal {tableSortOrder === 'asc' ? '↑' : '↓'}</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider min-w-[200px]">Judul</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Pillar</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Script</th>
@@ -2066,7 +2073,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
                                                     <div className="flex items-center gap-1.5 text-mutedForeground font-bold text-xs whitespace-nowrap">
                                                         <Calendar size={12} className="text-mutedForeground/60" />
-                                                        {task.date ? new Date(task.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                                                        {task.date ? new Date(task.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                                                     </div>
                                                 </td>
 
@@ -2259,7 +2266,7 @@ export const ContentPlanDetail: React.FC = () => {
                                 <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Tanggal</span>
                                 <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
                                     <Calendar size={12} className="text-slate-400 md:w-[18px] md:h-[18px]" />
-                                    {selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                                    {selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                                 </div>
                             </div>
                             <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">

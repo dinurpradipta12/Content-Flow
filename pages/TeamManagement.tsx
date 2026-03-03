@@ -181,11 +181,23 @@ export const TeamManagement: React.FC = () => {
                 myWsMemberIds.add(tenantId);
             }
 
-            const { data: userData } = await supabase
+            const adminId = tenantId || currentUserId;
+            const currentUserUsername = localStorage.getItem('user_username') || '';
+            const idsList = Array.from(myWsMemberIds);
+
+            let userQuery = supabase
                 .from('app_users')
                 .select('id, username, password, email, full_name, avatar_url, role, is_active, subscription_start, subscription_end, created_at, admin_id, invited_by, member_limit, subscription_package, online_status, last_activity_at')
-                .in('id', Array.from(myWsMemberIds))
                 .order('full_name');
+
+            // Find all our universe's users (by ID in workspace, or invited by us, or our tenant)
+            if (idsList.length > 0) {
+                userQuery = userQuery.or(`id.in.(${idsList.join(',')}),invited_by.eq.${currentUserUsername},admin_id.eq.${adminId},id.eq.${adminId}`);
+            } else {
+                userQuery = userQuery.or(`invited_by.eq.${currentUserUsername},admin_id.eq.${adminId},id.eq.${adminId}`);
+            }
+
+            const { data: userData } = await userQuery;
 
             let finalUsers = (userData || []) as AppUser[];
 
@@ -753,7 +765,9 @@ export const TeamManagement: React.FC = () => {
                                             )}
                                             <div className="min-w-0">
                                                 <h4 className="font-heading font-black text-foreground truncate text-xs sm:text-sm md:text-base">{ws.name}</h4>
-                                                <p className="text-[10px] sm:text-xs font-bold text-slate-500">{ws.members?.filter((m: string) => m.includes('/') || m.startsWith('data:')).length || 0} Members</p>
+                                                <p className="text-[10px] sm:text-xs font-bold text-slate-500">
+                                                    {users.filter(u => ws.members?.some((m: string) => m === u.id || m === u.username || u.avatar_url === m)).length} Members
+                                                </p>
                                             </div>
                                         </div>
                                         <ChevronRight size={16} className={`sm:w-5 sm:h-5 flex-shrink-0 ${selectedWorkspace?.id === ws.id ? 'text-accent' : 'text-slate-300'}`} />
