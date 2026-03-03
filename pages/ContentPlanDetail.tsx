@@ -1124,7 +1124,7 @@ export const ContentPlanDetail: React.FC = () => {
                 .update({
                     result_assets: updatedAssets,
                     result_type: 'photo'
-                } as any)
+                })
                 .eq('id', selectedTask.id);
 
             if (error) throw error;
@@ -2337,24 +2337,24 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
 
                         {/* --- CONTENT RESULTS SECTION --- */}
-                        <div className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-4 group ${selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400' : 'bg-slate-50 border-slate-200 hover:border-accent'}`}
+                        <div className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-4 group ${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400' : 'bg-slate-50 border-slate-200 hover:border-accent'}`}
                             onClick={() => setIsResultModalOpen(true)}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'bg-emerald-100 text-emerald-600 border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white' : 'bg-slate-100 text-slate-400 border-slate-200 group-hover:bg-accent group-hover:text-white'}`}>
+                                <div className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-100 text-emerald-600 border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white' : 'bg-slate-100 text-slate-400 border-slate-200 group-hover:bg-accent group-hover:text-white'}`}>
                                     {selectedTask.result_type === 'video' ? <Video size={20} /> : <ImageIcon size={20} />}
                                 </div>
                                 <div className="min-w-0">
                                     <p className="font-bold text-slate-800 text-sm">Hasil Produksi Konten</p>
                                     <p className="text-xs text-slate-500 truncate max-w-[200px]">
-                                        {selectedTask.result_assets && selectedTask.result_assets.length > 0
-                                            ? `${selectedTask.result_type === 'video' ? 'Link Video Drive tersedia' : `${selectedTask.result_assets.length} foto di galeri`}`
+                                        {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0
+                                            ? `${selectedTask.result_type === 'video' ? 'Link Video Drive tersedia' : `${(selectedTask.result_assets as any[]).length} foto di galeri`}`
                                             : 'Belum ada hasil konten yang diupload.'}
                                     </p>
                                 </div>
                             </div>
-                            <div className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm flex items-center gap-2 ${selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
-                                {selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'Lihat Hasil' : 'Upload Hasil'} <Plus size={14} />
+                            <div className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm flex items-center gap-2 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
+                                {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'Lihat Hasil' : 'Upload Hasil'} <Plus size={14} />
                             </div>
                         </div>
 
@@ -2707,8 +2707,8 @@ export const ContentPlanDetail: React.FC = () => {
                                 <div className="flex items-center justify-between px-1">
                                     <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Pilih Foto (Maks 15)</h5>
                                     <div className="flex items-center gap-2">
-                                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${selectedTask.result_assets && selectedTask.result_assets.length >= 15 ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'}`}>
-                                            {(selectedTask?.result_assets?.length || 0)} / 15
+                                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length >= 15 ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'}`}>
+                                            {(selectedTask?.result_assets as any[] || []).length} / 15
                                         </span>
                                     </div>
                                 </div>
@@ -2724,8 +2724,8 @@ export const ContentPlanDetail: React.FC = () => {
 
                                 <button
                                     onClick={() => resultInputRef.current?.click()}
-                                    disabled={uploadingResults || (selectedTask?.result_assets?.length || 0) >= 15}
-                                    className={`w-full py-10 border-4 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all group active:scale-95 ${uploadingResults ? 'bg-slate-50 border-slate-200' : (selectedTask?.result_assets?.length || 0) >= 15 ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                    disabled={uploadingResults || (selectedTask?.result_assets as any[] || []).length >= 15}
+                                    className={`w-full py-10 border-4 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all group active:scale-95 ${uploadingResults ? 'bg-slate-50 border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
                                 >
                                     {uploadingResults ? (
                                         <div className="flex flex-col items-center gap-3">
@@ -2746,19 +2746,20 @@ export const ContentPlanDetail: React.FC = () => {
                                 </button>
 
                                 {/* GALLERY PREVIEW */}
-                                {selectedTask?.result_assets && selectedTask.result_assets.length > 0 && (
+                                {selectedTask?.result_assets && (selectedTask.result_assets as any[]).length > 0 && (
                                     <div className="space-y-4">
                                         <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Pratinjau Galeri</h5>
                                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {selectedTask.result_assets.map((asset, idx) => (
+                                            {(selectedTask.result_assets as string[]).map((asset, idx) => (
                                                 <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-200 group shadow-sm hover:shadow-md transition-shadow">
                                                     <img src={asset} className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                const updated = selectedTask.result_assets?.filter((_, i) => i !== idx);
-                                                                const { error } = await supabase.from('content_items').update({ result_assets: updated } as any).eq('id', selectedTask.id);
+                                                                const currentAssets = (selectedTask.result_assets as any[]) || [];
+                                                                const updated = currentAssets.filter((_, i) => i !== idx);
+                                                                const { error } = await supabase.from('content_items').update({ result_assets: updated }).eq('id', selectedTask.id);
                                                                 if (!error) {
                                                                     const ut = { ...selectedTask, result_assets: updated };
                                                                     setSelectedTask(ut);
@@ -2799,7 +2800,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 type="url"
                                                 placeholder="Tempel url google drive di sini..."
                                                 className="w-full px-5 py-4 bg-white border-2 border-emerald-200 rounded-2xl text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:border-emerald-500 outline-none transition-all shadow-inner"
-                                                defaultValue={selectedTask.result_type === 'video' ? selectedTask.result_assets?.[0] : ''}
+                                                defaultValue={selectedTask.result_type === 'video' ? (selectedTask.result_assets as string[])?.[0] : ''}
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         const val = (e.target as HTMLInputElement).value;
@@ -2823,7 +2824,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {selectedTask.result_type === 'video' && selectedTask.result_assets?.[0] && (
+                                    {selectedTask.result_type === 'video' && (selectedTask.result_assets as string[])?.[0] && (
                                         <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-between gap-4">
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <div className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-emerald-500">
@@ -2831,11 +2832,11 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-xs font-black text-slate-800">Preview Link Aktif</p>
-                                                    <p className="text-[10px] text-slate-400 truncate">{selectedTask.result_assets[0]}</p>
+                                                    <p className="text-[10px] text-slate-400 truncate">{(selectedTask.result_assets as string[])[0]}</p>
                                                 </div>
                                             </div>
                                             <a
-                                                href={selectedTask.result_assets[0]}
+                                                href={(selectedTask.result_assets as string[])[0]}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-black hover:bg-slate-900 transition-colors shrink-0"
