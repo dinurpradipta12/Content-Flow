@@ -56,6 +56,8 @@ export interface ContentItem {
   };
   gcal_event_id?: string;
   publish_time?: string;
+  result_type?: 'photo' | 'video';
+  result_assets?: string[]; // Array of URLs or base64
 }
 
 export interface Workspace {

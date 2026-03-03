@@ -656,7 +656,6 @@ export const ContentPlanDetail: React.FC = () => {
         }
     }, [isPdfPreviewOpen]);
 
-    // Drive Preview States
     const [isDrivePreviewOpen, setIsDrivePreviewOpen] = useState(false);
     const [drivePreviewUrl, setDrivePreviewUrl] = useState<string | null>(null);
     const [driveMounted, setDriveMounted] = useState(false);
@@ -669,6 +668,22 @@ export const ContentPlanDetail: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [isDrivePreviewOpen]);
+
+    // Content Result States
+    const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+    const resultInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingResults, setUploadingResults] = useState(false);
+    const [resultResultType, setResultResultType] = useState<'photo' | 'video'>('photo');
+    const [resultMounted, setResultMounted] = useState(false);
+
+    useEffect(() => {
+        if (isResultModalOpen) {
+            setResultMounted(true);
+        } else {
+            const timer = setTimeout(() => setResultMounted(false), 800);
+            return () => clearTimeout(timer);
+        }
+    }, [isResultModalOpen]);
 
     // Asset upload ref
     const assetInputRef = useRef<HTMLInputElement>(null);
@@ -1076,6 +1091,80 @@ export const ContentPlanDetail: React.FC = () => {
             console.error('Drive URL save error:', err);
         } finally {
             setSavingDriveUrl(false);
+        }
+    };
+
+    // Handle content result upload (multi-photo)
+    const handleResultUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!selectedTask) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        if (files.length > 15) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Maksimum 15 foto sekaligus' } }));
+            return;
+        }
+
+        setUploadingResults(true);
+        try {
+            const uploadPromises = files.map(file => {
+                return new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file as Blob);
+                });
+            });
+
+            const base64Results = await Promise.all(uploadPromises);
+            const updatedAssets = base64Results.slice(0, 15);
+
+            const { error } = await supabase
+                .from('content_items')
+                .update({
+                    result_assets: updatedAssets,
+                    result_type: 'photo'
+                } as any)
+                .eq('id', selectedTask.id);
+
+            if (error) throw error;
+
+            const updatedTask = { ...selectedTask, result_assets: updatedAssets, result_type: 'photo' as const };
+            setSelectedTask(updatedTask);
+            setTasks(prev => prev.map(t => t.id === selectedTask.id ? updatedTask : t));
+
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Berhasil upload hasil foto!' } }));
+        } catch (err) {
+            console.error('Result upload error:', err);
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal upload hasil.' } }));
+        } finally {
+            setUploadingResults(false);
+        }
+    };
+
+    const handleSaveResultVideoUrl = async (url: string) => {
+        if (!selectedTask) return;
+        setUploadingResults(true);
+        try {
+            const { error } = await supabase
+                .from('content_items')
+                .update({
+                    result_assets: [url],
+                    result_type: 'video'
+                } as any)
+                .eq('id', selectedTask.id);
+
+            if (error) throw error;
+
+            const updatedTask = { ...selectedTask, result_assets: [url], result_type: 'video' as const };
+            setSelectedTask(updatedTask);
+            setTasks(prev => prev.map(t => t.id === selectedTask.id ? updatedTask : t));
+
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Link video hasil disimpan' } }));
+        } catch (err) {
+            console.error('Video link save error:', err);
+        } finally {
+            setUploadingResults(false);
         }
     };
 
@@ -2134,14 +2223,16 @@ export const ContentPlanDetail: React.FC = () => {
                     onClose={() => {
                         setIsDetailModalOpen(false);
                         setIsPdfPreviewOpen(false);
+                        setIsDrivePreviewOpen(false);
+                        setIsResultModalOpen(false);
                         setPdfUrl(null);
                     }}
                     title="Detail Konten"
-                    maxWidth={isPdfPreviewOpen ? "max-w-[47vw] hidden md:block" : "max-w-4xl"}
+                    maxWidth={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? "max-w-[47vw] hidden md:block" : "max-w-4xl"}
                     duration={800}
                     zIndex={9990}
-                    overlayClassName={isPdfPreviewOpen ? 'bg-slate-900/40 backdrop-blur-none transition-all md:block' : ''}
-                    className={isPdfPreviewOpen ? 'md:-translate-x-[52%] shadow-2xl' : 'translate-x-0'}
+                    overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-slate-900/40 backdrop-blur-none transition-all md:block' : ''}
+                    className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[52%] shadow-2xl' : 'translate-x-0'}
                 >
                     <div className="space-y-4 md:space-y-8 px-1 md:px-2 h-[80vh] md:h-[75vh] overflow-y-auto no-scrollbar">
                         {/* Header: Title & Platform */}
@@ -2243,6 +2334,28 @@ export const ContentPlanDetail: React.FC = () => {
                                     Acc: {selectedTask.approval}
                                 </div>
                             )}
+                        </div>
+
+                        {/* --- CONTENT RESULTS SECTION --- */}
+                        <div className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-4 group ${selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400' : 'bg-slate-50 border-slate-200 hover:border-accent'}`}
+                            onClick={() => setIsResultModalOpen(true)}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'bg-emerald-100 text-emerald-600 border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white' : 'bg-slate-100 text-slate-400 border-slate-200 group-hover:bg-accent group-hover:text-white'}`}>
+                                    {selectedTask.result_type === 'video' ? <Video size={20} /> : <ImageIcon size={20} />}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-bold text-slate-800 text-sm">Hasil Produksi Konten</p>
+                                    <p className="text-xs text-slate-500 truncate max-w-[200px]">
+                                        {selectedTask.result_assets && selectedTask.result_assets.length > 0
+                                            ? `${selectedTask.result_type === 'video' ? 'Link Video Drive tersedia' : `${selectedTask.result_assets.length} foto di galeri`}`
+                                            : 'Belum ada hasil konten yang diupload.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm flex items-center gap-2 ${selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
+                                {selectedTask.result_assets && selectedTask.result_assets.length > 0 ? 'Lihat Hasil' : 'Upload Hasil'} <Plus size={14} />
+                            </div>
                         </div>
 
                         {/* Post Link Section */}
@@ -2552,6 +2665,199 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
                     </Modal>
                 </>
+            )}
+
+            {/* --- RESULT UPLOAD MODAL --- */}
+            {resultMounted && selectedTask && (
+                <Modal
+                    isOpen={isResultModalOpen}
+                    onClose={() => setIsResultModalOpen(false)}
+                    title={<div className="flex items-center gap-2"><div className="p-1 bg-emerald-500 rounded"><CheckCircle size={18} className="text-white" /></div><span className="text-emerald-950">Upload Hasil Konten</span></div>}
+                    maxWidth="max-w-[47vw]"
+                    duration={800}
+                    zIndex={10000}
+                    overlayClassName="hidden md:block bg-transparent pointer-events-none backdrop-blur-0 shadow-none border-none"
+                    className={`pointer-events-auto shadow-2xl overflow-hidden ${isResultModalOpen ? 'translate-x-[52%] opacity-100 wipe-active' : 'translate-x-[52%] opacity-0 wipe-mask'}`}
+                >
+                    <div className="h-[75vh] p-4 md:p-8 space-y-4 md:space-y-8 overflow-y-auto no-scrollbar bg-card">
+                        {/* Desktop Header Info */}
+                        <div className="hidden md:block">
+                            <h3 className="text-2xl font-black text-slate-800 mb-1">Manajemen Hasil Produksi</h3>
+                            <p className="text-sm text-slate-500 font-medium">Upload hasil final konten Anda untuk di-review oleh tim.</p>
+                        </div>
+
+                        {/* Content Result Type Selector */}
+                        <div className="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200">
+                            <button
+                                onClick={() => setResultResultType('photo')}
+                                className={`flex-1 py-3 flex items-center justify-center gap-3 rounded-xl font-bold text-sm transition-all ${resultResultType === 'photo' ? 'bg-white text-accent shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <ImageIcon size={18} /> Foto (Galeri)
+                            </button>
+                            <button
+                                onClick={() => setResultResultType('video')}
+                                className={`flex-1 py-3 flex items-center justify-center gap-3 rounded-xl font-bold text-sm transition-all ${resultResultType === 'video' ? 'bg-white text-emerald-600 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <Video size={18} /> Video (Drive)
+                            </button>
+                        </div>
+
+                        {resultResultType === 'photo' ? (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between px-1">
+                                    <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Pilih Foto (Maks 15)</h5>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${selectedTask.result_assets && selectedTask.result_assets.length >= 15 ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'}`}>
+                                            {(selectedTask?.result_assets?.length || 0)} / 15
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <input
+                                    ref={resultInputRef}
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleResultUpload}
+                                />
+
+                                <button
+                                    onClick={() => resultInputRef.current?.click()}
+                                    disabled={uploadingResults || (selectedTask?.result_assets?.length || 0) >= 15}
+                                    className={`w-full py-10 border-4 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all group active:scale-95 ${uploadingResults ? 'bg-slate-50 border-slate-200' : (selectedTask?.result_assets?.length || 0) >= 15 ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                >
+                                    {uploadingResults ? (
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Loader2 size={40} className="animate-spin text-accent" />
+                                            <span className="text-sm font-black text-accent animate-pulse">Memproses file...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="w-16 h-16 bg-accent text-white rounded-3xl flex items-center justify-center shadow-lg shadow-accent/30 group-hover:rotate-6 transition-transform">
+                                                <Upload size={32} />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-lg font-black text-slate-800">Upload Hasil Foto</p>
+                                                <p className="text-xs font-bold text-slate-400">Click atau Drop file di sini</p>
+                                            </div>
+                                        </>
+                                    )}
+                                </button>
+
+                                {/* GALLERY PREVIEW */}
+                                {selectedTask?.result_assets && selectedTask.result_assets.length > 0 && (
+                                    <div className="space-y-4">
+                                        <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Pratinjau Galeri</h5>
+                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {selectedTask.result_assets.map((asset, idx) => (
+                                                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-200 group shadow-sm hover:shadow-md transition-shadow">
+                                                    <img src={asset} className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                const updated = selectedTask.result_assets?.filter((_, i) => i !== idx);
+                                                                const { error } = await supabase.from('content_items').update({ result_assets: updated } as any).eq('id', selectedTask.id);
+                                                                if (!error) {
+                                                                    const ut = { ...selectedTask, result_assets: updated };
+                                                                    setSelectedTask(ut);
+                                                                    setTasks(prev => prev.map(t => t.id === selectedTask.id ? ut : t));
+                                                                }
+                                                            }}
+                                                            className="w-10 h-10 bg-red-500 text-white rounded-xl shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
+                                                        >
+                                                            <Trash2 size={20} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 text-white text-[10px] font-bold rounded-md backdrop-blur-sm">
+                                                        {idx + 1}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Link Hasil Produksi (Drive)</h5>
+                                <div className="space-y-4">
+                                    <div className="bg-emerald-50 border-2 border-emerald-100 p-6 rounded-[32px] space-y-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                                                <FolderOpen size={24} />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-emerald-950">Google Drive Link</p>
+                                                <p className="text-xs text-emerald-600 font-bold">Pastikan akses link "Anyone with link" (Viewer)</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <input
+                                                type="url"
+                                                placeholder="Tempel url google drive di sini..."
+                                                className="w-full px-5 py-4 bg-white border-2 border-emerald-200 rounded-2xl text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:border-emerald-500 outline-none transition-all shadow-inner"
+                                                defaultValue={selectedTask.result_type === 'video' ? selectedTask.result_assets?.[0] : ''}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        const val = (e.target as HTMLInputElement).value;
+                                                        if (val) handleSaveResultVideoUrl(val);
+                                                    }
+                                                }}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val) handleSaveResultVideoUrl(val);
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const input = document.querySelector('input[placeholder="Tempel url google drive di sini..."]') as HTMLInputElement;
+                                                    if (input.value) handleSaveResultVideoUrl(input.value);
+                                                }}
+                                                className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95"
+                                            >
+                                                Simpan Link Produksi
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {selectedTask.result_type === 'video' && selectedTask.result_assets?.[0] && (
+                                        <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-emerald-500">
+                                                    <ExternalLink size={20} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-black text-slate-800">Preview Link Aktif</p>
+                                                    <p className="text-[10px] text-slate-400 truncate">{selectedTask.result_assets[0]}</p>
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={selectedTask.result_assets[0]}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-black hover:bg-slate-900 transition-colors shrink-0"
+                                            >
+                                                Buka
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="pt-6 border-t border-slate-100">
+                            <button
+                                onClick={() => setIsResultModalOpen(false)}
+                                className="w-full py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-sm hover:bg-slate-200 transition-colors"
+                            >
+                                Tutup Panel Hasil
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             )}
 
             {/* Modal Create/Edit Content */}
