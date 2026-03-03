@@ -119,32 +119,23 @@ export const getRequests = async (): Promise<ApprovalRequest[]> => {
 
     try {
         // Step 1: Get all workspaces where user is member or owner
+        // Step 1: Get only workspaces where user is member or owner (Server-side Filter)
         const { data: wsData, error: wsError } = await supabase
             .from('workspaces')
-            .select('id, owner_id, members');
+            .select('id, owner_id, members')
+            .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`);
 
         if (wsError) throw wsError;
 
-        // Filter workspaces where user is member or owner
+        // Filter workspaces where user is member or owner (Double check/Fallback)
         const userWorkspaceOwnerIds = new Set<string>();
         const userWorkspaceIds = new Set<string>();
         (wsData || []).forEach(ws => {
             const isOwner = ws.owner_id === userId;
-            if (isOwner) {
-                userWorkspaceOwnerIds.add(ws.owner_id);
-                userWorkspaceIds.add(ws.id);
-                return;
-            }
-
-            // Check membership
             const members: string[] = ws.members || [];
-            const isMember = members.includes(userId || '') ||
-                (userAvatar && members.some(m => {
-                    try { return decodeURIComponent(m) === decodeURIComponent(userAvatar) || m === userAvatar; }
-                    catch { return m === userAvatar; }
-                }));
+            const isMember = isOwner || members.includes(userId || '');
 
-            if (isMember) {
+            if (isOwner || isMember) {
                 userWorkspaceOwnerIds.add(ws.owner_id);
                 userWorkspaceIds.add(ws.id);
             }

@@ -11,19 +11,22 @@
   "lang": "id",
   "icons": [
     {
-      "src": "https://res.cloudinary.com/dk6xi96ek/image/upload/c_scale,w_192,h_192/aruneeka/icon-192_dqmhsl.png",
+      "src": "https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://res.cloudinary.com/dk6xi96ek/image/upload/c_scale,w_512,h_512/aruneeka/icon-512_nqljpc.png",
+      "src": "https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "business"],
+  "categories": [
+    "productivity",
+    "business"
+  ],
   "screenshots": [],
   "related_applications": [],
   "prefer_related_applications": false

@@ -97,10 +97,18 @@ export const UserManagement: React.FC = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('app_users')
-                .select('*')
-                .order('created_at', { ascending: false });
+            // Selection list for performance (avoid select *)
+            const columnList = 'id, username, password, role, full_name, avatar_url, email, is_active, is_verified, subscription_start, subscription_end, subscription_code, subscription_package, created_at, parent_user_id, invited_by, online_status, last_activity_at';
+
+            let query = supabase.from('app_users').select(columnList);
+
+            // Access Control: Non-developers should only see users they've invited/manage
+            if (!isDeveloper) {
+                const userId = localStorage.getItem('user_id');
+                query = query.or(`parent_user_id.eq.${userId},invited_by.eq.${localStorage.getItem('user_username')},id.eq.${userId}`);
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false }).limit(500);
 
             if (error) throw error;
             setUsers((data || []) as AppUser[]);

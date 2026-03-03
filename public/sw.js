@@ -30,7 +30,7 @@ self.addEventListener('install', (event) => {
 // ── Activate ──────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activated');
-    
+
     // Clear old caches and cache bust manifest.json
     event.waitUntil(
         (async () => {
@@ -41,11 +41,11 @@ self.addEventListener('activate', (event) => {
                     .filter(name => name !== CACHE_NAME)
                     .map(name => caches.delete(name))
             );
-            
+
             // Force refresh manifest.json by removing it from cache
             const cache = await caches.open(CACHE_NAME);
             cache.delete('/manifest.json');
-            
+
             await clients.claim();
         })()
     );
@@ -58,8 +58,8 @@ self.addEventListener('push', (event) => {
     let data = {
         title: 'Notifikasi Baru',
         body: 'Anda memiliki notifikasi baru',
-        icon: '/icon-192.png',
-        badge: '/icon-72.png',
+        icon: 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png',
+        badge: 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png',
         tag: 'contentflow-notif',
         data: {}
     };
@@ -75,8 +75,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
         body: data.body,
-        icon: data.icon || '/icon-192.png',
-        badge: data.badge || '/icon-72.png',
+        icon: data.icon || 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png',
+        badge: data.badge || 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png',
         tag: data.tag || 'contentflow-notif',
         data: data.data || {},
         vibrate: [100, 50, 100],

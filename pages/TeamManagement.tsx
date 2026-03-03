@@ -166,23 +166,28 @@ export const TeamManagement: React.FC = () => {
                 })
             );
 
-            // 2. Fetch All User Data
-            const { data: userData } = await supabase.from('app_users').select('*').order('full_name');
-            let isolatedUsers = (userData || []) as any[];
-            let finalUsers = isolatedUsers;
+            // 2. Fetch User Data (Server-side Filter)
+            const myWsMemberIds = new Set<string>();
+            myWorkspaces.forEach(ws => (ws.members || []).forEach((m: string) => {
+                // If it looks like a UUID, add to the set of IDs to fetch
+                if (m.length === 36 && m.includes('-')) {
+                    myWsMemberIds.add(m);
+                }
+            }));
 
-            const myWsMemberAvatars = new Set<string>();
-            myWorkspaces.forEach(ws => (ws.members || []).forEach((m: string) => myWsMemberAvatars.add(m)));
-            finalUsers = isolatedUsers.filter(u =>
-                u.admin_id === currentUserId ||
-                u.id === currentUserId ||
-                Array.from(myWsMemberAvatars).some(m => {
-                    const stringM = String(m);
-                    if (stringM === u.id || stringM === u.username) return true;
-                    try { return decodeURIComponent(stringM) === decodeURIComponent(u.avatar_url) || stringM === u.avatar_url; }
-                    catch { return stringM === u.avatar_url; }
-                })
-            );
+            // Add self and potential parent admin
+            myWsMemberIds.add(currentUserId!);
+            if (tenantId && tenantId !== currentUserId) {
+                myWsMemberIds.add(tenantId);
+            }
+
+            const { data: userData } = await supabase
+                .from('app_users')
+                .select('id, username, password, email, full_name, avatar_url, role, is_active, subscription_start, subscription_end, created_at, admin_id, invited_by, member_limit, subscription_package, online_status, last_activity_at')
+                .in('id', Array.from(myWsMemberIds))
+                .order('full_name');
+
+            let finalUsers = (userData || []) as AppUser[];
 
             // 3. Fetch Team Members & KPIs
             const [tmRes, kRes] = await Promise.all([

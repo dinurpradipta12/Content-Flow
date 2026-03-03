@@ -149,7 +149,7 @@ export const registerPushNotifications = async (userId: string): Promise<boolean
 
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as any
         });
 
         console.log('[Push] Push subscription created:', subscription.endpoint);
@@ -223,8 +223,8 @@ export const showLocalNotification = async (title: string, options?: Notificatio
         const registration = await navigator.serviceWorker.getRegistration('/sw.js');
         if (registration) {
             await registration.showNotification(title, {
-                icon: '/icon-192.png',
-                badge: '/icon-72.png',
+                icon: 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png',
+                badge: 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png',
                 ...(options as any)
             } as any);
         }
