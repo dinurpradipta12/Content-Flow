@@ -1,4 +1,4 @@
-import { supabase } from './src/services/supabaseClient';
+import { supabase } from './services/supabaseClient';
 async function run() {
   const { data, error } = await supabase.storage.listBuckets();
   console.log('Buckets:', data);

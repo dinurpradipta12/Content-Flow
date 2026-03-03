@@ -1,5 +1,7 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './src/lib/queryClient';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { ContentPlan } from './pages/ContentPlan';
@@ -190,43 +192,45 @@ const RequireDeveloper = ({ children }: { children: React.ReactElement }) => {
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
-      <AuthProvider>
-        <AppConfigProvider>
-          <NotificationProvider>
-            <Routes>
-              <Route path="/welcome" element={<Welcome />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/register" element={<Register />} />
+    <QueryClientProvider client={queryClient}>
+      <HashRouter>
+        <AuthProvider>
+          <AppConfigProvider>
+            <NotificationProvider>
+              <Routes>
+                <Route path="/welcome" element={<Welcome />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/register" element={<Register />} />
 
-              {/* Protected Workspace Area */}
-              <Route element={<RequireAuth />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="plan" element={<ContentPlan />} />
-                <Route path="plan/:id" element={<ContentPlanDetail />} />
-                <Route path="flow" element={<ContentFlow />} />
-                <Route path="calendar" element={<CalendarPage />} />
-                <Route path="approval" element={<Approval />} />
-                <Route path="insight" element={<ContentDataInsight />} />
-                <Route path="carousel" element={<CarouselMaker />} />
-                <Route path="script" element={<TeamKPIBoard />} />
-                <Route path="profile" element={<Profile />} />
+                {/* Protected Workspace Area */}
+                <Route element={<RequireAuth />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="plan" element={<ContentPlan />} />
+                  <Route path="plan/:id" element={<ContentPlanDetail />} />
+                  <Route path="flow" element={<ContentFlow />} />
+                  <Route path="calendar" element={<CalendarPage />} />
+                  <Route path="approval" element={<Approval />} />
+                  <Route path="insight" element={<ContentDataInsight />} />
+                  <Route path="carousel" element={<CarouselMaker />} />
+                  <Route path="script" element={<TeamKPIBoard />} />
+                  <Route path="profile" element={<Profile />} />
 
-                {/* Team & Admin Routes */}
-                <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
+                  {/* Team & Admin Routes */}
+                  <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
 
-                {/* Superuser / Developer Infrastructure */}
-                <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
-                <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
-                <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />
-                <Route path="admin/analytics" element={<RequireDeveloper><DeveloperAnalytics /></RequireDeveloper>} />
-              </Route>
-            </Routes>
-          </NotificationProvider>
-        </AppConfigProvider>
-      </AuthProvider>
-    </HashRouter>
+                  {/* Superuser / Developer Infrastructure */}
+                  <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
+                  <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
+                  <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />
+                  <Route path="admin/analytics" element={<RequireDeveloper><DeveloperAnalytics /></RequireDeveloper>} />
+                </Route>
+              </Routes>
+            </NotificationProvider>
+          </AppConfigProvider>
+        </AuthProvider>
+      </HashRouter>
+    </QueryClientProvider>
   );
 };
 
