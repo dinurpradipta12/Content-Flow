@@ -272,9 +272,26 @@ export const ContentFlow: React.FC = () => {
     const userId = localStorage.getItem('user_id');
 
     // Fetch workspaces and content items using React Query hooks
-    const { data: workspacesData = [], isLoading: workspacesLoading } = useWorkspaces(userId);
+    const {
+        data: workspacesData = [],
+        isLoading: workspacesLoading,
+        refetch: refetchWorkspaces
+    } = useWorkspaces(userId);
+
     const workspaceIds = workspacesData.map((ws: any) => ws.id);
-    const { data: contentItemsData = [], isLoading: contentItemsLoading } = useContentItems(workspaceIds.length > 0 ? workspaceIds : undefined);
+
+    const {
+        data: contentItemsData = [],
+        isLoading: contentItemsLoading,
+        refetch: refetchContentItems
+    } = useContentItems(workspaceIds.length > 0 ? workspaceIds : undefined);
+
+    const fetchData = useCallback(async () => {
+        await Promise.all([
+            refetchWorkspaces(),
+            refetchContentItems()
+        ]);
+    }, [refetchWorkspaces, refetchContentItems]);
 
     const [allItems, setAllItems] = useState<FlowItem[]>([]);
     const [workspaceSummaries, setWorkspaceSummaries] = useState<WorkspaceSummary[]>([]);

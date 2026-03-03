@@ -120,25 +120,30 @@ export const getRequests = async (): Promise<ApprovalRequest[]> => {
     try {
         // Step 1: Get all workspaces where user is member or owner
         // Step 1: Get only workspaces where user is member or owner (Server-side Filter)
-        const { data: wsData, error: wsError } = await supabase
-            .from('workspaces')
-            .select('id, owner_id, members')
-            .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`);
+        const [ownerRes, memberRes] = await Promise.all([
+            supabase
+                .from('workspaces')
+                .select('id, owner_id, members')
+                .eq('owner_id', userId),
+            supabase
+                .from('workspaces')
+                .select('id, owner_id, members')
+                .contains('members', [userId])
+        ]);
 
-        if (wsError) throw wsError;
+        if (ownerRes.error) throw ownerRes.error;
+        if (memberRes.error) throw memberRes.error;
 
-        // Filter workspaces where user is member or owner (Double check/Fallback)
+        // Filter and collect workspace info
         const userWorkspaceOwnerIds = new Set<string>();
         const userWorkspaceIds = new Set<string>();
-        (wsData || []).forEach(ws => {
-            const isOwner = ws.owner_id === userId;
-            const members: string[] = ws.members || [];
-            const isMember = isOwner || members.includes(userId || '');
 
-            if (isOwner || isMember) {
-                userWorkspaceOwnerIds.add(ws.owner_id);
-                userWorkspaceIds.add(ws.id);
-            }
+        const allWs = [...(ownerRes.data || []), ...(memberRes.data || [])];
+        const uniqueWs = Array.from(new Map(allWs.map(ws => [ws.id, ws])).values());
+
+        uniqueWs.forEach(ws => {
+            userWorkspaceOwnerIds.add(ws.owner_id);
+            userWorkspaceIds.add(ws.id);
         });
 
         // Step 2: Fetch approval_requests

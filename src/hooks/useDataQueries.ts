@@ -11,16 +11,34 @@ export const useWorkspaces = (userId: string | null) => {
     queryKey: ['workspaces', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID required');
-      
-      // OPTIMIZED: Select all columns needed for dashboard display
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type, period, description, members, profile_links, account_names')
-        .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+
+      const columnList = 'id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type, period, description, members, profile_links, account_names';
+
+      // Parallelize queries for better performance and to leverage individual indices
+      const [ownerRes, memberRes] = await Promise.all([
+        supabase
+          .from('workspaces')
+          .select(columnList)
+          .eq('owner_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('workspaces')
+          .select(columnList)
+          .contains('members', [userId])
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (ownerRes.error) throw ownerRes.error;
+      if (memberRes.error) throw memberRes.error;
+
+      // Merge and deduplicate by ID
+      const allWorkspaces = [...(ownerRes.data || []), ...(memberRes.data || [])];
+      const uniqueWorkspaces = Array.from(new Map(allWorkspaces.map(ws => [ws.id, ws])).values());
+
+      // Sort by created_at desc
+      return uniqueWorkspaces.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     },
     enabled: !!userId,  // Jangan query jika userId belum ada
     staleTime: 1000 * 60 * 5,  // Cache 5 menit
@@ -35,13 +53,13 @@ export const useUserPreferences = (userId: string | null) => {
     queryKey: ['user-preferences', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID required');
-      
+
       const { data, error } = await supabase
         .from('app_users')
         .select('religion, city, timezone, full_name, avatar_url')
         .eq('id', userId)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -58,14 +76,14 @@ export const useContentStats = (workspaceIds: string[] | undefined) => {
     queryKey: ['content-stats', workspaceIds],
     queryFn: async () => {
       if (!workspaceIds?.length) return {};
-      
+
       const { data, error } = await supabase
         .from('content_items')
         .select('workspace_id, status')
         .in('workspace_id', workspaceIds);
-      
+
       if (error) throw error;
-      
+
       // Transform ke map untuk efficient lookup
       const statsMap: Record<string, { total: number; published: number }> = {};
       (data || []).forEach(item => {
@@ -75,7 +93,7 @@ export const useContentStats = (workspaceIds: string[] | undefined) => {
         statsMap[item.workspace_id].total++;
         if (item.status === 'Published') statsMap[item.workspace_id].published++;
       });
-      
+
       return statsMap;
     },
     enabled: !!workspaceIds?.length,
@@ -94,7 +112,7 @@ export const useApprovalTemplates = () => {
         .from('approval_templates')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -113,7 +131,7 @@ export const useAppConfig = () => {
         .from('app_config')
         .select('*')
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -130,13 +148,13 @@ export const useTeamKpis = (memberId: string | null) => {
     queryKey: ['team-kpis', memberId],
     queryFn: async () => {
       if (!memberId) throw new Error('Member ID required');
-      
+
       const { data, error } = await supabase
         .from('team_kpis')
         .select('*')
         .eq('member_id', memberId)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -154,13 +172,14 @@ export const useContentItems = (workspaceIds: string[] | undefined) => {
     queryKey: ['content-items', workspaceIds],
     queryFn: async () => {
       if (!workspaceIds?.length) return [];
-      
+
       const { data, error } = await supabase
         .from('content_items')
         .select('id, title, status, platform, date, pillar, type, pic, priority, workspace_id')
         .in('workspace_id', workspaceIds)
-        .order('date', { ascending: true });
-      
+        .order('date', { ascending: true })
+        .limit(200);
+
       if (error) throw error;
       return data || [];
     },

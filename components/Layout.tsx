@@ -752,6 +752,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     // --- BRANDING EFFECT (Title & Favicon & Icons) ---
+    const fixIconUrl = (url?: string) => {
+        const DEFAULT_ICON = 'https://res.cloudinary.com/dk6xi96ek/image/upload/v1772254522/icon_new_axdwuq.png';
+        if (!url) return DEFAULT_ICON;
+        // If it's the broken legacy URL, replace with the new one
+        if (url.includes('dqmhsl.png')) return DEFAULT_ICON;
+        return url;
+    };
+
     useEffect(() => {
         document.title = branding.appName;
         let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
@@ -760,34 +768,39 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             link.rel = 'icon';
             document.head.appendChild(link);
         }
-        if (branding.appFavicon) link.href = branding.appFavicon;
-        else if (branding.appLogo) link.href = branding.appLogo;
+
+        const favIcon = fixIconUrl(branding.appFavicon || branding.appLogo);
+        if (favIcon) link.href = favIcon;
 
         // Update Web App Icon meta tags for mobile/PWA
-        if (config?.app_icon_192 || config?.app_icon_512 || config?.app_icon_mask) {
+        const icon192 = fixIconUrl(config?.app_icon_192);
+        const icon512 = fixIconUrl(config?.app_icon_512);
+        const iconMask = fixIconUrl(config?.app_icon_mask);
+
+        if (icon192 || icon512 || iconMask) {
             // Remove old manifest if exists
             let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
             if (manifestLink) manifestLink.remove();
 
             // Create new manifest with icons
             const manifest = {
-                name: config.app_name || 'Aruneeka',
-                short_name: config.app_name || 'Aruneeka',
+                name: config?.app_name || 'Aruneeka',
+                short_name: config?.app_name || 'Aruneeka',
                 icons: [
-                    ...(config.app_icon_192 ? [{
-                        src: config.app_icon_192,
+                    ...(icon192 ? [{
+                        src: icon192,
                         sizes: '192x192',
                         type: 'image/png',
                         purpose: 'any'
                     }] : []),
-                    ...(config.app_icon_512 ? [{
-                        src: config.app_icon_512,
+                    ...(icon512 ? [{
+                        src: icon512,
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any'
                     }] : []),
-                    ...(config.app_icon_mask ? [{
-                        src: config.app_icon_mask,
+                    ...(iconMask ? [{
+                        src: iconMask,
                         sizes: '192x192',
                         type: 'image/png',
                         purpose: 'maskable'

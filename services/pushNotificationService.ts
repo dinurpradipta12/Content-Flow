@@ -43,7 +43,7 @@
 import { supabase } from './supabaseClient';
 
 // VAPID public key from environment (generate with: npx web-push generate-vapid-keys)
-const VAPID_PUBLIC_KEY = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY || '';
+const VAPID_PUBLIC_KEY = (import.meta.env as any).VITE_VAPID_PUBLIC_KEY || '';
 
 /**
  * Convert VAPID public key from base64 to Uint8Array
