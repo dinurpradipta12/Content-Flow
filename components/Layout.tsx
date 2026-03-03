@@ -1319,7 +1319,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 translate-x-0'}`}
                 >
                     <div className="flex-shrink-0 mobile-safe-top-spacer"></div>
-                    <div className={`h-auto flex flex-col shrink-0 pt-4 pb-8 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
+                    <div className={`h-auto flex flex-col shrink-0 pt-1 pb-4 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
                         <div className={`flex items-center transition-all duration-500 ${isSidebarOpen ? 'justify-start w-full' : 'justify-center'} `}>
                             {(() => {
                                 const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';

@@ -203,15 +203,15 @@ const KanbanCard: React.FC<{
     // Find PIC member
     const picMember = members.find(m => m.name === item.pic);
 
-    // Helpers for Approval UI
+    // Helpers for Approval UI - More prominent and colorful
     const getApprovalBadge = (status?: string) => {
         switch (status) {
             case 'approved':
-                return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider animate-in zoom-in duration-300 shadow-sm"><CheckCircle size={10} fill="currentColor" fillOpacity={0.3} /> Approved</span>;
+                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest animate-in zoom-in duration-500 shadow-md border-2 border-emerald-400"><CheckCircle size={10} fill="currentColor" fillOpacity={0.3} /> Approved</span>;
             case 'revision':
-                return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider animate-in zoom-in duration-300 shadow-sm"><RefreshCw size={10} /> Revision</span>;
+                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest animate-in zoom-in duration-500 shadow-md border-2 border-amber-400"><RefreshCw size={10} /> Revision</span>;
             default:
-                return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-400 text-white text-[9px] font-black uppercase tracking-wider shadow-sm">Pending</span>;
+                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-widest border-2 border-slate-300 shadow-sm opacity-80">Draft (Pending)</span>;
         }
     };
 
@@ -229,6 +229,25 @@ const KanbanCard: React.FC<{
                         {getPlatformIcon(item.platform)}
                         <span>{item.platform}</span>
                     </div>
+                    {/* Quick Action Badges */}
+                    {isAdmin && item.approval_status !== 'approved' && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onApprove(item.id, 'approved'); }}
+                                className="p-1 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-all shadow-sm"
+                                title="Approve ini"
+                            >
+                                <CheckCircle size={12} />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onApprove(item.id, 'revision'); }}
+                                className="p-1 rounded bg-amber-100 text-amber-600 hover:bg-amber-200 transition-all shadow-sm"
+                                title="Minta Revisi"
+                            >
+                                <RefreshCw size={12} />
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="relative">
@@ -252,15 +271,15 @@ const KanbanCard: React.FC<{
                                     <>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'approved'); }}
-                                            className="w-full text-left px-3 py-2 hover:bg-emerald-50 flex items-center gap-2 font-bold text-emerald-600"
+                                            className="w-full text-left px-3 py-2 hover:bg-emerald-50 flex items-center gap-2 font-bold text-emerald-600 transition-colors"
                                         >
-                                            <CheckCircle size={14} /> Approve
+                                            <CheckCircle size={14} /> Mark as Approved
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'revision'); }}
-                                            className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center gap-2 font-bold text-amber-600"
+                                            className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center gap-2 font-bold text-amber-600 transition-colors"
                                         >
-                                            <RefreshCw size={14} /> Revision
+                                            <RefreshCw size={14} /> Request Revision
                                         </button>
                                     </>
                                 )}
@@ -431,6 +450,15 @@ export const ContentPlanDetail: React.FC = () => {
         members: []
     });
     const [loading, setLoading] = useState(true);
+
+    const [currentUserRole, setCurrentUserRole] = useState<string>('Member');
+    const [currentUserPackage, setCurrentUserPackage] = useState<string>('');
+
+    // Diagnostics Log
+    useEffect(() => {
+        console.log(`[ContentFlow-Detail] v1.6 initialized. User Role: ${currentUserRole}`);
+    }, [currentUserRole]);
+
     const [errorState, setErrorState] = useState<string | null>(null);
     // Default to table view on mobile for better readability
     const [viewMode, setViewMode] = useState<'kanban' | 'table' | 'brand_asset'>(() => {
@@ -505,8 +533,6 @@ export const ContentPlanDetail: React.FC = () => {
     const [filterPlatform, setFilterPlatform] = useState<string>('all');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [isScrolled, setIsScrolled] = useState(false);
-    const [currentUserRole, setCurrentUserRole] = useState<string>('Member');
-    const [currentUserPackage, setCurrentUserPackage] = useState<string>('');
     const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 
     // Date Period Filter State
