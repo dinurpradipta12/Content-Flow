@@ -21,6 +21,8 @@ export enum Platform {
   FACEBOOK = 'Facebook'
 }
 
+export type ApprovalStatus = 'pending' | 'approved' | 'revision';
+
 export interface ContentItem {
   id: string;
   title: string;
@@ -34,7 +36,10 @@ export interface ContentItem {
   pic?: string;
   script?: string;
   contentLink?: string; // Direct post link for analytics
-  approval?: string;
+  approval_status?: ApprovalStatus;
+  approved_by?: string;
+  approved_at?: string;
+  approval_notes?: string;
   asset_url?: string; // Uploaded JPG/image asset (base64 or URL)
   drive_folder_url?: string; // Google Drive folder link for video/multi-file assets
   metrics?: {

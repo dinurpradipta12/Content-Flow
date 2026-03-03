@@ -189,16 +189,31 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
 
 const KanbanCard: React.FC<{
     item: ContentItem;
-    members: Member[]; // Add members prop
+    members: Member[];
+    userRole: string; // Add userRole to check permissions
     onEdit: (item: ContentItem) => void;
     onDelete: (id: string) => void;
+    onApprove: (id: string, status: 'approved' | 'revision' | 'pending') => void; // New prop
     onDragStart: (e: React.DragEvent, id: string) => void;
     onClick: (item: ContentItem) => void;
-}> = ({ item, members, onEdit, onDelete, onDragStart, onClick }) => {
+}> = ({ item, members, userRole, onEdit, onDelete, onApprove, onDragStart, onClick }) => {
     const [showMenu, setShowMenu] = useState(false);
+    const isAdmin = userRole === 'Admin' || userRole === 'Owner' || userRole === 'Developer';
 
     // Find PIC member
     const picMember = members.find(m => m.name === item.pic);
+
+    // Helpers for Approval UI
+    const getApprovalBadge = (status?: string) => {
+        switch (status) {
+            case 'approved':
+                return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider animate-in zoom-in duration-300 shadow-sm"><CheckCircle size={10} fill="currentColor" fillOpacity={0.3} /> Approved</span>;
+            case 'revision':
+                return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-black uppercase tracking-wider animate-in zoom-in duration-300 shadow-sm"><RefreshCw size={10} /> Revision</span>;
+            default:
+                return <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-400 text-white text-[9px] font-black uppercase tracking-wider shadow-sm">Pending</span>;
+        }
+    };
 
     return (
         <div
@@ -207,11 +222,13 @@ const KanbanCard: React.FC<{
             onClick={() => onClick(item)}
             className={`group rounded-xl border-2 transition-all duration-200 hover:-translate-y-1 cursor-grab active:cursor-grabbing relative mb-4 flex-shrink-0 z-10 hover:z-20 overflow-visible ${getCardStatusStyle(item.status)}`}
         >
-            {/* ... (keep existing header) ... */}
+            {/* Header: Platform & Menu */}
             <div className={`px-4 py-3 flex justify-between items-center rounded-t-[10px]`}>
-                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${getPlatformBadgeStyle(item.platform)}`}>
-                    {getPlatformIcon(item.platform)}
-                    <span>{item.platform}</span>
+                <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${getPlatformBadgeStyle(item.platform)}`}>
+                        {getPlatformIcon(item.platform)}
+                        <span>{item.platform}</span>
+                    </div>
                 </div>
 
                 <div className="relative">
@@ -231,6 +248,22 @@ const KanbanCard: React.FC<{
                                 >
                                     <Edit size={14} className="text-accent" /> Edit
                                 </button>
+                                {isAdmin && (
+                                    <>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'approved'); }}
+                                            className="w-full text-left px-3 py-2 hover:bg-emerald-50 flex items-center gap-2 font-bold text-emerald-600"
+                                        >
+                                            <CheckCircle size={14} /> Approve
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'revision'); }}
+                                            className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center gap-2 font-bold text-amber-600"
+                                        >
+                                            <RefreshCw size={14} /> Revision
+                                        </button>
+                                    </>
+                                )}
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(item.id); }}
                                     className="w-full text-left px-3 py-2 hover:bg-red-500/10 flex items-center gap-2 font-bold text-red-500"
@@ -249,8 +282,10 @@ const KanbanCard: React.FC<{
                     {item.title}
                 </h4>
 
-                {/* Badges: Pillar & Type */}
-                <div className="flex flex-wrap gap-2">
+                {/* Approval & Tags */}
+                <div className="flex flex-wrap items-center gap-2 mt-1">
+                    {getApprovalBadge(item.approval_status)}
+
                     {item.pillar && (
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getPillarStyle(item.pillar)}`}>
                             {item.pillar}
@@ -266,25 +301,25 @@ const KanbanCard: React.FC<{
 
                 {/* Footer: Date & PIC */}
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-mutedForeground text-[11px] font-bold bg-muted/60 px-2 py-1 rounded border border-border">
+                    <div className="flex items-center gap-1.5 text-mutedForeground text-[11px] font-bold bg-muted/60 px-2 py-1 rounded border border-border shrink-0">
                         <Calendar size={12} className="text-mutedForeground/70" />
                         <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}</span>
                     </div>
 
                     {item.pic ? (
-                        <div className="flex items-center gap-1.5" title={`PIC: ${item.pic}`}>
+                        <div className="flex items-center gap-1.5 min-w-0" title={`PIC: ${item.pic}`}>
                             {picMember ? (
                                 <img
                                     src={picMember.avatar}
                                     alt={picMember.name}
-                                    className="w-6 h-6 rounded-full border border-slate-800 shadow-sm object-cover"
+                                    className="w-6 h-6 rounded-full border border-slate-800 shadow-sm object-cover flex-shrink-0"
                                 />
                             ) : (
-                                <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm">
+                                <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm flex-shrink-0">
                                     {item.pic.charAt(0).toUpperCase()}
                                 </div>
                             )}
-                            <span className="text-[10px] font-bold text-slate-600 truncate max-w-[60px]">{item.pic}</span>
+                            <span className="text-[10px] font-bold text-slate-600 truncate max-w-[50px]">{item.pic}</span>
                         </div>
                     ) : (
                         <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center">
@@ -301,13 +336,15 @@ const KanbanColumn: React.FC<{
     status: ContentStatus,
     items: ContentItem[],
     textColor: string,
-    members: Member[], // Add members prop
+    members: Member[],
+    userRole: string, // New prop
     onEdit: (item: ContentItem) => void,
     onDelete: (id: string) => void,
+    onApprove: (id: string, status: 'approved' | 'revision' | 'pending') => void, // New prop
     onDropTask: (e: React.DragEvent, status: ContentStatus) => void,
     onDragStart: (e: React.DragEvent, id: string) => void,
     onCardClick: (item: ContentItem) => void
-}> = ({ status, items, textColor, members, onEdit, onDelete, onDropTask, onDragStart, onCardClick }) => {
+}> = ({ status, items, textColor, members, userRole, onEdit, onDelete, onApprove, onDropTask, onDragStart, onCardClick }) => {
     // ... (keep existing handlers) ...
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -350,9 +387,11 @@ const KanbanColumn: React.FC<{
                         <KanbanCard
                             key={item.id}
                             item={item}
-                            members={members} // Pass members
+                            members={members}
+                            userRole={userRole}
                             onEdit={onEdit}
                             onDelete={onDelete}
+                            onApprove={onApprove}
                             onDragStart={onDragStart}
                             onClick={onCardClick}
                         />
@@ -866,6 +905,54 @@ export const ContentPlanDetail: React.FC = () => {
             contentLink: item.contentLink || '' // Ensure this reads from mapped item
         });
         setIsModalOpen(true);
+    };
+
+    const handleApprove = async (id: string, status: 'approved' | 'revision' | 'pending') => {
+        const currentUserId = localStorage.getItem('user_id');
+        const currentUserName = localStorage.getItem('user_name') || 'Admin';
+        if (!currentUserId) return;
+
+        try {
+            const { error } = await supabase
+                .from('content_items')
+                .update({
+                    approval_status: status,
+                    approved_by: status === 'approved' ? currentUserId : null,
+                    approved_at: status === 'approved' ? new Date().toISOString() : null
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            // Update local state
+            setTasks(prev => prev.map(t => t.id === id ? {
+                ...t,
+                approval_status: status,
+                approved_by: status === 'approved' ? currentUserId : undefined,
+                approved_at: status === 'approved' ? new Date().toISOString() : undefined
+            } : t));
+
+            console.log(`[Approval] Content ${id} status updated to ${status}`);
+
+            // Send notification to PIC
+            const task = tasks.find(t => t.id === id);
+            if (task && task.pic && status !== 'pending') {
+                const picMember = teamMembers.find(m => m.name === task.pic);
+                if (picMember && picMember.id) {
+                    sendNotification({
+                        recipient_id: picMember.id,
+                        actor_id: currentUserId,
+                        workspace_id: id || null,
+                        type: status === 'approved' ? 'CONTENT_APPROVED' : 'CONTENT_REVISION',
+                        title: status === 'approved' ? 'Konten Disetujui! 🎉' : 'Ada Revisi Konten 🔄',
+                        content: `Konten "${task.title}" telah ${status === 'approved' ? 'disetujui' : 'diminta revisi'} oleh ${currentUserName}`,
+                        metadata: { content_id: id }
+                    });
+                }
+            }
+        } catch (err: any) {
+            console.error('Error approving content:', err);
+        }
     };
 
     const handleCardClick = (item: ContentItem) => {
@@ -1616,6 +1703,8 @@ export const ContentPlanDetail: React.FC = () => {
                                     members={teamMembers}
                                     onEdit={handleOpenEditModal}
                                     onDelete={handleDeleteContent}
+                                    onApprove={handleApprove}
+                                    userRole={currentUserRole}
                                     onDragStart={handleDragStart}
                                     onDropTask={handleDropTask}
                                     onCardClick={handleCardClick}
@@ -1810,6 +1899,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Pillar</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Script</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">PIC</th>
+                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Apprv</th>
                                         <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider min-w-[150px]">Link Postingan</th>
                                         <th className="px-4 py-3 bg-muted rounded-r-xl text-mutedForeground text-xs font-bold uppercase tracking-wider text-right">Action</th>
                                     </tr>
@@ -1907,6 +1997,24 @@ export const ContentPlanDetail: React.FC = () => {
                                                     ) : (
                                                         <span className="text-mutedForeground opacity-50 text-xs">-</span>
                                                     )}
+                                                </td>
+
+                                                {/* 7.5 Approval Status (NEW) */}
+                                                <td className="p-3 border-y border-border text-center">
+                                                    <div className="flex flex-col items-center justify-center gap-1">
+                                                        {(() => {
+                                                            const status = task.approval_status;
+                                                            if (status === 'approved') return <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[8px] font-black uppercase tracking-wider">Approved</span>;
+                                                            if (status === 'revision') return <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider">Revision</span>;
+                                                            return <span className="px-2 py-0.5 rounded-full bg-slate-300 text-slate-600 text-[8px] font-black uppercase tracking-wider">Pending</span>;
+                                                        })()}
+                                                        {(currentUserRole === 'Admin' || currentUserRole === 'Owner' || currentUserRole === 'Developer') && (
+                                                            <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'approved'); }} className="p-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Approve"><Check size={10} /></button>
+                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'revision'); }} className="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors" title="Revision"><RefreshCw size={10} /></button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 {/* 8. Link Input (Interactive - Controlled) */}

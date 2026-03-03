@@ -1294,7 +1294,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
             { id: 'flow', path: '/flow', label: 'Content Flow', icon: GitBranch },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
-            { id: 'approval', path: '/approval', label: 'Approval Area', icon: CheckCircle },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },
             { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
@@ -1395,7 +1394,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }
 
                                 // Known core pages that are visible by default unless explicitly hidden
-                                const CORE_PAGES = ['dashboard', 'plan', 'flow', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+                                const CORE_PAGES = ['dashboard', 'plan', 'flow', 'calendar', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
 
                                 const isHidden = config?.hidden_pages?.includes(item.id);
 
@@ -2141,11 +2140,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </button>
                                     <span className={`text-[9px] font-bold text-center block mt-1 ${location.pathname === '/' ? 'text-accent' : 'text-slate-400'}`}>Dasbor</span>
                                 </div>
-                                {/* Right: Approval */}
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/approval'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/approval' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    <CheckCircle size={22} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
-                                    <span className="text-[9px] font-bold">Approval</span>
-                                </button>
                             </div>
                         </nav>
 
@@ -2398,7 +2392,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     if (!isSelfRegisteredAdmin) return false;
                                                     return true;
                                                 }
-                                                const CORE_PAGES = ['dashboard', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+                                                const CORE_PAGES = ['dashboard', 'plan', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
 
                                                 const isHidden = config?.hidden_pages?.includes(item.id);
                                                 if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
