@@ -191,7 +191,7 @@ export const useCarouselStore = create<CarouselState>()(
 
             savePreset: async (name, presetData) => {
                 const { pages, canvasSize } = get();
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
 
                 const { error } = await supabase.from('carousel_presets').insert({
@@ -204,7 +204,7 @@ export const useCarouselStore = create<CarouselState>()(
             },
 
             loadPresets: async () => {
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
                 if (!userId) return [];
                 const { data, error } = await supabase
@@ -222,7 +222,7 @@ export const useCarouselStore = create<CarouselState>()(
 
             saveProject: async (name) => {
                 const { pages, canvasSize, currentProjectId } = get();
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
                 if (!userId) throw new Error('User not logged in');
 
@@ -245,7 +245,7 @@ export const useCarouselStore = create<CarouselState>()(
             },
 
             loadProjects: async () => {
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
                 if (!userId) return [];
                 const { data, error } = await supabase
@@ -263,7 +263,7 @@ export const useCarouselStore = create<CarouselState>()(
             },
 
             deleteProject: async (id) => {
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const { error } = await supabase.from('carousel_projects').delete().eq('id', id);
                 if (error) throw error;
                 if (get().currentProjectId === id) set({ currentProjectId: null });
@@ -271,7 +271,7 @@ export const useCarouselStore = create<CarouselState>()(
             },
 
             uploadFont: async (name, data) => {
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
                 if (!userId) throw new Error('User not logged in');
 
@@ -291,7 +291,7 @@ export const useCarouselStore = create<CarouselState>()(
             },
 
             loadFonts: async () => {
-                const { supabase } = await import('../services/supabaseClient');
+                const { supabase } = await import('../../services/supabaseClient');
                 const userId = localStorage.getItem('user_id');
                 if (!userId) return;
 

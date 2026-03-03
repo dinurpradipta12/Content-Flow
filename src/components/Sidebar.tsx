@@ -191,7 +191,7 @@ export const Sidebar: React.FC = () => {
 
     const handleExportPreset = async (preset: any, e: React.MouseEvent) => {
         e.stopPropagation();
-        const { supabase } = await import('../services/supabaseClient');
+        const { supabase } = await import('../../services/supabaseClient');
 
         // Fetch fonts to embed
         let embeddedFonts: any[] = [];
@@ -265,7 +265,7 @@ export const Sidebar: React.FC = () => {
         e.stopPropagation();
         if (!confirm(`Hapus preset "${preset.name}"?`)) return;
         try {
-            const { supabase } = await import('../services/supabaseClient');
+            const { supabase } = await import('../../services/supabaseClient');
             const { error } = await supabase.from('carousel_presets').delete().eq('id', preset.id);
             if (error) throw error;
             fetchPresets();
