@@ -300,6 +300,22 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         fetchNotifications();
 
+        // ── Smart Sync: Personal users use polling, team users use realtime ──
+        const isPersonal = (() => {
+            const pkg = localStorage.getItem('user_subscription_package') || '';
+            return pkg.toLowerCase().includes('personal') || pkg.toLowerCase() === 'free';
+        })();
+
+        if (isPersonal) {
+            // Personal: Poll every 2 minutes instead of realtime
+            console.log('[SmartSync] Using polling for notifications (personal user)');
+            const pollInterval = setInterval(() => {
+                fetchNotifications();
+            }, 2 * 60 * 1000);
+            return () => clearInterval(pollInterval);
+        }
+
+        // Team: Full realtime subscription
         const channel = supabase
             .channel(`notif_realtime_${currentUserId}`)
             .on(
@@ -487,9 +503,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     useEffect(() => {
         if ('setAppBadge' in navigator) {
             if (unreadCount > 0) {
-                (navigator as any).setAppBadge(unreadCount).catch(() => {});
+                (navigator as any).setAppBadge(unreadCount).catch(() => { });
             } else {
-                (navigator as any).clearAppBadge().catch(() => {});
+                (navigator as any).clearAppBadge().catch(() => { });
             }
         }
     }, [unreadCount]);
@@ -584,11 +600,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             style={{ animationDelay: `${index * 60}ms` }}
                         >
                             {/* Dynamic Island Pill */}
-                            <div className={`relative flex items-center gap-3 px-4 py-3 rounded-[22px] shadow-[0_8px_32px_rgba(0,0,0,0.35)] overflow-hidden cursor-pointer active:scale-[0.97] transition-transform ${
-                                isSpecial
+                            <div className={`relative flex items-center gap-3 px-4 py-3 rounded-[22px] shadow-[0_8px_32px_rgba(0,0,0,0.35)] overflow-hidden cursor-pointer active:scale-[0.97] transition-transform ${isSpecial
                                     ? 'bg-[#1a1200] border border-amber-500/30'
                                     : 'bg-[#0d0d0d] border border-white/10'
-                            }`}>
+                                }`}>
                                 {/* Shimmer effect */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer pointer-events-none"></div>
 
@@ -647,11 +662,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         <div
                             key={toast.id}
                             onClick={() => handleNotificationClick(toast)}
-                            className={`pointer-events-auto border-2 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer transition-all ${
-                                isSpecial
+                            className={`pointer-events-auto border-2 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer transition-all ${isSpecial
                                     ? 'bg-amber-50 border-amber-500 hover:bg-amber-100'
                                     : 'bg-white border-slate-800 hover:bg-slate-50'
-                            }`}
+                                }`}
                         >
                             {/* Progress Bar */}
                             <div className={`absolute bottom-0 left-0 h-1.5 w-full origin-left animate-toast-progress ${isSpecial ? 'bg-amber-500/20' : 'bg-accent/20'}`}></div>
@@ -716,10 +730,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             </div>
 
                             {/* Header */}
-                            <div className={`mx-4 mb-4 rounded-2xl p-4 flex items-center gap-3 ${
-                                currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
-                                currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
-                            }`}>
+                            <div className={`mx-4 mb-4 rounded-2xl p-4 flex items-center gap-3 ${currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
+                                    currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
+                                }`}>
                                 <div className="relative flex-shrink-0">
                                     {currentPopup.actor?.avatar_url ? (
                                         <img src={currentPopup.actor.avatar_url} className="w-12 h-12 rounded-full border-2 border-white/50 object-cover" alt="" />
@@ -775,10 +788,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     {/* DESKTOP: Bottom-right card */}
                     <div className="hidden md:block fixed bottom-6 right-6 z-[10000] w-[400px] animate-in slide-in-from-right-10 fade-in duration-500">
                         <div className="bg-card border-2 border-slate-900 shadow-hard rounded-2xl overflow-hidden flex flex-col">
-                            <div className={`p-4 flex items-center gap-4 border-b-2 border-slate-900 ${
-                                currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
-                                currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
-                            }`}>
+                            <div className={`p-4 flex items-center gap-4 border-b-2 border-slate-900 ${currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
+                                    currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
+                                }`}>
                                 <div className="relative">
                                     {currentPopup.actor?.avatar_url ? (
                                         <img src={currentPopup.actor.avatar_url} className="w-12 h-12 rounded-full border-2 border-white object-cover shadow-sm" alt="" />

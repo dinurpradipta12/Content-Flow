@@ -430,8 +430,16 @@ export const ContentPlanDetail: React.FC = () => {
         return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
     };
 
-    // Subscribing to Presence Changes
+    // Subscribing to Presence Changes (Team workspaces only)
     useEffect(() => {
+        // ── Smart Sync: Skip realtime presence for personal workspaces ──
+        const pkg = localStorage.getItem('user_subscription_package') || '';
+        const isPersonal = pkg.toLowerCase().includes('personal') || pkg.toLowerCase() === 'free';
+        if (isPersonal) {
+            console.log('[SmartSync] Skipping presence channel for personal workspace');
+            return;
+        }
+
         const presenceChannel = supabase
             .channel('workspace_user_presence')
             .on(
