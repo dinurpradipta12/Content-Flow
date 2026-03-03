@@ -51,7 +51,6 @@ import { UserPresence } from './UserPresence';
 import { PresenceToast } from './PresenceToast';
 import { FirstLoginModal } from './FirstLoginModal';
 import { EmailSetupModal } from './EmailSetupModal';
-import { ChatNotificationListener } from './ChatNotificationListener';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -1292,7 +1291,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const NAV_ITEMS: Record<string, NavItem[]> = {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
-            { id: 'messages', path: '/messages', label: 'Messages', icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : null },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
             { id: 'flow', path: '/flow', label: 'Content Flow', icon: GitBranch },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
@@ -1397,12 +1395,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }
 
                                 // Known core pages that are visible by default unless explicitly hidden
-                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'flow', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+                                const CORE_PAGES = ['dashboard', 'plan', 'flow', 'calendar', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
 
                                 const isHidden = config?.hidden_pages?.includes(item.id);
 
-                                // Messages is always globally visible to all users
-                                if (item.id === 'messages') return true;
 
                                 // Safety: While loading for the first time (no cache),
                                 // assume hidden for everything except dashboard to prevent flickering.
@@ -1487,7 +1483,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Main Wrapper-Uses padding left instead of flex width sharing */}
                 <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
                     <PresenceToast />
-                    <ChatNotificationListener />
+                    {/* ChatNotificationListener removed - Messages feature disabled */}
+
                     {/* Mobile & Tablet top safe area spacer - pushes header below status bar */}
                     <div className="flex-shrink-0 mobile-safe-top-spacer"></div>
                     <header className={`mt-0 md:mt-4 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-3 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-16 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 sm:px-4 md:px-6 py-2 sm:py-2 md:py-3 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
@@ -2149,14 +2146,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <CheckCircle size={22} className={location.pathname === '/approval' ? 'fill-accent/20' : ''} />
                                     <span className="text-[9px] font-bold">Approval</span>
                                 </button>
-                                {/* Right: Messages */}
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/messages'); }} className={`relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/messages' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    <div className="relative">
-                                        <MessageSquare size={22} className={location.pathname === '/messages' ? 'fill-accent/20' : ''} />
-                                        {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border border-white text-[7px] text-white flex items-center justify-center font-black">{unreadCount > 9 ? '9+' : unreadCount}</span>}
-                                    </div>
-                                    <span className="text-[9px] font-bold">Pesan</span>
-                                </button>
                             </div>
                         </nav>
 
@@ -2409,8 +2398,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     if (!isSelfRegisteredAdmin) return false;
                                                     return true;
                                                 }
-                                                if (item.id === 'messages') return true;
-                                                const CORE_PAGES = ['dashboard', 'messages', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+                                                const CORE_PAGES = ['dashboard', 'plan', 'approval', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace', 'activity'];
+
                                                 const isHidden = config?.hidden_pages?.includes(item.id);
                                                 if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
                                                 else { if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false; }

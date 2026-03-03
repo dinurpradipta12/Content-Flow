@@ -1,4 +1,6 @@
-import { supabase } from './supabaseClient';
+// Activity Service - DISABLED
+// Activity logs feature has been removed to reduce Supabase database usage.
+// All functions are kept as no-ops to avoid breaking existing callers.
 
 export type ActivityAction =
     | 'LOGIN'
@@ -25,75 +27,12 @@ export interface ActivityLog {
     details?: any;
 }
 
-export const logActivity = async (activity: ActivityLog) => {
-    try {
-        const userId = activity.user_id || localStorage.getItem('user_id');
-
-        const { error } = await supabase.from('activity_logs').insert([{
-            user_id: userId,
-            workspace_id: activity.workspace_id || null,
-            action: activity.action,
-            entity_type: activity.entity_type,
-            entity_id: activity.entity_id,
-            details: activity.details,
-            created_at: new Date().toISOString()
-        }]);
-
-        if (error) {
-            console.error('Error logging activity:', error);
-        }
-    } catch (err) {
-        console.error('Failed to log activity:', err);
-    }
+// No-op: does nothing, returns silently
+export const logActivity = async (_activity: ActivityLog): Promise<void> => {
+    return;
 };
 
-export const fetchActivityLogs = async (workspaceId?: string | string[], limit = 50) => {
-    try {
-        let query = supabase
-            .from('activity_logs')
-            .select(`
-                *,
-                actor:user_id(full_name, username, avatar_url)
-            `)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-        if (workspaceId) {
-            if (Array.isArray(workspaceId)) {
-                query = query.in('workspace_id', workspaceId);
-            } else {
-                query = query.eq('workspace_id', workspaceId);
-            }
-        }
-
-        const { data, error } = await query;
-        if (error) {
-            console.error('fetchActivityLogs error:', error);
-            return [];
-        }
-
-        // Enrich with workspace names separately (avoids FK join issues)
-        if (data && data.length > 0) {
-            const wsIds = [...new Set(data.map(d => d.workspace_id).filter(Boolean))];
-            let wsMap: Record<string, string> = {};
-            if (wsIds.length > 0) {
-                const { data: wsData } = await supabase
-                    .from('workspaces')
-                    .select('id, name')
-                    .in('id', wsIds);
-                if (wsData) {
-                    wsMap = Object.fromEntries(wsData.map(w => [w.id, w.name]));
-                }
-            }
-            return data.map(log => ({
-                ...log,
-                workspace: log.workspace_id ? { name: wsMap[log.workspace_id] || 'Unknown' } : null
-            }));
-        }
-
-        return data || [];
-    } catch (err) {
-        console.error('fetchActivityLogs exception:', err);
-        return [];
-    }
+// No-op: returns empty array
+export const fetchActivityLogs = async (_workspaceId?: string | string[], _limit = 50): Promise<any[]> => {
+    return [];
 };
