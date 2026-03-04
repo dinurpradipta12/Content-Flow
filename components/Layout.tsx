@@ -827,7 +827,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             let appleLink = document.getElementById('apple-touch-icon-link') as HTMLLinkElement || document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
 
             // Only set if URL is valid and HTTPS
-            if (config.app_icon_192 && config.app_icon_192.startsWith('https://')) {
+            if (config?.app_icon_192?.startsWith('https://')) {
                 if (!appleLink) {
                     appleLink = document.createElement('link');
                     appleLink.id = 'apple-touch-icon-link';
@@ -835,10 +835,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     document.head.appendChild(appleLink);
                 }
                 appleLink.href = config.app_icon_192;
-                console.log('✅ Branding: Apple Touch Icon updated:', config.app_icon_192);
+                console.log('✅ Branding: Apple Touch Icon updated:', config?.app_icon_192);
             } else {
                 // No valid icon - use fallback
-                console.log('⚠️ Invalid or missing app_icon_192. Using fallback icon. Config:', config.app_icon_192);
+                console.log('⚠️ Invalid or missing app_icon_192. Using fallback icon. Config:', config?.app_icon_192);
             }
         }
     }, [branding, config?.app_icon_192, config?.app_icon_512, config?.app_icon_mask, currentTheme]);
@@ -860,7 +860,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // EARLY: Set apple-touch-icon immediately when config loads
             // This is critical for iOS home screen icon to work
             // Only set if URL is valid and HTTPS to prevent iOS fallback
-            if (config.app_icon_192 && config.app_icon_192.startsWith('https://')) {
+            if (config?.app_icon_192?.startsWith('https://')) {
                 let appleLink = document.getElementById('apple-touch-icon-link') as HTMLLinkElement;
                 if (!appleLink) {
                     appleLink = document.createElement('link');
@@ -869,7 +869,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     document.head.appendChild(appleLink);
                 }
                 appleLink.href = config.app_icon_192;
-                console.log('✅ Apple Touch Icon set:', config.app_icon_192);
+                console.log('✅ Apple Touch Icon set:', config?.app_icon_192);
             } else {
                 console.warn('⚠️ app_icon_192 not configured or invalid URL. Using fallback icon.');
             }
