@@ -28,13 +28,20 @@ const supabaseUrl = storedUrl || envUrl || DEFAULT_URL;
 const supabaseAnonKey = storedKey || envKey || DEFAULT_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Supabase URL or Key missing. Please configure them in the Login settings.");
+    console.warn("Supabase URL or Key missing. Please configure them in the Login settings.");
 }
 
 // Initialize Supabase Client
 export const supabase = createClient(
-  supabaseUrl, 
-  supabaseAnonKey
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+        }
+    }
 );
 
 // Helper to check if configured
@@ -46,7 +53,7 @@ export const isSupabaseConfigured = () => {
 export const updateSupabaseConfig = (url: string, key: string) => {
     localStorage.setItem('sb_url', url);
     localStorage.setItem('sb_key', key);
-    window.location.reload(); 
+    window.location.reload();
 };
 
 // Helper to check connection latency

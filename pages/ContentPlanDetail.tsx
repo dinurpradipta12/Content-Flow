@@ -1306,9 +1306,24 @@ export const ContentPlanDetail: React.FC = () => {
             } catch (err) {
                 console.warn("Failed to sync to GCal", err);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving content:", error);
-            alert("Gagal menyimpan konten.");
+
+            // Detect auth/RLS errors and try to refresh session
+            const isAuthError = error?.code === '42501' || error?.message?.includes('row-level security') || error?.status === 401;
+            if (isAuthError) {
+                // Try refreshing the session
+                const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshError || !refreshData?.session) {
+                    alert("Sesi Anda telah kedaluwarsa. Silakan login ulang.");
+                    window.location.hash = '#/login';
+                    return;
+                }
+                // Session refreshed, suggest retry
+                alert("Sesi telah diperbarui. Silakan coba simpan kembali.");
+            } else {
+                alert("Gagal menyimpan konten.");
+            }
         }
     };
 

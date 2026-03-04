@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { isPersonalOnlyUser } from '../services/smartSyncService';
 import { User as UserIcon } from 'lucide-react';
 
 // ── Detect mobile/tablet ──────────────────────────────────────────────────────
@@ -26,11 +25,7 @@ export const PresenceToast = () => {
     useEffect(() => {
         if (!currentUserId) return;
 
-        // ── Smart Sync: Skip realtime presence for personal users ──
-        if (isPersonalOnlyUser()) {
-            console.log('[SmartSync] Skipping presence tracking for personal user');
-            return;
-        }
+        // ── Proceed with setup ──
 
         let isMounted = true;
 
@@ -204,8 +199,8 @@ export const PresenceToast = () => {
         return (
             <div
                 className={`fixed left-1/2 -translate-x-1/2 z-[1001] transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-[calc(100vw-2rem)] max-w-[320px] ${isVisible
-                        ? 'translate-y-0 opacity-100 scale-100'
-                        : '-translate-y-full opacity-0 scale-75 pointer-events-none'
+                    ? 'translate-y-0 opacity-100 scale-100'
+                    : '-translate-y-full opacity-0 scale-75 pointer-events-none'
                     }`}
                 style={{ top: 'max(0.5rem, env(safe-area-inset-top, 0.5rem))' }}
             >
