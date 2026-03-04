@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
-import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye } from 'lucide-react';
+import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
@@ -684,6 +684,128 @@ export const ContentPlanDetail: React.FC = () => {
     const [resultResultType, setResultResultType] = useState<'photo' | 'video'>('photo');
     const [resultMounted, setResultMounted] = useState(false);
 
+    // --- RESULT COMMENTS STATE ---
+    interface ResultComment {
+        id: string;
+        content_item_id: string;
+        workspace_id: string;
+        user_id: string;
+        user_name: string;
+        user_avatar: string;
+        message: string;
+        parent_id: string | null;
+        reactions: Record<string, string[]>; // emoji -> [userId1, userId2]
+        created_at: string;
+    }
+    const [resultComments, setResultComments] = useState<ResultComment[]>([]);
+    const [commentInput, setCommentInput] = useState('');
+    const [replyingTo, setReplyingTo] = useState<ResultComment | null>(null);
+    const [sendingComment, setSendingComment] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
+    const commentEndRef = useRef<HTMLDivElement>(null);
+    const commentInputRef = useRef<HTMLInputElement>(null);
+
+    // Fetch comments for selected task
+    const fetchResultComments = async (contentItemId: string) => {
+        const { data } = await supabase
+            .from('result_comments')
+            .select('*')
+            .eq('content_item_id', contentItemId)
+            .order('created_at', { ascending: true });
+        setResultComments((data || []) as ResultComment[]);
+    };
+
+    // Real-time subscription for comments
+    useEffect(() => {
+        if (!isResultModalOpen || !selectedTask?.id) return;
+        fetchResultComments(selectedTask.id);
+
+        const channel = supabase
+            .channel(`result-comments-${selectedTask.id}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'result_comments',
+                filter: `content_item_id=eq.${selectedTask.id}`
+            }, () => {
+                fetchResultComments(selectedTask.id);
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [isResultModalOpen, selectedTask?.id]);
+
+    // Auto-scroll to bottom when new comments arrive
+    useEffect(() => {
+        if (commentEndRef.current) {
+            commentEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [resultComments.length]);
+
+    // Send comment (or reply)
+    const handleSendComment = async () => {
+        if (!commentInput.trim() || !selectedTask || !id) return;
+        setSendingComment(true);
+        try {
+            const userId = localStorage.getItem('user_id') || '';
+            const userName = localStorage.getItem('user_name') || localStorage.getItem('user_full_name') || 'Unknown';
+            const userAvatar = localStorage.getItem('user_avatar') || '';
+
+            const { error } = await supabase.from('result_comments').insert({
+                content_item_id: selectedTask.id,
+                workspace_id: id,
+                user_id: userId,
+                user_name: userName,
+                user_avatar: userAvatar,
+                message: commentInput.trim(),
+                parent_id: replyingTo?.id || null
+            });
+
+            if (error) throw error;
+
+            // Notify all workspace members
+            const replyLabel = replyingTo ? ` (membalas ${replyingTo.user_name})` : '';
+            for (const member of teamMembers) {
+                if (member.id !== userId) {
+                    await sendNotification({
+                        recipientId: member.id,
+                        type: 'CONTENT_REVISION' as NotificationType,
+                        title: `Komentar Baru pada "${selectedTask.title}"`,
+                        content: `${userName} berkomentar${replyLabel}: "${commentInput.trim().slice(0, 80)}${commentInput.trim().length > 80 ? '...' : ''}"`,
+                        workspaceId: id,
+                        metadata: { contentItemId: selectedTask.id, contentTitle: selectedTask.title }
+                    });
+                }
+            }
+
+            setCommentInput('');
+            setReplyingTo(null);
+        } catch (err) {
+            console.error('Comment error:', err);
+        } finally {
+            setSendingComment(false);
+        }
+    };
+
+    // Toggle reaction on a comment
+    const handleToggleReaction = async (commentId: string, emoji: string) => {
+        const userId = localStorage.getItem('user_id') || '';
+        const comment = resultComments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        const reactions = { ...(comment.reactions || {}) };
+        const users = reactions[emoji] || [];
+        if (users.includes(userId)) {
+            reactions[emoji] = users.filter(u => u !== userId);
+            if (reactions[emoji].length === 0) delete reactions[emoji];
+        } else {
+            reactions[emoji] = [...users, userId];
+        }
+
+        await supabase.from('result_comments').update({ reactions }).eq('id', commentId);
+        setShowEmojiPicker(null);
+    };
+
     useEffect(() => {
         if (isResultModalOpen) {
             setResultMounted(true);
@@ -1108,30 +1230,59 @@ export const ContentPlanDetail: React.FC = () => {
         }
     };
 
-    // Handle content result upload (multi-photo)
+    // Handle content result upload (multi-photo) via Supabase Storage
     const handleResultUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!selectedTask) return;
-        const files = Array.from(e.target.files || []);
+        const files: File[] = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        if (files.length > 15) {
-            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Maksimum 15 foto sekaligus' } }));
+        const currentAssets = (selectedTask.result_assets as string[]) || [];
+        const maxAllowed = 15 - currentAssets.length;
+
+        if (files.length > maxAllowed) {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: `Maksimum ${maxAllowed} foto lagi (sudah ada ${currentAssets.length})` } }));
             return;
         }
 
         setUploadingResults(true);
         try {
-            const uploadPromises = files.map(file => {
-                return new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file as Blob);
-                });
-            });
+            const uploadedUrls: string[] = [];
 
-            const base64Results = await Promise.all(uploadPromises);
-            const updatedAssets = base64Results.slice(0, 15);
+            for (const file of files) {
+                // Generate unique filename
+                const ext = file.name.split('.').pop() || 'jpg';
+                const fileName = `${id}/${selectedTask.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+                // Upload to Supabase Storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('result-assets')
+                    .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (uploadError) {
+                    console.error('Upload error:', uploadError);
+                    // Fallback: try base64 if storage fails (bucket might not exist)
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    uploadedUrls.push(base64);
+                    continue;
+                }
+
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from('result-assets')
+                    .getPublicUrl(uploadData.path);
+
+                uploadedUrls.push(urlData.publicUrl);
+            }
+
+            const updatedAssets = [...currentAssets, ...uploadedUrls].slice(0, 15);
 
             const { error } = await supabase
                 .from('content_items')
@@ -2760,21 +2911,21 @@ export const ContentPlanDetail: React.FC = () => {
                                 <button
                                     onClick={() => resultInputRef.current?.click()}
                                     disabled={uploadingResults || (selectedTask?.result_assets as any[] || []).length >= 15}
-                                    className={`w-full py-10 border-4 border-dashed rounded-[32px] flex flex-col items-center justify-center gap-4 transition-all group active:scale-95 ${uploadingResults ? 'bg-slate-50 border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                    className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98] ${uploadingResults ? 'bg-slate-50 border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
                                 >
                                     {uploadingResults ? (
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Loader2 size={40} className="animate-spin text-accent" />
+                                        <div className="flex items-center gap-3">
+                                            <Loader2 size={24} className="animate-spin text-accent" />
                                             <span className="text-sm font-black text-accent animate-pulse">Memproses file...</span>
                                         </div>
                                     ) : (
                                         <>
-                                            <div className="w-16 h-16 bg-accent text-white rounded-3xl flex items-center justify-center shadow-lg shadow-accent/30 group-hover:rotate-6 transition-transform">
-                                                <Upload size={32} />
+                                            <div className="w-10 h-10 bg-accent text-white rounded-2xl flex items-center justify-center shadow-lg shadow-accent/30 group-hover:rotate-6 transition-transform">
+                                                <Upload size={20} />
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-lg font-black text-slate-800">Upload Hasil Foto</p>
-                                                <p className="text-xs font-bold text-slate-400">Click atau Drop file di sini</p>
+                                                <p className="text-sm font-black text-slate-800">Upload Hasil Foto</p>
+                                                <p className="text-[10px] font-bold text-slate-400">Click atau Drop file di sini</p>
                                             </div>
                                         </>
                                     )}
@@ -2821,7 +2972,184 @@ export const ContentPlanDetail: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
-                            </div>
+
+                                {/* ═══ COMMENT SECTION ═══ */}
+                                <div className="border-t-2 border-slate-100 pt-5 space-y-4">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <MessageCircle size={16} className="text-slate-400" />
+                                        <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Komentar Revisi</h5>
+                                        {resultComments.length > 0 && (
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent">{resultComments.length}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Comment List */}
+                                    <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 no-scrollbar">
+                                        {resultComments.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <MessageCircle size={32} className="mx-auto text-slate-200 mb-2" />
+                                                <p className="text-xs font-bold text-slate-300">Belum ada komentar.</p>
+                                                <p className="text-[10px] text-slate-300">Berikan feedback untuk hasil konten ini.</p>
+                                            </div>
+                                        ) : (
+                                            (() => {
+                                                const topLevel = resultComments.filter(c => !c.parent_id);
+                                                const replies = resultComments.filter(c => c.parent_id);
+                                                const currentUserId = localStorage.getItem('user_id') || '';
+
+                                                const renderComment = (comment: ResultComment, isReply = false) => {
+                                                    const isOwn = comment.user_id === currentUserId;
+                                                    const commentReplies = replies.filter(r => r.parent_id === comment.id);
+                                                    const timeAgo = (() => {
+                                                        const diff = Date.now() - new Date(comment.created_at).getTime();
+                                                        const m = Math.floor(diff / 60000);
+                                                        if (m < 1) return 'baru saja';
+                                                        if (m < 60) return `${m}m`;
+                                                        const h = Math.floor(m / 60);
+                                                        if (h < 24) return `${h}j`;
+                                                        return `${Math.floor(h / 24)}h`;
+                                                    })();
+
+                                                    return (
+                                                        <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
+                                                            <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-slate-50 ${isReply ? '' : ''}`}>
+                                                                {/* Avatar */}
+                                                                <div className="flex-shrink-0 pt-0.5">
+                                                                    {comment.user_avatar ? (
+                                                                        <img src={comment.user_avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200" />
+                                                                    ) : (
+                                                                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-[10px] font-black">
+                                                                            {comment.user_name.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Content */}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
+                                                                        <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
+                                                                    </div>
+
+                                                                    {/* Reply indicator */}
+                                                                    {comment.parent_id && (() => {
+                                                                        const parent = resultComments.find(c => c.id === comment.parent_id);
+                                                                        return parent ? (
+                                                                            <div className="text-[9px] text-slate-400 font-bold flex items-center gap-1 mb-0.5">
+                                                                                <Reply size={9} /> membalas {parent.user_name}
+                                                                            </div>
+                                                                        ) : null;
+                                                                    })()}
+
+                                                                    <p className="text-[13px] text-slate-600 leading-relaxed break-words">{comment.message}</p>
+
+                                                                    {/* Reactions display */}
+                                                                    {comment.reactions && Object.keys(comment.reactions).length > 0 && (
+                                                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                            {Object.entries(comment.reactions).map(([emoji, users]) => (
+                                                                                <button
+                                                                                    key={emoji}
+                                                                                    onClick={() => handleToggleReaction(comment.id, emoji)}
+                                                                                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
+                                                                                        ? 'bg-accent/10 border-accent/30 text-accent'
+                                                                                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-accent/30'
+                                                                                        }`}
+                                                                                >
+                                                                                    <span>{emoji}</span>
+                                                                                    <span>{(users as string[]).length}</span>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {/* Action buttons */}
+                                                                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={() => { setReplyingTo(comment); commentInputRef.current?.focus(); }}
+                                                                            className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
+                                                                        >
+                                                                            <Reply size={10} /> Balas
+                                                                        </button>
+                                                                        <div className="relative">
+                                                                            <button
+                                                                                onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
+                                                                                className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
+                                                                            >
+                                                                                <SmilePlus size={10} /> React
+                                                                            </button>
+                                                                            {showEmojiPicker === comment.id && (
+                                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                                                                    {['👍', '❤️', '😂', '🔥', '👎'].map(emoji => (
+                                                                                        <button
+                                                                                            key={emoji}
+                                                                                            onClick={() => handleToggleReaction(comment.id, emoji)}
+                                                                                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-base transition-transform hover:scale-125"
+                                                                                        >
+                                                                                            {emoji}
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Render replies */}
+                                                            {commentReplies.map(reply => renderComment(reply, true))}
+                                                        </div>
+                                                    );
+                                                };
+
+                                                return topLevel.map(c => renderComment(c));
+                                            })()
+                                        )}
+                                        <div ref={commentEndRef} />
+                                    </div>
+
+                                    {/* Reply indicator */}
+                                    {replyingTo && (
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-xl animate-in slide-in-from-bottom-2">
+                                            <Reply size={12} className="text-accent" />
+                                            <span className="text-[11px] font-bold text-accent flex-1 truncate">Membalas {replyingTo.user_name}: "{replyingTo.message.slice(0, 50)}..."</span>
+                                            <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
+                                        </div>
+                                    )}
+
+                                    {/* Comment Input */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-shrink-0">
+                                            {(() => {
+                                                const av = localStorage.getItem('user_avatar');
+                                                return av ? (
+                                                    <img src={av} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-xs font-black">
+                                                        {(localStorage.getItem('user_name') || 'U').charAt(0).toUpperCase()}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        <div className="flex-1 relative">
+                                            <input
+                                                ref={commentInputRef}
+                                                type="text"
+                                                placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
+                                                value={commentInput}
+                                                onChange={e => setCommentInput(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                                                className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-accent focus:bg-white outline-none transition-all pr-12"
+                                            />
+                                            <button
+                                                onClick={handleSendComment}
+                                                disabled={!commentInput.trim() || sendingComment}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/90 transition-all active:scale-90"
+                                            >
+                                                {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>                            </div>
                         ) : (
                             <div className="space-y-6">
                                 <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Link Hasil Produksi (Drive)</h5>

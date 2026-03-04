@@ -976,11 +976,56 @@ export const Editor: React.FC = () => {
             }
         };
 
+        // CRITICAL FIX: Global mouseup listener to prevent objects sticking to cursor.
+        // When the canvas is CSS-scaled via transform:scale(), mouseup events outside
+        // the canvas bounds are never received by Fabric.js, leaving objects in a
+        // perpetual drag state. This document-level listener catches those mouseups.
+        const handleGlobalMouseUp = (e: MouseEvent) => {
+            if (!canvas) return;
+            // Check if the mouseup happened outside the canvas element
+            const upperCanvas = canvas.upperCanvasEl;
+            if (upperCanvas && !upperCanvas.contains(e.target as Node)) {
+                // Force Fabric.js to end any active dragging/interaction
+                canvas.fire('mouse:up', { e, isClick: false, pointer: canvas.getPointer(e), target: null } as any);
+                // Also reset the canvas internal state
+                (canvas as any).__onMouseUp?.(e);
+            }
+        };
+
+        // Also catch when mouse leaves the canvas element during a drag
+        const handleCanvasMouseLeave = (e: MouseEvent) => {
+            // Add document-level mousemove and mouseup to track outside movements
+            const handleDocMouseMove = (moveEvent: MouseEvent) => {
+                // Forward the mouse move to fabric so the object follows the cursor even outside
+                canvas.fire('mouse:move', { e: moveEvent, pointer: canvas.getPointer(moveEvent) } as any);
+            };
+            const handleDocMouseUp = (upEvent: MouseEvent) => {
+                canvas.fire('mouse:up', { e: upEvent, isClick: false, pointer: canvas.getPointer(upEvent), target: null } as any);
+                document.removeEventListener('mousemove', handleDocMouseMove);
+                document.removeEventListener('mouseup', handleDocMouseUp);
+            };
+            // Only attach if mouse button is pressed (button state during mouseleave)
+            if (e.buttons > 0) {
+                document.addEventListener('mousemove', handleDocMouseMove);
+                document.addEventListener('mouseup', handleDocMouseUp);
+            }
+        };
+
+        document.addEventListener('mouseup', handleGlobalMouseUp);
+        const upperCanvasEl = canvas.upperCanvasEl;
+        if (upperCanvasEl) {
+            upperCanvasEl.addEventListener('mouseleave', handleCanvasMouseLeave);
+        }
+
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
         window.addEventListener('paste', handleSystemPaste);
 
         return () => {
+            document.removeEventListener('mouseup', handleGlobalMouseUp);
+            if (upperCanvasEl) {
+                upperCanvasEl.removeEventListener('mouseleave', handleCanvasMouseLeave);
+            }
             window.removeEventListener('canvas:export', handleExport);
             window.removeEventListener('canvas:action', handleCanvasAction);
             window.removeEventListener('canvas:add', handleCanvasAdd);
