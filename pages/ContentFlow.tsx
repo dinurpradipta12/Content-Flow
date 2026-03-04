@@ -388,8 +388,11 @@ export const ContentFlow: React.FC = () => {
     const reviewItems = filteredItems.filter(i => i.status === ContentStatus.REVIEW).length;
     const publishRate = totalItems > 0 ? Math.round((publishedItems / totalItems) * 100) : 0;
 
-    // Unique platforms in filtered items
-    const activePlatforms = [...new Set(filteredItems.map(i => i.platform))];
+    // Unique platforms across workspace-filtered items (NOT platform-filtered, to avoid buttons disappearing)
+    const workspaceFilteredItems = allItems.filter(item =>
+        selectedWorkspace === 'all' || item.workspace_id === selectedWorkspace
+    );
+    const activePlatforms = [...new Set(workspaceFilteredItems.map(i => i.platform))];
 
     const handleCardClick = (item: FlowItem) => {
         setSelectedItem(item);
