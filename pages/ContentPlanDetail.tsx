@@ -68,10 +68,13 @@ const getCardStatusStyle = (status: ContentStatus) => {
         case ContentStatus.REVIEW:
             // Amber Theme
             return 'bg-amber-50/60 border-amber-200 shadow-hard hover:shadow-hard-hover';
+        case ContentStatus.REVISION:
+            // Orange Theme for Revision
+            return 'bg-orange-50/60 border-orange-200 shadow-hard hover:shadow-hard-hover';
         case ContentStatus.SCHEDULED:
             // Pink Theme
             return 'bg-pink-50/60 border-pink-200 shadow-hard hover:shadow-hard-hover';
-        default: // TODO
+        default: // TODO (Planning)
             // White/Slate Theme
             return 'bg-white border-slate-800 shadow-hard hover:shadow-hard-hover';
     }
@@ -1446,9 +1449,10 @@ export const ContentPlanDetail: React.FC = () => {
                 <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2 mb-3 flex-shrink-0">
                     {[
                         { value: 'all', label: 'Semua', color: 'bg-slate-500' },
-                        { value: ContentStatus.TODO, label: 'To Do', color: 'bg-slate-400' },
+                        { value: ContentStatus.TODO, label: 'Planning', color: 'bg-slate-400' },
                         { value: ContentStatus.IN_PROGRESS, label: 'In Progress', color: 'bg-blue-500' },
                         { value: ContentStatus.REVIEW, label: 'Review', color: 'bg-amber-500' },
+                        { value: ContentStatus.REVISION, label: 'Revisi', color: 'bg-orange-500' },
                         { value: ContentStatus.SCHEDULED, label: 'Scheduled', color: 'bg-purple-500' },
                         { value: ContentStatus.PUBLISHED, label: 'Published', color: 'bg-emerald-500' },
                     ].map(s => {
@@ -1483,6 +1487,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     [ContentStatus.TODO]: 'border-l-slate-400',
                                     [ContentStatus.IN_PROGRESS]: 'border-l-blue-500',
                                     [ContentStatus.REVIEW]: 'border-l-amber-500',
+                                    [ContentStatus.REVISION]: 'border-l-orange-500',
                                     [ContentStatus.SCHEDULED]: 'border-l-purple-500',
                                     [ContentStatus.PUBLISHED]: 'border-l-emerald-500',
                                 };
@@ -1490,6 +1495,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     [ContentStatus.TODO]: 'bg-slate-100 text-slate-600',
                                     [ContentStatus.IN_PROGRESS]: 'bg-blue-50 text-blue-700',
                                     [ContentStatus.REVIEW]: 'bg-amber-50 text-amber-700',
+                                    [ContentStatus.REVISION]: 'bg-orange-50 text-orange-700',
                                     [ContentStatus.SCHEDULED]: 'bg-purple-50 text-purple-700',
                                     [ContentStatus.PUBLISHED]: 'bg-emerald-50 text-emerald-700',
                                 };
@@ -1830,7 +1836,7 @@ export const ContentPlanDetail: React.FC = () => {
                 {viewMode === 'kanban' ? (
                     <div className="flex-1 w-full overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
                         <div className="flex gap-2 sm:gap-3 md:gap-4 lg:gap-6 items-start min-w-min w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8">
-                            {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
+                            {[ContentStatus.TODO, ContentStatus.IN_PROGRESS, ContentStatus.REVIEW, ContentStatus.REVISION, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED].map(status => (
                                 <KanbanColumn
                                     key={status}
                                     status={status}
@@ -1839,7 +1845,8 @@ export const ContentPlanDetail: React.FC = () => {
                                         status === ContentStatus.TODO ? 'text-slate-900' :
                                             status === ContentStatus.IN_PROGRESS ? 'text-blue-500' :
                                                 status === ContentStatus.REVIEW ? 'text-pink-500' :
-                                                    status === ContentStatus.SCHEDULED ? 'text-purple-500' : 'text-emerald-500'
+                                                    status === ContentStatus.REVISION ? 'text-orange-500' :
+                                                        status === ContentStatus.SCHEDULED ? 'text-purple-500' : 'text-emerald-500'
                                     }
                                     members={teamMembers}
                                     onEdit={handleOpenEditModal}
@@ -2062,8 +2069,9 @@ export const ContentPlanDetail: React.FC = () => {
                                                             className={`appearance-none outline-none font-bold text-xs py-1.5 pl-3 pr-8 rounded-full border-2 cursor-pointer transition-colors w-full min-w-[120px] ${task.status === ContentStatus.TODO ? 'bg-slate-50 border-slate-300 text-slate-600' :
                                                                 task.status === ContentStatus.IN_PROGRESS ? 'bg-purple-50 border-purple-300 text-purple-700' :
                                                                     task.status === ContentStatus.REVIEW ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                                                                        task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 border-pink-300 text-pink-700' :
-                                                                            'bg-emerald-50 border-emerald-300 text-emerald-700'
+                                                                        task.status === ContentStatus.REVISION ? 'bg-orange-50 border-orange-300 text-orange-700' :
+                                                                            task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 border-pink-300 text-pink-700' :
+                                                                                'bg-emerald-50 border-emerald-300 text-emerald-700'
                                                                 }`}
                                                         >
                                                             {Object.values(ContentStatus).map((s) => (
@@ -2329,8 +2337,9 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className={`px-2.5 md:px-4 py-1 md:py-1.5 rounded-full border text-[10px] md:text-sm font-bold flex items-center gap-1.5 md:gap-2 ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-100 border-slate-300 text-slate-600' :
                                 selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-purple-100 border-purple-300 text-purple-700' :
                                     selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-100 border-amber-300 text-amber-700' :
-                                        selectedTask.status === ContentStatus.SCHEDULED ? 'bg-pink-100 border-pink-300 text-pink-700' :
-                                            'bg-emerald-100 border-emerald-300 text-emerald-700'
+                                        selectedTask.status === ContentStatus.REVISION ? 'bg-orange-100 border-orange-300 text-orange-700' :
+                                            selectedTask.status === ContentStatus.SCHEDULED ? 'bg-pink-100 border-pink-300 text-pink-700' :
+                                                'bg-emerald-100 border-emerald-300 text-emerald-700'
                                 }`}>
                                 <div className={`w-2 h-2 rounded-full ${selectedTask.status === ContentStatus.PUBLISHED ? 'bg-emerald-500' : 'bg-current'
                                     }`}></div>

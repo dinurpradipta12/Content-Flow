@@ -480,7 +480,8 @@ export const TeamManagement: React.FC = () => {
         if (!confirm(`Keluarkan ${selectedUser.full_name} dari workspace ${selectedWorkspace.name}?`)) return;
 
         try {
-            const updatedMembers = (selectedWorkspace.members || []).filter(url => url !== selectedUser.avatar_url);
+            // Remove both user ID and avatar_url from the members array
+            const updatedMembers = (selectedWorkspace.members || []).filter(m => m !== selectedUser.avatar_url && m !== selectedUser.id && m !== selectedUser.username);
 
             const { error } = await supabase
                 .from('workspaces')
@@ -533,7 +534,8 @@ export const TeamManagement: React.FC = () => {
         if (!confirm(`Hapus ${selectedUser.full_name} dari workspace "${wsName}"?`)) return;
         const ws = allWorkspaces.find(w => w.id === wsId);
         if (!ws) return;
-        const updatedMembers = (ws.members || []).filter(m => m !== selectedUser.avatar_url);
+        // Remove both user ID and avatar_url from the members array
+        const updatedMembers = (ws.members || []).filter(m => m !== selectedUser.avatar_url && m !== selectedUser.id && m !== selectedUser.username);
         const { error } = await supabase.from('workspaces').update({ members: updatedMembers }).eq('id', wsId);
         if (error) { console.error(error); window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal menghapus dari workspace.' } })); }
         else { fetchData(); }

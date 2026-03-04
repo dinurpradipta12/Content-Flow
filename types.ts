@@ -1,7 +1,8 @@
 export enum ContentStatus {
-  TODO = 'To-Do',
+  TODO = 'Planning',
   IN_PROGRESS = 'In Progress',
   REVIEW = 'Review',
+  REVISION = 'Revisi',
   SCHEDULED = 'Scheduled',
   PUBLISHED = 'Published'
 }

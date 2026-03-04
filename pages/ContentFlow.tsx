@@ -105,7 +105,7 @@ const STATUS_CONFIG: Record<ContentStatus, {
     dotColor: string;
 }> = {
     [ContentStatus.TODO]: {
-        label: 'To-Do',
+        label: 'Planning',
         color: 'text-slate-600',
         bg: 'bg-slate-100',
         border: 'border-slate-300',
@@ -127,6 +127,14 @@ const STATUS_CONFIG: Record<ContentStatus, {
         border: 'border-amber-300',
         icon: <Eye size={14} />,
         dotColor: 'bg-amber-500'
+    },
+    [ContentStatus.REVISION]: {
+        label: 'Revisi',
+        color: 'text-orange-600',
+        bg: 'bg-orange-100',
+        border: 'border-orange-300',
+        icon: <AlertCircle size={14} />,
+        dotColor: 'bg-orange-500'
     },
     [ContentStatus.SCHEDULED]: {
         label: 'Scheduled',

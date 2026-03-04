@@ -14,29 +14,50 @@ export const useWorkspaces = (userId: string | null) => {
 
       const columnList = 'id, name, platforms, color, account_name, logo_url, owner_id, role, created_at, workspace_type, period, description, members, profile_links, account_names';
 
-      // Parallelize queries for better performance and to leverage individual indices
-      const [ownerRes, memberRes] = await Promise.all([
+      // Build membership queries - users can be stored in members by ID, avatar_url, or username
+      const userAvatar = localStorage.getItem('user_avatar') || '';
+      const userName = localStorage.getItem('user_name') || '';
+
+      // Build parallel queries for owner + member matching
+      const queries: PromiseLike<any>[] = [
+        // 1. Owner query
         supabase
           .from('workspaces')
           .select(columnList)
           .eq('owner_id', userId)
           .order('created_at', { ascending: false }),
+        // 2. Member by userId
         supabase
           .from('workspaces')
           .select(columnList)
           .contains('members', [userId])
           .order('created_at', { ascending: false })
-      ]);
+      ];
 
-      if (ownerRes.error) throw ownerRes.error;
-      if (memberRes.error) throw memberRes.error;
+      // 3. Member by avatar_url (backward compatibility, skip base64 data URLs)
+      if (userAvatar && !userAvatar.startsWith('data:')) {
+        queries.push(
+          supabase
+            .from('workspaces')
+            .select(columnList)
+            .contains('members', [userAvatar])
+            .order('created_at', { ascending: false })
+        );
+      }
+
+      const results = await Promise.all(queries);
+
+      // Check for errors
+      for (const res of results) {
+        if (res.error) throw res.error;
+      }
 
       // Merge and deduplicate by ID
-      const allWorkspaces = [...(ownerRes.data || []), ...(memberRes.data || [])];
-      const uniqueWorkspaces = Array.from(new Map(allWorkspaces.map(ws => [ws.id, ws])).values());
+      const allWorkspaces = results.flatMap(res => res.data || []);
+      const uniqueWorkspaces = Array.from(new Map(allWorkspaces.map((ws: any) => [ws.id, ws])).values());
 
       // Sort by created_at desc
-      return uniqueWorkspaces.sort((a, b) =>
+      return uniqueWorkspaces.sort((a: any, b: any) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     },
