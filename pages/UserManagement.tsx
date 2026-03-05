@@ -48,6 +48,7 @@ export const UserManagement: React.FC = () => {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isResetting, setIsResetting] = useState(false);
     const [registering, setRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -137,6 +138,39 @@ export const UserManagement: React.FC = () => {
             supabase.removeChannel(channel);
         };
     }, []);
+
+    const handleResetExpiredUsers = async () => {
+        if (!confirm("Reset semua user yang sudah expired ke paket Free (Selamanya) dan aktifkan kembali akses login mereka?")) return;
+
+        setIsResetting(true);
+        try {
+            const now = new Date().toISOString();
+            // Mendapatkan semua user yang expired (subscription_end < NOW)
+            // Dan mengaktifkan kembali (is_active: true) serta mengubah ke paket Free
+            const { error, count } = await supabase
+                .from('app_users')
+                .update({
+                    is_active: true,
+                    subscription_package: 'Free',
+                    subscription_end: null
+                })
+                .lt('subscription_end', now);
+
+            if (error) throw error;
+
+            window.dispatchEvent(new CustomEvent('app-alert', {
+                detail: { type: 'success', message: `Berhasil mereset ${count || 0} user ke sistem terbaru!` }
+            }));
+            fetchUsers();
+        } catch (err: any) {
+            console.error(err);
+            window.dispatchEvent(new CustomEvent('app-alert', {
+                detail: { type: 'error', message: 'Gagal mereset user: ' + err.message }
+            }));
+        } finally {
+            setIsResetting(false);
+        }
+    };
 
     const fetchWorkspaces = async () => {
         try {
@@ -526,9 +560,20 @@ export const UserManagement: React.FC = () => {
                                 <p className="text-slate-500 font-bold text-[10px] sm:text-sm">Total {users.length} pengguna terdaftar.</p>
                             </div>
                         </div>
-                        <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={14} className={`${loading ? 'animate-spin' : ''} sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px]`} />} className="shadow-hard border-2 border-slate-900 text-xs sm:text-sm w-full md:w-auto">
-                            Refresh Data
-                        </Button>
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            {isDeveloper && (
+                                <button
+                                    onClick={handleResetExpiredUsers}
+                                    disabled={isResetting}
+                                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl border-2 border-slate-900 shadow-hard active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-2 text-xs md:text-sm"
+                                >
+                                    {isResetting ? <Loader2 size={16} className="animate-spin" /> : 'Reset Expired'}
+                                </button>
+                            )}
+                            <Button onClick={fetchUsers} variant="secondary" icon={<RefreshCw size={14} className={`${loading ? 'animate-spin' : ''} sm:w-4.5 sm:h-4.5 md:w-[18px] md:h-[18px]`} />} className="shadow-hard border-2 border-slate-900 text-xs sm:text-sm flex-1 md:flex-none">
+                                Refresh Data
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Summary Strategy Cards */}

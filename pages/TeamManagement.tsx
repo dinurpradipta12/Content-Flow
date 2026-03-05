@@ -361,7 +361,7 @@ export const TeamManagement: React.FC = () => {
                 is_verified: true, // Admin-invited users are auto-verified
                 subscription_start: new Date().toISOString(),
                 subscription_package: 'Free', // Default package untuk invited user
-                subscription_end: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default 30 days
+                subscription_end: null, // Free users don't expire
                 parent_user_id: adminId, // Track parent admin
                 invited_by: adminName // Track who invited
             };
@@ -412,7 +412,7 @@ export const TeamManagement: React.FC = () => {
                     is_verified: true,
                     subscription_start: new Date().toISOString(),
                     subscription_package: 'Free', // ADD: Default package untuk invited user
-                    subscription_end: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString() // Default 30 hari
+                    subscription_end: null // Free users don't expire
                 };
                 const { data: fallbackUser, error: fallbackError } = await supabase.from('app_users').insert([insertData]).select().single();
                 if (!fallbackError && fallbackUser) {
@@ -657,6 +657,7 @@ export const TeamManagement: React.FC = () => {
         const msg = encodeURIComponent(`Halo Developer,\n\nSaya ${currentAdmin?.full_name} (@${currentAdmin?.username}) telah melakukan pembayaran untuk upgrade paket ke ${[...(config?.payment_config?.teamPackages || []), ...(config?.payment_config?.personalPackages || [])].find(p => p.id === selectedPkgId)?.name}.\n\nOrder ID: ${upgradeOrderId}\n\nMohon diverifikasi. Terima kasih!`);
         window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank');
     };
+
 
     const handleUpgradePackage = () => {
         setUpgradeStep('payment');

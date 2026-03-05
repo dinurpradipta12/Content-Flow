@@ -31,6 +31,7 @@ import { supabase } from '../services/supabaseClient';
 import { ContentStatus, Platform } from '../types';
 import { useAppConfig } from '../components/AppConfigProvider';
 import { useWorkspaces, useContentItems } from '../src/hooks/useDataQueries';
+import { PremiumLockScreen } from '../components/PremiumLockScreen';
 
 // --- TYPES ---
 interface FlowItem {
@@ -278,6 +279,7 @@ export const ContentFlow: React.FC = () => {
     const navigate = useNavigate();
     const { config } = useAppConfig();
     const userId = localStorage.getItem('user_id');
+    const isFree = localStorage.getItem('user_subscription_package') === 'Free' && localStorage.getItem('user_role') !== 'Developer';
 
     // Fetch workspaces and content items using React Query hooks
     const {
@@ -405,6 +407,13 @@ export const ContentFlow: React.FC = () => {
         }
         navigate(`/plan/${wsId}`);
     };
+
+    if (isFree) {
+        return <PremiumLockScreen
+            title="Content Flow Terkunci"
+            description="Pantau dan kelola jadwal konten dari seluruh workspace Anda dalam satu tampilan kanban interaktif. Upgrade untuk membuka fitur pro ini."
+        />;
+    }
 
     return (
         <>

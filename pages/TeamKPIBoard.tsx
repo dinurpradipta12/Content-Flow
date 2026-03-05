@@ -9,6 +9,7 @@ import {
 import { useNotifications } from '../components/NotificationProvider';
 import { NotificationType } from '../types';
 import { useAppConfig } from '../components/AppConfigProvider';
+import { PremiumLockScreen } from '../components/PremiumLockScreen';
 
 interface TeamMember {
     id: string;
@@ -89,6 +90,8 @@ export const TeamKPIBoard: React.FC = () => {
 
     const { sendNotification } = useNotifications();
     const [allAppUsers, setAllAppUsers] = useState<{ id: string, name: string }[]>([]);
+
+    const isFree = localStorage.getItem('user_subscription_package') === 'Free' && localStorage.getItem('user_role') !== 'Developer';
 
     useEffect(() => {
         fetchData();
@@ -400,6 +403,13 @@ export const TeamKPIBoard: React.FC = () => {
                 </div>
             </div>
         );
+    }
+
+    if (isFree) {
+        return <PremiumLockScreen
+            title="Team KPI Board Terkunci"
+            description="Pantau performa dan pencapaian tim Anda secara visual dan interaktif. Upgrade untuk membuka fitur pro ini."
+        />;
     }
 
     return (

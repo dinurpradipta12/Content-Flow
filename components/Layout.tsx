@@ -39,7 +39,8 @@ import {
     Smartphone,
     Clock,
     CheckCheck,
-    Trash2
+    Trash2,
+    Crown
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
@@ -520,13 +521,34 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 .eq('id', userId)
                 .single();
             if (data && !error) {
+                // Determine effective subscription
+                let effectiveSubscription = data.subscription_package || 'Free';
+
+                if (data.role === 'Developer') {
+                    effectiveSubscription = 'Premium'; // Developer role never locked
+                } else if (data.parent_user_id) {
+                    // Fetch parent info to determine effective subscription
+                    const { data: parentData } = await supabase.from('app_users')
+                        .select('role, subscription_package')
+                        .eq('id', data.parent_user_id)
+                        .single();
+
+                    if (parentData) {
+                        if (parentData.role === 'Developer') {
+                            effectiveSubscription = 'Premium'; // Invited by Developer
+                        } else {
+                            effectiveSubscription = parentData.subscription_package || 'Free';
+                        }
+                    }
+                }
+
                 const profileData = {
                     id: data.id,
                     name: data.full_name || 'User',
                     role: data.role || 'Member',
                     avatar: data.avatar_url || 'https://picsum.photos/40/40',
                     jobTitle: data.job_title || '',
-                    subscriptionPackage: data.subscription_package || 'Personal',
+                    subscriptionPackage: effectiveSubscription,
                     parentUserId: data.parent_user_id
                 };
                 setUserProfile(profileData);
@@ -916,13 +938,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     if (payload.new.subscription_end && userProfile.role !== 'Developer') {
                         localStorage.setItem('subscription_end', payload.new.subscription_end);
                         if (new Date() > new Date(payload.new.subscription_end)) {
-                            // Auto deactivate
-                            await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
-                            setShowSubExpiredModal(true);
+                            // Downgrade to Free package
+                            await supabase.from('app_users').update({ subscription_package: 'Free', subscription_end: null }).eq('id', currentUserId);
+                            localStorage.setItem('user_subscription_package', 'Free');
+                            localStorage.removeItem('subscription_end');
+
+                            // Check if modal was already shown to prevent spam
+                            const lastExpMsgTime = localStorage.getItem('last_sub_exp_msg');
+                            if (!lastExpMsgTime || (Date.now() - parseInt(lastExpMsgTime)) > 3600000) {
+                                setStatusModal({ isOpen: true, type: 'error', message: 'Masa aktif langganan Anda telah habis, Anda sekarang berada di paket Free.' });
+                                localStorage.setItem('last_sub_exp_msg', Date.now().toString());
+                            }
                         } else {
                             window.dispatchEvent(new Event('sub_updated'));
                         }
-                    } else {
+                    } else if (payload.new.subscription_package === 'Free') {
+                        localStorage.removeItem('subscription_end');
+                        window.dispatchEvent(new Event('sub_updated'));
+                    } else if (!payload.new.subscription_end) {
                         localStorage.removeItem('subscription_end'); // unlimited
                         window.dispatchEvent(new Event('sub_updated'));
                     }
@@ -974,10 +1007,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                 // If past endDate and it's not the exact same calendar day
                 if (now > endDate && now.getDate() !== endDate.getDate()) {
-                    setShowSubExpiredModal(true);
-                    await supabase.from('app_users').update({ is_active: false }).eq('id', currentUserId);
-                    localStorage.removeItem('subscription_end'); // prevent looping updates
+                    await supabase.from('app_users').update({ subscription_package: 'Free', subscription_end: null }).eq('id', currentUserId);
+                    localStorage.setItem('user_subscription_package', 'Free');
+                    localStorage.removeItem('subscription_end');
                     setDaysToSubExp(null);
+
+                    const lastExpMsgTime = localStorage.getItem('last_sub_exp_msg');
+                    if (!lastExpMsgTime || (Date.now() - parseInt(lastExpMsgTime)) > 3600000) {
+                        setStatusModal({ isOpen: true, type: 'error', message: 'Masa aktif langganan Anda telah habis, Anda sekarang berada di paket Free.' });
+                        localStorage.setItem('last_sub_exp_msg', Date.now().toString());
+                    }
                 } else {
                     const diffTime = endDate.getTime() - now.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1440,9 +1479,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     <div className={`flex items-center ${isSidebarOpen ? 'gap-4 min-w-[200px]' : 'justify-center'} `}>
                                                         <item.icon size={20} className={`shrink-0 transition-all duration-500 ${isActive ? 'text-white' : 'group-hover:text-accent'} `} />
                                                         {isSidebarOpen && (
-                                                            <span className={`font-bold text-sm tracking-tight whitespace-nowrap transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'} `}>
-                                                                {item.label}
-                                                            </span>
+                                                            <div className={`flex items-center gap-2 transition-all duration-500 ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none'}`}>
+                                                                <span className="font-bold text-sm tracking-tight whitespace-nowrap">
+                                                                    {item.label}
+                                                                </span>
+                                                                {userProfile.subscriptionPackage === 'Free' && ['flow', 'carousel', 'kpi'].includes(item.id) && (
+                                                                    <Crown size={14} className={isActive ? "text-amber-300" : "text-amber-500"} title="Pro Feature" />
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
                                                     {item.badge && isSidebarOpen && (
@@ -2420,6 +2464,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                                         <item.icon size={17} className={isActive ? 'text-white' : 'text-slate-500'} />
                                                                     </div>
                                                                     <span className="text-sm tracking-tight flex-1 text-left">{item.label}</span>
+                                                                    {userProfile.subscriptionPackage === 'Free' && ['flow', 'carousel', 'kpi'].includes(item.id) && (
+                                                                        <Crown size={14} className={isActive ? "text-amber-300 mr-2" : "text-amber-500 mr-2"} title="Pro Feature" />
+                                                                    )}
                                                                     {item.badge && (
                                                                         <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500 text-white">{item.badge}</span>
                                                                     )}

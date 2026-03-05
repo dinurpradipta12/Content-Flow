@@ -148,9 +148,7 @@ export const Register: React.FC = () => {
                 else if (selectedPackage.name.includes('Personal')) memberLimit = 1;
 
                 if (selectedPackage.price === 0) {
-                    const end = new Date();
-                    end.setDate(end.getDate() + duration);
-                    subscriptionEnd = end.toISOString();
+                    subscriptionEnd = null; // Free users don't expire
                     isVerified = true;
 
                     // Generate a random trial code if none provided
@@ -468,7 +466,7 @@ export const Register: React.FC = () => {
                     {selectedPackage && selectedPackage.price === 0 && (
                         <div className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
                             <p className="text-xs font-bold text-emerald-800 flex items-center gap-2">
-                                <Info size={16} /> Paket Free Trial diaktifkan otomatis selama {selectedPackage.durationDays || 3} hari.
+                                <Info size={16} /> Paket Free diaktifkan otomatis tanpa batasan masa aktif (Selamanya).
                             </p>
                         </div>
                     )}

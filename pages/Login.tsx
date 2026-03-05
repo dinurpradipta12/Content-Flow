@@ -341,7 +341,27 @@ export const Login: React.FC = () => {
                 throw new Error("Profil pengguna tidak ditemukan di database.");
             }
 
-            // 5. Permission & Subscription Verification
+            // 5. Subscription Expiry & Reactivation Logic
+            if (profile.subscription_end) {
+                const endDate = new Date(profile.subscription_end);
+                if (new Date() > endDate) {
+                    // Downgrade to Free package AND ensure they are active so they can login
+                    await supabase.from('app_users').update({
+                        subscription_package: 'Free',
+                        subscription_end: null,
+                        is_active: true // Reactivate if they were blocked by old system
+                    }).eq('id', profile.id);
+
+                    // Update local copy so login proceeds as Free
+                    profile.subscription_package = 'Free';
+                    profile.subscription_end = null;
+                    profile.is_active = true;
+
+                    console.log("Subscription expired. Account reactivated and downgraded to Free.");
+                }
+            }
+
+            // 6. Permission Verification
             if (profile.is_active === false) {
                 await supabase.auth.signOut();
                 throw new Error("Akun Anda telah dinonaktifkan.");
@@ -350,16 +370,6 @@ export const Login: React.FC = () => {
             if (profile.is_verified === false && profile.role !== 'Developer') {
                 await supabase.auth.signOut();
                 throw new Error("Akun Anda belum diverifikasi oleh Administrator.");
-            }
-
-            // Check Expiry
-            if (profile.subscription_end) {
-                const endDate = new Date(profile.subscription_end);
-                if (new Date() > endDate) {
-                    await supabase.from('app_users').update({ is_active: false }).eq('id', profile.id);
-                    await supabase.auth.signOut();
-                    throw new Error(`Langganan Anda berakhir pada ${endDate.toLocaleString('id-ID')}.`);
-                }
             }
 
             // Success: Activity log

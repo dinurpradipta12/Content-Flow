@@ -7,6 +7,7 @@ import { Sparkles, Plus, ChevronLeft, ChevronRight, Palette, X, Loader2, Save, A
 import { useCarouselStore } from '../src/store/useCarouselStore';
 import { NotesPanel } from '../src/components/NotesPanel';
 import { useAppConfig } from '../components/AppConfigProvider';
+import { PremiumLockScreen } from '../components/PremiumLockScreen';
 
 export const CarouselMaker: React.FC = () => {
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ export const CarouselMaker: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const [showMobileBottomBar, setShowMobileBottomBar] = useState(false);
+    const isFree = localStorage.getItem('user_subscription_package') === 'Free' && localStorage.getItem('user_role') !== 'Developer';
 
     const {
         resetCanvas,
@@ -182,6 +184,13 @@ export const CarouselMaker: React.FC = () => {
             .theme-custom aside .text-red-500 { color: ${customColor} !important; }
         `
     };
+
+    if (isFree) {
+        return <PremiumLockScreen
+            title="Arunika Carousel Terkunci"
+            description="Buat carousel memukau dalam hitungan detik dengan AI assistant dan berbagai template. Upgrade untuk membuka fitur pro ini."
+        />;
+    }
 
     return (
         <div className={`flex flex-col bg-slate-50 font-sans text-slate-900 flex-1 min-h-0 relative border-4 border-slate-900 rounded-3xl overflow-hidden shadow-[12px_12px_0px_0px_#0f172a] theme-${currentTheme}`}>

@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
-import { Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle } from 'lucide-react';
+import {
+    Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle, Crown
+} from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
 import { supabase } from '../services/supabaseClient';
 import { useNotifications } from '../components/NotificationProvider';
 import { googleCalendarService } from '../services/googleCalendarService';
+import { PremiumLockScreen } from '../components/PremiumLockScreen';
 
 // --- TYPES & HELPERS ---
 
@@ -202,6 +205,7 @@ const KanbanCard: React.FC<{
 }> = ({ item, members, userRole, onEdit, onDelete, onApprove, onDragStart, onClick }) => {
     const [showMenu, setShowMenu] = useState(false);
     const isAdmin = userRole === 'Admin' || userRole === 'Owner' || userRole === 'Developer';
+    const isFree = localStorage.getItem('user_subscription_package') === 'Free';
 
     // Find PIC member
     const picMember = members.find(m => m.name === item.pic);
@@ -244,10 +248,11 @@ const KanbanCard: React.FC<{
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onApprove(item.id, 'revision'); }}
-                                className="p-1 rounded bg-amber-100 text-amber-600 hover:bg-amber-200 transition-all shadow-sm"
+                                className="p-1 rounded bg-amber-100 text-amber-600 hover:bg-amber-200 transition-all shadow-sm flex items-center gap-1"
                                 title="Minta Revisi"
                             >
                                 <RefreshCw size={12} />
+                                {isFree && <Crown size={10} className="text-amber-500" title="Pro Feature" />}
                             </button>
                         </div>
                     )}
@@ -280,9 +285,10 @@ const KanbanCard: React.FC<{
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'revision'); }}
-                                            className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center gap-2 font-bold text-amber-600 transition-colors"
+                                            className="w-full text-left px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-50 flex items-center justify-between"
                                         >
-                                            <RefreshCw size={14} /> Request Revision
+                                            <span className="flex items-center gap-2"><RefreshCw size={14} /> Request Revision</span>
+                                            {isFree && <Crown size={12} className="text-amber-500" title="Pro Feature" />}
                                         </button>
                                     </>
                                 )}
@@ -456,6 +462,7 @@ export const ContentPlanDetail: React.FC = () => {
 
     const [currentUserRole, setCurrentUserRole] = useState<string>('Member');
     const [currentUserPackage, setCurrentUserPackage] = useState<string>('');
+    const isFree = localStorage.getItem('user_subscription_package') === 'Free' && localStorage.getItem('user_role') !== 'Developer';
 
     // Diagnostics Log
     useEffect(() => {
@@ -1085,8 +1092,17 @@ export const ContentPlanDetail: React.FC = () => {
     };
 
     const handleApprove = async (contentId: string, status: 'approved' | 'revision' | 'pending') => {
+        const { sendNotification, notifyRole, notifyMemberByName } = useNotifications();
         const currentUserId = localStorage.getItem('user_id');
         const currentUserName = localStorage.getItem('user_name') || 'Admin';
+        const isFree = localStorage.getItem('user_subscription_package') === 'Free';
+
+        // Lock Komentar Revisi if isFree
+        if (isFree && status === 'revision') {
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Fitur revisi hanya tersedia untuk paket Premium.' } }));
+            return;
+        }
+
         const workspaceId = id; // use workspace id from useParams
         if (!currentUserId) return;
 
@@ -1792,7 +1808,13 @@ export const ContentPlanDetail: React.FC = () => {
 
                                     return (
                                         <button
-                                            onClick={() => setIsInviteModalOpen(true)}
+                                            onClick={() => {
+                                                if (isFree && teamMembers.length >= 3) {
+                                                    window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Paket Free maksimal mengundang 2 anggota. Silakan upgrade ke Premium.' } }));
+                                                    return;
+                                                }
+                                                setIsInviteModalOpen(true);
+                                            }}
                                             className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 hover:bg-accent hover:text-white text-slate-500 flex items-center justify-center transition-colors shadow-sm z-10"
                                             title="Invite"
                                         >
@@ -2974,182 +2996,192 @@ export const ContentPlanDetail: React.FC = () => {
                                 )}
 
                                 {/* ═══ COMMENT SECTION ═══ */}
-                                <div className="border-t-2 border-slate-100 pt-5 space-y-4">
-                                    <div className="flex items-center gap-2 px-1">
-                                        <MessageCircle size={16} className="text-slate-400" />
-                                        <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Komentar Revisi</h5>
-                                        {resultComments.length > 0 && (
-                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent">{resultComments.length}</span>
-                                        )}
+                                {isFree ? (
+                                    <div className="border-t-2 border-slate-100 pt-5 space-y-4 pb-4">
+                                        <PremiumLockScreen
+                                            title="Komentar Revisi Terkunci"
+                                            description="Berikan catatan, feedback, dan diskusikan revisi konten langsung dengan tim Anda. Upgrade ke paket Pro untuk menggunakan fitur ini."
+                                        />
                                     </div>
+                                ) : (
+                                    <div className="border-t-2 border-slate-100 pt-5 space-y-4">
+                                        <div className="flex items-center gap-2 px-1">
+                                            <MessageCircle size={16} className="text-slate-400" />
+                                            <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Komentar Revisi</h5>
+                                            {resultComments.length > 0 && (
+                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent">{resultComments.length}</span>
+                                            )}
+                                        </div>
 
-                                    {/* Comment List */}
-                                    <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 no-scrollbar">
-                                        {resultComments.length === 0 ? (
-                                            <div className="text-center py-8">
-                                                <MessageCircle size={32} className="mx-auto text-slate-200 mb-2" />
-                                                <p className="text-xs font-bold text-slate-300">Belum ada komentar.</p>
-                                                <p className="text-[10px] text-slate-300">Berikan feedback untuk hasil konten ini.</p>
-                                            </div>
-                                        ) : (
-                                            (() => {
-                                                const topLevel = resultComments.filter(c => !c.parent_id);
-                                                const replies = resultComments.filter(c => c.parent_id);
-                                                const currentUserId = localStorage.getItem('user_id') || '';
+                                        {/* Comment List */}
+                                        <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 no-scrollbar">
+                                            {resultComments.length === 0 ? (
+                                                <div className="text-center py-8">
+                                                    <MessageCircle size={32} className="mx-auto text-slate-200 mb-2" />
+                                                    <p className="text-xs font-bold text-slate-300">Belum ada komentar.</p>
+                                                    <p className="text-[10px] text-slate-300">Berikan feedback untuk hasil konten ini.</p>
+                                                </div>
+                                            ) : (
+                                                (() => {
+                                                    const topLevel = resultComments.filter(c => !c.parent_id);
+                                                    const replies = resultComments.filter(c => c.parent_id);
+                                                    const currentUserId = localStorage.getItem('user_id') || '';
 
-                                                const renderComment = (comment: ResultComment, isReply = false) => {
-                                                    const isOwn = comment.user_id === currentUserId;
-                                                    const commentReplies = replies.filter(r => r.parent_id === comment.id);
-                                                    const timeAgo = (() => {
-                                                        const diff = Date.now() - new Date(comment.created_at).getTime();
-                                                        const m = Math.floor(diff / 60000);
-                                                        if (m < 1) return 'baru saja';
-                                                        if (m < 60) return `${m}m`;
-                                                        const h = Math.floor(m / 60);
-                                                        if (h < 24) return `${h}j`;
-                                                        return `${Math.floor(h / 24)}h`;
-                                                    })();
+                                                    const renderComment = (comment: ResultComment, isReply = false) => {
+                                                        const isOwn = comment.user_id === currentUserId;
+                                                        const commentReplies = replies.filter(r => r.parent_id === comment.id);
+                                                        const timeAgo = (() => {
+                                                            const diff = Date.now() - new Date(comment.created_at).getTime();
+                                                            const m = Math.floor(diff / 60000);
+                                                            if (m < 1) return 'baru saja';
+                                                            if (m < 60) return `${m}m`;
+                                                            const h = Math.floor(m / 60);
+                                                            if (h < 24) return `${h}j`;
+                                                            return `${Math.floor(h / 24)}h`;
+                                                        })();
 
-                                                    return (
-                                                        <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
-                                                            <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-slate-50 ${isReply ? '' : ''}`}>
-                                                                {/* Avatar */}
-                                                                <div className="flex-shrink-0 pt-0.5">
-                                                                    {comment.user_avatar ? (
-                                                                        <img src={comment.user_avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200" />
-                                                                    ) : (
-                                                                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-[10px] font-black">
-                                                                            {comment.user_name.charAt(0).toUpperCase()}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-
-                                                                {/* Content */}
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
-                                                                        <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
+                                                        return (
+                                                            <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
+                                                                <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-slate-50 ${isReply ? '' : ''}`}>
+                                                                    {/* Avatar */}
+                                                                    <div className="flex-shrink-0 pt-0.5">
+                                                                        {comment.user_avatar ? (
+                                                                            <img src={comment.user_avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200" />
+                                                                        ) : (
+                                                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-[10px] font-black">
+                                                                                {comment.user_name.charAt(0).toUpperCase()}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
 
-                                                                    {/* Reply indicator */}
-                                                                    {comment.parent_id && (() => {
-                                                                        const parent = resultComments.find(c => c.id === comment.parent_id);
-                                                                        return parent ? (
-                                                                            <div className="text-[9px] text-slate-400 font-bold flex items-center gap-1 mb-0.5">
-                                                                                <Reply size={9} /> membalas {parent.user_name}
-                                                                            </div>
-                                                                        ) : null;
-                                                                    })()}
-
-                                                                    <p className="text-[13px] text-slate-600 leading-relaxed break-words">{comment.message}</p>
-
-                                                                    {/* Reactions display */}
-                                                                    {comment.reactions && Object.keys(comment.reactions).length > 0 && (
-                                                                        <div className="flex flex-wrap gap-1 mt-1.5">
-                                                                            {Object.entries(comment.reactions).map(([emoji, users]) => (
-                                                                                <button
-                                                                                    key={emoji}
-                                                                                    onClick={() => handleToggleReaction(comment.id, emoji)}
-                                                                                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
-                                                                                        ? 'bg-accent/10 border-accent/30 text-accent'
-                                                                                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-accent/30'
-                                                                                        }`}
-                                                                                >
-                                                                                    <span>{emoji}</span>
-                                                                                    <span>{(users as string[]).length}</span>
-                                                                                </button>
-                                                                            ))}
+                                                                    {/* Content */}
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
+                                                                            <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
                                                                         </div>
-                                                                    )}
 
-                                                                    {/* Action buttons */}
-                                                                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <button
-                                                                            onClick={() => { setReplyingTo(comment); commentInputRef.current?.focus(); }}
-                                                                            className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
-                                                                        >
-                                                                            <Reply size={10} /> Balas
-                                                                        </button>
-                                                                        <div className="relative">
+                                                                        {/* Reply indicator */}
+                                                                        {comment.parent_id && (() => {
+                                                                            const parent = resultComments.find(c => c.id === comment.parent_id);
+                                                                            return parent ? (
+                                                                                <div className="text-[9px] text-slate-400 font-bold flex items-center gap-1 mb-0.5">
+                                                                                    <Reply size={9} /> membalas {parent.user_name}
+                                                                                </div>
+                                                                            ) : null;
+                                                                        })()}
+
+                                                                        <p className="text-[13px] text-slate-600 leading-relaxed break-words">{comment.message}</p>
+
+                                                                        {/* Reactions display */}
+                                                                        {comment.reactions && Object.keys(comment.reactions).length > 0 && (
+                                                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                                {Object.entries(comment.reactions).map(([emoji, users]) => (
+                                                                                    <button
+                                                                                        key={emoji}
+                                                                                        onClick={() => handleToggleReaction(comment.id, emoji)}
+                                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
+                                                                                            ? 'bg-accent/10 border-accent/30 text-accent'
+                                                                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-accent/30'
+                                                                                            }`}
+                                                                                    >
+                                                                                        <span>{emoji}</span>
+                                                                                        <span>{(users as string[]).length}</span>
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Action buttons */}
+                                                                        <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                             <button
-                                                                                onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
+                                                                                onClick={() => { setReplyingTo(comment); commentInputRef.current?.focus(); }}
                                                                                 className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
                                                                             >
-                                                                                <SmilePlus size={10} /> React
+                                                                                <Reply size={10} /> Balas
                                                                             </button>
-                                                                            {showEmojiPicker === comment.id && (
-                                                                                <div className="absolute bottom-full left-0 mb-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                                                                                    {['👍', '❤️', '😂', '🔥', '👎'].map(emoji => (
-                                                                                        <button
-                                                                                            key={emoji}
-                                                                                            onClick={() => handleToggleReaction(comment.id, emoji)}
-                                                                                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-base transition-transform hover:scale-125"
-                                                                                        >
-                                                                                            {emoji}
-                                                                                        </button>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
+                                                                            <div className="relative">
+                                                                                <button
+                                                                                    onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
+                                                                                    className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
+                                                                                >
+                                                                                    <SmilePlus size={10} /> React
+                                                                                </button>
+                                                                                {showEmojiPicker === comment.id && (
+                                                                                    <div className="absolute bottom-full left-0 mb-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                                                                        {['👍', '❤️', '😂', '🔥', '👎'].map(emoji => (
+                                                                                            <button
+                                                                                                key={emoji}
+                                                                                                onClick={() => handleToggleReaction(comment.id, emoji)}
+                                                                                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-base transition-transform hover:scale-125"
+                                                                                            >
+                                                                                                {emoji}
+                                                                                            </button>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
 
-                                                            {/* Render replies */}
-                                                            {commentReplies.map(reply => renderComment(reply, true))}
+                                                                {/* Render replies */}
+                                                                {commentReplies.map(reply => renderComment(reply, true))}
+                                                            </div>
+                                                        );
+                                                    };
+
+                                                    return topLevel.map(c => renderComment(c));
+                                                })()
+                                            )}
+                                            <div ref={commentEndRef} />
+                                        </div>
+
+                                        {/* Reply indicator */}
+                                        {replyingTo && (
+                                            <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-xl animate-in slide-in-from-bottom-2">
+                                                <Reply size={12} className="text-accent" />
+                                                <span className="text-[11px] font-bold text-accent flex-1 truncate">Membalas {replyingTo.user_name}: "{replyingTo.message.slice(0, 50)}..."</span>
+                                                <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
+                                            </div>
+                                        )}
+
+                                        {/* Comment Input */}
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-shrink-0">
+                                                {(() => {
+                                                    const av = localStorage.getItem('user_avatar');
+                                                    return av ? (
+                                                        <img src={av} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-xs font-black">
+                                                            {(localStorage.getItem('user_name') || 'U').charAt(0).toUpperCase()}
                                                         </div>
                                                     );
-                                                };
-
-                                                return topLevel.map(c => renderComment(c));
-                                            })()
-                                        )}
-                                        <div ref={commentEndRef} />
-                                    </div>
-
-                                    {/* Reply indicator */}
-                                    {replyingTo && (
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-xl animate-in slide-in-from-bottom-2">
-                                            <Reply size={12} className="text-accent" />
-                                            <span className="text-[11px] font-bold text-accent flex-1 truncate">Membalas {replyingTo.user_name}: "{replyingTo.message.slice(0, 50)}..."</span>
-                                            <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
-                                        </div>
-                                    )}
-
-                                    {/* Comment Input */}
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-shrink-0">
-                                            {(() => {
-                                                const av = localStorage.getItem('user_avatar');
-                                                return av ? (
-                                                    <img src={av} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-xs font-black">
-                                                        {(localStorage.getItem('user_name') || 'U').charAt(0).toUpperCase()}
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                        <div className="flex-1 relative">
-                                            <input
-                                                ref={commentInputRef}
-                                                type="text"
-                                                placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
-                                                value={commentInput}
-                                                onChange={e => setCommentInput(e.target.value)}
-                                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
-                                                className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-accent focus:bg-white outline-none transition-all pr-12"
-                                            />
-                                            <button
-                                                onClick={handleSendComment}
-                                                disabled={!commentInput.trim() || sendingComment}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/90 transition-all active:scale-90"
-                                            >
-                                                {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                                            </button>
+                                                })()}
+                                            </div>
+                                            <div className="flex-1 relative">
+                                                <input
+                                                    ref={commentInputRef}
+                                                    type="text"
+                                                    placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
+                                                    value={commentInput}
+                                                    onChange={e => setCommentInput(e.target.value)}
+                                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                                                    className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-accent focus:bg-white outline-none transition-all pr-12"
+                                                />
+                                                <button
+                                                    onClick={handleSendComment}
+                                                    disabled={!commentInput.trim() || sendingComment}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/90 transition-all active:scale-90"
+                                                >
+                                                    {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>                            </div>
+                                )}
+                            </div>
                         ) : (
                             <div className="space-y-6">
                                 <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Link Hasil Produksi (Drive)</h5>
