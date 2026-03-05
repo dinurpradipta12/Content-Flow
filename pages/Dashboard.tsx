@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { RELIGION_CONTENT } from './religionData';
 import { Button } from '../components/ui/Button';
-import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, CheckCircle, Book, Settings, Clock, Layers, Circle, Check, TrendingUp, ArrowUpRight, Eye, MousePointerClick, CalendarCheck, TrendingDown, X, CheckCheck } from 'lucide-react';
+import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, CheckCircle, Book, Settings, Clock, Layers, Circle, Check, TrendingUp, ArrowUpRight, Eye, MousePointerClick, CalendarCheck, TrendingDown, X, CheckCheck, Sparkles, Zap, PlusCircle, UserPlus, Heart, MessageSquare, Share2, BarChart3, Layout, Command, Send, Users } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../components/NotificationProvider';
 import { useUserPreferences, useTeamKpis, useWorkspaces } from '../src/hooks/useDataQueries';
+import { DashboardAddContentModal } from '@/components/DashboardAddContentModal';
+import { DashboardAddMissionModal } from '@/components/DashboardAddMissionModal';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -23,12 +25,11 @@ import {
 
 const getGreetingInfo = () => {
     const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return { text: 'Selamat Pagi', theme: 'from-[#f97316] to-[#ec4899]', icon: <Sunrise size={64} className="text-white" />, quote: "Fokus pada kualitas, bukan hanya kecepatan. 🌟" };
-    if (hour >= 12 && hour < 15) return { text: 'Selamat Siang', theme: 'from-sky-400 to-indigo-500', icon: <Sun size={64} className="text-white" />, quote: "Tetap semangat dan selesaikan tugasmu dengan baik! 💪" };
-    if (hour >= 15 && hour < 18) return { text: 'Selamat Sore', theme: 'from-amber-500 to-rose-600', icon: <Sunset size={64} className="text-white" />, quote: "Bagus sekali, waktu yang tepat untuk menyelesaikannya! ☕" };
-    return { text: 'Selamat Malam', theme: 'from-indigo-600 to-purple-800', icon: <Moon size={64} className="text-white" />, quote: "Beristirahatlah, besok adalah hari yang baru! 🌙" };
+    if (hour >= 5 && hour < 12) return { text: 'Selamat Pagi', theme: 'border-amber-200 bg-amber-50/10', icon: <Sunrise size={64} className="text-amber-500" />, quote: "Fokus pada kualitas, bukan hanya kecepatan. 🌟" };
+    if (hour >= 12 && hour < 15) return { text: 'Selamat Siang', theme: 'border-sky-200 bg-sky-50/10', icon: <Sun size={64} className="text-sky-500" />, quote: "Tetap semangat dan selesaikan tugasmu dengan baik! 💪" };
+    if (hour >= 15 && hour < 18) return { text: 'Selamat Sore', theme: 'border-rose-200 bg-rose-50/10', icon: <Sunset size={64} className="text-rose-500" />, quote: "Bagus sekali, waktu yang tepat untuk menyelesaikannya! ☕" };
+    return { text: 'Selamat Malam', theme: 'border-indigo-200 bg-indigo-50/10', icon: <Moon size={64} className="text-indigo-500" />, quote: "Beristirahatlah, besok adalah hari yang baru! 🌙" };
 };
-
 
 
 const ChartTooltip = ({ active, payload, label }: any) => {
@@ -51,11 +52,45 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 };
 
 export const Dashboard: React.FC = () => {
+    useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }, []);
+
     const navigate = useNavigate();
     const { notifications, handleNotificationClick, unreadCount, markAllAsRead, clearAllNotifications } = useNotifications();
     const [showNotifSidebar, setShowNotifSidebar] = useState(false);
+    const [isAddContentModalOpen, setIsAddContentModalOpen] = useState(false);
+    const [isAddMissionModalOpen, setIsAddMissionModalOpen] = useState(false);
     const userName = localStorage.getItem('user_name') || 'Aditya';
     const userId = localStorage.getItem('user_id');
+    const userRole = localStorage.getItem('user_role');
+    const subPkg = localStorage.getItem('subscription_package') || 'Free';
+
+    const getPlanDisplay = () => {
+        if (userRole === 'Developer') return 'Developer';
+
+        const pkg = subPkg.toLowerCase();
+        const isAdmin = (userRole === 'Admin' || userRole === 'Owner');
+
+        if (pkg.includes('team') && isAdmin) return 'Team Admin';
+        if (pkg.includes('team') && pkg.includes('personal')) return 'Personal Team';
+        if (pkg.includes('team')) return 'Team Plan';
+        if (isAdmin) return 'Admin';
+        if (pkg.includes('personal')) return 'Personal';
+        if (pkg === 'free' || pkg === 'none') return 'Free Member';
+
+        return `${subPkg} Member`;
+    };
+
+    const canInviteTeam = () => {
+        if (userRole === 'Developer' || userRole === 'Admin' || userRole === 'Owner') return true;
+        const pkg = subPkg.toLowerCase();
+        if (pkg.includes('team') && !pkg.includes('personal')) return true;
+        if (pkg === 'free-team') return true;
+        return false;
+    };
 
     // 1. Time Info
     const [timeInfo, setTimeInfo] = useState(getGreetingInfo());
@@ -301,8 +336,8 @@ export const Dashboard: React.FC = () => {
 
 
 
-    // 4. Daily Checklist
-    const [checklists, setChecklists] = useState<{ id: string, text: string, done: boolean }[]>([]);
+    // 4. Daily Checklist / Missions
+    const [checklists, setChecklists] = useState<{ id: string, text: string, done: boolean, time?: string, notifPref?: string, notified?: boolean }[]>([]);
     const [newChecklist, setNewChecklist] = useState('');
 
     // 5. KPI Data - Using React Query for caching
@@ -345,9 +380,19 @@ export const Dashboard: React.FC = () => {
     const addChecklist = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newChecklist.trim()) return;
-        const newList = [...checklists, { id: Date.now().toString(), text: newChecklist, done: false }];
+        const newList = [...checklists, { id: Date.now().toString(), text: newChecklist, done: false, time: '09:00', notifPref: '15m' }];
         saveChecklists(newList);
         setNewChecklist('');
+    };
+
+    const addMission = (mission: { text: string, time: string, notifPref: string }) => {
+        const newList = [...checklists, { id: Date.now().toString(), text: mission.text, done: false, time: mission.time, notifPref: mission.notifPref }];
+        saveChecklists(newList);
+
+        // Show success alert
+        window.dispatchEvent(new CustomEvent('app-alert', {
+            detail: { type: 'success', message: `Mission "${mission.text}" ditambahkan!` }
+        }));
     };
 
     const toggleChecklist = (id: string) => {
@@ -359,6 +404,53 @@ export const Dashboard: React.FC = () => {
         const newList = checklists.filter(c => c.id !== id);
         saveChecklists(newList);
     };
+
+    // 6. Mission Notifications Logic
+    useEffect(() => {
+        if (!checklists.length) return;
+
+        const checkMissions = () => {
+            const now = new Date();
+            let changed = false;
+
+            const updatedChecklists = checklists.map(mission => {
+                if (mission.done || !mission.time || mission.notifPref === 'none' || (mission as any).notified) return mission;
+
+                const [hours, minutes] = mission.time.split(':').map(Number);
+                const missionTime = new Date();
+                missionTime.setHours(hours, minutes, 0, 0);
+
+                let targetTime = new Date(missionTime);
+                if (mission.notifPref === '15m') targetTime.setMinutes(targetTime.getMinutes() - 15);
+                else if (mission.notifPref === '30m') targetTime.setMinutes(targetTime.getMinutes() - 30);
+                else if (mission.notifPref === '1d') targetTime.setDate(targetTime.getDate() - 1);
+
+                if (now >= targetTime && now < missionTime) {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification(`Reminder: ${mission.text}`, {
+                            body: `Mission kamu akan dimulai pada pukul ${mission.time}. Semangat!`,
+                        });
+                    }
+
+                    window.dispatchEvent(new CustomEvent('app-alert', {
+                        detail: { type: 'info', message: `Reminder: Mission "${mission.text}" mendekati jam task (${mission.time})!` }
+                    }));
+
+                    changed = true;
+                    return { ...mission, notified: true };
+                }
+                return mission;
+            });
+
+            if (changed) {
+                saveChecklists(updatedChecklists);
+            }
+        };
+
+        const timer = setInterval(checkMissions, 15000);
+        checkMissions();
+        return () => clearInterval(timer);
+    }, [checklists]);
 
     // Fetch workspaces using React Query for automatic caching
     const { data: workspacesData = [] } = useWorkspaces(userId);
@@ -375,6 +467,7 @@ export const Dashboard: React.FC = () => {
     const [chartData, setChartData] = useState<any[]>([]);
     const [statusDistribution, setStatusDistribution] = useState<any[]>([]);
     const [pillarDistribution, setPillarDistribution] = useState<any[]>([]);
+    const [recentContent, setRecentContent] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -388,7 +481,7 @@ export const Dashboard: React.FC = () => {
 
             let query = supabase
                 .from('content_items')
-                .select('date, metrics, platform, workspace_id, status, pillar')
+                .select('id, title, date, metrics, platform, workspace_id, status, pillar, thumbnail_url, updated_at')
                 .gte('date', startPrev.toISOString())
                 .lte('date', endCurrent.toISOString());
 
@@ -401,12 +494,15 @@ export const Dashboard: React.FC = () => {
 
             if (filterPlatform !== 'all') query = query.eq('platform', filterPlatform);
 
-            const { data, error } = await query;
+            const { data, error } = await query.order('updated_at', { ascending: false });
             if (error) {
                 console.error("Error fetching analytics:", error);
                 return;
             }
             if (!data) return;
+
+            // Set Recent Content (Pipeline)
+            setRecentContent(data.slice(0, 5));
 
             // Prepare Chart Data (Days of selected month)
             const dailyDataMap: Record<string, any> = {};
@@ -499,7 +595,8 @@ export const Dashboard: React.FC = () => {
             setMetricsPrev({ views: prevViews, er: prevER, published: prevPublished });
         };
         fetchAnalytics();
-    }, [filterWs, filterPlatform, filterMonth, filterYear, workspaces]);
+
+    }, [filterWs, filterPlatform, filterMonth, filterYear, workspaces, userId]);
 
     const calculateGrowth = (current: number, previous: number) => {
         if (previous === 0) return current > 0 ? 100 : 0;
@@ -529,915 +626,521 @@ export const Dashboard: React.FC = () => {
     };
 
     return (
-        <>
+        <div className="min-h-screen bg-transparent pb-20 selection:bg-accent/30 selection:text-white">
             {/* ═══════════════════════════════════════════════════════════════════
-            MOBILE VIEW (< md) - Native App Style
+            MOBILE VIEW (Native Style)
             ═══════════════════════════════════════════════════════════════════ */}
-            <div className="block md:hidden w-full pb-24 animate-in fade-in duration-300">
-                {/* 1. Banner Welcome */}
-                <div className={`bg-gradient-to-br ${timeInfo.theme} rounded-2xl p-4 mb-3 text-white relative overflow-hidden`}>
-                    <div className="absolute -right-4 -top-4 opacity-20">{timeInfo.icon}</div>
-                    <p className="text-xs font-bold text-white/80 mb-0.5">{timeInfo.text}</p>
-                    <h1 className="text-xl font-black font-heading leading-tight">{userName}!</h1>
-                    <p className="text-xs text-white/80 mt-1 line-clamp-1">{timeInfo.quote}</p>
+            <div className="block md:hidden w-full p-4 space-y-4 animate-in fade-in duration-500">
+                <div className={`p-6 rounded-[2.5rem] bg-white border-2 ${timeInfo.theme} text-slate-900 shadow-xl relative overflow-hidden`}>
+                    <div className="absolute -right-6 -top-6 opacity-10 rotate-12 scale-150">{timeInfo.icon}</div>
+                    <div className="relative z-10">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{timeInfo.text}</span>
+                        <h1 className="text-3xl font-black font-heading mt-1">{userName}! <Sparkles size={18} className="inline ml-1 animate-pulse text-amber-400" /></h1>
+                        <p className="text-xs mt-3 opacity-60 italic leading-relaxed font-medium">"{timeInfo.quote}"</p>
+                    </div>
                 </div>
 
-                {/* 2. Religion/Quote Card */}
+                {/* Quick Action Ribbon - Mobile */}
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    {[
+                        { label: 'Content', icon: <Plus size={16} />, action: () => setIsAddContentModalOpen(true), color: 'bg-slate-900 text-white' },
+                        { label: 'Mission', icon: <PlusCircle size={16} />, action: () => setIsAddMissionModalOpen(true), color: 'bg-white border-2 border-slate-900' },
+                        { label: 'Idea', icon: <Zap size={16} />, action: () => navigate('/collect-idea'), color: 'bg-white border-2 border-slate-900' },
+                    ].map((btn, i) => (
+                        <button key={i} onClick={btn.action} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs whitespace-nowrap shadow-hard-mini ${btn.color}`}>
+                            {btn.icon} {btn.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Vertical Sections */}
                 {religion && !isSelectingReligion && (
-                    <div className={`bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-800' : getReligionStyles(religion)} rounded-2xl p-4 mb-3 text-white`}>
-                        {religion === 'Islam' && prayerData ? (
-                            <>
-                                <p className="text-[10px] font-bold text-white/80 mb-0.5">{nextPrayerState.countdown} menit lagi</p>
-                                <h3 className="text-2xl font-black font-heading">{nextPrayerState.name}</h3>
-                                <p className="text-xs text-white/80">{nextPrayerState.time} {tzLabel}</p>
-                            </>
-                        ) : (
-                            <p className="text-sm font-bold italic line-clamp-3">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
-                        )}
-                        <button onClick={() => setIsSelectingReligion(true)} className="mt-2 text-[10px] text-white/60 underline">Ubah preferensi</button>
-                    </div>
-                )}
-                {isSelectingReligion && (
-                    <div className="bg-card border border-border rounded-2xl p-4 mb-3">
-                        <h3 className="text-sm font-black text-foreground mb-3">Pilih Preferensi</h3>
-                        <div className="grid grid-cols-3 gap-2">
-                            {Object.keys(RELIGION_CONTENT).map(rel => (
-                                <button key={rel} onClick={() => handleSetReligion(rel)}
-                                    className={`py-2 rounded-xl border-2 font-bold text-xs transition-all ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-border text-foreground'}`}>
-                                    {rel}
-                                </button>
-                            ))}
+                    <div className={`p-5 rounded-[2rem] bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-900 border-none' : getReligionStyles(religion) + ' border-none'} text-white shadow-lg relative overflow-hidden`}>
+                        <div className="absolute -right-4 -bottom-4 opacity-10">{religion === 'Islam' ? <Sunrise size={80} /> : <Book size={80} />}</div>
+                        <div className="flex justify-between items-start mb-3 relative z-10">
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-70">Daily {religion}</span>
+                            <Settings size={14} className="opacity-50" onClick={() => setIsSelectingReligion(true)} />
                         </div>
+                        {religion === 'Islam' && prayerData ? (
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-black">{nextPrayerState.name} • {nextPrayerState.time}</h3>
+                                <p className="text-[10px] font-bold opacity-80 mt-1">{nextPrayerState.countdown} menit lagi ({cityInfo})</p>
+                            </div>
+                        ) : (
+                            <p className="text-xs font-bold leading-relaxed relative z-10">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
+                        )}
                     </div>
                 )}
 
-                {/* 3. Daily Checklist */}
-                <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                    <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle size={14} className="text-accent" />
-                        <h3 className="text-xs font-black text-foreground">Checklist Hari Ini</h3>
+                {/* Pipeline - Mobile */}
+                <div className="bg-white border-2 border-slate-900 rounded-[2rem] p-5 shadow-hard-mini">
+                    <div className="flex justify-between items-center mb-5">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Content Pipeline</h3>
+                        <ArrowRight size={14} className="text-slate-300" />
                     </div>
-                    <div className="space-y-1.5 mb-2 max-h-[150px] overflow-y-auto">
-                        {checklists.length === 0 ? (
-                            <p className="text-xs text-mutedForeground text-center py-3">Belum ada checklist</p>
-                        ) : checklists.map(c => (
-                            <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg border border-border">
-                                <button onClick={() => toggleChecklist(c.id)}
-                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300'}`}>
-                                    {c.done && <Check size={10} />}
-                                </button>
-                                <p className={`flex-1 text-xs font-bold ${c.done ? 'line-through text-mutedForeground' : 'text-foreground'}`}>{c.text}</p>
-                                <button onClick={() => deleteChecklist(c.id)} className="text-mutedForeground hover:text-red-500"><Trash2 size={12} /></button>
+                    <div className="space-y-4">
+                        {recentContent.slice(0, 3).map(item => (
+                            <div key={item.id} className="flex items-center gap-4">
+                                <div className="w-12 h-10 rounded-xl bg-slate-100 border-2 border-slate-900 overflow-hidden shrink-0">
+                                    {item.thumbnail_url ? <img src={item.thumbnail_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black">{item.platform?.[0]}</div>}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-black truncate">{item.title}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-900 ${item.status === 'Published' ? 'bg-emerald-400' : 'bg-amber-400'}`}>
+                                            {item.status}
+                                        </span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase">{item.platform}</span>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
-                    <form onSubmit={addChecklist} className="flex gap-2">
-                        <input className="flex-1 bg-muted border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:border-accent"
-                            placeholder="Tambah tugas..." value={newChecklist} onChange={e => setNewChecklist(e.target.value)} />
-                        <button type="submit" className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center flex-shrink-0"><Plus size={14} /></button>
-                    </form>
                 </div>
-
-                {/* 4. Notifications */}
-                {notifications.length > 0 && (
-                    <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <Bell size={14} className="text-accent" />
-                                <h3 className="text-xs font-black text-foreground">Notifikasi</h3>
-                                {unreadCount > 0 && <span className="w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">{unreadCount}</span>}
-                            </div>
-                            <button onClick={() => setShowNotifSidebar(true)} className="text-[10px] font-bold text-accent">Lihat →</button>
-                        </div>
-                        <div className="space-y-1.5">
-                            {notifications.slice(0, 3).map(n => (
-                                <div key={n.id} onClick={() => handleNotificationClick(n)}
-                                    className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer ${n.is_read ? 'border-border opacity-60' : 'border-accent/30 bg-accent/5'}`}>
-                                    <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        {n.actor?.avatar_url ? <img src={n.actor.avatar_url} className="w-full h-full rounded-full object-cover" alt="" /> : <Bell size={10} className="text-accent" />}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[9px] font-black text-accent uppercase tracking-wider truncate">{n.title}</p>
-                                        <p className="text-[10px] font-bold text-foreground line-clamp-1">{n.content}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* 5. KPI Preview */}
-                {kpis.length > 0 && (
-                    <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <TrendingUp size={14} className="text-accent" />
-                                <h3 className="text-xs font-black text-foreground">KPI Saya</h3>
-                            </div>
-                            <button onClick={() => navigate('/script')} className="text-[10px] font-bold text-accent">Lihat →</button>
-                        </div>
-                        <div className="space-y-2">
-                            {kpis.slice(0, 3).map(k => {
-                                const rate = k.target_value > 0 ? Math.min((k.actual_value / k.target_value) * 100, 100) : 0;
-                                return (
-                                    <div key={k.id} className="flex items-center gap-2">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[10px] font-bold text-foreground truncate">{k.metric_name}</p>
-                                            <div className="flex items-center gap-1 mt-0.5">
-                                                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                    <div className="h-full bg-accent rounded-full" style={{ width: `${rate}%` }} />
-                                                </div>
-                                                <span className="text-[9px] font-bold text-mutedForeground">{rate.toFixed(0)}%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* 6. Metrics Cards */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Views</p>
-                        <p className="text-lg font-black text-foreground">{formatShortNumber(metricsCurrent.views)}</p>
-                        <div className="mt-0.5">{renderMetricCompare(metricsCurrent.views, metricsPrev.views)}</div>
-                    </div>
-                    <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">ER</p>
-                        <p className="text-lg font-black text-foreground">{metricsCurrent.er.toFixed(1)}%</p>
-                        <div className="mt-0.5">{renderMetricCompare(metricsCurrent.er, metricsPrev.er)}</div>
-                    </div>
-                    <div className="bg-card border border-border rounded-xl p-2.5 text-center">
-                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-wider mb-0.5">Post</p>
-                        <p className="text-lg font-black text-foreground">{metricsCurrent.published}</p>
-                        <div className="mt-0.5">{renderMetricCompare(metricsCurrent.published, metricsPrev.published)}</div>
-                    </div>
-                </div>
-
-                {/* 7. Performance Trend Chart */}
-                <div className="bg-card border border-border rounded-2xl p-3 mb-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs font-black text-foreground">Performance Trend</h3>
-                        <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                            {['views', 'likes', 'interactions'].map(m => (
-                                <button key={m} onClick={() => setSelectedMetric(m)}
-                                    className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border transition-all flex-shrink-0 ${selectedMetric === m ? 'bg-slate-900 border-slate-900 text-white' : 'bg-card border-slate-200 text-mutedForeground'}`}>
-                                    {m === 'interactions' ? 'Eng' : m}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="h-[120px] w-full">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="mobileColorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
-                                        <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 7, fill: '#94a3b8' }} minTickGap={40} />
-                                <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 1 }} />
-                                <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={2} fillOpacity={1} fill="url(#mobileColorValue)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* 8. Workspaces */}
-                {workspaces.length > 0 && (
-                    <div className="mb-3">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-xs font-black text-foreground uppercase tracking-wider">Workspaces</h3>
-                            <button onClick={() => navigate('/plan')} className="text-[10px] font-bold text-accent">Lihat Semua →</button>
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                            {workspaces.slice(0, 5).map(ws => (
-                                <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
-                                    className="flex-shrink-0 bg-card border border-border rounded-xl p-3 w-32 text-left hover:border-accent transition-colors">
-                                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center mb-2 overflow-hidden">
-                                        <Layers size={16} className="text-accent" />
-                                    </div>
-                                    <p className="text-xs font-bold text-foreground truncate">{ws.name}</p>
-                                    <p className="text-[9px] text-mutedForeground">Workspace</p>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════════
-            DESKTOP VIEW (≥ md) - Original Layout
-            ═══════════════════════════════════════════════════════════════════ */}
-            <div className="hidden md:block w-full px-2 sm:px-4 md:px-6 lg:px-10 space-y-4 sm:space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-12 sm:pb-20">
-                {/* GRID LAYOUT */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8">
-
-                    {/* --- LEFT DESKTOP COLUMN (8 of 12) --- */}
-                    <div className="lg:col-span-8 space-y-2 sm:space-y-4 md:space-y-6 lg:space-y-8">
-
-                        {/* Welcome Banner */}
-                        <div className="mb-0 sm:mb-1 md:mb-2 pt-2 sm:pt-4 md:pt-6 lg:pt-8">
-                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[3.5rem] font-heading font-black tracking-tight text-slate-800 leading-[1.1] pb-2">
-                                {timeInfo.text}, {userName}!
-                            </h1>
-                            <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-slate-500 font-bold mt-0.5 sm:mt-1 md:mt-2 max-w-2xl leading-snug line-clamp-2">
-                                {timeInfo.quote}
-                            </p>
-                        </div>
-
-                        {/* Analytics Filtering & Cards */}
-                        <div>
-                            <div className="mb-4 sm:mb-6">
-                                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold font-heading text-foreground">Overview Analytic</h2>
+  DESKTOP VIEW (Bento Command Center)
+  ═══════════════════════════════════════════════════════════════════ */}
+            <div className="hidden md:block w-full px-8 lg:px-12 py-10 space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
+                {/* 1. TOP HEADER SECTION */}
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-white p-10 rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="px-4 py-1.5 rounded-full border-2 border-slate-900 bg-white text-slate-900 font-black text-[10px] uppercase tracking-[0.2em] shadow-hard-mini">
+                                {getPlanDisplay()}
                             </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
-                                {/* Total Views Card */}
-                                <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
-                                    <div className="h-8 sm:h-10 md:h-14 bg-accent px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                            <Eye size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-foreground" strokeWidth={2.5} />
-                                        </div>
-                                        <span className="font-black text-white text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Views</span>
-                                    </div>
-                                    <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
-                                        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{formatShortNumber(metricsCurrent.views)}</h3>
-                                        {renderMetricCompare(metricsCurrent.views, metricsPrev.views)}
-                                    </div>
-                                </div>
-
-                                {/* Engagement Card */}
-                                <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
-                                    <div className="h-8 sm:h-10 md:h-14 bg-tertiary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                            <MousePointerClick size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
-                                        </div>
-                                        <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Engagement</span>
-                                    </div>
-                                    <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
-                                        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.er.toFixed(1)}%</h3>
-                                        {renderMetricCompare(metricsCurrent.er, metricsPrev.er)}
-                                    </div>
-                                </div>
-
-                                {/* Published Card */}
-                                <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-[100px] sm:h-[120px] md:h-[140px] transition-transform hover:-translate-y-1">
-                                    <div className="h-8 sm:h-10 md:h-14 bg-quaternary px-2 sm:px-3 md:px-4 flex items-center gap-1.5 sm:gap-2 md:gap-3 border-b-2 sm:border-b-[3px] border-slate-900">
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center shrink-0">
-                                            <CalendarCheck size={12} className="sm:w-3.5 sm:h-3.5 md:w-4.5 md:h-4.5 text-slate-900" strokeWidth={2.5} />
-                                        </div>
-                                        <span className="font-black text-slate-900 text-[7px] sm:text-[9px] md:text-sm uppercase tracking-wider">Published Content</span>
-                                    </div>
-                                    <div className="p-2 sm:p-2.5 md:p-4 flex-1 flex flex-col justify-center bg-card">
-                                        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-foreground mb-0.5 leading-none">{metricsCurrent.published}</h3>
-                                        {renderMetricCompare(metricsCurrent.published, metricsPrev.published)}
-                                    </div>
-                                </div>
+                            <div className="flex items-center gap-2 text-slate-400 font-bold text-sm bg-slate-100 px-3 py-1 rounded-lg">
+                                <Calendar size={14} className="text-accent" /> {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
                             </div>
                         </div>
+                        <h1 className="text-4xl lg:text-6xl xl:text-7xl font-heading font-black text-slate-900 leading-tight">
+                            {timeInfo.text}, <span className="text-accent">{userName}!</span>
+                        </h1>
+                        <p className="text-slate-500 font-bold max-w-3xl text-xl leading-relaxed">
+                            <Sparkles size={20} className="inline mr-2 text-amber-400 animate-pulse" />
+                            "{timeInfo.quote}"
+                        </p>
+                    </div>
 
-                        {/* Minimalist Analytics Chart */}
-                        <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-[32px] border-2 sm:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] p-2 sm:p-3 md:p-4 lg:p-6 lg:p-8">
-                            <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 mb-2 sm:mb-3 md:mb-4 lg:mb-8">
-                                <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
-                                    <TrendingUp size={16} className="sm:w-5 md:w-6 text-slate-800" />
-                                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold font-heading text-slate-800 whitespace-nowrap">Performance Trend</h3>
+                    <div className="flex flex-wrap items-center gap-4">
+                        {[
+                            { label: 'Add Daily Mission', icon: <PlusCircle size={22} />, action: () => setIsAddMissionModalOpen(true), color: 'bg-slate-900 text-white', show: true },
+                            { label: 'Papan Ide', icon: <Zap size={22} />, action: () => navigate('/collect-idea'), color: 'bg-white border-[3px] border-slate-900', show: true },
+                            { label: 'Undang Tim', icon: <UserPlus size={22} />, action: () => navigate('/admin/team'), color: 'bg-white border-[3px] border-slate-900', show: canInviteTeam() }
+                        ].filter(btn => btn.show).map((btn, i) => (
+                            <button key={i} onClick={btn.action} className={`flex items-center gap-3 px-8 py-4 rounded-[1.5rem] font-black text-base transition-all hover:-translate-y-2 hover:shadow-hard active:translate-y-0 active:shadow-none ${btn.color} shadow-hard-mini`}>
+                                {btn.icon} <span>{btn.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 2. MAIN BENTO GRID */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+                    {/* --- LEFT AREA: COMMAND CENTER (9 cols) --- */}
+                    <div className="lg:col-span-9 space-y-10">
+
+                        {/* Summary Metrics Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                            {[
+                                { title: 'Viral Reach', value: formatShortNumber(metricsCurrent.views), prev: metricsPrev.views, cur: metricsCurrent.views, icon: <Eye size={24} />, color: 'bg-sky-400 text-white border-slate-900 shadow-hard-mini' },
+                                { title: 'Eng. Power', value: metricsCurrent.er.toFixed(2) + '%', prev: metricsPrev.er, cur: metricsCurrent.er, icon: <MousePointerClick size={24} />, color: 'bg-indigo-500 text-white border-slate-900 shadow-hard-mini' },
+                                { title: 'Consistency', value: metricsCurrent.published, prev: metricsPrev.published, cur: metricsCurrent.published, icon: <CalendarCheck size={24} />, color: 'bg-emerald-500 text-white border-slate-900 shadow-hard-mini' }
+                            ].map((card, i) => (
+                                <div key={i} className="group bg-white rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[12px_12px_0px_#0f172a] transition-all p-8 relative overflow-hidden">
+                                    <div className={`w-16 h-16 ${card.color} rounded-[1.5rem] border-[3.5px] flex items-center justify-center mb-6 shadow-hard-mini group-hover:rotate-12 transition-transform`}>
+                                        {card.icon}
+                                    </div>
+                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{card.title}</p>
+                                    <h3 className="text-4xl lg:text-5xl font-black text-slate-900 leading-none">{card.value}</h3>
+                                    <div className="mt-4">
+                                        {renderMetricCompare(card.cur, card.prev)}
+                                    </div>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 md:gap-2">
-                                    {['views', 'likes', 'comments', 'shares', 'interactions'].map((metric) => (
-                                        <button
-                                            key={metric}
-                                            onClick={() => setSelectedMetric(metric)}
-                                            className={`px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-[7px] sm:text-xs font-black uppercase tracking-wider border-2 transition-all ${selectedMetric === metric
-                                                ? 'bg-slate-900 border-slate-900 text-white shadow-md'
-                                                : 'bg-card border-slate-200 text-mutedForeground hover:border-slate-400'
-                                                }`}
-                                        >
-                                            {metric === 'interactions' ? 'Eng' : metric}
+                            ))}
+                        </div>
+
+                        {/* Chart: The Big Bento Block */}
+                        <div className="bg-white rounded-[3.5rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                            <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-8 mb-12">
+                                <div className="space-y-2">
+                                    <h3 className="text-3xl font-black font-heading text-slate-900 flex items-center gap-4">
+                                        <BarChart3 className="text-accent w-10 h-10" strokeWidth={2.5} /> Content Growth Trend
+                                    </h3>
+                                    <p className="text-slate-400 font-bold text-lg">Visualisasi performa konten berdasarkan metrik terpilih.</p>
+                                </div>
+                                <div className="flex flex-wrap bg-slate-50 p-2 rounded-[1.5rem] border-2 border-slate-200">
+                                    {['views', 'likes', 'comments', 'shares', 'interactions'].map((m) => (
+                                        <button key={m} onClick={() => setSelectedMetric(m)} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedMetric === m ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>
+                                            {m === 'interactions' ? 'Eng' : m}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-
-                            <div className="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
-                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                            <div className="h-[400px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData}>
                                         <defs>
                                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#A855F7" stopOpacity={0.1} />
+                                                <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
                                                 <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis
-                                            dataKey="formattedDate"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
-                                            minTickGap={30}
-                                        />
-                                        <YAxis
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fontSize: 9, fontWeight: 'bold', fill: '#94a3b8' }}
-                                            tickFormatter={formatShortNumber}
-                                        />
-                                        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 2 }} />
-                                        <Area
-                                            type="monotone"
-                                            dataKey={selectedMetric}
-                                            stroke="#A855F7"
-                                            strokeWidth={4}
-                                            fillOpacity={1}
-                                            fill="url(#colorValue)"
-                                            animationDuration={1500}
-                                        />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                        <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: '800', fill: '#94a3b8' }} minTickGap={30} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: '800', fill: '#94a3b8' }} tickFormatter={formatShortNumber} dx={-10} />
+                                        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#0f172a', strokeWidth: 3 }} />
+                                        <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={6} fillOpacity={1} fill="url(#colorValue)" animationDuration={2000} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        {/* Distribution Pie Charts */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                            {/* Status Distribution */}
-                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
-                                <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
-                                    <CheckCircle size={18} className="md:w-6 md:h-6 text-foreground" />
-                                    <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Status Distribution</h3>
+                        {/* Bottom Double Bento: Pipeline & Distribution */}
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+                            <div className="bg-white rounded-[3.5rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                                <div className="flex items-center justify-between mb-10">
+                                    <h3 className="text-2xl font-black font-heading flex items-center gap-4">
+                                        <Command className="text-amber-500 w-8 h-8" /> Smart Pipeline
+                                    </h3>
+                                    <button onClick={() => navigate('/plan')} className="text-sm font-black text-accent hover:underline flex items-center gap-2">View Calendar <ArrowUpRight size={16} /></button>
                                 </div>
-                                <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                        <PieChart>
-                                            <Pie
-                                                data={statusDistribution}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={100}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                animationDuration={1500}
-                                            >
-                                                {statusDistribution.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={['#A855F7', '#34D399', '#FBBF24', '#F43F5E', '#3B82F6'][index % 5]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip content={<ChartTooltip />} />
-                                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            {/* Pillar Distribution */}
-                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] p-4 md:p-6 lg:p-8 flex flex-col items-center">
-                                <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-8 self-start">
-                                    <Layers size={18} className="md:w-6 md:h-6 text-foreground" />
-                                    <h3 className="text-base md:text-xl font-bold font-heading text-foreground">Content Pillars</h3>
-                                </div>
-                                <div className="h-[180px] md:h-[300px] min-w-[200px] w-full" style={{ minWidth: 0, minHeight: 0 }}>
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                        <PieChart>
-                                            <Pie
-                                                data={pillarDistribution}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={100}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                animationDuration={1500}
-                                            >
-                                                {pillarDistribution.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={['#FBBF24', '#34D399', '#A855F7', '#3B82F6', '#F43F5E'][index % 5]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip content={<ChartTooltip />} />
-                                            <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                        </div>
-
-
-
-                        {/* Workspace Gallery */}
-                        <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-                            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                                <Layers size={20} className="sm:w-7 sm:h-7 text-foreground" strokeWidth={2.5} />
-                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold font-heading text-foreground">Workspace Gallery</h2>
-                            </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
-                                {workspaces.length === 0 ? (
-                                    <p className="text-xs sm:text-sm text-slate-500 font-bold col-span-full">Belum ada workspace yang tersedia.</p>
-                                ) : (
-                                    workspaces.map(ws => (
-                                        <div
-                                            key={ws.id}
-                                            onClick={() => navigate(`/plan/${ws.id}`)}
-                                            className="group cursor-pointer bg-card rounded-2xl sm:rounded-[32px] border-2 sm:border-[3px] border-slate-900 p-4 sm:p-5 lg:p-6 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] hover:-translate-y-2 hover:shadow-[2px_4px_0px_#0f172a] sm:hover:shadow-[0px_12px_0px_#0f172a] transition-all flex flex-col relative overflow-hidden h-full min-h-[180px] sm:min-h-[220px]"
-                                        >
-                                            {/* Top Section */}
-                                            <div className="flex justify-between items-start gap-2 sm:gap-3 lg:gap-4 mb-2 sm:mb-3">
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-black text-slate-900 font-heading leading-tight truncate w-full mb-1.5 sm:mb-2 lg:mb-3" title={ws.name}>
-                                                        {ws.name}
-                                                    </h3>
-                                                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                                        <span className="inline-block px-1.5 sm:px-2 py-0.5 rounded text-[8px] sm:text-[10px] font-black bg-slate-900 text-white border-2 border-slate-900 uppercase tracking-widest leading-none">
-                                                            {ws.role || 'OWNER'}
-                                                        </span>
-                                                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                                            GENERAL • {ws.period || 'PERSONAL'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl border-2 border-slate-900 bg-background flex items-center justify-center shrink-0 p-1 shadow-sm relative z-10 transition-transform group-hover:scale-105">
-                                                    {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers size={18} className="sm:w-6 sm:h-6 text-slate-400" />}
+                                <div className="space-y-6">
+                                    {recentContent.length === 0 ? (
+                                        <div className="py-20 text-center text-slate-300 font-bold italic text-lg">No content in pipeline.</div>
+                                    ) : recentContent.map(item => (
+                                        <div key={item.id} className="group flex items-center gap-6 p-5 rounded-[2rem] border-[3px] border-slate-50 hover:border-slate-900 transition-all bg-card shadow-sm hover:shadow-hard-mini">
+                                            <div className="w-20 h-16 bg-slate-100 rounded-2xl border-[3px] border-slate-900 overflow-hidden shrink-0 group-hover:rotate-2 transition-transform">
+                                                {item.thumbnail_url ? <img src={item.thumbnail_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 font-black text-2xl uppercase">{item.platform?.[0]}</div>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-lg font-black truncate text-slate-900 ">{item.title}</h4>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.platform}</span>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{new Date(item.updated_at || item.date).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
-
-                                            {/* Middle Section */}
-                                            <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6 line-clamp-2 leading-relaxed flex-1">
-                                                {ws.description || "Content Plan Workspace yang akan membantu memanajemen konten kamu secara tersistem"}
-                                            </p>
-
-                                            {/* Divider */}
-                                            <div className="w-full h-[1px] bg-slate-100 mb-3 sm:mb-4 lg:mb-5 relative overflow-hidden">
-                                                {/* decorative dashed effect */}
-                                                <div className="absolute top-0 left-0 w-full border-t-2 border-dashed border-slate-200"></div>
-                                            </div>
-
-                                            {/* Bottom Section */}
-                                            <div className="flex items-center justify-between mt-auto">
-                                                <div className="flex -space-x-2 sm:-space-x-4">
-                                                    {(ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 0) ? (
-                                                        ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).slice(0, 3).map((url: string, i: number) => (
-                                                            <img key={i} src={url} className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 bg-slate-200 object-cover" />
-                                                        ))
-                                                    ) : (
-                                                        <>
-                                                            <img src="https://ui-avatars.com/api/?name=User+One&background=0f172a&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
-                                                            <img src="https://ui-avatars.com/api/?name=Tim+A&background=10b981&color=fff" className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md flex-shrink-0 object-cover" />
-                                                        </>
-                                                    )}
-                                                    {ws.members && ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length > 3 && (
-                                                        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-[3px] border-white shadow-md font-black text-[10px] sm:text-[14px] flex items-center justify-center bg-slate-100 text-slate-900 z-10 relative">
-                                                            +{ws.members.filter((m: string) => m.includes('/') || m.startsWith('data:')).length - 3}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-900 bg-slate-900 text-white flex items-center justify-center group-hover:bg-slate-800 transition-all group-hover:-translate-y-1">
-                                                    <ArrowUpRight strokeWidth={2.5} size={16} className="sm:w-5 sm:h-5" />
-                                                </div>
+                                            <div className={`px-5 py-2 rounded-full text-[10px] font-black uppercase border-[3px] shadow-hard-mini ${item.status === 'Published' ? 'bg-emerald-400 text-slate-900 border-slate-900 animate-pulse' : 'bg-amber-400 text-slate-900 border-slate-900'}`}>
+                                                {item.status}
                                             </div>
                                         </div>
-                                    ))
-                                )}
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-[3.5rem] border-[3.5px] border-slate-900 shadow-hard p-10 flex flex-col items-center">
+                                <h3 className="text-2xl font-black font-heading self-start mb-10 flex items-center gap-4">
+                                    <Layout className="text-emerald-500 w-8 h-8" /> Status Ratio
+                                </h3>
+                                <div className="h-[300px] w-full">
+                                    <ResponsiveContainer>
+                                        <PieChart>
+                                            <Pie data={statusDistribution} cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={10} dataKey="value" stroke="none">
+                                                {statusDistribution.map((_, index) => <Cell key={index} fill={['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#A855F7'][index % 5]} className="stroke-slate-900 stroke-[5px]" />)}
+                                            </Pie>
+                                            <Tooltip content={<ChartTooltip />} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-10 gap-y-4 mt-8">
+                                    {statusDistribution.map((d, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className="w-4 h-4 rounded-lg border-2 border-slate-900" style={{ backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#A855F7'][i % 5] }} />
+                                            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{d.name} <span className="text-slate-300 ml-1">{d.value}</span></span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
+                        {/* Recent Workspaces Triple Scroll */}
+                        <div className="space-y-8">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-3xl font-black font-heading flex items-center gap-4">
+                                    <Send className="text-indigo-500 w-10 h-10 -rotate-12" strokeWidth={3} /> My Power Workspaces
+                                </h2>
+                                <Button variant="secondary" onClick={() => navigate('/plan')} className="shadow-hard rounded-[1.5rem] px-8 py-6 font-black text-base uppercase tracking-widest border-[3px] border-slate-900">Explore Labs</Button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+                                {workspaces.slice(0, 6).map(ws => (
+                                    <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="group bg-white rounded-[3.5rem] border-[3.5px] border-slate-900 p-8 shadow-hard hover:shadow-[16px_16px_0px_#0f172a] transition-all hover:-translate-y-3 cursor-pointer flex flex-col h-full relative overflow-hidden">
+                                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-slate-50 rounded-full group-hover:scale-110 transition-transform duration-500" />
+                                        <div className="flex justify-between items-start mb-8 relative z-10">
+                                            <div className="w-20 h-20 rounded-[2rem] border-[3.5px] border-slate-900 bg-white p-2.5 flex items-center justify-center shadow-hard-mini group-hover:rotate-6 transition-transform">
+                                                {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <div className="text-4xl font-black text-slate-100 uppercase">{ws.name?.[0]}</div>}
+                                            </div>
+                                            <div className="px-5 py-2 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-hard-mini">{ws.period || 'PERSONAL'}</div>
+                                        </div>
+                                        <h4 className="text-2xl font-black text-slate-900 font-heading mb-4 group-hover:text-accent transition-colors truncate relative z-10">{ws.name}</h4>
+                                        <p className="text-sm font-bold text-slate-500 mb-10 line-clamp-3 leading-relaxed flex-1 relative z-10">{ws.description || "Content Plan Workspace untuk memanajemen konten secara tersistem & maksimal."}</p>
+                                        <div className="flex items-center justify-between pt-6 border-t-[3.5px] border-dashed border-slate-100 relative z-10">
+                                            <div className="flex -space-x-4">
+                                                {ws.members?.slice(0, 4).map((m: any, idx: number) => (
+                                                    <img key={idx} src={m.includes('/') ? m : `https://ui-avatars.com/api/?name=${m}&background=random&color=fff`} className="w-12 h-12 rounded-full border-[3.5px] border-white bg-slate-200 object-cover shadow-soft" />
+                                                ))}
+                                                {ws.members && ws.members.length > 4 && <div className="w-12 h-12 rounded-full border-[3.5px] border-white bg-slate-100 text-xs font-black flex items-center justify-center text-slate-500 z-10 shadow-soft">+{ws.members.length - 4}</div>}
+                                            </div>
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center group-hover:bg-accent group-hover:scale-110 transition-all shadow-hard-mini">
+                                                <ArrowUpRight size={22} strokeWidth={3} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    {/* --- RIGHT DESKTOP COLUMN (4 of 12) --- */}
-                    <div className="lg:col-span-4 space-y-4 sm:space-y-6 lg:pt-[115px]">
+                    {/* --- RIGHT AREA: PRIVATE HUB (3 cols) --- */}
+                    <div className="lg:col-span-3 space-y-10">
 
-                        {/* Analytics Filtering shifted here */}
-                        <div className="flex flex-wrap gap-2 w-full justify-end">
-                            <select
-                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                value={filterPlatform}
-                                onChange={(e) => setFilterPlatform(e.target.value)}
-                            >
-                                <option value="all">PLATFORM</option>
-                                {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => (
-                                    <option key={p} value={p}>{p.toUpperCase()}</option>
-                                ))}
-                            </select>
-                            <select
-                                className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                value={filterWs}
-                                onChange={(e) => setFilterWs(e.target.value)}
-                            >
-                                <option value="all">WORKSPACE</option>
-                                {workspaces.map(ws => (
-                                    <option key={ws.id} value={ws.id}>{ws.name.length > 15 ? ws.name.substring(0, 12) + '...' : ws.name.toUpperCase()}</option>
-                                ))}
-                            </select>
-                            <div className="flex gap-2">
-                                <select
-                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                    value={filterMonth}
-                                    onChange={(e) => setFilterMonth(parseInt(e.target.value))}
-                                >
-                                    {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m, i) => (
-                                        <option key={m} value={i}>{m.toUpperCase()}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    className="px-3 py-1.5 border-2 border-slate-900 rounded-full font-black text-[10px] uppercase tracking-wider bg-card text-foreground outline-none focus:bg-slate-100 cursor-pointer shadow-hard-mini hover:translate-x-0.5 hover:translate-y-0.5"
-                                    value={filterYear}
-                                    onChange={(e) => setFilterYear(parseInt(e.target.value))}
-                                >
-                                    {[2024, 2025, 2026].map(y => (
-                                        <option key={y} value={y}>{y}</option>
-                                    ))}
-                                </select>
+                        {/* 1. Global Filter Hub */}
+                        <div className="bg-white rounded-[3rem] border-[3.5px] border-slate-900 p-8 shadow-hard space-y-6">
+                            <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-300">Hub Filter</h4>
+                            <div className="grid grid-cols-1 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Platform Focus</label>
+                                    <select value={filterPlatform} onChange={(e) => setFilterPlatform(e.target.value)} className="w-full bg-slate-50 border-[3px] border-slate-900 rounded-2xl px-5 py-4 text-xs font-black uppercase tracking-widest outline-none focus:bg-white cursor-pointer shadow-hard-mini transition-all">
+                                        <option value="all">ALL PLATFORM</option>
+                                        {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Workspace Filter</label>
+                                    <select value={filterWs} onChange={(e) => setFilterWs(e.target.value)} className="w-full bg-slate-50 border-[3px] border-slate-900 rounded-2xl px-5 py-4 text-xs font-black uppercase tracking-widest outline-none focus:bg-white cursor-pointer shadow-hard-mini transition-all">
+                                        <option value="all">ALL WORKSPACE</option>
+                                        {workspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>)}
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Month</label>
+                                        <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))} className="w-full bg-slate-50 border-[3px] border-slate-900 rounded-2xl px-4 py-4 text-xs font-black uppercase outline-none focus:bg-white cursor-pointer shadow-hard-mini">
+                                            {['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'].map((m, i) => <option key={m} value={i}>{m}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Year</label>
+                                        <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-full bg-slate-50 border-[3px] border-slate-900 rounded-2xl px-4 py-4 text-xs font-black uppercase outline-none focus:bg-white cursor-pointer shadow-hard-mini">
+                                            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Religious Card */}
-                        <div className="space-y-1.5 sm:space-y-2">
-                            <div className="bg-slate-900 rounded-2xl sm:rounded-[32px] overflow-hidden border-2 sm:border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] sm:shadow-[0px_8px_0px_#0f172a] relative">
-                                {isSelectingReligion ? (
-                                    <div className="p-3 sm:p-4 lg:p-6 bg-slate-50 h-full flex flex-col justify-center overflow-y-auto custom-scrollbar">
-                                        <Book size={24} className="sm:w-8 sm:h-8 text-accent mb-3 sm:mb-4" />
-                                        <h3 className="text-base sm:text-lg lg:text-xl font-black text-slate-900 uppercase tracking-tighter mb-1 sm:mb-2">Quote Harian</h3>
-                                        <p className="text-[11px] sm:text-sm font-bold text-slate-500 mb-3 sm:mb-4 lg:mb-6">Pilih preferensi Anda untuk menyesuaikan motivasi harian.</p>
-                                        <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 lg:mb-6">
-                                            {Object.keys(RELIGION_CONTENT).map(rel => (
-                                                <button
-                                                    key={rel}
-                                                    onClick={() => handleSetReligion(rel)}
-                                                    className={`px-2 sm:px-4 py-1.5 sm:py-3 border-2 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-xs transition-colors ${religion === rel ? 'bg-accent border-accent text-white' : 'bg-card border-slate-200 text-foreground hover:border-slate-900 hover:bg-slate-500/10'}`}
-                                                >
-                                                    {rel}
-                                                </button>
-                                            ))}
+                        {/* 2. Personalized Insight (Religious/Quote) */}
+                        <div className="bg-slate-900 rounded-[3.5rem] overflow-hidden border-[4px] border-slate-900 shadow-hard relative group">
+                            {isSelectingReligion ? (
+                                <div className="p-10 bg-white h-full space-y-8 animate-in zoom-in-95 duration-300">
+                                    <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Set Preference</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {Object.keys(RELIGION_CONTENT).map(rel => (
+                                            <button key={rel} onClick={() => handleSetReligion(rel)} className={`px-4 py-5 border-[3px] rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${religion === rel ? 'bg-slate-900 border-slate-900 text-white shadow-hard' : 'border-slate-100 hover:border-slate-900'}`}>{rel}</button>
+                                        ))}
+                                    </div>
+                                    <Button className="w-full py-8 text-lg rounded-3xl" variant="outline" onClick={() => setIsSelectingReligion(false)}>Go Back</Button>
+                                </div>
+                            ) : religion === 'Islam' ? (
+                                <div className="bg-gradient-to-br from-[#10B981] via-[#059669] to-[#064E3B] p-10 text-white min-h-[420px] flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full" />
+                                    <button onClick={() => setIsSelectingReligion(true)} className="absolute top-8 right-8 bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all backdrop-blur-md"><Settings size={20} /></button>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] mb-6 text-emerald-200 flex items-center gap-2"><Clock size={14} /> Next Prayer</p>
+                                    <h3 className="text-6xl font-black font-heading mb-6 drop-shadow-hard">{nextPrayerState.name}</h3>
+                                    <div className="bg-black/20 px-6 py-3 rounded-3xl backdrop-blur-xl border border-white/10 shadow-xl">
+                                        <p className="font-black text-xl">{nextPrayerState.time} <span className="text-[10px] text-emerald-300 ml-1">{tzLabel}</span></p>
+                                        <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mt-1">In {nextPrayerState.countdown} mins • {cityInfo}</p>
+                                    </div>
+                                    <div className="w-full h-px bg-white/10 my-10" />
+                                    {dailyQuote && typeof dailyQuote === 'object' && (
+                                        <div className="space-y-4 animate-in slide-in-from-bottom-2">
+                                            <p className="text-lg font-bold italic leading-relaxed">"{dailyQuote.text}"</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300/80 bg-white/5 px-4 py-2 rounded-full inline-block">- {dailyQuote.surah} -</p>
                                         </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className={`bg-gradient-to-br ${getReligionStyles(religion)} p-10 text-white min-h-[420px] flex flex-col items-center justify-center text-center relative`}>
+                                    <button onClick={() => setIsSelectingReligion(true)} className="absolute top-8 right-8 bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all backdrop-blur-md"><Settings size={20} /></button>
+                                    <Book size={60} className="opacity-10 mb-8 animate-bounce-slow" />
+                                    <h3 className="text-2xl font-black font-heading italic leading-relaxed mb-8 drop-shadow-md">"{dailyQuote?.text || String(dailyQuote || '')}"</h3>
+                                    <div className="bg-black/10 px-6 py-3 rounded-full backdrop-blur-md border border-white/5">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em]">- {dailyQuote?.source || 'Motivasi'} -</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-                                        {religion === 'Islam' && (
-                                            <div className="bg-background p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-slate-200 mt-2">
-                                                <h4 className="font-bold text-[10px] sm:text-sm text-slate-800 mb-1.5 sm:mb-2">Lokasi Jadwal Sholat (Opsi Manual)</h4>
-                                                <p className="text-[9px] sm:text-xs text-slate-500 mb-2 sm:mb-3 block">Bila kosong, sistem akan menggunakan lokasi otomatis GPS device Anda.</p>
-                                                <div className="space-y-2 sm:space-y-3">
-                                                    <input
-                                                        className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
-                                                        placeholder="Contoh: Banjarmasin"
-                                                        value={manualCity}
-                                                        onChange={e => setManualCity(e.target.value)}
-                                                    />
-                                                    <select
-                                                        className="w-full border-2 border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none"
-                                                        value={manualTz}
-                                                        onChange={e => setManualTz(e.target.value)}
-                                                    >
-                                                        <option value="WIB">WIB (Waktu Indonesia Barat)</option>
-                                                        <option value="WITA">WITA (Waktu Indonesia Tengah)</option>
-                                                        <option value="WIT">WIT (Waktu Indonesia Timur)</option>
-                                                    </select>
-                                                    <button
-                                                        onClick={async () => {
-                                                            localStorage.setItem('user_city', manualCity);
-                                                            localStorage.setItem('user_tz', manualTz);
-                                                            setIsSelectingReligion(false);
-
-                                                            // Save to DB
-                                                            const userId = localStorage.getItem('user_id');
-                                                            if (userId) {
-                                                                await supabase.from('app_users').update({
-                                                                    city: manualCity,
-                                                                    timezone: manualTz
-                                                                }).eq('id', userId);
-                                                            }
-                                                        }}
-                                                        className="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-sm hover:bg-emerald-700 transition"
-                                                    >
-                                                        Simpan Preferensi Lokasi
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {religion !== 'Islam' && religion !== null && (
-                                            <button
-                                                onClick={() => setIsSelectingReligion(false)}
-                                                className="w-full mt-2 bg-slate-900 text-white font-bold py-3 rounded-lg text-sm hover:bg-slate-800 transition"
-                                            >
-                                                Kembali ke Dashboard
+                        <div className="bg-white rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                            <div className="flex items-center justify-between mb-10">
+                                <h3 className="text-2xl font-black font-heading flex items-center gap-4">
+                                    <CheckCircle size={28} className="text-slate-800" strokeWidth={3} /> Daily Mission
+                                </h3>
+                                <div className="px-4 py-1.5 bg-slate-900 text-white rounded-full text-[10px] font-black shadow-hard-mini">{checklists.filter(c => c.done).length}/{checklists.length}</div>
+                            </div>
+                            <div className="space-y-4 mb-10 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
+                                {checklists.length === 0 ? (
+                                    <div className="py-12 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                                        <p className="text-xs font-bold text-slate-400">Zero tasks today. Relax!</p>
+                                    </div>
+                                ) : checklists.map(c => (
+                                    <div key={c.id} className="flex flex-col group p-4 rounded-3xl hover:bg-slate-50 transition-all border-2 border-transparent hover:border-slate-100">
+                                        <div className="flex items-center gap-4">
+                                            <button onClick={() => toggleChecklist(c.id)} className={`w-8 h-8 rounded-xl border-[3px] flex items-center justify-center transition-all shadow-hard-mini ${c.done ? 'bg-emerald-500 border-slate-900 text-white' : 'bg-white border-slate-900'}`}>
+                                                {c.done && <Check size={20} strokeWidth={5} />}
                                             </button>
-                                        )}
-                                    </div>
-                                ) : religion === 'Islam' ? (
-                                    <div className="bg-gradient-to-br from-[#18B878] to-[#0D9F61] p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[240px] relative">
-                                        <button onClick={() => setIsSelectingReligion(true)} className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
-                                            <Settings size={20} />
-                                        </button>
-
-                                        <p className="font-bold text-white/90 text-sm md:text-base mb-1">
-                                            {nextPrayerState.countdown} menit lagi memasuki waktu
-                                        </p>
-                                        <h3 className="text-5xl md:text-6xl font-black font-heading mb-2 drop-shadow-sm">{nextPrayerState.name}</h3>
-                                        <p className="font-bold text-white/90 text-xs md:text-sm mb-4">
-                                            {nextPrayerState.time} {tzLabel} - {cityInfo}
-                                        </p>
-
-                                        <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
-                                        {dailyQuote && typeof dailyQuote === 'object' ? (
-                                            <>
-                                                {dailyQuote.arabic && (
-                                                    <p className="text-2xl md:text-3xl font-bold font-heading mb-3 text-white leading-normal" dir="rtl">
-                                                        {dailyQuote.arabic}
-                                                    </p>
-                                                )}
-                                                <p className="text-sm md:text-base font-bold italic mb-2 leading-relaxed">
-                                                    "{dailyQuote.text}"
-                                                </p>
-                                                <p className="text-xs font-bold text-white/80">
-                                                    - {dailyQuote.surah} -
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <p className="text-sm md:text-base font-bold italic mb-2 leading-relaxed">"{String(dailyQuote)}"</p>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className={`bg-gradient-to-br ${getReligionStyles(religion)} p-6 h-full flex flex-col items-center justify-center text-center text-white min-h-[220px] relative transition-colors duration-500`}>
-                                        <button onClick={() => setIsSelectingReligion(true)} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
-                                            <Settings size={20} />
-                                        </button>
-
-                                        <Book size={32} className="text-white/20 mb-4" />
-
-                                        <div className="w-full h-[1px] bg-white/30 mb-4 max-w-sm"></div>
-
-                                        <div className="flex-1 flex flex-col justify-center items-center">
-                                            <h3 className="text-xl md:text-2xl font-bold font-heading leading-relaxed italic mb-4 max-w-md drop-shadow-sm">
-                                                "{dailyQuote?.text || (typeof dailyQuote === 'string' ? dailyQuote : '')}"
-                                            </h3>
-                                            <p className="text-sm font-bold text-white/80 bg-black/10 px-4 py-2 rounded-xl backdrop-blur-sm">
-                                                - {dailyQuote?.source || 'Motivasi'} -
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Daily Checklist */}
-                        <div id="daily-checklist" className="space-y-2">
-                            <div className="flex items-center gap-3 mb-1">
-                                <CheckCircle size={22} className="text-slate-800" strokeWidth={2.5} />
-                                <h2 className="text-lg font-bold font-heading text-slate-800">Checklist</h2>
-                            </div>
-                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
-                                <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2 rounded-xl">
-                                    {checklists.length === 0 ? (
-                                        <div className="text-center py-10">
-                                            <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <Check size={24} className="text-slate-300" />
-                                            </div>
-                                            <p className="text-slate-500 font-bold text-sm">Checklist Anda kosong.<br />Tambahkan tugas hari ini!</p>
-                                        </div>
-                                    ) : (
-                                        checklists.map(c => (
-                                            <div key={c.id} className="group flex items-center gap-3 p-3 rounded-xl border-2 border-slate-200 hover:border-slate-300 bg-card transition-colors">
-                                                <button onClick={() => toggleChecklist(c.id)} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${c.done ? 'bg-accent border-accent text-white' : 'border-slate-300 text-transparent'}`}>
-                                                    <Check size={14} className={c.done ? 'opacity-100' : 'opacity-0'} />
-                                                </button>
-                                                <p className={`flex-1 font-bold text-sm transition-all ${c.done ? 'text-mutedForeground line-through' : 'text-foreground'}`}>{c.text}</p>
-                                                <button onClick={() => deleteChecklist(c.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                                <form onSubmit={addChecklist} className="flex gap-2">
-                                    <input
-                                        className="flex-1 bg-background border-2 border-slate-200 rounded-xl px-4 py-2 font-bold text-sm focus:border-accent outline-none transition-colors"
-                                        placeholder="Tugas baru..."
-                                        value={newChecklist}
-                                        onChange={e => setNewChecklist(e.target.value)}
-                                    />
-                                    <button type="submit" className="w-12 h-11 bg-slate-900 border-2 border-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-slate-800 transition-colors shadow-hard-mini shrink-0">
-                                        <Plus size={20} />
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        {/* Notification Box */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-3 mb-1">
-                                <Bell size={22} className="text-slate-800" strokeWidth={2.5} />
-                                <h2 className="text-lg font-bold font-heading text-slate-800">Notifikasi</h2>
-                            </div>
-                            <div className="bg-card rounded-2xl md:rounded-[32px] border-2 md:border-[3px] border-slate-900 p-4 md:p-6 shadow-[2px_2px_0px_#0f172a] md:shadow-[0px_8px_0px_#0f172a] flex flex-col min-h-[200px] md:min-h-[300px]">
-                                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                                    {notifications.length === 0 ? (
-                                        <div className="text-center py-10">
-                                            <div className="w-16 h-16 bg-slate-50 border-2 border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <Bell size={24} className="text-slate-300" />
-                                            </div>
-                                            <p className="text-slate-500 font-bold text-sm">Belum ada notifikasi baru.</p>
-                                        </div>
-                                    ) : (
-                                        notifications.slice(0, 5).map(n => (
-                                            <div
-                                                key={n.id}
-                                                onClick={() => handleNotificationClick(n)}
-                                                className={`group flex items-start gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer ${n.is_read ? 'border-slate-100 bg-slate-50 opacity-70' : 'border-slate-200 hover:border-slate-300 bg-card shadow-sm'}`}
-                                            >
-                                                <div className="shrink-0 relative mt-1">
-                                                    {n.actor?.avatar_url ? (
-                                                        <img src={n.actor.avatar_url} className="w-8 h-8 rounded-full border border-slate-900 object-cover" alt="" />
-                                                    ) : (
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white border border-slate-900 text-[10px] font-bold ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
-                                                            {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`text-sm font-black truncate ${c.done ? 'text-slate-300 line-through' : 'text-slate-800'}`}>{c.text}</p>
+                                                {c.time && (
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-[10px] font-black text-slate-500">
+                                                            <Clock size={10} /> {c.time}
                                                         </div>
-                                                    )}
-                                                    {!n.is_read && (
-                                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start mb-0.5">
-                                                        <p className="text-[9px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
-                                                        <p className="text-[8px] font-bold text-slate-400 shrink-0 ml-2">
-                                                            {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
+                                                        {c.notifPref && c.notifPref !== 'none' && (
+                                                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-accent/10 text-[10px] font-black text-accent">
+                                                                <Bell size={10} /> {c.notifPref}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <p className="text-xs font-bold text-slate-700 leading-tight line-clamp-2">{n.content}</p>
-                                                </div>
+                                                )}
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                                <Button className="w-full mt-6" variant="outline" size="sm" onClick={() => setShowNotifSidebar(true)}>
-                                    Lihat Semua <ArrowRight size={14} className="ml-2" />
-                                </Button>
+                                            <button onClick={() => deleteChecklist(c.id)} className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 transition-all"><Trash2 size={18} /></button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                            <form onSubmit={addChecklist} className="flex gap-3">
+                                <input className="flex-1 bg-slate-50 border-[3px] border-slate-900 rounded-[1.5rem] px-6 py-4 text-sm font-black outline-none focus:bg-white shadow-hard-mini transition-all" placeholder="New mission..." value={newChecklist} onChange={e => setNewChecklist(e.target.value)} />
+                                <button type="submit" className="w-14 h-14 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center shadow-hard hover:scale-110 active:scale-95 transition-all"><Plus size={28} strokeWidth={3} /></button>
+                            </form>
                         </div>
 
-                        {/* KPI Targets Preview */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-3 mb-1">
-                                <TrendingUp size={22} className="text-slate-800" strokeWidth={2.5} />
-                                <h2 className="text-lg font-bold font-heading text-slate-800">KPI Targets</h2>
-                            </div>
-                            <div className="bg-card rounded-[32px] border-[3px] border-slate-900 shadow-[0px_8px_0px_#0f172a] p-6">
-                                <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl mb-4">
-                                    <p className="text-xs font-bold text-yellow-800">
-                                        Berikut adalah target bulan ini yang terkoneksi pada performa kerja Anda secara personal.
-                                    </p>
-                                </div>
-                                <div className="space-y-4">
-                                    {kpis.length === 0 ? (
-                                        <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">
-                                            <p className="text-sm font-bold text-slate-400">Belum ada target KPI yang diassign untuk profil Anda bulan ini. ✨</p>
-                                        </div>
-                                    ) : (
-                                        kpis.map((kpi, idx) => {
-                                            const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
-                                            const isCompleted = kpi.actual_value >= kpi.target_value;
-                                            return (
-                                                <div key={kpi.id || idx} className="bg-card border-2 border-border/20 rounded-xl p-4 shadow-sm hover:border-slate-300 transition-colors">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <h4 className="font-black text-slate-800 text-sm truncate pr-4">{kpi.metric_name}</h4>
-                                                        <span className="text-[10px] font-black bg-slate-100 px-2 py-1 rounded border border-slate-200">
-                                                            {kpis[idx].actual_value} / {kpis[idx].target_value} {kpi.unit}
-                                                        </span>
-                                                    </div>
-                                                    <div className="w-full bg-background h-3 rounded-full overflow-hidden border border-slate-200">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? 'bg-green-500' : 'bg-accent'}`}
-                                                            style={{ width: `${Math.min(progress, 100)}%` }}
-                                                        ></div>
-                                                    </div>
+                        {/* 5. KPI Live Preview */}
+                        <div className="bg-card rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                            <h3 className="text-2xl font-black font-heading mb-10 flex items-center gap-4">
+                                <TrendingUp size={28} className="text-slate-800 " strokeWidth={3} /> My KPI Targets
+                            </h3>
+                            <div className="space-y-8">
+                                {kpis.length === 0 ? (
+                                    <div className="py-12 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 ">
+                                        <p className="text-xs font-bold text-slate-400">No active KPIs. Keep up the vibe!</p>
+                                    </div>
+                                ) : kpis.map((kpi, idx) => {
+                                    const progress = kpi.target_value > 0 ? (kpi.actual_value / kpi.target_value) * 100 : 0;
+                                    const isCompleted = kpi.actual_value >= kpi.target_value;
+                                    return (
+                                        <div key={kpi.id || idx} className="space-y-3">
+                                            <div className="flex justify-between items-end">
+                                                <div>
+                                                    <h4 className="font-black text-slate-900 text-base leading-none mb-2">{kpi.metric_name}</h4>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{kpi.unit} Base Target</p>
                                                 </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                                <Button className="w-full mt-6" variant="secondary" onClick={() => navigate('/script')}>
-                                    Lihat Board KPI Saya <ArrowRight size={16} className="ml-2" />
-                                </Button>
+                                                <span className="text-xs font-black bg-slate-900 text-white px-3 py-1 rounded-lg shadow-hard-mini">
+                                                    {kpi.actual_value} / {kpi.target_value}
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 h-5 rounded-2xl overflow-hidden border-[3px] border-slate-900 p-0.5 shadow-hard-mini">
+                                                <div className={`h-full rounded-xl transition-all duration-1000 ${isCompleted ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' : 'bg-gradient-to-r from-blue-400 to-accent'}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
+                            <Button className="w-full mt-12 py-8 rounded-[1.5rem] font-black uppercase text-xs tracking-[0.3em]" variant="secondary" onClick={() => navigate('/script')}>View Full Board</Button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Notification Sidebar Overlay */}
-                {showNotifSidebar && (
-                    <div className="fixed inset-0 z-[10001] flex justify-end">
-                        {/* Backdrop */}
-                        <div
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
-                            onClick={() => setShowNotifSidebar(false)}
-                        />
-
-                        {/* Sidebar Content */}
-                        <div className="relative w-full max-w-[450px] bg-card h-full border-l-4 border-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-500 ease-out">
-                            {/* Header */}
-                            <div className="p-6 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-hard-mini">
-                                        <Bell size={24} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Semua Notifikasi</h2>
-                                        <p className="text-[10px] font-black text-accent uppercase tracking-widest">{unreadCount} belum dibaca</p>
-                                    </div>
+            {/* Global Notification Hub Sidebar Overlay */}
+            {showNotifSidebar && (
+                <div className="fixed inset-0 z-[10001] flex justify-end">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-500" onClick={() => setShowNotifSidebar(false)} />
+                    <div className="relative w-full max-w-[500px] bg-white h-full border-l-[6px] border-slate-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-700 ease-out">
+                        <div className="p-10 border-b-[4px] border-slate-900 flex items-center justify-between bg-white ">
+                            <div className="flex items-center gap-6">
+                                <div className="w-16 h-16 rounded-[1.5rem] bg-slate-900 text-white flex items-center justify-center shadow-hard"><Bell size={32} /></div>
+                                <div className="space-y-1">
+                                    <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Activity</h2>
+                                    <p className="text-xs font-bold text-accent uppercase tracking-[0.3em]">{unreadCount} UNREAD PULSE</p>
                                 </div>
-                                <button
-                                    onClick={() => setShowNotifSidebar(false)}
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"
-                                >
-                                    <X size={24} />
-                                </button>
                             </div>
-
-                            {/* Top Action Bar */}
-                            <div className="px-6 py-4 border-b-2 border-slate-50 flex items-center justify-between bg-white">
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={markAllAsRead}
-                                        className="text-[10px] font-black uppercase text-slate-600 hover:text-accent transition-colors flex items-center gap-2"
-                                    >
-                                        <CheckCheck size={14} /> Tandai Semua Terbaca
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm('Hapus semua notifikasi permanen?')) {
-                                                clearAllNotifications();
-                                            }
-                                        }}
-                                        className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2"
-                                    >
-                                        <Trash2 size={14} /> Hapus Semua
-                                    </button>
+                            <button onClick={() => setShowNotifSidebar(false)} className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all border-2 border-transparent hover:border-slate-200"><X size={32} /></button>
+                        </div>
+                        <div className="px-10 py-6 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50">
+                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-slate-500 hover:text-accent flex items-center gap-2"><CheckCheck size={16} /> Mark All Clear</button>
+                            <button onClick={() => window.confirm('Purge all notifications?') && clearAllNotifications()} className="text-[10px] font-black uppercase text-slate-400 hover:text-red-500 flex items-center gap-2"><Trash2 size={16} /> Purge Hub</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-10 space-y-6 custom-scrollbar">
+                            {notifications.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-30 grayscale">
+                                    <Bell size={80} className="mb-6" />
+                                    <h3 className="text-2xl font-black uppercase tracking-widest">Hub Empty</h3>
+                                    <p className="text-xs font-bold">Waiting for new activity...</p>
                                 </div>
-                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Terbaru</span>
-                            </div>
-
-                            {/* Notification List */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-50/30">
-                                {notifications.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center p-12">
-                                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-slate-200">
-                                            <Bell size={32} className="text-slate-200" />
-                                        </div>
-                                        <h3 className="text-slate-900 font-black uppercase tracking-tight mb-1">Hening Sekali...</h3>
-                                        <p className="text-xs font-bold text-slate-400">Belum ada notifikasi yang masuk untuk Anda saat ini.</p>
+                            ) : Object.entries(notifications.reduce((acc: any, n) => {
+                                const date = new Date(n.created_at).toLocaleDateString();
+                                if (!acc[date]) acc[date] = [];
+                                acc[date].push(n);
+                                return acc;
+                            }, {})).map(([date, group]: any) => (
+                                <div key={date} className="space-y-4">
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] whitespace-nowrap">{date}</span>
+                                        <div className="h-px w-full bg-slate-100 " />
                                     </div>
-                                ) : (
-                                    notifications.map(n => (
-                                        <div
-                                            key={n.id}
-                                            onClick={() => {
-                                                handleNotificationClick(n);
-                                            }}
-                                            className={`group flex items-start gap-4 p-5 rounded-[24px] border-2 transition-all cursor-pointer relative overflow-hidden ${n.is_read
-                                                ? 'border-slate-100 bg-white/50 opacity-60'
-                                                : 'border-slate-900 bg-white shadow-hard-mini hover:-translate-y-1'
-                                                }`}
-                                        >
-                                            <div className="shrink-0 relative">
-                                                {n.actor?.avatar_url ? (
-                                                    <img src={n.actor.avatar_url} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" alt="" />
-                                                ) : (
-                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white border-2 border-slate-900 font-black text-sm ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
-                                                        {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
-                                                    </div>
-                                                )}
-                                                {!n.is_read && (
-                                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-white rounded-full animate-pulse shadow-sm"></div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <p className="text-[10px] font-black uppercase text-accent tracking-widest line-clamp-1">{n.title}</p>
-                                                    <p className="text-[9px] font-black text-slate-400 shrink-0 ml-2 bg-slate-50 px-2 py-0.5 rounded-full">
-                                                        {new Date(n.created_at).toLocaleDateString() === new Date().toLocaleDateString()
-                                                            ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                                            : new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
-                                                        }
-                                                    </p>
+                                    {group.map((n: any) => (
+                                        <div key={n.id} onClick={() => handleNotificationClick(n)} className={`group relative p-8 rounded-[2.5rem] border-[3.5px] transition-all cursor-pointer overflow-hidden ${n.is_read ? 'bg-slate-50 border-slate-100 opacity-50' : 'bg-white border-slate-900 shadow-hard hover:-translate-y-2'}`}>
+                                            {!n.is_read && <div className="absolute top-0 right-0 w-20 h-20 bg-accent/5 rounded-bl-[4rem]" />}
+                                            <div className="flex items-start gap-6 relative z-10">
+                                                <div className="shrink-0 relative">
+                                                    {n.actor?.avatar_url ? (
+                                                        <img src={n.actor.avatar_url} className="w-14 h-14 rounded-2xl border-[3px] border-slate-900 object-cover" />
+                                                    ) : (
+                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white border-[3px] border-slate-900 font-black text-xl ${n.type === 'DEVELOPER_ALERT' ? 'bg-amber-500' : 'bg-accent'}`}>
+                                                            {n.type === 'DEVELOPER_ALERT' ? 'DEV' : (n.title?.[0] || 'N')}
+                                                        </div>
+                                                    )}
+                                                    {!n.is_read && <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 border-[4px] border-white rounded-full animate-pulse" />}
                                                 </div>
-                                                <p className="text-sm font-bold text-slate-700 leading-snug">
-                                                    {n.content}
-                                                </p>
-
-                                                {/* Action Indicator on dark border cards */}
-                                                {!n.is_read && (
-                                                    <div className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-900 uppercase">
-                                                        Lihat Detail <ArrowRight size={12} strokeWidth={3} />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <p className="text-[11px] font-black uppercase text-accent tracking-[0.2em]">{n.title}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                     </div>
-                                                )}
+                                                    <p className="text-base font-bold text-slate-800 leading-snug">{n.content}</p>
+                                                    {!n.is_read && <div className="mt-4 flex items-center gap-2 text-[10px] font-black text-slate-900 uppercase">Inspect Signal <ArrowRight size={14} strokeWidth={3} /></div>}
+                                                </div>
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
+                                    ))}
+                                </div>
+                            ))
+                            }
                         </div>
                     </div>
-                )}
-            </div>
-        </>
+                </div>
+            )}
+
+            <DashboardAddContentModal
+                isOpen={isAddContentModalOpen}
+                onClose={() => setIsAddContentModalOpen(false)}
+                workspaces={workspaces}
+                onSuccess={() => {
+                    // Refetch data is auto-handled by dependency arrays in useEffects
+                    window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Konten berhasil ditambahkan ke Planning!' } }));
+                }}
+            />
+
+            <DashboardAddMissionModal
+                isOpen={isAddMissionModalOpen}
+                onClose={() => setIsAddMissionModalOpen(false)}
+                onSuccess={addMission}
+            />
+        </div>
     );
 };
+
+export default Dashboard;

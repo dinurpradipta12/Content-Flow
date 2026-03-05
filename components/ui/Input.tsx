@@ -31,10 +31,10 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = '', ...pr
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
-  options: { label: string; value: string }[];
+  options?: { label: string; value: string }[];
 }
 
-export const Select: React.FC<SelectProps> = ({ label, options, className = '', ...props }) => {
+export const Select: React.FC<SelectProps> = ({ label, options, children, className = '', ...props }) => {
   return (
     <div className="flex flex-col gap-1 w-full">
       {label && (
@@ -47,9 +47,9 @@ export const Select: React.FC<SelectProps> = ({ label, options, className = '', 
           className={`w-full bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none ${className}`}
           {...props}
         >
-          {options.map((opt) => (
+          {options ? options.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          )) : children}
         </select>
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
           <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>

@@ -21,6 +21,7 @@ import { Profile } from './pages/Profile';
 import { CalendarPage } from './pages/CalendarPage';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
 import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
+import { CollectIdea } from './pages/CollectIdea';
 import { NotificationProvider } from './components/NotificationProvider';
 import { AppConfigProvider } from './components/AppConfigProvider';
 import { supabase } from './services/supabaseClient';
@@ -213,6 +214,8 @@ const App: React.FC = () => {
                   <Route path="carousel" element={<CarouselMaker />} />
                   <Route path="script" element={<TeamKPIBoard />} />
                   <Route path="profile" element={<Profile />} />
+                  <Route path="collect-idea" element={<CollectIdea />} />
+                  <Route path="collect-idea/:id" element={<CollectIdea />} />
 
                   {/* Team & Admin Routes */}
                   <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
