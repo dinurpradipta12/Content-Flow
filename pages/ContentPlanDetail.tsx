@@ -1831,7 +1831,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setViewMode(tab.id as any)}
-                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[11px] font-black ${viewMode === tab.id ? `bg-card ${tab.color} shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[12px] font-black ${viewMode === tab.id ? `bg-card ${tab.color} shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
                                     >
                                         <tab.icon size={14} strokeWidth={4} />
                                         <span>{tab.label}</span>
@@ -1845,7 +1845,7 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-3 justify-center">
                                 <button
                                     onClick={() => setFilterPlatform('all')}
-                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[10px] transition-all flex items-center gap-2 ${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
+                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[12px] transition-all flex items-center gap-2 ${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
                                 >
                                     Semua
                                 </button>
@@ -1862,7 +1862,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         key={formatStatus(p)}
                                         onClick={() => setFilterPlatform(p)}
-                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[10px] transition-all flex items-center gap-2 ${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
+                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[12px] transition-all flex items-center gap-2 ${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
                                     >
                                         {getPlatformIcon(p)}
                                         {formatStatus(p)}
@@ -2127,19 +2127,19 @@ export const ContentPlanDetail: React.FC = () => {
                             <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-3 px-2">
                                 {/* Header */}
                                 <thead className="sticky top-0 z-20">
-                                    <tr>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Status</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Platform</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors" onClick={() => setTableSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+                                    <tr className="group">
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-l-[3px] border-slate-950 dark:border-slate-800 rounded-l-2xl shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a]">Status</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a]">Platform</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a] cursor-pointer hover:bg-blue-700 transition-colors" onClick={() => setTableSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
                                             <div className="flex items-center gap-2">Tanggal {tableSortOrder === 'asc' ? '↑' : '↓'}</div>
                                         </th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider min-w-[200px]">Judul Konten</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Pillar</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider text-center">Script</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Project Lead</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider text-center">Approval</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider min-w-[150px]">Social Link</th>
-                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider text-right pr-8">Action</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a] min-w-[200px]">Judul Konten</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a]">Pillar</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a] text-center">Script</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a]">Project Lead</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a] text-center">Approval</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-slate-950 dark:border-slate-800 shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a] min-w-[150px]">Social Link</th>
+                                        <th className="px-5 py-4 bg-blue-600 text-white text-[12px] font-black uppercase tracking-widest border-y-[3px] border-r-[3px] border-slate-950 dark:border-slate-800 rounded-r-2xl shadow-[0px_4px_0px_#0f172a] dark:shadow-[0px_4px_0px_#0f172a] text-right pr-8">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-transparent">
@@ -2147,60 +2147,60 @@ export const ContentPlanDetail: React.FC = () => {
                                         filteredTableTasks.map((task) => (
                                             <tr
                                                 key={task.id}
-                                                className="group relative"
+                                                className="group relative transition-all duration-300 hover:-translate-y-1 hover:-translate-x-[2px] bg-card rounded-2xl hover:shadow-[4px_6px_0px_#0f172a] dark:hover:shadow-[4px_6px_0px_#000000] z-0 hover:z-50"
                                             >
                                                 {/* 1. Status (Interactive Dropdown) */}
-                                                <td className="p-3 border-y-[2.5px] border-l-[2.5px] border-slate-900 rounded-l-2xl bg-card group-hover:bg-slate-50 transition-colors shadow-none">
+                                                <td className="p-3 border-y-[2.5px] border-l-[2.5px] border-border rounded-l-2xl bg-inherit transition-colors">
                                                     <div className="relative">
                                                         <select
                                                             value={task.status}
                                                             onChange={(e) => handleQuickUpdateStatus(task.id, e.target.value as ContentStatus)}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className={`appearance-none outline-none font-bold text-[11px] py-1.5 pl-3 pr-8 rounded-lg border cursor-pointer transition-all w-full min-w-[130px] ${task.status === ContentStatus.TODO ? 'bg-card border-border text-foreground' :
-                                                                task.status === ContentStatus.IN_PROGRESS ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' :
-                                                                    task.status === ContentStatus.REVIEW ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
-                                                                        task.status === ContentStatus.REVISION ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20' :
-                                                                            task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-500/10 dark:text-pink-400 dark:border-pink-500/20' :
-                                                                                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                                                            className={`appearance-none outline-none font-black text-[12px] uppercase tracking-wider py-1.5 pl-3 pr-8 rounded-lg border-2 cursor-pointer transition-all w-full min-w-[130px] shadow-sm ${task.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
+                                                                task.status === ContentStatus.IN_PROGRESS ? 'bg-blue-500 text-white border-blue-700' :
+                                                                    task.status === ContentStatus.REVIEW ? 'bg-amber-400 text-amber-950 border-amber-600' :
+                                                                        task.status === ContentStatus.REVISION ? 'bg-rose-500 text-white border-rose-700' :
+                                                                            task.status === ContentStatus.SCHEDULED ? 'bg-fuchsia-500 text-white border-fuchsia-700' :
+                                                                                'bg-emerald-500 text-white border-emerald-700'
                                                                 }`}
                                                         >
                                                             {Object.values(ContentStatus).map((s) => (
                                                                 <option key={s} value={s}>{formatStatus(s)}</option>
                                                             ))}
                                                         </select>
-                                                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-mutedForeground" />
+                                                        <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${task.status === ContentStatus.TODO || task.status === ContentStatus.REVIEW ? 'text-slate-800' : 'text-white'}`} />
                                                     </div>
                                                 </td>
 
                                                 {/* 2. Platform */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     <div className="flex items-center gap-2">
                                                         <div className={`p-1.5 rounded-md border-[2px] border-indigo-950 bg-card shadow-[2px_2px_0px_#1e1b4b] transform -rotate-2`}>
                                                             {getPlatformIcon(task.platform)}
                                                         </div>
-                                                        <span className="text-[11px] font-bold text-foreground">{task.platform}</span>
+                                                        <span className="text-[13px] font-bold text-foreground">{task.platform}</span>
                                                     </div>
                                                 </td>
 
                                                 {/* 3. Tanggal */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     <div className="flex flex-col">
-                                                        <span className="text-[9px] font-bold text-mutedForeground mb-0.5">Upload Date</span>
-                                                        <div className="flex items-center gap-1.5 text-foreground font-bold text-[11px] whitespace-nowrap">
-                                                            <Calendar size={12} className="text-violet-500" />
+                                                        <span className="text-[12px] font-bold text-mutedForeground mb-0.5">Upload Date</span>
+                                                        <div className="flex items-center gap-1.5 text-foreground font-bold text-[13px] whitespace-nowrap">
+                                                            <Calendar size={14} className="text-violet-500" />
                                                             {task.date ? new Date(task.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                                         </div>
                                                     </div>
                                                 </td>
 
                                                 {/* 4. Judul */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     <div className="flex flex-col gap-1.5">
-                                                        <div className="font-heading font-black text-foreground text-[13px] line-clamp-1 tracking-tight" title={task.title}>
+                                                        <div className="font-heading font-black text-foreground text-[15px] line-clamp-1 tracking-tight" title={task.title}>
                                                             {task.title}
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-[12px] font-bold text-violet-600 bg-violet-50 border border-violet-200 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20 px-2 py-0.5 rounded flex items-center gap-1">
                                                                 {getTypeIcon(task.type)} {task.type}
                                                             </span>
                                                         </div>
@@ -2208,64 +2208,66 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 5. Pillar */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     {task.pillar ? (
-                                                        <span className="px-2 py-1 rounded w-fit text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 whitespace-nowrap">
+                                                        <span className="px-3 py-1 rounded w-fit text-[12px] font-bold bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-2 border-slate-700 dark:border-slate-300 whitespace-nowrap shadow-sm tracking-wide">
                                                             {task.pillar}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-mutedForeground font-bold text-xs">—</span>
+                                                        <span className="text-mutedForeground font-bold text-[13px]">—</span>
                                                     )}
                                                 </td>
 
                                                 {/* 6. Script Preview Button */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer text-center">
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer text-center">
                                                     <button
                                                         onClick={() => handleCardClick(task)}
-                                                        className={`w-8 h-8 rounded-lg border transition-all hover:scale-105 flex items-center justify-center mx-auto ${task.script ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : 'bg-muted/50 border-transparent text-mutedForeground'}`}
+                                                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-105 flex items-center justify-center mx-auto ${task.script
+                                                            ? 'bg-slate-900 dark:bg-slate-100 border-slate-700 dark:border-slate-300 text-white dark:text-slate-900 shadow-sm'
+                                                            : 'bg-transparent border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-600'
+                                                            }`}
                                                     >
-                                                        <FileText size={16} />
+                                                        <FileText size={16} strokeWidth={task.script ? 2.5 : 2} />
                                                     </button>
                                                 </td>
-
                                                 {/* 7. PIC */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     {task.pic ? (
                                                         <div className="flex items-center gap-2" title={task.pic}>
                                                             <img
                                                                 src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(task.pic)}`}
                                                                 alt={task.pic}
-                                                                className="w-7 h-7 rounded-full border border-border bg-card object-cover"
+                                                                className="w-8 h-8 rounded-full border border-border bg-card object-cover"
                                                             />
-                                                            <span className="text-[10px] font-bold text-foreground truncate max-w-[80px]">{task.pic}</span>
+                                                            <span className="text-[12px] font-bold text-foreground truncate max-w-[100px]">{task.pic}</span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-mutedForeground font-bold text-xs">—</span>
+                                                        <span className="text-mutedForeground font-bold text-[13px]">—</span>
                                                     )}
                                                 </td>
 
                                                 {/* 7.5 Approval Status (NEW) */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors text-center">
-                                                    <div className="flex flex-col items-center justify-center gap-1.5">
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors text-center relative">
+                                                    <div className="flex flex-col items-center justify-center gap-2">
                                                         {(() => {
                                                             const status = task.approval_status;
-                                                            if (status === 'approved') return <span className="px-2 py-0.5 rounded w-fit bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 text-[9px] font-bold">Approved</span>;
-                                                            if (status === 'revision') return <span className="px-2 py-0.5 rounded w-fit bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20 text-[9px] font-bold">Revision</span>;
-                                                            return <span className="px-2 py-0.5 rounded w-fit bg-slate-50 text-slate-500 border border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20 text-[9px] font-bold">Pending</span>;
+                                                            if (status === 'approved') return <span className="px-2 py-0.5 rounded w-fit bg-transparent text-emerald-600 dark:text-emerald-400 border-2 border-emerald-500 text-[12px] font-black uppercase tracking-widest flex items-center gap-1"><Check size={14} strokeWidth={3} /> Approved</span>;
+                                                            if (status === 'revision') return <span className="px-2 py-0.5 rounded w-fit bg-transparent text-rose-600 dark:text-rose-400 border-2 border-rose-500 text-[12px] font-black uppercase tracking-widest flex items-center gap-1"><RefreshCw size={14} strokeWidth={3} /> Revision</span>;
+                                                            return <span className="px-2 py-0.5 rounded w-fit bg-transparent text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-300 dark:border-slate-600 text-[12px] font-bold uppercase tracking-widest">Pending</span>;
                                                         })()}
                                                         {(currentUserRole === 'Admin' || currentUserRole === 'Owner' || currentUserRole === 'Developer') && (
-                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'approved'); }} className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500 dark:hover:text-white transition-all" title="Approve"><Check size={12} /></button>
-                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'revision'); }} className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500 dark:hover:text-white transition-all" title="Revision"><RefreshCw size={12} /></button>
+                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 bg-card p-1 shadow-md rounded border border-border">
+                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'approved'); }} className="p-1.5 rounded bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500 border-2 border-transparent hover:border-emerald-600 transition-all" title="Approve"><Check size={16} strokeWidth={3} /></button>
+                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'revision'); }} className="p-1.5 rounded bg-transparent text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 border-2 border-transparent hover:border-rose-600 transition-all" title="Revision"><RefreshCw size={16} strokeWidth={3} /></button>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </td>
 
                                                 {/* 8. Link Input (Interactive - Controlled) */}
-                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors">
+                                                <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors">
                                                     <div className="relative flex items-center">
-                                                        <LinkIcon size={12} className={`absolute left-2.5 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
+                                                        <LinkIcon size={14} className={`absolute left-3 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
                                                         <input
                                                             type="text"
                                                             value={task.contentLink || ''}
@@ -2275,18 +2277,18 @@ export const ContentPlanDetail: React.FC = () => {
                                                                 setTasks(prev => prev.map(t => t.id === task.id ? { ...t, contentLink: newVal } : t));
                                                             }}
                                                             onBlur={(e) => handleQuickUpdateLink(task.id, e.target.value)}
-                                                            className="w-full bg-card border-[2px] border-slate-900 text-[10px] font-medium text-foreground rounded-lg pl-7 pr-7 py-2 outline-none focus:ring-1 focus:ring-accent transition-all min-w-[120px]"
+                                                            className="w-full bg-card border-[2px] border-slate-900 text-[12px] font-medium text-foreground rounded-lg pl-9 pr-8 py-2.5 outline-none focus:ring-1 focus:ring-accent transition-all min-w-[140px]"
                                                         />
                                                         {task.contentLink && (
-                                                            <a href={task.contentLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="absolute right-2.5 text-mutedForeground hover:text-blue-600">
-                                                                <ExternalLink size={12} />
+                                                            <a href={task.contentLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="absolute right-3 text-mutedForeground hover:text-blue-600">
+                                                                <ExternalLink size={14} />
                                                             </a>
                                                         )}
                                                     </div>
                                                 </td>
 
                                                 {/* 9. Action (Menu) */}
-                                                <td className="p-3 border-y-[2.5px] border-r-[2.5px] border-slate-900 rounded-r-2xl bg-card group-hover:bg-slate-50 transition-colors text-right pr-5 relative">
+                                                <td className="p-3 border-y-[2.5px] border-r-[2.5px] border-border rounded-r-2xl bg-inherit transition-colors text-right pr-5 relative">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -2302,15 +2304,15 @@ export const ContentPlanDetail: React.FC = () => {
                                                         <div className="absolute right-12 top-1/2 -translate-y-1/2 w-48 bg-card border border-border rounded-xl shadow-hard-mini z-50 overflow-hidden transform animate-in fade-in zoom-in-95 duration-200">
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setActiveRowMenu(null); handleOpenEditModal(task); }}
-                                                                className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-2 font-bold text-[10px] text-foreground transition-colors border-b border-border"
+                                                                className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-2 font-bold text-[12px] text-foreground transition-colors border-b border-border"
                                                             >
-                                                                <Edit size={14} className="text-violet-600" /> Edit Konten
+                                                                <Edit size={16} className="text-violet-600" /> Edit Konten
                                                             </button>
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setActiveRowMenu(null); handleDeleteContent(task.id); }}
-                                                                className="w-full text-left px-4 py-3 hover:bg-rose-50 flex items-center gap-2 font-bold text-[10px] text-rose-600 transition-colors"
+                                                                className="w-full text-left px-4 py-3 hover:bg-rose-50 flex items-center gap-2 font-bold text-[12px] text-rose-600 transition-colors"
                                                             >
-                                                                <Trash2 size={14} /> Hapus Konten
+                                                                <Trash2 size={16} /> Hapus Konten
                                                             </button>
                                                         </div>
                                                     )}

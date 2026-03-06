@@ -38,7 +38,10 @@ import {
     ArrowDownRight,
     Lightbulb,
     Users,
-    Crown
+    Crown,
+    Youtube,
+    Facebook,
+    Linkedin
 } from 'lucide-react';
 import {
     LineChart,
@@ -85,6 +88,21 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 // Pie chart color palette
 const PIE_COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#06b6d4'];
 
+const getPlatformIcon = (platform: string, size = 16) => {
+    switch (platform) {
+        case Platform.INSTAGRAM: return <Instagram size={size} />;
+        case Platform.TIKTOK: return (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+            </svg>
+        );
+        case Platform.YOUTUBE: return <Youtube size={size} />;
+        case Platform.FACEBOOK: return <Facebook size={size} />;
+        case Platform.LINKEDIN: return <Linkedin size={size} />;
+        default: return <Globe size={size} />;
+    }
+};
+
 export const ContentDataInsight: React.FC = () => {
     const { config } = useAppConfig();
     const [data, setData] = useState<ContentItem[]>([]);
@@ -112,7 +130,8 @@ export const ContentDataInsight: React.FC = () => {
         comments: 0,
         shares: 0,
         saves: 0,
-        reach: 0
+        reach: 0,
+        reposts: 0
     });
 
     // --- MONTHLY REPORT STATE ---
@@ -283,7 +302,8 @@ export const ContentDataInsight: React.FC = () => {
             comments: item.metrics?.comments || 0,
             shares: item.metrics?.shares || 0,
             saves: item.metrics?.saves || 0,
-            reach: (item.metrics as any)?.reach || 0 // Handle custom reach field
+            reach: (item.metrics as any)?.reach || 0,
+            reposts: item.metrics?.reposts || 0
         });
         setIsManualModalOpen(true);
     };
@@ -349,7 +369,7 @@ export const ContentDataInsight: React.FC = () => {
     // Helper for Total Interactions Formula
     const calculateInteractions = (m: any) => {
         if (!m) return 0;
-        return (m.likes || 0) + (m.comments || 0) + (m.shares || 0) + (m.saves || 0);
+        return (m.likes || 0) + (m.comments || 0) + (m.shares || 0) + (m.saves || 0) + (m.reposts || 0);
     };
 
     // Helper for ER Formula
@@ -434,7 +454,7 @@ export const ContentDataInsight: React.FC = () => {
         });
 
         // Total metrics
-        let totalReach = 0, totalViews = 0, totalLikes = 0, totalComments = 0, totalShares = 0, totalSaves = 0;
+        let totalReach = 0, totalViews = 0, totalLikes = 0, totalComments = 0, totalShares = 0, totalSaves = 0, totalReposts = 0;
         filtered.forEach(item => {
             const m = item.metrics || {};
             totalReach += (m as any).reach || 0;
@@ -443,8 +463,9 @@ export const ContentDataInsight: React.FC = () => {
             totalComments += m.comments || 0;
             totalShares += m.shares || 0;
             totalSaves += m.saves || 0;
+            totalReposts += (m as any).reposts || 0;
         });
-        const totalInteractions = totalLikes + totalComments + totalShares + totalSaves;
+        const totalInteractions = totalLikes + totalComments + totalShares + totalSaves + totalReposts;
         const avgER = totalViews > 0 ? (totalInteractions / totalViews) * 100 : (totalReach > 0 ? (totalInteractions / totalReach) * 100 : 0);
 
         // Growth chart data (by week)
@@ -524,6 +545,7 @@ export const ContentDataInsight: React.FC = () => {
             totalComments,
             totalShares,
             totalSaves,
+            totalReposts,
             totalInteractions,
             avgER,
             totalPosts: filtered.length,
@@ -745,6 +767,12 @@ export const ContentDataInsight: React.FC = () => {
                                                         <p className="text-sm font-black text-foreground">{(m.saves || 0).toLocaleString()}</p>
                                                         <p className="text-[8px] text-mutedForeground">Saves</p>
                                                     </div>
+                                                    {item.platform === Platform.INSTAGRAM && (
+                                                        <div className="text-center">
+                                                            <p className="text-sm font-black text-foreground">{(m.reposts || 0).toLocaleString()}</p>
+                                                            <p className="text-[8px] text-mutedForeground">Reposts</p>
+                                                        </div>
+                                                    )}
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{interactions.toLocaleString()}</p>
                                                         <p className="text-[8px] text-mutedForeground">Total Eng</p>
@@ -790,8 +818,9 @@ export const ContentDataInsight: React.FC = () => {
                                         { key: 'comments', label: 'Comments', icon: <MessageSquare size={14} /> },
                                         { key: 'shares', label: 'Shares', icon: <Share2 size={14} /> },
                                         { key: 'saves', label: 'Saves', icon: <Bookmark size={14} /> },
+                                        { key: 'reposts', label: 'Reposts', icon: <RefreshCw size={14} />, condition: selectedItemForInput?.platform === Platform.INSTAGRAM },
                                         { key: 'reach', label: 'Reach', icon: <Globe size={14} /> },
-                                    ].map(({ key, label, icon }) => (
+                                    ].filter(f => f.condition !== false).map(({ key, label, icon }) => (
                                         <div key={key} className="bg-muted rounded-xl p-3">
                                             <div className="flex items-center gap-1.5 mb-1.5 text-mutedForeground">
                                                 {icon}
@@ -858,24 +887,24 @@ export const ContentDataInsight: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Summary Cards - Colorful & Solid */}
-                <div className={`grid gap-2 sm:gap-3 md:gap-4 ${filterPlatform === Platform.TIKTOK ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'}`}>
+                {/* Summary Cards - Premium Bento Style */}
+                <div className={`grid gap-4 sm:gap-6 ${filterPlatform === Platform.TIKTOK ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'}`}>
 
                     {/* Reach Card */}
                     {filterPlatform !== Platform.TIKTOK && (
                         <div
                             onClick={() => setSelectedMetric('reach')}
-                            className="bg-blue-500 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                            className="bg-blue-600 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
                         >
-                            <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                                <BarChart2 size={60} className="text-white" />
+                            <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+                                <BarChart2 size={70} className="text-white" />
                             </div>
                             <div className="relative z-10 text-white">
-                                <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Reach</p>
-                                <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.reach.toLocaleString()}</h3>
+                                <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-1 opacity-90">Total Reach</p>
+                                <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.reach.toLocaleString()}</h3>
                             </div>
-                            <div className="relative z-10 mt-auto pt-2">
-                                <span className="inline-block bg-black/20 text-white text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                            <div className="relative z-10 mt-auto">
+                                <span className="inline-block bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
                                     {getCardFooterText()}
                                 </span>
                             </div>
@@ -885,17 +914,17 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Engagement Rate */}
                     <div
                         onClick={() => setSelectedMetric('er')}
-                        className="bg-pink-500 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                        className="bg-pink-600 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
                     >
-                        <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                            <TrendingUp size={80} className="text-white" />
+                        <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <TrendingUp size={90} className="text-white" />
                         </div>
                         <div className="relative z-10 text-white">
-                            <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-90">Engagement Rate</p>
-                            <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.er.toFixed(2)}%</h3>
+                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-1 opacity-90">Engagement Rate</p>
+                            <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.er.toFixed(2)}%</h3>
                         </div>
-                        <div className="relative z-10 mt-auto pt-2">
-                            <span className="inline-block bg-black/20 text-white text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                        <div className="relative z-10 mt-auto">
+                            <span className="inline-block bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -904,17 +933,17 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Interactions */}
                     <div
                         onClick={() => setSelectedMetric('interactions')}
-                        className="bg-purple-600 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                        className="bg-violet-600 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
                     >
-                        <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                            <Zap size={60} className="text-white" />
+                        <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <Zap size={70} className="text-white" />
                         </div>
                         <div className="relative z-10 text-white">
-                            <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-90">Total Interaksi</p>
-                            <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.interactions.toLocaleString()}</h3>
+                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-1 opacity-90">Total Interaksi</p>
+                            <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.interactions.toLocaleString()}</h3>
                         </div>
-                        <div className="relative z-10 mt-auto pt-2">
-                            <span className="inline-block bg-black/20 text-white text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                        <div className="relative z-10 mt-auto">
+                            <span className="inline-block bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -923,17 +952,17 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Views */}
                     <div
                         onClick={() => setSelectedMetric('views')}
-                        className="bg-yellow-400 p-3 sm:p-5 rounded-lg sm:rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0F172A] flex flex-col justify-between h-28 sm:h-36 relative overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0F172A] transition-all duration-200 cursor-pointer"
+                        className="bg-yellow-400 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
                     >
-                        <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
-                            <Eye size={60} className="text-black" />
+                        <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <Eye size={70} className="text-black" />
                         </div>
-                        <div className="relative z-10 text-foreground">
-                            <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-80">Content Views</p>
-                            <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.views.toLocaleString()}</h3>
+                        <div className="relative z-10 text-slate-900">
+                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-1 opacity-80">Content Views</p>
+                            <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.views.toLocaleString()}</h3>
                         </div>
-                        <div className="relative z-10 mt-auto pt-2">
-                            <span className="inline-block bg-black/10 text-foreground text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                        <div className="relative z-10 mt-auto">
+                            <span className="inline-block bg-black/10 text-slate-900 text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-black/20">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -1024,51 +1053,55 @@ export const ContentDataInsight: React.FC = () => {
                     </Modal>
                 )}
 
-                <div className="bg-card rounded-lg sm:rounded-xl border-2 border-slate-800 shadow-hard overflow-hidden flex flex-col flex-1 min-h-0">
-                    {/* Toolbar */}
-                    <div className="border-b-2 border-slate-200 p-2 sm:p-3 md:p-4 flex flex-col xl:flex-row gap-2 sm:gap-3 items-center justify-between">
-                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 w-full xl:w-auto">
-                            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 border rounded-lg font-bold text-[8px] sm:text-xs">
-                                <Filter size={12} />
-                                <span className="hidden sm:inline">Filter:</span>
+                <div className="bg-card rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col flex-1 min-h-0">
+                    {/* Premium Toolbar */}
+                    <div className="border-b-[3px] border-slate-900 p-4 bg-muted/30 flex flex-col 2xl:flex-row gap-4 items-center justify-between">
+                        <div className="flex flex-wrap items-center gap-4 w-full">
+                            {/* Platform Capsules */}
+                            <div className="flex bg-slate-50 p-1.5 rounded-full border-2 border-slate-200 shadow-[4px_4px_0px_#f1f5f9] overflow-x-auto no-scrollbar max-w-full">
+                                {['all', ...Object.values(Platform)].map((p) => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setFilterPlatform(p)}
+                                        className={`
+                                            px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                                            ${filterPlatform === p
+                                                ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#4c1d95] scale-105'
+                                                : 'text-slate-500 hover:text-violet-600 hover:bg-white'}
+                                        `}
+                                    >
+                                        {p === 'all' ? 'Semua' : p}
+                                    </button>
+                                ))}
                             </div>
-                            <div className="w-28 sm:w-36 md:w-40">
-                                <Select
-                                    value={filterPlatform}
-                                    onChange={(e) => setFilterPlatform(e.target.value)}
-                                    options={[
-                                        { label: 'Semua Platform', value: 'all' },
-                                        { label: 'Instagram', value: Platform.INSTAGRAM },
-                                        { label: 'TikTok', value: Platform.TIKTOK },
-                                        { label: 'LinkedIn', value: Platform.LINKEDIN },
-                                        { label: 'YouTube', value: Platform.YOUTUBE },
-                                        { label: 'Facebook', value: Platform.FACEBOOK },
-                                    ]}
-                                    className="!py-1 sm:!py-2 !text-[8px] sm:!text-xs h-8 sm:h-9"
-                                />
+
+                            <div className="h-6 w-[2px] bg-slate-200 hidden xl:block" />
+
+                            {/* Account & Date Filters */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="w-44">
+                                    <Select
+                                        value={filterAccount}
+                                        onChange={(e) => setFilterAccount(e.target.value)}
+                                        options={[{ label: 'SEMUA AKUN', value: 'all' }, ...accounts.map(acc => ({ label: acc.toUpperCase(), value: acc }))]}
+                                        className="!py-2 !text-[11px] !font-black !rounded-xl !border-2 !border-slate-300"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 bg-white border-2 border-slate-300 rounded-xl px-3 py-1.5 shadow-sm">
+                                    <Calendar size={14} className="text-slate-400" />
+                                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 uppercase" />
+                                    <span className="text-slate-300 font-black">—</span>
+                                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 uppercase" />
+                                </div>
+                                {(filterPlatform !== 'all' || filterAccount !== 'all' || startDate || endDate) && (
+                                    <button onClick={resetFilters} className="p-2.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-all border-2 border-transparent hover:border-rose-100 group">
+                                        <X size={16} className="group-hover:rotate-90 transition-transform" />
+                                    </button>
+                                )}
                             </div>
-                            <div className="w-28 sm:w-36 md:w-40">
-                                <Select
-                                    value={filterAccount}
-                                    onChange={(e) => setFilterAccount(e.target.value)}
-                                    options={[{ label: 'Semua Akun', value: 'all' }, ...accounts.map(acc => ({ label: acc, value: acc }))]}
-                                    className="!py-1 sm:!py-2 !text-[8px] sm:!text-xs h-8 sm:h-9"
-                                />
-                            </div>
-                            <div className="flex items-center gap-1 sm:gap-2 border rounded-lg px-1 sm:px-2 h-8 sm:h-9">
-                                <span className="text-[7px] sm:text-[10px] font-bold text-mutedForeground uppercase">Periode</span>
-                                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-[7px] sm:text-xs font-bold outline-none bg-transparent w-20 sm:w-24" />
-                                <span className="text-slate-300 text-xs">-</span>
-                                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-[7px] sm:text-xs font-bold outline-none bg-transparent w-20 sm:w-24" />
-                            </div>
-                            {(filterPlatform !== 'all' || filterAccount !== 'all' || startDate || endDate) && (
-                                <button onClick={resetFilters} className="p-1 sm:p-2 text-mutedForeground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                    <X size={14} />
-                                </button>
-                            )}
                         </div>
-                        <div className="flex-shrink-0 w-full xl:w-auto flex justify-end">
-                            <Button variant="secondary" size="sm" onClick={fetchData} icon={<RefreshCw size={12} />} className="h-8 sm:h-9 text-[8px] sm:text-xs">Refresh</Button>
+                        <div className="flex-shrink-0 w-full 2xl:w-auto flex justify-end">
+                            <Button variant="outline" size="sm" onClick={fetchData} icon={<RefreshCw size={14} />} className="h-10 !rounded-xl !border-[3.5px] !border-slate-900 !bg-white !text-slate-900 !font-black !shadow-[3px_3px_0px_#0f172a] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_#0f172a] transition-all">REFRESH DATA</Button>
                         </div>
                     </div>
 
@@ -1105,172 +1138,191 @@ export const ContentDataInsight: React.FC = () => {
                                     filteredData.map((item) => (
                                         <React.Fragment key={item.id}>
                                             <tr
-                                                className={`transition-colors cursor-pointer text-[9px] sm:text-sm ${expandedRowId === item.id ? 'bg-purple-500/10' : 'hover:bg-muted0/5'}`}
+                                                className={`transition-all duration-300 cursor-pointer group/row relative
+                                                    ${expandedRowId === item.id ? 'bg-violet-50' : 'hover:bg-slate-50'}
+                                                `}
                                                 onClick={() => toggleRow(item.id)}
                                             >
-                                                <td className="p-2 sm:p-3 md:p-4 text-center">
-                                                    {expandedRowId === item.id ? <ChevronUp size={14} className="text-accent" /> : <ChevronDown size={14} className="text-mutedForeground" />}
-                                                </td>
-                                                <td className="p-2 sm:p-3 md:p-4 align-middle">
-                                                    <div className="flex items-center gap-1 sm:gap-2 font-bold text-slate-600">
-                                                        <Calendar size={12} sm:size={16} className="text-mutedForeground flex-shrink-0" />
-                                                        <span className="text-[7px] sm:text-sm whitespace-nowrap">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
+                                                <td className="p-4 text-center">
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${expandedRowId === item.id ? 'bg-violet-600 text-white rotate-180' : 'bg-slate-100 text-slate-400 group-hover/row:bg-slate-200 group-hover/row:text-slate-600'}`}>
+                                                        <ChevronDown size={18} strokeWidth={3} />
                                                     </div>
                                                 </td>
-                                                <td className="p-2 sm:p-3 md:p-4 align-middle max-w-[120px] sm:max-w-xs">
-                                                    <p className="font-bold text-foreground text-[8px] sm:text-sm line-clamp-1 mb-0.5 sm:mb-1" title={item.title}>{item.title}</p>
-                                                    <div className="flex items-center gap-1 sm:gap-2">
-                                                        <span className="text-[6px] sm:text-[10px] px-1 sm:px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
-                                                        <div className="flex items-center gap-0.5 sm:gap-1 text-slate-500">
-                                                            {item.platform === Platform.INSTAGRAM ? <Instagram size={10} /> :
-                                                                item.platform === Platform.TIKTOK ? (
-                                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-                                                                    </svg>
-                                                                ) : <Globe size={10} />}
-                                                            <span className="text-[6px] sm:text-[10px] font-bold">@{item.workspaces?.account_name || '-'}</span>
+                                                <td className="p-4 align-middle">
+                                                    <div className="flex items-center gap-3">
+                                                        {/* Date Label - SOFTENED */}
+                                                        <div className="bg-slate-50 border-2 border-slate-200 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[2px_2px_0px_#f1f5f9]">
+                                                            <Calendar size={14} className="text-violet-600" />
+                                                            <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest whitespace-nowrap">
+                                                                {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 align-middle max-w-xs">
+                                                    <p className="font-black text-slate-900 text-[15px] leading-tight mb-1 group-hover/row:text-violet-600 transition-colors">{item.title}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border-2 border-slate-200 text-slate-600 font-black uppercase tracking-widest">{item.type}</span>
+                                                        <div className="flex items-center gap-1.5 text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
+                                                            {getPlatformIcon(item.platform, 12)}
+                                                            <span className="text-[10px] font-black tracking-tight">@{item.workspaces?.account_name || '-'}</span>
                                                         </div>
                                                     </div>
                                                 </td>
 
-                                                <td className="p-2 sm:p-3 md:p-4 align-middle hidden sm:table-cell">
+                                                <td className="p-4 align-middle hidden sm:table-cell">
                                                     {item.contentLink ? (
                                                         <a
                                                             href={item.contentLink}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             onClick={e => e.stopPropagation()}
-                                                            className="inline-flex items-center gap-1 text-[7px] sm:text-xs font-bold text-blue-500 bg-blue-500/10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border border-blue-500/20 hover:bg-blue-500/20"
+                                                            className="inline-flex items-center gap-2 group/link px-4 py-2 bg-white border-[2.5px] border-slate-900 rounded-xl shadow-[3px_3px_0px_#0f172a] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_#0f172a] transition-all"
                                                         >
-                                                            <LinkIcon size={10} /> Link
+                                                            <LinkIcon size={14} className="text-violet-600" />
+                                                            <span className="text-xs font-black text-slate-900">BUKA</span>
                                                         </a>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-[7px] sm:text-xs font-bold text-mutedForeground bg-muted0/10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border border-slate-500/20">
-                                                            <LinkIcon size={10} /> Kosong
+                                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border-[2.5px] border-slate-200 rounded-xl text-slate-400">
+                                                            <LinkIcon size={14} />
+                                                            <span className="text-xs font-black">NA</span>
                                                         </span>
                                                     )}
                                                 </td>
 
-                                                <td className="p-2 sm:p-3 md:p-4 align-middle">
+                                                <td className="p-4 align-middle">
                                                     {item.metrics ? (
-                                                        <div className={`grid gap-1 sm:gap-2 text-center w-full text-[7px] sm:text-xs ${item.platform === Platform.INSTAGRAM ? 'grid-cols-3 sm:grid-cols-6 max-w-[250px] sm:max-w-[400px]' : 'grid-cols-2.5 sm:grid-cols-5 max-w-[200px] sm:max-w-[350px]'}`}>
-                                                            {item.platform === Platform.INSTAGRAM && (
-                                                                <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Reach</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics as any).reach?.toLocaleString() || 0}</span></div>
-                                                            )}
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Views</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.views || 0).toLocaleString()}</span></div>
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Likes</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.likes || 0).toLocaleString()}</span></div>
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Comm</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.comments || 0).toLocaleString()}</span></div>
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Share</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.shares || 0).toLocaleString()}</span></div>
-                                                            <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Save</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.saves || 0).toLocaleString()}</span></div>
+                                                        <div className="flex items-center justify-center gap-3">
+                                                            {/* Hero Metric: ER - BIGGER */}
+                                                            <div className="bg-pink-100 border-2 border-pink-200 px-4 py-2.5 rounded-2xl text-center min-w-[85px] shadow-sm">
+                                                                <span className="block text-[14px] font-black text-pink-700 leading-none">{calculateER(item.metrics).toFixed(1)}%</span>
+                                                                <span className="text-[9px] font-black text-pink-500 uppercase tracking-widest mt-0.5 block">ER RT</span>
+                                                            </div>
+                                                            {/* Grid of micro-stats - VIOLET THEMED & CENTERED */}
+                                                            <div className={`grid grid-cols-${item.platform === Platform.INSTAGRAM ? '6' : '5'} bg-violet-700 border-[3px] border-violet-700 p-1.5 rounded-2xl shadow-xl`}>
+                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.views || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">VIEW</span>
+                                                                </div>
+                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.likes || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">LIKE</span>
+                                                                </div>
+                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.comments || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">COMM</span>
+                                                                </div>
+                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.shares || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">SHAR</span>
+                                                                </div>
+                                                                <div className={`px-4 py-1.5 text-center ${item.platform === Platform.INSTAGRAM ? 'border-r border-violet-600/50' : ''} min-w-[60px]`}>
+                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.saves || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">SAVE</span>
+                                                                </div>
+                                                                {item.platform === Platform.INSTAGRAM && (
+                                                                    <div className="px-4 py-1.5 text-center min-w-[60px]">
+                                                                        <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.reposts || 0).toLocaleString()}</span>
+                                                                        <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">REPOST</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-center"><span className="text-[7px] sm:text-xs text-mutedForeground italic">Belum</span></div>
+                                                        <div className="w-full h-12 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center">
+                                                            <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest italic">Belum Ada Data Metrics</span>
+                                                        </div>
                                                     )}
                                                 </td>
-                                                <td className="p-2 sm:p-3 md:p-4 align-middle text-right">
-                                                    <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                                        {/* TOMBOL INPUT MANUAL */}
+                                                <td className="p-4 align-middle text-right">
+                                                    <div className="flex items-center justify-end gap-2">
                                                         <Button
                                                             size="sm"
-                                                            className="h-7 sm:h-8 px-2 sm:px-3 text-[7px] sm:text-xs font-bold rounded-lg border-2 border-pink-500/30 text-pink-500 hover:bg-pink-500/10 hover:border-pink-500/50 shadow-sm hidden sm:flex"
+                                                            className="h-9 px-4 !rounded-xl !border-[2.5px] !border-slate-900 !bg-white !text-violet-600 !font-black !shadow-[3px_3px_0px_#0f172a] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_#0f172a] transition-all hidden sm:flex"
                                                             onClick={(e) => openManualInput(e, item)}
-                                                            title="Input Metrics Manual"
                                                         >
-                                                            <Edit3 size={12} className="mr-1" /> Input
+                                                            <Edit3 size={14} className="mr-2" /> INPUT
                                                         </Button>
                                                         <button
-                                                            onClick={(e) => openManualInput(e, item)}
-                                                            className="p-1 sm:p-2 text-pink-300 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition-colors sm:hidden"
-                                                            title="Input Metrics"
+                                                            onClick={(e) => handleDelete(e, item.id)}
+                                                            className="w-9 h-9 flex items-center justify-center bg-white border-2 border-slate-200 text-slate-300 hover:text-rose-500 hover:border-rose-200 rounded-xl transition-all hover:bg-rose-50 shadow-sm"
                                                         >
-                                                            <Edit3 size={12} />
-                                                        </button>
-
-                                                        <button onClick={(e) => handleDelete(e, item.id)} className="p-1 sm:p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                                            <Trash2 size={14} sm:size={18} />
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </div>
                                                 </td>
                                             </tr>
                                             {/* EXPANDED ROW DETAIL */}
                                             {expandedRowId === item.id && (
-                                                <tr className="bg-purple-50/30 animate-in slide-in-from-top-2 duration-200">
-                                                    <td colSpan={6} className="p-3 sm:p-4 md:p-6 border-b-2 border-border/50">
-                                                        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
-                                                            {/* Left: Detailed Metrics with NEW FORMULA */}
-                                                            <div className="flex-1 space-y-2 sm:space-y-4">
+                                                <tr className="bg-white animate-in slide-in-from-top-4 duration-300">
+                                                    <td colSpan={6} className="p-6 border-b-[3px] border-slate-900">
+                                                        <div className="flex flex-col lg:flex-row gap-6">
+                                                            {/* Left: Detailed Metrics */}
+                                                            <div className="flex-[1.5] space-y-4">
                                                                 <div className="flex justify-between items-center">
-                                                                    <h4 className="font-bold text-foreground text-xs sm:text-sm flex items-center gap-2"><TrendingUp size={14} sm:size={18} className="text-accent" /> Details</h4>
+                                                                    <h4 className="font-black text-slate-900 text-base flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-violet-600" /> Metrics Breakdown</h4>
                                                                     {(item.metrics as any)?.isManual && (
-                                                                        <span className="text-[8px] sm:text-[10px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-200">
-                                                                            Manual
+                                                                        <span className="text-[10px] bg-yellow-400 text-slate-950 px-3 py-1 rounded-full font-black border-2 border-slate-900 shadow-[2px_2px_0px_#000] uppercase">
+                                                                            PENGINPUTAN MANUAL
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                                 {item.metrics ? (
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                                                                        <div className="bg-card p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                                                            <div className="absolute top-0 right-0 p-1">
-                                                                                <TrendingUp size={40} className="text-slate-50 opacity-50 -rotate-12" />
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
+                                                                            <div className="absolute -top-4 -right-4 p-2 opacity-5 scale-150 rotate-12 group-hover/detail:opacity-10 transition-opacity">
+                                                                                <TrendingUp size={100} className="text-violet-900" />
                                                                             </div>
-                                                                            <div className="flex justify-between items-start mb-1 sm:mb-2 relative z-10">
-                                                                                <span className="text-[7px] sm:text-xs font-bold text-mutedForeground uppercase">ER</span>
-                                                                            </div>
-                                                                            <p className="text-xl sm:text-3xl font-black text-foreground relative z-10">
+                                                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Engagement Rate</span>
+                                                                            <p className="text-4xl font-black text-slate-900 tabular-nums">
                                                                                 {calculateER(item.metrics).toFixed(2)}%
                                                                             </p>
-                                                                            <p className="text-[7px] sm:text-[10px] text-mutedForeground mt-0.5 sm:mt-1 relative z-10 font-medium">
-                                                                                Interaksi/Views
+                                                                            <p className="text-[10px] font-bold text-slate-500 mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
+                                                                                Formula: (Interaksi / Views) × 100
                                                                             </p>
                                                                         </div>
-                                                                        <div className="bg-card p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                                                            <div className="absolute top-0 right-0 p-1">
-                                                                                <Zap size={40} className="text-slate-50 opacity-50 -rotate-12" />
+                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
+                                                                            <div className="absolute -top-4 -right-4 p-2 opacity-5 scale-150 rotate-12 group-hover/detail:opacity-10 transition-opacity">
+                                                                                <Zap size={100} className="text-violet-900" />
                                                                             </div>
-                                                                            <div className="flex justify-between items-start mb-1 sm:mb-2 relative z-10">
-                                                                                <span className="text-[7px] sm:text-xs font-bold text-mutedForeground uppercase">Total</span>
-                                                                            </div>
-                                                                            <p className="text-xl sm:text-3xl font-black text-foreground relative z-10">
+                                                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Interaksi</span>
+                                                                            <p className="text-4xl font-black text-slate-900 tabular-nums">
                                                                                 {calculateInteractions(item.metrics).toLocaleString()}
                                                                             </p>
-                                                                            <p className="text-[7px] sm:text-[10px] text-mutedForeground mt-0.5 sm:mt-1 relative z-10 font-medium">
-                                                                                L+C+S+V
+                                                                            <p className="text-[10px] font-bold text-slate-500 mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
+                                                                                Gabungan: L + C + S + Sv
                                                                             </p>
                                                                         </div>
-                                                                        {/* Additional Stats Display */}
-                                                                        {(item.metrics as any).reach > 0 && (
-                                                                            <div className="col-span-1 sm:col-span-2 bg-blue-50 p-2 sm:p-3 rounded-lg border border-blue-100 flex justify-between items-center">
-                                                                                <span className="text-[7px] sm:text-xs font-bold text-blue-500 uppercase">Reach</span>
-                                                                                <span className="font-black text-blue-900 text-xs sm:text-sm">{(item.metrics as any).reach.toLocaleString()}</span>
-                                                                            </div>
-                                                                        )}
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="bg-slate-100 p-3 sm:p-6 rounded-lg sm:rounded-xl text-center text-mutedForeground italic text-[8px] sm:text-sm">Belum ada data detail.</div>
+                                                                    <div className="bg-slate-50 p-12 rounded-2xl border-4 border-dashed border-slate-200 text-center text-slate-400 font-black uppercase tracking-widest">Belum ada data detail.</div>
                                                                 )}
                                                             </div>
 
-                                                            {/* Right: Content Details & Insights (REPLACED CAPTION) */}
-                                                            <div className="flex-1 bg-card p-5 rounded-xl border-2 border-slate-200 shadow-sm relative">
-                                                                <div className="absolute top-0 right-0 bg-yellow-400 text-foreground text-[10px] font-black px-2 py-1 rounded-bl-lg border-l border-b border-slate-800">CONTENT DETAILS</div>
-                                                                <h4 className="font-bold text-foreground flex items-center gap-2 mb-4"><FileText size={18} className="text-mutedForeground" /> Insight & Details</h4>
+                                                            {/* Right: Content Details */}
+                                                            <div className="flex-1 bg-slate-900 p-6 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#4c1d95] text-white relative">
+                                                                <div className="absolute top-4 right-4 text-violet-400">
+                                                                    <FileText size={24} />
+                                                                </div>
+                                                                <h4 className="font-black text-white text-base mb-6 uppercase tracking-widest flex items-center gap-2">
+                                                                    Informasi Konten
+                                                                </h4>
 
                                                                 <div className="space-y-4">
-                                                                    <div className="grid grid-cols-2 gap-3">
-                                                                        <div className="p-3 bg-muted rounded-lg border border-border/50">
-                                                                            <span className="block text-[10px] font-bold text-mutedForeground uppercase mb-1">Pillar Konten</span>
-                                                                            <span className="font-bold text-slate-700 text-sm">{item.pillar || '-'}</span>
-                                                                        </div>
-                                                                        <div className="p-3 bg-muted rounded-lg border border-border/50">
-                                                                            <span className="block text-[10px] font-bold text-mutedForeground uppercase mb-1">PIC / Creator</span>
-                                                                            <span className="font-bold text-slate-700 text-sm">{item.pic || item.assignee || '-'}</span>
-                                                                        </div>
+                                                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                                                        <span className="block text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">Pillar Konten</span>
+                                                                        <span className="font-black text-white text-lg">{item.pillar || 'GENERAL'}</span>
+                                                                    </div>
+                                                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                                                        <span className="block text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">PIC / Talent</span>
+                                                                        <span className="font-black text-white text-lg">{item.pic || item.assignee || 'TEAM-WIDE'}</span>
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between">
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span className="text-[10px] text-slate-300 font-mono">Last updated: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : '-'}</span>
+                                                                <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between opacity-60">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <RefreshCw size={12} />
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest">Update: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : 'N/A'}</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1362,7 +1414,7 @@ export const ContentDataInsight: React.FC = () => {
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, shares: parseInt(e.target.value) || 0 })}
                                         />
                                     </div>
-                                    <div className="flex flex-col gap-1 w-full">
+                                    <div className="flex flex-col gap-1 w-full text-left">
                                         <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
                                         <input
                                             type="number"
@@ -1371,6 +1423,19 @@ export const ContentDataInsight: React.FC = () => {
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, saves: parseInt(e.target.value) || 0 })}
                                         />
                                     </div>
+
+                                    {/* Conditional Field: Repost (Only IG) */}
+                                    {selectedItemForInput?.platform === Platform.INSTAGRAM && (
+                                        <div className="flex flex-col gap-1 w-full text-left">
+                                            <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><RefreshCw size={12} /> Reposts</label>
+                                            <input
+                                                type="number"
+                                                className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                value={manualMetrics.reposts}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, reposts: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="pt-4 border-t-2 border-border/50 flex justify-end gap-3">
@@ -1392,12 +1457,12 @@ export const ContentDataInsight: React.FC = () => {
                 isOpen={isReportModalOpen}
                 onClose={() => setIsReportModalOpen(false)}
                 title={
-                    <span className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <FileBarChart size={20} />
-                        Full Monthly Report
-                    </span>
+                        Full Monthly Report Dashboard
+                    </div>
                 }
-                maxWidth="max-w-[85vw]"
+                maxWidth="max-w-[98vw]"
             >
                 {isFree ? (
                     <div className="py-4">
@@ -1407,128 +1472,127 @@ export const ContentDataInsight: React.FC = () => {
                         />
                     </div>
                 ) : (
-                    <div className="space-y-8">
-                        {/* ── Filter Bar ── */}
-                        <div className="flex flex-wrap items-center gap-3 bg-muted border-2 border-slate-200 rounded-2xl p-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black text-mutedForeground uppercase tracking-widest mr-2">
-                                <Filter size={14} /> Filter Report
-                            </div>
-                            <div className="w-44">
-                                <select
-                                    value={reportFilterAccount}
-                                    onChange={e => setReportFilterAccount(e.target.value)}
-                                    className="w-full px-3 py-2 border-2 border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 bg-card transition-colors"
-                                >
-                                    <option value="all">Semua Akun</option>
-                                    {accounts.map(a => <option key={a} value={a}>{a}</option>)}
-                                </select>
-                            </div>
-                            <div className="w-40">
-                                <select
-                                    value={reportFilterPlatform}
-                                    onChange={e => setReportFilterPlatform(e.target.value)}
-                                    className="w-full px-3 py-2 border-2 border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 bg-card transition-colors"
-                                >
-                                    <option value="all">Semua Platform</option>
-                                    <option value={Platform.INSTAGRAM}>Instagram</option>
-                                    <option value={Platform.TIKTOK}>TikTok</option>
-                                    <option value={Platform.YOUTUBE}>YouTube</option>
-                                    <option value={Platform.LINKEDIN}>LinkedIn</option>
-                                    <option value={Platform.FACEBOOK}>Facebook</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-2 border-2 border-slate-300 rounded-xl px-3 py-2 bg-card">
-                                <Calendar size={14} className="text-indigo-500" />
-                                <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-28" />
-                                <span className="text-slate-300 text-xs font-black">—</span>
-                                <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-28" />
-                            </div>
-                            <div className="ml-auto text-xs font-bold text-slate-500">
-                                {reportData.totalPosts} konten ditemukan
+                    <div className="p-4 space-y-6 max-h-[96vh] overflow-y-auto no-scrollbar">
+                        {/* ── ROW 1: Filters ── */}
+                        <div className="grid grid-cols-12 gap-4">
+                            <div className="col-span-12 flex flex-wrap items-center gap-3 bg-slate-50 border-2 border-slate-200 rounded-3xl p-3 shadow-sm">
+                                <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest px-3 border-r-2 border-slate-200">
+                                    <Filter size={14} />
+                                </div>
+                                <div className="w-44">
+                                    <select
+                                        value={reportFilterAccount}
+                                        onChange={e => setReportFilterAccount(e.target.value)}
+                                        className="w-full px-3 py-1.5 bg-white border-2 border-slate-200 rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
+                                    >
+                                        <option value="all">Semua Akun</option>
+                                        {accounts.map(a => <option key={a} value={a}>{a}</option>)}
+                                    </select>
+                                </div>
+                                <div className="w-44">
+                                    <select
+                                        value={reportFilterPlatform}
+                                        onChange={e => setReportFilterPlatform(e.target.value)}
+                                        className="w-full px-3 py-1.5 bg-white border-2 border-slate-200 rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
+                                    >
+                                        <option value="all">Semua Platform</option>
+                                        <option value={Platform.INSTAGRAM}>Instagram</option>
+                                        <option value={Platform.TIKTOK}>TikTok</option>
+                                        <option value={Platform.YOUTUBE}>YouTube</option>
+                                        <option value={Platform.LINKEDIN}>LinkedIn</option>
+                                        <option value={Platform.FACEBOOK}>Facebook</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white border-2 border-slate-200 rounded-xl px-3 py-1.5 font-sans">
+                                    <Calendar size={14} className="text-violet-600" />
+                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28" />
+                                    <span className="text-slate-300 text-xs font-black px-1">—</span>
+                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28" />
+                                </div>
+                                <div className="ml-auto flex items-center gap-4 pr-2">
+                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                        FILTERS APPLIED
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* ── Section 1: Total Metrics Cards ── */}
-                        <div>
-                            <h4 className="text-lg font-black text-foreground mb-4 flex items-center gap-2">
-                                <BarChart2 size={20} className="text-indigo-500" />
-                                Ringkasan Metrics Bulanan
-                            </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {[
-                                    { label: 'Total Reach', value: reportData.totalReach, color: 'from-blue-500 to-blue-600', icon: <Globe size={20} /> },
-                                    { label: 'Total Views', value: reportData.totalViews, color: 'from-yellow-400 to-amber-500', icon: <Eye size={20} /> },
-                                    { label: 'Engagement Rate', value: `${reportData.avgER.toFixed(2)}%`, color: 'from-pink-500 to-rose-600', icon: <TrendingUp size={20} /> },
-                                    { label: 'Total Interaksi', value: reportData.totalInteractions, color: 'from-purple-500 to-purple-700', icon: <Zap size={20} /> },
-                                    { label: 'Total Likes', value: reportData.totalLikes, color: 'from-red-400 to-red-500', icon: <Heart size={20} /> },
-                                    { label: 'Total Comments', value: reportData.totalComments, color: 'from-indigo-400 to-indigo-600', icon: <MessageSquare size={20} /> },
-                                    { label: 'Total Shares', value: reportData.totalShares, color: 'from-emerald-400 to-emerald-600', icon: <Share2 size={20} /> },
-                                    { label: 'Total Saves', value: reportData.totalSaves, color: 'from-amber-400 to-orange-500', icon: <Bookmark size={20} /> }
-                                ].map((card, i) => (
-                                    <div key={i} className={`bg-gradient-to-br ${card.color} p-4 rounded-2xl border-2 border-slate-800 shadow-[3px_3px_0px_#1e293b] text-white relative overflow-hidden`}>
-                                        <div className="absolute top-2 right-2 opacity-20">{card.icon}</div>
-                                        <p className="text-[9px] font-black uppercase tracking-wider opacity-90 mb-1">{card.label}</p>
-                                        <p className="text-2xl font-black">{typeof card.value === 'number' ? card.value.toLocaleString() : card.value}</p>
+                        {/* ── ROW 2: Metrics Grid ── */}
+                        <div className={`grid grid-cols-3 md:grid-cols-5 lg:grid-cols-${reportFilterPlatform === Platform.TIKTOK ? '7' : '9'} gap-3`}>
+                            {[
+                                { label: 'Reach', value: reportData.totalReach, color: 'blue', icon: <Globe size={14} /> },
+                                { label: 'Views', value: reportData.totalViews, color: 'amber', icon: <Eye size={14} /> },
+                                { label: 'ER RT', value: `${reportData.avgER.toFixed(2)}%`, color: 'pink', icon: <TrendingUp size={14} /> },
+                                { label: 'Interaksi', value: reportData.totalInteractions, color: 'indigo', icon: <Zap size={14} /> },
+                                { label: 'Likes', value: reportData.totalLikes, color: 'red', icon: <Heart size={14} /> },
+                                { label: 'Comment', value: reportData.totalComments, color: 'blue', icon: <MessageSquare size={14} /> },
+                                { label: 'Share', value: reportData.totalShares, color: 'emerald', icon: <Share2 size={14} /> },
+                                { label: 'Save', value: reportData.totalSaves, color: 'orange', icon: <Bookmark size={14} /> },
+                                { label: 'Repost', value: reportData.totalReposts, color: 'violet', icon: <RefreshCw size={14} /> }
+                            ].filter(card => {
+                                if (reportFilterPlatform === Platform.TIKTOK) {
+                                    return card.label !== 'Reach' && card.label !== 'Repost';
+                                }
+                                return true;
+                            }).map((card, i) => (
+                                <div
+                                    key={i}
+                                    className={`bg-${card.color}-50 border-2 border-${card.color}-200 p-3 rounded-2xl shadow-sm hover:shadow-[5px_5px_0px_#00000020] hover:shadow-${card.color}-200/50 hover:-translate-y-1 transition-all relative overflow-hidden group`}
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className={`text-xs font-black uppercase text-${card.color}-700 tracking-wider font-heading`}>{card.label}</p>
+                                        <div className={`p-1.5 rounded-lg bg-white border border-${card.color}-200 text-${card.color}-600 shadow-sm group-hover:scale-110 transition-transform`}>
+                                            {card.icon}
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
+                                    <p className={`text-xl font-black text-${card.color}-900 leading-none`}>
+                                        {card.value.toLocaleString()}
+                                    </p>
+                                </div>
+                            ))}
                         </div>
 
-                        {/* ── Section 2: Growth Charts ── */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Weekly Growth Line Chart */}
-                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
-                                    <TrendingUp size={16} className="text-indigo-500" />
-                                    Grafik Pertumbuhan Per Minggu
-                                </h4>
-                                <div className="h-[250px]">
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                        {/* ── ROW 3: Charts Side by Side ── */}
+                        <div className="grid grid-cols-12 gap-4">
+                            <div className="col-span-12 lg:col-span-8 bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-xs font-black text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                                        <TrendingUp size={16} className="text-violet-600" />
+                                        Weekly Performance Growth
+                                    </h4>
+                                    <div className="flex gap-4 text-xs font-black uppercase opacity-60">
+                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Reach</span>
+                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> Views</span>
+                                    </div>
+                                </div>
+                                <div className="h-[200px]">
+                                    <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={reportData.growthChartData}>
                                             <defs>
-                                                <linearGradient id="reportReach" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                                <linearGradient id="reportViews" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                                                </linearGradient>
-                                                <linearGradient id="reportInteractions" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                                </linearGradient>
+                                                <linearGradient id="rReachM" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} /></linearGradient>
+                                                <linearGradient id="rViewsM" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} /></linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                                            <YAxis stroke="#64748b" fontSize={11} />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={800} axisLine={false} tickLine={false} />
+                                            <YAxis stroke="#94a3b8" fontSize={11} fontWeight={800} axisLine={false} tickLine={false} />
                                             <Tooltip content={<ChartTooltip />} />
-                                            <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
-                                            <Area type="monotone" dataKey="reach" name="Reach" stroke="#3b82f6" strokeWidth={2} fill="url(#reportReach)" />
-                                            <Area type="monotone" dataKey="views" name="Views" stroke="#f59e0b" strokeWidth={2} fill="url(#reportViews)" />
-                                            <Area type="monotone" dataKey="interactions" name="Interaksi" stroke="#8b5cf6" strokeWidth={2} fill="url(#reportInteractions)" />
+                                            <Area type="monotone" dataKey="reach" stroke="#3b82f6" strokeWidth={3} fill="url(#rReachM)" />
+                                            <Area type="monotone" dataKey="views" stroke="#f59e0b" strokeWidth={3} fill="url(#rViewsM)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
-
-                            {/* Metrics Comparison Bar Chart */}
-                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
-                                    <Layers size={16} className="text-purple-500" />
-                                    Komparasi Metrics Engagement
+                            <div className="col-span-12 lg:col-span-4 bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm">
+                                <h4 className="text-xs font-black text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-widest">
+                                    <BarChart2 size={16} className="text-violet-600" /> Engagement Comparison
                                 </h4>
-                                <div className="h-[250px]">
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                <div className="h-[200px]">
+                                    <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={reportData.metricsBarData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                                            <YAxis stroke="#64748b" fontSize={11} />
+                                            <XAxis dataKey="name" fontSize={11} fontWeight={900} axisLine={false} tickLine={false} />
                                             <Tooltip content={<ChartTooltip />} />
-                                            <Bar dataKey="value" name="Total" radius={[8, 8, 0, 0]}>
-                                                {reportData.metricsBarData.map((entry, index) => (
-                                                    <Cell key={index} fill={entry.fill} />
-                                                ))}
+                                            <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                                                {reportData.metricsBarData.map((e, i) => <Cell key={i} fill={e.fill} />)}
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -1536,321 +1600,154 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* ── Section 3: Top 3 & Bottom 3 Content ── */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Top 3 */}
-                            <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-300 rounded-2xl p-5">
-                                <h4 className="text-sm font-black text-emerald-800 mb-4 flex items-center gap-2">
-                                    <Award size={18} className="text-emerald-600" />
-                                    🏆 Top 3 Konten Terbaik
+                        {/* ── ROW 4: Performance Lists & Total Post ── */}
+                        <div className="grid grid-cols-12 gap-4">
+                            <div className="col-span-12 lg:col-span-3 bg-emerald-50/50 border-2 border-emerald-200 rounded-3xl p-4">
+                                <h4 className="text-xs font-black text-emerald-800 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                                    <Award size={16} className="text-emerald-600" /> Top Perform
                                 </h4>
-                                <div className="space-y-3">
-                                    {reportData.top3.length > 0 ? reportData.top3.map((item, i) => (
-                                        <div key={item.id} className="bg-card border-2 border-emerald-200 rounded-xl p-4 flex items-start gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0 ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-amber-700'}`}>
-                                                {i + 1}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-foreground line-clamp-1">{item.title}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">{item.platform}</span>
-                                                    <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-600">
-                                                    <span className="flex items-center gap-1"><Heart size={10} className="text-pink-500" />{(item.metrics?.likes || 0).toLocaleString()}</span>
-                                                    <span className="flex items-center gap-1"><MessageSquare size={10} className="text-indigo-500" />{(item.metrics?.comments || 0).toLocaleString()}</span>
-                                                    <span className="flex items-center gap-1"><Share2 size={10} className="text-emerald-500" />{(item.metrics?.shares || 0).toLocaleString()}</span>
-                                                    <span className="flex items-center gap-1 ml-auto font-black text-emerald-600"><ArrowUpRight size={10} />ER: {item._er.toFixed(2)}%</span>
-                                                </div>
+                                <div className="space-y-2">
+                                    {reportData.top3.map((item, i) => (
+                                        <div key={item.id} className="bg-white p-2.5 rounded-xl border border-emerald-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
+                                            <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
                                             </div>
                                         </div>
-                                    )) : (
-                                        <p className="text-xs text-slate-500 text-center py-4">Belum ada data metrics</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Bottom 3 */}
-                            <div className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl p-5">
-                                <h4 className="text-sm font-black text-red-800 mb-4 flex items-center gap-2">
-                                    <AlertTriangle size={18} className="text-red-500" />
-                                    📉 3 Konten Terendah / Not Perform
-                                </h4>
-                                <div className="space-y-3">
-                                    {reportData.bottom3.length > 0 ? reportData.bottom3.map((item, i) => (
-                                        <div key={item.id} className="bg-card border-2 border-red-100 rounded-xl p-4 flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-black text-sm shrink-0">
-                                                {i + 1}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-foreground line-clamp-1">{item.title}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[9px] font-black text-red-600 bg-red-100 px-2 py-0.5 rounded-full">{item.platform}</span>
-                                                    <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-slate-600">
-                                                    <span className="flex items-center gap-1"><Heart size={10} className="text-pink-500" />{(item.metrics?.likes || 0).toLocaleString()}</span>
-                                                    <span className="flex items-center gap-1"><MessageSquare size={10} className="text-indigo-500" />{(item.metrics?.comments || 0).toLocaleString()}</span>
-                                                    <span className="flex items-center gap-1"><Share2 size={10} className="text-emerald-500" />{(item.metrics?.shares || 0).toLocaleString()}</span>
-                                                    <span className="flex items-center gap-1 ml-auto font-black text-red-500"><ArrowDownRight size={10} />ER: {item._er.toFixed(2)}%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )) : (
-                                        <p className="text-xs text-slate-500 text-center py-4">Belum ada data metrics</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ── Section 4: Total Posted + Pillar Pie + Posting Frequency ── */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* Total Konten */}
-                            <div className="bg-gradient-to-br from-indigo-500 to-blue-600 border-2 border-slate-800 rounded-2xl p-6 text-white shadow-hard relative overflow-hidden">
-                                <div className="absolute top-4 right-4 opacity-20"><Hash size={60} /></div>
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Total Konten Posted</p>
-                                <p className="text-5xl font-black">{reportData.totalPosts}</p>
-                                <p className="text-xs font-bold opacity-70 mt-2">konten dipublikasikan pada periode ini</p>
-                                <div className="mt-4 flex items-center gap-2 bg-card/15 px-3 py-2 rounded-xl text-[10px] font-bold">
-                                    <Target size={12} />
-                                    Rata-rata {reportData.totalPosts > 0 ? Math.ceil(reportData.totalPosts / 4) : 0} konten / minggu
-                                </div>
-                            </div>
-
-                            {/* Pillar Pie Chart */}
-                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-foreground mb-2 flex items-center gap-2">
-                                    <Layers size={16} className="text-indigo-500" />
-                                    Content Pillar Overview
-                                </h4>
-                                <div className="h-[200px]">
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                        <PieChart>
-                                            <Pie
-                                                data={reportData.pillarPieData}
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={70}
-                                                innerRadius={35}
-                                                dataKey="value"
-                                                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                                                labelLine={false}
-                                                fontSize={9}
-                                                fontWeight={700}
-                                            >
-                                                {reportData.pillarPieData.map((_, i) => (
-                                                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="#1e293b" strokeWidth={2} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {reportData.pillarPieData.map((p, i) => (
-                                        <span key={p.name} className="flex items-center gap-1 text-[9px] font-bold text-slate-600">
-                                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                            {p.name}: {p.value}
-                                        </span>
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Posting Frequency Heatmap */}
-                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
-                                    <Clock size={16} className="text-amber-500" />
-                                    Frekuensi Posting Per Hari
+                            <div className="col-span-12 lg:col-span-3 bg-rose-50/50 border-2 border-rose-200 rounded-3xl p-4 text-rose-800">
+                                <h4 className="text-xs font-black text-rose-800 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                                    <AlertTriangle size={16} className="text-rose-600" /> Low Perform
                                 </h4>
-                                <div className="h-[200px]">
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                        <BarChart data={reportData.postingFreqData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                                            <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} />
-                                            <Tooltip content={<ChartTooltip />} />
-                                            <Bar dataKey="posts" name="Posts" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                <div className="space-y-2">
+                                    {reportData.bottom3.map((item, i) => (
+                                        <div key={item.id} className="bg-white p-2.5 rounded-xl border border-rose-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
+                                            <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <p className="text-[10px] text-mutedForeground font-bold mt-2 text-center">
-                                    Hari terbaik: <span className="text-indigo-600">{reportData.postingFreqData.reduce((best, d) => d.posts > best.posts ? d : best, { name: '-', posts: 0 }).name}</span>
-                                </p>
+                            </div>
+                            <div className="col-span-12 lg:col-span-6 bg-violet-600 border-2 border-slate-900 p-6 rounded-3xl text-white shadow-[8px_8px_0px_#1e293b] flex items-center justify-between relative overflow-hidden group">
+                                <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                                    <BarChart2 size={200} />
+                                </div>
+                                <div className="relative z-10 flex items-center gap-6">
+                                    <div className="bg-white/10 p-5 rounded-2xl border border-white/20 backdrop-blur-md">
+                                        <Hash size={32} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Production Summary</p>
+                                        <h2 className="text-5xl font-black leading-none mb-1">
+                                            {reportData.totalPosts} <span className="text-xl opacity-60">Konten</span>
+                                        </h2>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-widest text-white">Digital Content Portfolio</span>
+                                            <span className="text-[10px] font-black opacity-60 uppercase tracking-widest text-white">{reportStartDate} — {reportEndDate}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="hidden lg:flex flex-col items-end gap-1 relative z-10">
+                                    <div className="text-xs font-black uppercase tracking-widest border-b border-white/20 pb-1 mb-1">Platform Split</div>
+                                    <div className="flex gap-3">
+                                        {reportData.platformPieData.map((p, i) => (
+                                            <div key={i} className="flex flex-col items-center">
+                                                <div className="text-sm font-black">{p.value}</div>
+                                                <div className="text-[10px] font-bold opacity-70 uppercase">{p.name}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {/* ── Section 5: Platform Distribution (jika multi-platform) ── */}
-                        {reportFilterPlatform === 'all' && reportData.platformPieData.length > 1 && (
-                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
-                                    <Users size={16} className="text-teal-500" />
-                                    Distribusi Platform
+                        {/* ── ROW 5: Distribution, Frequency & Notes ── */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white border-2 border-slate-200 rounded-3xl p-4 shadow-sm min-h-[180px]">
+                                <h4 className="text-xs font-black text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                                    <Layers size={14} className="text-violet-600" /> Pillar Distribution
                                 </h4>
-                                <div className="flex items-center gap-8">
-                                    <div className="h-[180px] w-[180px]">
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                <div className="flex items-center">
+                                    <div className="w-2/3 h-[120px]">
+                                        <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
-                                                <Pie data={reportData.platformPieData} cx="50%" cy="50%" outerRadius={80} innerRadius={40} dataKey="value" fontSize={10} fontWeight={700}>
-                                                    {reportData.platformPieData.map((_, i) => (
-                                                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="#1e293b" strokeWidth={2} />
-                                                    ))}
+                                                <Pie data={reportData.pillarPieData} innerRadius={30} outerRadius={45} paddingAngle={5} dataKey="value">
+                                                    {reportData.pillarPieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                                                 </Pie>
-                                                <Tooltip />
+                                                <Tooltip content={<ChartTooltip />} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="flex-1 grid grid-cols-2 gap-3">
-                                        {reportData.platformPieData.map((p, i) => (
-                                            <div key={p.name} className="flex items-center gap-3 bg-muted border border-slate-200 rounded-xl px-4 py-3">
-                                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                                <div>
-                                                    <p className="text-xs font-black text-foreground">{p.name}</p>
-                                                    <p className="text-lg font-black text-slate-600">{p.value} <span className="text-[9px] font-bold text-mutedForeground">konten</span></p>
+                                    <div className="w-1/3 space-y-1.5 pr-2">
+                                        {reportData.pillarPieData.map((p, i) => (
+                                            <div key={p.name} className="flex items-center gap-2">
+                                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}></div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tighter">{p.name}</p>
+                                                    <p className="text-xs font-bold text-slate-400 leading-none">{p.value} Post</p>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {/* ── Section 6: Monthly Notes (Editable + Saved) ── */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div className="bg-[#FFFDF5] border-2 border-amber-300 rounded-2xl p-6 relative">
-                                <div className="absolute top-0 left-0 w-2 h-full bg-amber-400 rounded-l-2xl" />
-                                <h4 className="text-sm font-black text-amber-800 mb-3 flex items-center gap-2">
-                                    <PenTool size={16} className="text-amber-600" />
-                                    📝 Catatan Bulan Ini
+                            <div className="bg-white border-2 border-slate-200 rounded-3xl p-4 shadow-sm min-h-[180px]">
+                                <h4 className="text-xs font-black text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                                    <Clock size={14} className="text-violet-600" /> Post Frequency
+                                </h4>
+                                <div className="h-[120px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={reportData.postingFreqData}>
+                                            <XAxis dataKey="name" fontSize={11} fontWeight={900} axisLine={false} tickLine={false} />
+                                            <Bar dataKey="posts" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                            <div className="bg-amber-50/50 border-2 border-amber-200 rounded-3xl p-4 min-h-[180px]">
+                                <h4 className="text-xs font-black text-amber-800 mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                    <PenTool size={14} className="text-amber-600" /> Catatan Performa
                                 </h4>
                                 <textarea
                                     value={reportNotes}
                                     onChange={e => setReportNotes(e.target.value)}
-                                    rows={6}
-                                    placeholder="Tulis catatan performance bulan ini... (mis: Kolaborasi dengan influencer X meningkatkan reach 3x, Konten edukasi mendapat engagement tertinggi, dll.)"
-                                    className="w-full bg-transparent text-sm text-slate-700 font-medium outline-none resize-none placeholder:text-amber-300 leading-relaxed"
+                                    rows={5}
+                                    placeholder="Tulis catatan..."
+                                    className="w-full bg-white/50 border border-amber-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-white transition-all no-scrollbar"
                                 />
                             </div>
-
-                            <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-6 relative">
-                                <div className="absolute top-0 left-0 w-2 h-full bg-blue-400 rounded-l-2xl" />
-                                <h4 className="text-sm font-black text-blue-800 mb-3 flex items-center gap-2">
-                                    <Target size={16} className="text-blue-600" />
-                                    🎯 Next Plan Strategy & Saran
+                            <div className="bg-blue-50/50 border-2 border-blue-200 rounded-3xl p-4 min-h-[180px]">
+                                <h4 className="text-xs font-black text-blue-800 mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                    <Target size={14} className="text-blue-600" /> Strategi & Target
                                 </h4>
                                 <textarea
                                     value={reportNextPlan}
                                     onChange={e => setReportNextPlan(e.target.value)}
-                                    rows={6}
-                                    placeholder="Tulis rencana dan strategi bulan depan... (mis: Fokus pada konten video pendek, Tingkatkan posting di hari Senin & Rabu, Target reach 50K, dll.)"
-                                    className="w-full bg-transparent text-sm text-slate-700 font-medium outline-none resize-none placeholder:text-blue-300 leading-relaxed"
+                                    rows={5}
+                                    placeholder="Tulis strategi..."
+                                    className="w-full bg-white/50 border border-blue-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-white transition-all no-scrollbar"
                                 />
                             </div>
                         </div>
 
-                        {/* Save Notes Button */}
-                        <div className="flex justify-center">
+                        {/* Save Button */}
+                        <div className="flex justify-center pt-2">
                             <button
                                 onClick={saveReportNotesToStorage}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-2xl border-2 border-slate-800 font-black text-sm shadow-hard transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-card text-foreground hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard-hover'}`}
+                                className={`flex items-center gap-2 px-10 py-3 rounded-2xl border-2 border-slate-900 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_#1e293b] hover:-translate-y-0.5 transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-white text-slate-800 hover:bg-slate-50'}`}
                             >
-                                {savingReportNotes ? (
-                                    <><Save size={16} /> Tersimpan! ✓</>
-                                ) : (
-                                    <><Save size={16} /> Simpan Catatan & Plan</>
-                                )}
+                                {savingReportNotes ? <><Save size={16} /> Tersimpan!</> : <><Save size={16} /> Simpan Laporan</>}
                             </button>
-                        </div>
-
-                        {/* ── Section 7: Rekomendasi AI / Insight Otomatis ── */}
-                        <div className="bg-gradient-to-br from-violet-50 to-indigo-50 border-2 border-indigo-300 rounded-2xl p-6">
-                            <h4 className="text-sm font-black text-indigo-800 mb-4 flex items-center gap-2">
-                                <Lightbulb size={18} className="text-indigo-500" />
-                                💡 Rekomendasi & Insight Otomatis
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Dynamic recommendations based on data */}
-                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Star size={14} className="text-amber-500" />
-                                        <span className="text-xs font-black text-foreground">Optimasi Engagement Rate</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                                        {reportData.avgER >= 3
-                                            ? "✅ ER Anda sudah bagus! Pertahankan jenis konten yang mendapat engagement tinggi dan eksperimen dengan format baru."
-                                            : reportData.avgER >= 1
-                                                ? "⚡ ER cukup baik. Coba tambahkan CTA yang kuat dan gunakan hook di 3 detik pertama untuk meningkatkan interaksi."
-                                                : "🔴 ER masih rendah. Fokus pada konten yang memancing komentar (pertanyaan, polling) dan sesuaikan waktu posting."}
-                                    </p>
-                                </div>
-
-                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Clock size={14} className="text-indigo-500" />
-                                        <span className="text-xs font-black text-foreground">Frekuensi Posting</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                                        {reportData.totalPosts >= 20
-                                            ? "✅ Volume posting bagus! Pastikan kualitas tetap terjaga meski kuantitas tinggi."
-                                            : reportData.totalPosts >= 8
-                                                ? "⚡ Volume cukup. Tingkatkan menjadi 4-5 konten/minggu untuk algoritma yang lebih optimal."
-                                                : "🔴 Volume posting rendah. Idealnya minimal 3-4 konten per minggu untuk menjaga konsistensi di feed."}
-                                    </p>
-                                </div>
-
-                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Layers size={14} className="text-purple-500" />
-                                        <span className="text-xs font-black text-foreground">Diversifikasi Content Pillar</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                                        {reportData.pillarPieData.length >= 3
-                                            ? "✅ Variasi pillar sudah baik. Monitor mana yang paling engage dan beri porsi lebih."
-                                            : "⚡ Coba tambah variasi content pillar (edukasi, behind-the-scene, testimonial, tips) agar audiens tidak bosan."}
-                                    </p>
-                                </div>
-
-                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Target size={14} className="text-emerald-500" />
-                                        <span className="text-xs font-black text-foreground">Kualitas vs Kuantitas</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                                        {reportData.top3.length > 0 && reportData.top3[0]._interactions > reportData.totalInteractions * 0.3
-                                            ? "⚡ Engagement terlalu bergantung pada 1 konten viral. Coba stabilkan performa seluruh konten."
-                                            : "✅ Distribusi engagement cukup merata. Pertahankan konsistensi kualitas konten."}
-                                    </p>
-                                </div>
-
-                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Share2 size={14} className="text-teal-500" />
-                                        <span className="text-xs font-black text-foreground">Saves & Shares Ratio</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                                        {(reportData.totalSaves + reportData.totalShares) > reportData.totalLikes * 0.1
-                                            ? "✅ Rasio saves/shares bagus! Konten Anda dianggap 'bookmark-worthy' oleh audiens."
-                                            : "⚡ Tingkatkan konten yang 'saveable' seperti tips, infografis, atau checklist untuk boost shareability."}
-                                    </p>
-                                </div>
-
-                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Eye size={14} className="text-blue-500" />
-                                        <span className="text-xs font-black text-foreground">Reach vs Views Efficiency</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                                        {reportData.totalReach > 0 && reportData.totalViews > reportData.totalReach * 0.8
-                                            ? "✅ Views per reach tinggi — audiens menonton konten Anda secara penuh."
-                                            : reportData.totalReach > 0
-                                                ? "⚡ Views/reach bisa ditingkatkan. Perbaiki thumbnail, judul, dan hook awal konten."
-                                                : "Data reach belum tersedia. Input reach secara manual untuk analisis lebih akurat."}
-                                    </p>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 )}
-            </Modal>
+            </Modal >
         </>
     );
 };

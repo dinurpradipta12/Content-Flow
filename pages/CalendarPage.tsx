@@ -51,6 +51,19 @@ const MONTH_NAMES = [
 
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
+// Platform color mapping for left-border accent
+const getPlatformColor = (platform: string): string => {
+    switch (platform) {
+        case 'Instagram': return '#8b5cf6'; // violet
+        case 'TikTok': return '#64748b';    // slate
+        case 'LinkedIn': return '#2563eb';  // blue
+        case 'YouTube': return '#dc2626';   // red
+        case 'Facebook': return '#3b82f6';  // blue-400
+        case 'Threads': return '#71717a';   // zinc
+        default: return '#6366f1';
+    }
+};
+
 const getPlatformIcon = (platform: string, size = 12) => {
     switch (platform) {
         case 'Instagram': return <Instagram size={size} />;
@@ -67,14 +80,15 @@ const getPlatformIcon = (platform: string, size = 12) => {
     }
 };
 
-const getStatusDot = (status: string) => {
+// Status badge styling
+const getStatusStyle = (status: string): { bg: string; text: string; dot: string } => {
     switch (status) {
-        case 'Published': return 'bg-emerald-500';
-        case 'Scheduled': return 'bg-blue-500';
-        case 'Review': return 'bg-amber-500';
-        case 'Revisi': return 'bg-orange-500';
-        case 'In Progress': return 'bg-purple-500';
-        default: return 'bg-slate-400';
+        case 'Published': return { bg: 'bg-emerald-500/20 border-emerald-500', text: 'text-emerald-500', dot: 'bg-emerald-500' };
+        case 'Scheduled': return { bg: 'bg-blue-500/20 border-blue-500', text: 'text-blue-400', dot: 'bg-blue-500' };
+        case 'Review': return { bg: 'bg-amber-500/20 border-amber-500', text: 'text-amber-500', dot: 'bg-amber-500' };
+        case 'Revisi': return { bg: 'bg-rose-500/20 border-rose-500', text: 'text-rose-500', dot: 'bg-rose-500' };
+        case 'In Progress': return { bg: 'bg-violet-500/20 border-violet-500', text: 'text-violet-400', dot: 'bg-violet-500' };
+        default: return { bg: 'bg-slate-500/20 border-slate-500', text: 'text-slate-400', dot: 'bg-slate-400' };
     }
 };
 
@@ -90,7 +104,6 @@ export const CalendarPage: React.FC = () => {
     const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
     const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
 
     // Detail Modal
     const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -130,7 +143,6 @@ export const CalendarPage: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Build OR condition: match by owner, userId, or avatar_url in members
             let orCond = `owner_id.eq.${userId},members.cs.{"${userId}"}`;
             if (userAvatar && !userAvatar.startsWith('data:')) {
                 orCond += `,members.cs.{"${userAvatar}"}`;
@@ -243,13 +255,11 @@ export const CalendarPage: React.FC = () => {
 
                 {/* Compact Calendar Grid */}
                 <div className="bg-card border border-border rounded-2xl overflow-hidden mb-3 flex-shrink-0">
-                    {/* Day headers */}
                     <div className="grid grid-cols-7 border-b border-border bg-muted/40">
                         {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
                             <div key={d} className="py-1.5 text-center text-[9px] font-black text-mutedForeground uppercase">{d}</div>
                         ))}
                     </div>
-                    {/* Calendar cells */}
                     <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(44px, 1fr)' }}>
                         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
                             <div key={`e-${i}`} className="border-r border-b border-border bg-muted/10" />
@@ -276,7 +286,7 @@ export const CalendarPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Today's Events */}
+                {/* List */}
                 <div className="flex-1 overflow-y-auto">
                     <h3 className="text-xs font-black text-foreground uppercase tracking-wider mb-2">
                         Konten {MONTH_NAMES[month]} {year}
@@ -299,7 +309,7 @@ export const CalendarPage: React.FC = () => {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
-                                                <p className="text-[9px] text-mutedForeground">{item.platform} · {item.status}</p>
+                                                <p className="text-[9px] text-mutedForeground">{item.platform} · {item.type} · {item.status}</p>
                                             </div>
                                             <ChevronRightIcon size={14} className="text-mutedForeground flex-shrink-0" />
                                         </button>
@@ -342,29 +352,15 @@ export const CalendarPage: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Filter toggle */}
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 text-sm font-bold transition-all ${showFilters ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground hover:border-accent'}`}
-                        >
-                            <Filter size={14} />
-                            <span className="hidden sm:inline">Filter</span>
-                            {(selectedPlatforms.length > 0 || selectedWorkspaces.length < workspaces.length) && (
-                                <span className="w-4 h-4 rounded-full bg-white/30 text-[9px] font-black flex items-center justify-center">
-                                    {selectedPlatforms.length + (workspaces.length - selectedWorkspaces.length)}
-                                </span>
-                            )}
-                        </button>
-
                         {/* Month nav */}
-                        <div className="flex items-center bg-muted rounded-xl border-2 border-border overflow-hidden">
-                            <button onClick={() => setCurrentDate(new Date(year, month - 1))} className="p-2 hover:bg-card transition-colors text-foreground">
+                        <div className="flex items-center bg-card rounded-xl border-[3px] border-slate-900 overflow-hidden shadow-[3px_3px_0px_#0f172a]">
+                            <button onClick={() => setCurrentDate(new Date(year, month - 1))} className="p-2 hover:bg-muted transition-colors text-foreground border-r-[3px] border-slate-900">
                                 <ChevronLeft size={16} />
                             </button>
-                            <button onClick={() => setCurrentDate(new Date())} className="px-3 py-2 text-xs font-black text-foreground hover:bg-card transition-colors whitespace-nowrap">
+                            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 text-sm font-black text-foreground hover:bg-muted transition-colors whitespace-nowrap">
                                 {MONTH_NAMES[month].slice(0, 3)} {year}
                             </button>
-                            <button onClick={() => setCurrentDate(new Date(year, month + 1))} className="p-2 hover:bg-card transition-colors text-foreground">
+                            <button onClick={() => setCurrentDate(new Date(year, month + 1))} className="p-2 hover:bg-muted transition-colors text-foreground border-l-[3px] border-slate-900">
                                 <ChevronRight size={16} />
                             </button>
                         </div>
@@ -375,115 +371,86 @@ export const CalendarPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* ── Filter Panel (collapsible) ── */}
-                {showFilters && (
-                    <div className="bg-card border-2 border-border rounded-2xl p-4 flex flex-wrap gap-6 animate-in slide-in-from-top-2 duration-200">
-                        {/* Workspaces */}
-                        <div className="flex-1 min-w-[200px]">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground mb-2">Workspace</p>
-                            <div className="flex flex-wrap gap-2">
-                                {workspaces.map(ws => (
-                                    <div key={ws.id} className="relative">
-                                        <div className="flex items-center gap-1.5">
-                                            {/* Color dot - opens color picker */}
-                                            <button
-                                                type="button"
-                                                onClick={() => setColorPickerOpen(colorPickerOpen === ws.id ? null : ws.id)}
-                                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform flex-shrink-0"
-                                                style={{ backgroundColor: ws.calendarColor }}
-                                                title="Ubah warna"
-                                            />
-                                            {/* Name toggle */}
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedWorkspaces(prev =>
-                                                    prev.includes(ws.id) ? prev.filter(id => id !== ws.id) : [...prev, ws.id]
-                                                )}
-                                                className={`px-2.5 py-1 rounded-lg border-2 text-xs font-bold transition-all ${selectedWorkspaces.includes(ws.id)
-                                                    ? 'border-border bg-muted text-foreground'
-                                                    : 'border-transparent text-mutedForeground opacity-50'
-                                                    }`}
-                                            >
-                                                {ws.name}
-                                            </button>
-                                        </div>
-
-                                        {/* Color Picker */}
-                                        {colorPickerOpen === ws.id && (
-                                            <div
-                                                ref={colorPickerRef}
-                                                className="absolute left-0 top-full mt-1 z-50 bg-card border-2 border-border rounded-xl shadow-hard p-3 w-48"
-                                                onClick={e => e.stopPropagation()}
-                                            >
-                                                <p className="text-[9px] font-black uppercase tracking-widest text-mutedForeground mb-2">Warna Kalender</p>
-                                                <div className="grid grid-cols-6 gap-1.5 mb-2">
-                                                    {DEFAULT_PALETTE.map(color => (
-                                                        <button
-                                                            key={color}
-                                                            type="button"
-                                                            onClick={() => handleSaveCalendarColor(ws.id, color)}
-                                                            disabled={savingColor === ws.id}
-                                                            className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform flex items-center justify-center"
-                                                            style={{ backgroundColor: color }}
-                                                        >
-                                                            {ws.calendarColor === color && <Check size={10} className="text-white" strokeWidth={3} />}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                                <input
-                                                    type="color"
-                                                    value={ws.calendarColor}
-                                                    onChange={e => setWorkspaces(prev => prev.map(w => w.id === ws.id ? { ...w, calendarColor: e.target.value } : w))}
-                                                    onBlur={e => handleSaveCalendarColor(ws.id, e.target.value)}
-                                                    className="w-full h-7 rounded-lg border-2 border-border cursor-pointer"
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Platforms */}
-                        <div className="flex-1 min-w-[200px]">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground mb-2">Platform</p>
-                            <div className="flex flex-wrap gap-2">
-                                {['Instagram', 'TikTok', 'LinkedIn', 'YouTube', 'Facebook', 'Threads'].map(p => (
-                                    <button
-                                        key={p}
-                                        onClick={() => setSelectedPlatforms(prev =>
-                                            prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
-                                        )}
-                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border-2 text-xs font-bold transition-all ${selectedPlatforms.includes(p)
-                                            ? 'bg-accent/10 border-accent text-accent'
-                                            : 'border-border text-mutedForeground hover:border-accent/50'
-                                            }`}
+                {/* ── Filter Panel (Permanent Capsules) ── */}
+                <div className="bg-card border-[3px] border-slate-900 rounded-2xl p-3.5 flex flex-wrap items-center gap-x-8 gap-y-3 shadow-[4px_4px_0px_#0f172a]">
+                    {/* Workspaces */}
+                    <div className="flex items-center gap-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground">Workspace</p>
+                        <div className="flex flex-wrap gap-2">
+                            {workspaces.map(ws => (
+                                <div key={ws.id} className="relative group/ws">
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-[2.5px] transition-all cursor-pointer ${selectedWorkspaces.includes(ws.id) ? 'bg-muted border-slate-900 shadow-[2px_2px_0px_#0f172a]' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                        onClick={() => setSelectedWorkspaces(prev => prev.includes(ws.id) ? prev.filter(id => id !== ws.id) : [...prev, ws.id])}
                                     >
-                                        {getPlatformIcon(p, 12)}
-                                        <span>{p}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                                        <div
+                                            className="w-3 h-3 rounded-full border border-white/20 shadow-sm transition-transform group-hover/ws:scale-110"
+                                            style={{ backgroundColor: ws.calendarColor }}
+                                            onClick={(e) => { e.stopPropagation(); setColorPickerOpen(colorPickerOpen === ws.id ? null : ws.id); }}
+                                        />
+                                        <span className="text-[11px] font-black text-foreground whitespace-nowrap">{ws.name}</span>
+                                    </div>
 
-                        {/* Reset */}
-                        {(selectedPlatforms.length > 0 || selectedWorkspaces.length < workspaces.length) && (
-                            <button
-                                onClick={() => { setSelectedPlatforms([]); setSelectedWorkspaces(workspaces.map(w => w.id)); }}
-                                className="text-xs font-bold text-mutedForeground hover:text-foreground flex items-center gap-1 self-end"
-                            >
-                                <X size={12} /> Reset
-                            </button>
-                        )}
+                                    {colorPickerOpen === ws.id && (
+                                        <div ref={colorPickerRef} className="absolute left-0 top-full mt-2 z-50 bg-card border-2 border-border rounded-xl shadow-hard p-3 w-48" onClick={e => e.stopPropagation()}>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-mutedForeground mb-2">Warna Kalender</p>
+                                            <div className="grid grid-cols-6 gap-1.5 mb-2">
+                                                {DEFAULT_PALETTE.map(color => (
+                                                    <button key={color} type="button" onClick={() => handleSaveCalendarColor(ws.id, color)} disabled={savingColor === ws.id}
+                                                        className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform flex items-center justify-center"
+                                                        style={{ backgroundColor: color }}
+                                                    >
+                                                        {ws.calendarColor === color && <Check size={10} className="text-white" strokeWidth={3} />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <input type="color" value={ws.calendarColor} onChange={e => setWorkspaces(prev => prev.map(w => w.id === ws.id ? { ...w, calendarColor: e.target.value } : w))} onBlur={e => handleSaveCalendarColor(ws.id, e.target.value)} className="w-full h-7 rounded-lg border-2 border-border cursor-pointer" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                )}
+
+                    <div className="h-4 w-[2px] bg-slate-200 dark:bg-slate-800 hidden lg:block" />
+
+                    {/* Platforms */}
+                    <div className="flex items-center gap-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground">Platform</p>
+                        <div className="flex flex-wrap gap-2">
+                            {['Instagram', 'TikTok', 'LinkedIn', 'YouTube', 'Facebook', 'Threads'].map(p => (
+                                <button key={p} onClick={() => setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-[2.5px] text-[11px] font-black transition-all ${selectedPlatforms.includes(p) ? 'bg-accent/10 border-accent text-accent shadow-[2px_2px_0px_currentColor]' : 'border-transparent text-mutedForeground hover:border-slate-300'}`}
+                                >
+                                    {getPlatformIcon(p, 12)}
+                                    <span>{p}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Reset */}
+                    {(selectedPlatforms.length > 0 || selectedWorkspaces.length < workspaces.length) && (
+                        <button onClick={() => { setSelectedPlatforms([]); setSelectedWorkspaces(workspaces.map(w => w.id)); }}
+                            className="ml-auto text-[11px] font-black text-rose-500 hover:text-rose-600 flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-transparent hover:border-rose-100 transition-all"
+                        >
+                            <X size={12} strokeWidth={3} /> Reset
+                        </button>
+                    )}
+                </div>
 
                 {/* ── Calendar Grid ── */}
-                <div className="flex-1 bg-card border-2 border-border rounded-2xl overflow-hidden flex flex-col min-h-0">
-                    {/* Day headers */}
-                    <div className="grid grid-cols-7 border-b-2 border-border bg-muted/40">
-                        {DAY_NAMES.map(d => (
-                            <div key={d} className="py-2.5 text-center text-[10px] font-black uppercase tracking-widest text-mutedForeground">
+                <div className="flex-1 bg-card border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl overflow-hidden flex flex-col min-h-0 shadow-[4px_4px_0px_#0f172a] dark:shadow-[4px_4px_0px_#000]">
+                    {/* Day headers — blue solid pill style */}
+                    <div className="grid grid-cols-7">
+                        {DAY_NAMES.map((d, idx) => (
+                            <div
+                                key={d}
+                                className={`py-3.5 text-center text-[12px] font-black uppercase tracking-widest text-white bg-violet-600 border-b-[3px] border-slate-950 dark:border-slate-800
+                                    ${idx === 0 ? 'rounded-tl-[calc(1rem-3px)]' : ''}
+                                    ${idx === 6 ? 'rounded-tr-[calc(1rem-3px)]' : ''}
+                                    ${idx < 6 ? 'border-r-[3px] border-r-violet-700' : ''}
+                                `}
+                            >
                                 {d}
                             </div>
                         ))}
@@ -495,10 +462,10 @@ export const CalendarPage: React.FC = () => {
                             <div className="text-sm font-bold animate-pulse">Memuat kalender...</div>
                         </div>
                     ) : (
-                        <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridAutoRows: 'minmax(70px, 1fr)' }}>
+                        <div className="flex-1 grid grid-cols-7 overflow-y-auto" style={{ gridAutoRows: 'minmax(90px, 1fr)' }}>
                             {/* Prev month empty cells */}
                             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                                <div key={`e-${i}`} className="border-r border-b border-border bg-muted/20" />
+                                <div key={`e-${i}`} className={`border-r border-b border-border bg-muted/10 ${i < firstDayOfMonth - 1 ? 'border-r' : ''}`} />
                             ))}
 
                             {/* Days */}
@@ -506,45 +473,62 @@ export const CalendarPage: React.FC = () => {
                                 const day = i + 1;
                                 const dayItems = getItemsForDay(day);
                                 const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-                                const MAX_VISIBLE = 3;
-
+                                const MAX_VISIBLE = 2;
+                                const isLastCol = (firstDayOfMonth + i) % 7 === 6;
                                 return (
                                     <div
                                         key={day}
-                                        className={`border-r border-b border-border p-1.5 flex flex-col gap-1 overflow-hidden transition-colors hover:bg-muted/30 ${isToday ? 'bg-accent/5' : ''}`}
+                                        className={`border-b border-border p-2 flex flex-col gap-1.5 overflow-hidden transition-colors group
+                                            ${isLastCol ? '' : 'border-r border-border'}
+                                            ${isToday ? 'bg-violet-600/5 dark:bg-violet-600/10' : 'hover:bg-muted/20'}
+                                        `}
                                     >
                                         {/* Day number */}
-                                        <div className="flex items-center justify-between mb-0.5">
-                                            <span className={`w-6 h-6 flex items-center justify-center rounded-lg text-xs font-black ${isToday
-                                                ? 'bg-accent text-white'
-                                                : 'text-mutedForeground'
-                                                }`}>
+                                        <div className="flex items-center justify-between">
+                                            <span className={`w-7 h-7 flex items-center justify-center rounded-lg text-[13px] font-black transition-all
+                                                ${isToday
+                                                    ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#4c1d95]'
+                                                    : 'text-foreground group-hover:bg-muted'
+                                                }`}
+                                            >
                                                 {day}
                                             </span>
                                             {dayItems.length > 0 && (
-                                                <span className="text-[9px] font-black text-mutedForeground/60">{dayItems.length}</span>
+                                                <span className="text-[10px] font-black text-mutedForeground/70 pr-0.5">{dayItems.length}</span>
                                             )}
                                         </div>
 
-                                        {/* Content cards */}
+                                        {/* Content cards - Show limited items */}
                                         {dayItems.slice(0, MAX_VISIBLE).map(item => {
                                             const wsColor = getWorkspaceColor(item.workspace_id);
+                                            const platformColor = getPlatformColor(item.platform);
+                                            const statusStyle = getStatusStyle(item.status);
                                             return (
                                                 <button
                                                     key={item.id}
                                                     onClick={() => { setSelectedItem(item); setIsDetailOpen(true); }}
-                                                    className="w-full text-left rounded-md px-1.5 py-1 text-[10px] font-bold leading-tight line-clamp-1 transition-all hover:brightness-110 hover:scale-[1.02]"
-                                                    style={{
-                                                        backgroundColor: `${wsColor}20`,
-                                                        borderLeft: `2.5px solid ${wsColor}`,
-                                                        color: wsColor
-                                                    }}
+                                                    className="w-full text-left rounded-lg px-2 py-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[2px_3px_0px_#0f172a] dark:hover:shadow-[2px_3px_0px_#000] bg-card border border-border"
+                                                    style={{ borderLeft: `4px solid ${wsColor}` }}
                                                     title={item.title}
                                                 >
-                                                    <span className="flex items-center gap-1">
-                                                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusDot(item.status)}`} />
-                                                        <span className="truncate">{item.title}</span>
-                                                    </span>
+                                                    {/* Judul */}
+                                                    <p className="text-[12px] font-bold text-foreground truncate leading-tight mb-1">
+                                                        {item.title}
+                                                    </p>
+                                                    {/* Row 2: Platform icon | Jenis | Status */}
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span style={{ color: platformColor }} className="flex-shrink-0">
+                                                            {getPlatformIcon(item.platform, 11)}
+                                                        </span>
+                                                        <span className="text-[9px] text-border font-bold">|</span>
+                                                        <span className="text-[10px] font-bold text-mutedForeground truncate max-w-[60px]">
+                                                            {item.type || 'Standard'}
+                                                        </span>
+                                                        <span className="text-[9px] text-border font-bold">|</span>
+                                                        <span className={`text-[10px] font-black truncate ${statusStyle.text}`}>
+                                                            {item.status}
+                                                        </span>
+                                                    </div>
                                                 </button>
                                             );
                                         })}
@@ -552,9 +536,9 @@ export const CalendarPage: React.FC = () => {
                                         {dayItems.length > MAX_VISIBLE && (
                                             <button
                                                 onClick={() => { setDayViewDate(day); setIsDayViewOpen(true); }}
-                                                className="text-[9px] font-black text-mutedForeground/60 hover:text-accent transition-colors text-left pl-1"
+                                                className="text-[10px] font-black text-violet-500 hover:text-violet-700 hover:underline transition-all text-left pl-1 py-1"
                                             >
-                                                +{dayItems.length - MAX_VISIBLE} lagi
+                                                +{dayItems.length - MAX_VISIBLE} konten lainnya
                                             </button>
                                         )}
                                     </div>
@@ -563,7 +547,7 @@ export const CalendarPage: React.FC = () => {
 
                             {/* Next month empty cells */}
                             {Array.from({ length: Math.max(0, 35 - (daysInMonth + firstDayOfMonth)) }).map((_, i) => (
-                                <div key={`n-${i}`} className="border-r border-b border-border bg-muted/20" />
+                                <div key={`n-${i}`} className="border-r border-b border-border bg-muted/10" />
                             ))}
                         </div>
                     )}
@@ -573,23 +557,23 @@ export const CalendarPage: React.FC = () => {
                 <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title="Detail Konten">
                     {selectedItem && (
                         <div className="space-y-4">
-                            {/* Title & workspace */}
+                            {/* Title & platform */}
                             <div
-                                className="p-4 rounded-xl"
+                                className="p-4 rounded-xl bg-card border-[3px]"
                                 style={{
-                                    backgroundColor: `${getWorkspaceColor(selectedItem.workspace_id)}15`,
-                                    borderLeft: `4px solid ${getWorkspaceColor(selectedItem.workspace_id)}`
+                                    borderColor: getPlatformColor(selectedItem.platform),
+                                    borderLeft: `6px solid ${getPlatformColor(selectedItem.platform)}`
                                 }}
                             >
-                                <h3 className="text-lg font-black text-foreground leading-tight mb-1">{selectedItem.title}</h3>
-                                <div className="flex items-center gap-2 text-sm text-mutedForeground font-medium">
+                                <h3 className="text-lg font-black text-foreground leading-tight mb-2">{selectedItem.title}</h3>
+                                <div className="flex items-center gap-2 text-sm text-mutedForeground font-medium" style={{ color: getPlatformColor(selectedItem.platform) }}>
                                     {getPlatformIcon(selectedItem.platform, 14)}
                                     <span>{selectedItem.platform}</span>
                                     {selectedItem.workspaces?.name && (
                                         <>
-                                            <span>·</span>
-                                            <Layers size={12} />
-                                            <span>{selectedItem.workspaces.name}</span>
+                                            <span className="text-mutedForeground">·</span>
+                                            <Layers size={12} className="text-mutedForeground" />
+                                            <span className="text-mutedForeground">{selectedItem.workspaces.name}</span>
                                         </>
                                     )}
                                 </div>
@@ -649,26 +633,25 @@ export const CalendarPage: React.FC = () => {
                 >
                     <div className="space-y-2">
                         {dayViewDate && getItemsForDay(dayViewDate).map(item => {
-                            const wsColor = getWorkspaceColor(item.workspace_id);
+                            const platformColor = getPlatformColor(item.platform);
+                            const statusStyle = getStatusStyle(item.status);
                             return (
                                 <button
                                     key={item.id}
                                     onClick={() => { setSelectedItem(item); setIsDayViewOpen(false); setIsDetailOpen(true); }}
-                                    className="w-full text-left p-3 rounded-xl border-2 border-border hover:border-accent transition-all group"
-                                    style={{ borderLeftColor: wsColor, borderLeftWidth: 4 }}
+                                    className="w-full text-left p-3 rounded-xl border-[2.5px] border-border hover:shadow-[3px_3px_0px_#0f172a] transition-all group"
+                                    style={{ borderLeft: `6px solid ${platformColor}` }}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className="mt-0.5 text-mutedForeground group-hover:text-accent transition-colors">
+                                        <div className="mt-0.5 flex-shrink-0" style={{ color: platformColor }}>
                                             {getPlatformIcon(item.platform, 16)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-foreground text-sm line-clamp-2 group-hover:text-accent transition-colors">{item.title}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className={`w-2 h-2 rounded-full ${getStatusDot(item.status)}`} />
-                                                <span className="text-[10px] font-bold text-mutedForeground">{item.status}</span>
-                                                {item.workspaces?.name && (
-                                                    <span className="text-[10px] text-mutedForeground/60">· {item.workspaces.name}</span>
-                                                )}
+                                                <span className={`w-2 h-2 rounded-full ${statusStyle.dot}`} />
+                                                <span className={`text-[11px] font-bold ${statusStyle.text}`}>{item.status}</span>
+                                                <span className="text-[11px] text-mutedForeground">· {item.type || 'Standard'}</span>
                                             </div>
                                         </div>
                                         <ChevronRightIcon size={16} className="text-mutedForeground group-hover:text-accent transition-colors flex-shrink-0 mt-0.5" />

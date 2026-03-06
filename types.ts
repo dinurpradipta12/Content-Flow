@@ -49,6 +49,8 @@ export interface ContentItem {
     comments: number;
     shares: number;
     saves?: number;
+    reposts?: number;
+    reach?: number;
     lastUpdated: string;
   };
   workspaces?: {
