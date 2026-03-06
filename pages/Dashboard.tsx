@@ -35,7 +35,7 @@ const getGreetingInfo = () => {
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-card p-4 border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] rounded-[20px] pointer-events-none">
+            <div className="bg-card p-4 border-[3px] border-border shadow-[6px_6px_0px_#0f172a] rounded-[20px] pointer-events-none">
                 {label && <p className="text-mutedForeground font-black text-[10px] uppercase tracking-widest mb-2 leading-none border-b-2 border-border/50 pb-1">{label}</p>}
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2">
@@ -631,7 +631,7 @@ export const Dashboard: React.FC = () => {
             MOBILE VIEW (Native Style)
             ═══════════════════════════════════════════════════════════════════ */}
             <div className="block md:hidden w-full p-4 space-y-4 animate-in fade-in duration-500">
-                <div className={`p-6 rounded-[2.5rem] bg-card border-[3.5px] border-slate-900 ${timeInfo.theme} text-foreground shadow-[6px_6px_0px_#0f172a] relative overflow-hidden`}>
+                <div className={`p-6 rounded-[2.5rem] bg-card border-[3.5px] border-border ${timeInfo.theme} text-foreground shadow-[6px_6px_0px_#0f172a] relative overflow-hidden`}>
                     <div className="absolute -right-6 -top-6 opacity-10 rotate-12 scale-150">{timeInfo.icon}</div>
                     <div className="relative z-10">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{timeInfo.text}</span>
@@ -643,9 +643,9 @@ export const Dashboard: React.FC = () => {
                 {/* Quick Action Ribbon - Mobile */}
                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                     {[
-                        { label: 'Content', icon: <Plus size={16} />, action: () => setIsAddContentModalOpen(true), color: 'bg-slate-900 text-white' },
-                        { label: 'Mission', icon: <PlusCircle size={16} />, action: () => setIsAddMissionModalOpen(true), color: 'bg-card border-[3px] border-slate-900' },
-                        { label: 'Idea', icon: <Zap size={16} />, action: () => navigate('/collect-idea'), color: 'bg-card border-[3px] border-slate-900' },
+                        { label: 'Content', icon: <Plus size={16} />, action: () => setIsAddContentModalOpen(true), color: 'bg-foreground text-background shadow-hard-mini' },
+                        { label: 'Mission', icon: <PlusCircle size={16} />, action: () => setIsAddMissionModalOpen(true), color: 'bg-card border-[3px] border-border' },
+                        { label: 'Idea', icon: <Zap size={16} />, action: () => navigate('/collect-idea'), color: 'bg-card border-[3px] border-border' },
                     ].map((btn, i) => (
                         <button key={i} onClick={btn.action} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs whitespace-nowrap shadow-hard-mini ${btn.color}`}>
                             {btn.icon} {btn.label}
@@ -673,7 +673,7 @@ export const Dashboard: React.FC = () => {
                 )}
 
                 {/* Pipeline - Mobile */}
-                <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] p-6 shadow-[6px_6px_0px_#0f172a]">
+                <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] p-6 shadow-[6px_6px_0px_#0f172a]">
                     <div className="flex justify-between items-center mb-5">
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-mutedForeground">Content Pipeline</h3>
                         <ArrowRight size={14} className="text-slate-300" />
@@ -681,13 +681,13 @@ export const Dashboard: React.FC = () => {
                     <div className="space-y-4">
                         {recentContent.slice(0, 3).map(item => (
                             <div key={item.id} className="flex items-center gap-4">
-                                <div className="w-12 h-10 rounded-xl bg-slate-100 border-[3px] border-slate-900 overflow-hidden shrink-0">
+                                <div className="w-12 h-10 rounded-xl bg-slate-100 border-[3px] border-border overflow-hidden shrink-0">
                                     {item.thumbnail_url ? <img src={item.thumbnail_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black">{item.platform?.[0]}</div>}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-black truncate">{item.title}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
-                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-900 ${item.status === 'Published' ? 'bg-emerald-400' : 'bg-amber-400'}`}>
+                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-border ${item.status === 'Published' ? 'bg-emerald-400' : 'bg-amber-400'}`}>
                                             {item.status}
                                         </span>
                                         <span className="text-[8px] font-bold text-mutedForeground uppercase">{item.platform}</span>
@@ -704,7 +704,7 @@ export const Dashboard: React.FC = () => {
   ═══════════════════════════════════════════════════════════════════ */}
             <div className="hidden md:block w-full px-8 lg:px-12 py-10 space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
                 {/* 1. TOP HEADER SECTION */}
-                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-border shadow-hard">
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="px-4 py-1.5 rounded-full border-[3px] border-border bg-card text-foreground font-black text-[10px] uppercase tracking-[0.2em] shadow-hard-mini">
@@ -763,7 +763,7 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Chart: The Big Bento Block */}
-                        <div className="bg-card rounded-[3.5rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                        <div className="bg-card rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-10">
                             <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-8 mb-12">
                                 <div className="space-y-2">
                                     <h3 className="text-3xl font-black font-heading text-foreground flex items-center gap-4">
@@ -800,7 +800,7 @@ export const Dashboard: React.FC = () => {
 
                         {/* Bottom Double Bento: Pipeline & Distribution */}
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-                            <div className="bg-card rounded-[3.5rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                            <div className="bg-card rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-10">
                                 <div className="flex items-center justify-between mb-10">
                                     <h3 className="text-2xl font-black font-heading flex items-center gap-4">
                                         <Command className="text-amber-500 w-8 h-8" /> Smart Pipeline
@@ -831,7 +831,7 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-card rounded-[3.5rem] border-[3.5px] border-slate-900 shadow-hard p-10 flex flex-col items-center">
+                            <div className="bg-card rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-10 flex flex-col items-center">
                                 <h3 className="text-2xl font-black font-heading self-start mb-10 flex items-center gap-4">
                                     <Layout className="text-emerald-500 w-8 h-8" /> Status Ratio
                                 </h3>
@@ -917,13 +917,13 @@ export const Dashboard: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase text-mutedForeground ml-2">Month</label>
-                                        <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))} className="w-full bg-muted border-[3px] border-slate-900 rounded-2xl px-4 py-4 text-xs font-black uppercase outline-none focus:bg-card cursor-pointer shadow-hard-mini">
+                                        <select value={filterMonth} onChange={(e) => setFilterMonth(parseInt(e.target.value))} className="w-full bg-muted border-[3px] border-border rounded-2xl px-4 py-4 text-xs font-black uppercase outline-none focus:bg-card cursor-pointer shadow-hard-mini">
                                             {['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'].map((m, i) => <option key={m} value={i}>{m}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase text-mutedForeground ml-2">Year</label>
-                                        <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-full bg-muted border-[3px] border-slate-900 rounded-2xl px-4 py-4 text-xs font-black uppercase outline-none focus:bg-card cursor-pointer shadow-hard-mini">
+                                        <select value={filterYear} onChange={(e) => setFilterYear(parseInt(e.target.value))} className="w-full bg-muted border-[3px] border-border rounded-2xl px-4 py-4 text-xs font-black uppercase outline-none focus:bg-card cursor-pointer shadow-hard-mini">
                                             {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                                         </select>
                                     </div>
@@ -973,7 +973,7 @@ export const Dashboard: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="bg-card rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                        <div className="bg-card rounded-[3rem] border-[3.5px] border-border shadow-hard p-10">
                             <div className="flex items-center justify-between mb-10">
                                 <h3 className="text-2xl font-black font-heading flex items-center gap-4">
                                     <CheckCircle size={28} className="text-foreground" strokeWidth={3} /> Daily Mission
@@ -1012,13 +1012,13 @@ export const Dashboard: React.FC = () => {
                                 ))}
                             </div>
                             <form onSubmit={addChecklist} className="flex gap-3">
-                                <input className="flex-1 bg-muted border-[3px] border-slate-900 rounded-[1.5rem] px-6 py-4 text-sm font-black outline-none focus:bg-card shadow-hard-mini transition-all" placeholder="New mission..." value={newChecklist} onChange={e => setNewChecklist(e.target.value)} />
-                                <button type="submit" className="w-14 h-14 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center shadow-hard hover:scale-110 active:scale-95 transition-all"><Plus size={28} strokeWidth={3} /></button>
+                                <input className="flex-1 bg-muted border-[3px] border-border rounded-[1.5rem] px-6 py-4 text-sm font-black outline-none focus:bg-card shadow-hard-mini transition-all" placeholder="New mission..." value={newChecklist} onChange={e => setNewChecklist(e.target.value)} />
+                                <button type="submit" className="w-14 h-14 bg-foreground text-background rounded-[1.5rem] flex items-center justify-center shadow-hard hover:scale-110 active:scale-95 transition-all"><Plus size={28} strokeWidth={3} /></button>
                             </form>
                         </div>
 
                         {/* 5. KPI Live Preview */}
-                        <div className="bg-card rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard p-10">
+                        <div className="bg-card rounded-[3rem] border-[3.5px] border-border shadow-hard p-10">
                             <h3 className="text-2xl font-black font-heading mb-10 flex items-center gap-4">
                                 <TrendingUp size={28} className="text-foreground " strokeWidth={3} /> My KPI Targets
                             </h3>
@@ -1092,7 +1092,7 @@ export const Dashboard: React.FC = () => {
                                         <div className="h-px w-full bg-slate-100 " />
                                     </div>
                                     {group.map((n: any) => (
-                                        <div key={n.id} onClick={() => handleNotificationClick(n)} className={`group relative p-8 rounded-[2.5rem] border-[3.5px] transition-all cursor-pointer overflow-hidden ${n.is_read ? 'bg-muted border-border/50 opacity-50' : 'bg-card border-slate-900 shadow-hard hover:-translate-y-2'}`}>
+                                        <div key={n.id} onClick={() => handleNotificationClick(n)} className={`group relative p-8 rounded-[2.5rem] border-[3.5px] transition-all cursor-pointer overflow-hidden ${n.is_read ? 'bg-muted border-border/50 opacity-50' : 'bg-card border-border shadow-hard hover:-translate-y-2'}`}>
                                             {!n.is_read && <div className="absolute top-0 right-0 w-20 h-20 bg-accent/5 rounded-bl-[4rem]" />}
                                             <div className="flex items-start gap-6 relative z-10">
                                                 <div className="shrink-0 relative">

@@ -21,7 +21,7 @@ export const Input: React.FC<InputProps> = ({ label, icon, className = '', ...pr
           </div>
         )}
         <input
-          className={`bg-transparent border-2 border-slate-300 text-foreground rounded-lg ${icon ? 'pl-10' : 'px-4'} pr-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground w-full ${className}`}
+          className={`bg-transparent border-2 border-border/60 text-foreground rounded-lg ${icon ? 'pl-10' : 'px-4'} pr-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground w-full ${className}`}
           {...props}
         />
       </div>
@@ -44,7 +44,7 @@ export const Select: React.FC<SelectProps> = ({ label, options, children, classN
       )}
       <div className="relative">
         <select
-          className={`w-full bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none ${className}`}
+          className={`w-full bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] appearance-none ${className}`}
           {...props}
         >
           {options ? options.map((opt) => (
@@ -72,7 +72,7 @@ export const Textarea: React.FC<TextareaProps> = ({ label, className = '', ...pr
         </label>
       )}
       <textarea
-        className={`bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground min-h-[120px] ${className}`}
+        className={`bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none transition-all duration-200 focus:border-accent focus:shadow-[4px_4px_0px_0px_#8B5CF6] placeholder:text-mutedForeground min-h-[120px] ${className}`}
         {...props}
       />
     </div>
@@ -156,7 +156,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
       <div className="relative">
         <input
           type="text"
-          className={`w-full bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 pr-10 outline-none transition-all duration-200 ${themeStyles[colorTheme]} placeholder:text-mutedForeground`}
+          className={`w-full bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 pr-10 outline-none transition-all duration-200 ${themeStyles[colorTheme]} placeholder:text-mutedForeground`}
           value={inputValue}
           onChange={handleInputChange}
           onClick={() => setIsOpen(true)}
@@ -171,7 +171,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-card border-2 border-slate-800 rounded-xl shadow-hard max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-card border-2 border-border rounded-xl shadow-hard max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
                 <div
@@ -180,7 +180,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
                   onClick={() => handleSelectOption(opt.value)}
                 >
                   {opt.label}
-                  {opt.value === value && <div className="w-2 h-2 rounded-full bg-slate-800"></div>}
+                  {opt.value === value && <div className="w-2 h-2 rounded-full bg-foreground"></div>}
                 </div>
               ))
             ) : (
@@ -192,7 +192,7 @@ export const CreatableSelect: React.FC<CreatableSelectProps> = ({
             {/* Create Option */}
             {!isExactMatch && inputValue.trim() !== '' && (
               <div
-                className="px-4 py-3 bg-slate-50 border-t border-slate-100 cursor-pointer text-accent font-bold hover:bg-accent hover:text-white transition-colors flex items-center gap-2"
+                className="px-4 py-3 bg-background border-t border-border cursor-pointer text-accent font-bold hover:bg-accent hover:text-white transition-colors flex items-center gap-2"
                 onClick={() => handleSelectOption(inputValue)}
               >
                 <Plus size={16} />
