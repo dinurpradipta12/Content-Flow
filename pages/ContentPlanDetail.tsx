@@ -1077,7 +1077,6 @@ export const ContentPlanDetail: React.FC = () => {
     };
 
     const handleApprove = async (contentId: string, status: 'approved' | 'revision' | 'pending') => {
-        const { sendNotification, notifyRole, notifyMemberByName } = useNotifications();
         const currentUserId = localStorage.getItem('user_id');
         const currentUserName = localStorage.getItem('user_name') || 'Admin';
         const isFree = localStorage.getItem('user_subscription_package') === 'Free';
