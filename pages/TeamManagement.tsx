@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcryptjs';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Workspace } from '../types';
@@ -7,7 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save, Bell } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 import { useAppConfig } from '../components/AppConfigProvider';
-import bcrypt from 'bcryptjs';
+
 import { logActivity } from '../services/activityService';
 
 interface AppUser {
