@@ -1000,19 +1000,19 @@ export const TeamManagement: React.FC = () => {
                         {/* LEFT COL */}
                         <div className="space-y-6">
                             {/* Header User */}
-                            <div className="flex items-start gap-4 p-4 border-2 border-border rounded-2xl bg-muted relative overflow-hidden shadow-sm">
+                            <div className="flex items-start gap-4 p-4 border-[3px] border-slate-900 rounded-2xl bg-muted relative overflow-hidden shadow-[4px_4px_0px_#0f172a] transition-all">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
                                 <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                    className="w-16 h-16 rounded-xl border-2 border-border shadow-sm object-cover relative z-10 bg-card" alt="Avatar" />
+                                    className="w-16 h-16 rounded-xl border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-card" alt="Avatar" />
                                 <div className="relative z-10 w-full">
                                     <div className="flex items-center justify-between gap-2">
-                                        <h3 className="text-xl font-heading font-black text-foreground">{selectedUser.full_name}</h3>
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${selectedUser.online_status === 'online' ? 'text-emerald-500' : selectedUser.online_status === 'idle' ? 'text-amber-500' : 'text-slate-400'}`}>
-                                            <div className={`w-2 h-2 rounded-full ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                                        <h3 className="text-xl font-heading font-black text-slate-900 truncate">{selectedUser.full_name}</h3>
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border-[2px] ${selectedUser.online_status === 'online' ? 'text-emerald-600 border-emerald-500 bg-emerald-50' : selectedUser.online_status === 'idle' ? 'text-amber-600 border-amber-500 bg-amber-50' : 'text-slate-500 border-slate-400 bg-slate-50'}`}>
+                                            <div className={`w-2 h-2 rounded-full border border-slate-900/10 ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'}`} />
                                             {selectedUser.online_status === 'online' ? 'Online' : selectedUser.online_status === 'idle' ? 'Idle' : 'Offline'}
                                         </span>
                                     </div>
-                                    <p className="text-sm font-bold text-mutedForeground mb-1 flex items-center gap-2">
+                                    <p className="text-sm font-bold text-slate-500 mb-1 flex items-center gap-2">
                                         @{selectedUser.username}
                                         {selectedUser.last_activity_at && selectedUser.online_status !== 'online' && (
                                             <span className="text-[10px] font-bold text-slate-400">
@@ -1020,7 +1020,7 @@ export const TeamManagement: React.FC = () => {
                                             </span>
                                         )}
                                     </p>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-accent shadow-sm">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] uppercase tracking-widest mt-1">
                                         {selectedUser.role}
                                     </span>
                                 </div>
@@ -1028,31 +1028,31 @@ export const TeamManagement: React.FC = () => {
 
                             {/* Reset Password */}
                             <div>
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
-                                    <Key size={16} /> Password User
+                                <h4 className="flex items-center gap-2 text-sm font-black text-slate-900 mb-2 uppercase tracking-wide">
+                                    <Key size={16} strokeWidth={2.5} /> Password User
                                 </h4>
-                                <div className="bg-card rounded-2xl border-2 border-border shadow-sm p-4">
+                                <div className="bg-card rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 transition-all hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-0.5">
                                     <div className="mb-4">
-                                        <p className="text-sm font-bold text-mutedForeground mb-2">Password Saat Ini:</p>
-                                        <div className="flex justify-between items-center bg-muted border-2 border-border p-3 rounded-xl shadow-inner">
-                                            <span className="font-mono font-bold text-foreground">
+                                        <p className="text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Password Saat Ini:</p>
+                                        <div className="flex justify-between items-center bg-slate-100 border-2 border-slate-300 p-3 rounded-xl">
+                                            <span className="font-mono font-black text-slate-700 tracking-widest text-lg">
                                                 {showPassword ? selectedUser.password : '••••••••'}
                                             </span>
-                                            <button onClick={() => setShowPassword(!showPassword)} className="text-mutedForeground hover:text-foreground">
-                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            <button onClick={() => setShowPassword(!showPassword)} className="text-slate-400 hover:text-slate-900 transition-colors bg-white border-2 border-slate-300 p-2 rounded-lg hover:border-slate-900 shadow-sm">
+                                                {showPassword ? <EyeOff size={16} strokeWidth={2.5} /> : <Eye size={16} strokeWidth={2.5} />}
                                             </button>
                                         </div>
                                     </div>
-                                    <form onSubmit={handleUpdatePassword} className="border-t-2 border-border pt-4 flex gap-3">
+                                    <form onSubmit={handleUpdatePassword} className="border-t-[3px] border-slate-900/10 pt-4 flex gap-3">
                                         <input
                                             type="text"
                                             value={newPassword}
                                             onChange={e => setNewPassword(e.target.value)}
                                             placeholder="Ketik password baru..."
                                             required
-                                            className="flex-1 bg-muted border-2 border-border rounded-xl px-4 py-2 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent shadow-sm placeholder:text-mutedForeground"
+                                            className="flex-1 bg-white border-[3px] border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-accent/20 shadow-[2px_2px_0px_#0f172a] placeholder:text-slate-400"
                                         />
-                                        <Button type="submit" disabled={saving || !newPassword}>
+                                        <Button type="submit" disabled={saving || !newPassword} className="border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] uppercase font-black text-[10px] tracking-widest px-4 sm:px-6 h-11 bg-accent hover:bg-violet-600 transition-all">
                                             {saving ? <Loader2 className="animate-spin" size={16} /> : 'Ubah Password'}
                                         </Button>
                                     </form>
@@ -1060,36 +1060,36 @@ export const TeamManagement: React.FC = () => {
                             </div>
 
                             {/* WORKSPACES INFO & INVITE */}
-                            <div className="space-y-3 pt-4 border-t-2 border-border">
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
-                                    <Globe size={16} /> Workspaces
+                            <div className="space-y-4 pt-5 border-t-[3px] border-slate-900 border-dashed">
+                                <h4 className="flex items-center gap-2 text-sm font-black text-slate-900 mb-2 uppercase tracking-wide">
+                                    <Globe size={18} strokeWidth={2.5} /> Workspaces
                                 </h4>
                                 {/* Workspace tags with individual remove button */}
                                 <div className="flex flex-wrap gap-2">
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).map(ws => (
-                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1 bg-card border-2 border-border rounded-lg text-xs font-bold text-foreground shadow-sm">
+                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border-[2px] border-slate-900 rounded-lg text-xs font-black text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#0f172a] transition-all">
                                             {ws.name}
                                             <button
                                                 onClick={() => handleRemoveFromSpecificWorkspace(ws.id, ws.name)}
-                                                className="text-mutedForeground hover:text-red-500 transition-colors ml-0.5"
+                                                className="text-slate-400 hover:text-rose-500 transition-colors ml-1 p-0.5 hover:bg-rose-50 rounded"
                                                 title={`Hapus dari ${ws.name}`}
                                             >
-                                                <X size={12} />
+                                                <X size={14} strokeWidth={3} />
                                             </button>
                                         </span>
                                     ))}
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).length === 0 && (
-                                        <p className="text-xs text-mutedForeground italic">Tidak ada workspace</p>
+                                        <p className="text-xs font-bold text-slate-400 italic">Tidak ada workspace</p>
                                     )}
                                 </div>
 
                                 {/* Add to Workspace feature */}
-                                <div className="bg-emerald-500/10 rounded-2xl border-2 border-emerald-500/20 p-3">
-                                    <p className="text-xs font-bold text-emerald-500 mb-2">Undang ke workspace lain:</p>
+                                <div className="bg-emerald-100 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
+                                    <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-2">Undang ke workspace lain:</p>
                                     <div className="flex gap-2 items-center">
                                         <select
                                             id="ws-select"
-                                            className="flex-1 bg-muted/50 border-2 border-border rounded-xl px-3 py-2 text-sm font-bold text-foreground shadow-sm appearance-none"
+                                            className="flex-1 bg-white border-[3px] border-slate-900 rounded-xl px-3 py-2 text-sm font-black text-slate-900 shadow-[2px_2px_0px_#0f172a] appearance-none focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
                                         >
                                             <option value="">-- Pilih Workspace --</option>
                                             {allWorkspaces.filter(ws => !ws.members?.includes(selectedUser.avatar_url)).map(ws => (
@@ -1099,58 +1099,58 @@ export const TeamManagement: React.FC = () => {
                                         <Button onClick={() => {
                                             const selectEl = document.getElementById('ws-select') as HTMLSelectElement;
                                             if (selectEl && selectEl.value) handleAddToOtherWorkspace(selectEl.value);
-                                        }}>Undang</Button>
+                                        }} className="border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] bg-emerald-500 hover:bg-emerald-600 font-black uppercase text-[10px] tracking-widest px-4 h-11">Undang</Button>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Hapus dari workspace aktif */}
-                            <div className="pt-4 border-t-2 border-border">
-                                <div className="bg-red-500/10 rounded-2xl border-2 border-red-500/30 p-3 flex flex-col sm:flex-row gap-3 items-center justify-between">
-                                    <p className="text-xs font-bold text-red-500">
-                                        Keluarkan dari workspace <span className="italic">{selectedWorkspace?.name}</span>.
+                            <div className="pt-4 border-t-2 border-slate-200">
+                                <div className="bg-rose-100 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 flex flex-col sm:flex-row gap-4 items-center justify-between transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a]">
+                                    <p className="text-xs font-black text-rose-700 leading-snug">
+                                        Keluarkan dari workspace <span className="italic block text-sm mt-0.5 text-rose-800">{selectedWorkspace?.name}</span>
                                     </p>
                                     <button
                                         onClick={handleRemoveFromWorkspace}
-                                        className="whitespace-nowrap bg-card text-red-500 hover:bg-red-500 hover:text-white font-black text-xs px-4 py-2.5 rounded-xl border-2 border-red-500/50 shadow-sm transition-all hover:translate-y-[2px] hover:shadow-none"
+                                        className="whitespace-nowrap bg-rose-500 text-white hover:bg-rose-600 font-black text-[10px] sm:text-xs px-4 py-3 rounded-xl border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:shadow-none uppercase tracking-widest flex items-center"
                                     >
-                                        <UserMinus size={14} className="inline mr-1" /> Keluarkan
+                                        <UserMinus size={14} className="inline mr-1" strokeWidth={3} /> Keluarkan
                                     </button>
                                 </div>
                             </div>
                         </div>
 
                         {/* RIGHT COL - KPI */}
-                        <div className="space-y-4 bg-muted/30 p-6 rounded-2xl border-2 border-border shadow-sm h-full flex flex-col">
+                        <div className="space-y-4 bg-muted/30 p-5 sm:p-6 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] h-full flex flex-col relative overflow-hidden">
                             {/* KPI Header */}
-                            <div className="pb-3 border-b-2 border-border">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="font-heading font-black text-xl text-foreground">Daftar KPI</h4>
+                            <div className="pb-4 border-b-[3px] border-slate-900 border-dashed relative z-10">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-heading font-black text-2xl tracking-tight text-slate-900">Daftar KPI</h4>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm px-3 py-1 bg-accent text-white rounded-full shadow-[2px_2px_0px_#0f172a]">
+                                        <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 bg-accent text-white rounded-lg border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a]">
                                             {getKPICompletion(selectedUser)}% Selesai
                                         </span>
                                         <button
                                             onClick={() => setShowAddKPI(!showAddKPI)}
-                                            className="p-1.5 bg-emerald-500 text-white rounded-lg border-2 border-emerald-600 shadow-sm hover:bg-emerald-600 transition-colors"
+                                            className="p-2 bg-emerald-500 text-white rounded-lg border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-emerald-600 transition-all hover:translate-y-[2px] hover:shadow-none"
                                             title="Tambah KPI"
                                         >
-                                            <Plus size={16} />
+                                            <Plus size={16} strokeWidth={3} />
                                         </button>
                                     </div>
                                 </div>
                                 {/* Min Completion Rate setter */}
-                                <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
-                                    <Target size={14} className="text-amber-500 shrink-0" />
-                                    <span className="text-xs font-bold text-amber-500">Completion min:</span>
+                                <div className="flex items-center gap-2 bg-amber-100 border-[3px] border-slate-900 rounded-xl px-3 py-2 shadow-[2px_2px_0px_#0f172a] w-fit">
+                                    <Target size={14} className="text-amber-700 shrink-0" strokeWidth={3} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 mt-0.5">Completion min:</span>
                                     <input
                                         type="number"
                                         min={0} max={100}
                                         value={minCompletionRate}
                                         onChange={e => setMinCompletionRate(Number(e.target.value))}
-                                        className="w-16 bg-card border mx-2 border-amber-500/30 rounded px-2 py-0.5 text-xs font-black text-amber-500 text-center focus:outline-none"
+                                        className="w-16 bg-white border-[2px] mx-1 border-slate-900 rounded-lg px-2 py-0.5 text-xs font-black text-slate-900 text-center shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500"
                                     />
-                                    <span className="text-xs font-bold text-amber-500">%</span>
+                                    <span className="text-xs font-black text-amber-800 mt-0.5">%</span>
                                 </div>
                                 {/* Add KPI Form */}
                                 {showAddKPI && (
@@ -1220,39 +1220,39 @@ export const TeamManagement: React.FC = () => {
                                         const isSuccess = pVal >= minCompletionRate;
                                         const isEditingThis = editingKPIId === kpi.id;
                                         return (
-                                            <div key={kpi.id} className={`bg-card p-4 rounded-xl border-2 transition-colors ${isEditingThis ? 'border-violet-400 shadow-[2px_2px_0px_#7c3aed]' : 'border-slate-200 hover:border-slate-900'}`}>
+                                            <div key={kpi.id} className={`bg-card p-4 rounded-xl border-[3px] transition-all hover:-translate-y-1 ${isEditingThis ? 'border-violet-600 shadow-[6px_6px_0px_#7c3aed]' : 'border-slate-900 shadow-[4px_4px_0px_#0f172a]'}`}>
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h5 className="font-bold text-foreground text-sm truncate pr-2">{kpi.metric_name}</h5>
+                                                    <h5 className="font-black text-slate-900 text-base truncate pr-2 tracking-tight uppercase">{kpi.metric_name}</h5>
                                                     <div className="flex items-center gap-1.5 shrink-0">
-                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${isSuccess ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10' : 'bg-red-500/10 text-red-500 border-red-500/10'
+                                                        <span className={`text-[10px] font-black tracking-widest px-2 py-1 rounded-md border-[2px] border-slate-900 uppercase shadow-[2px_2px_0px_#0f172a] ${isSuccess ? 'bg-emerald-400 text-slate-900' : 'bg-rose-400 text-white'
                                                             }`}>{isSuccess ? '✓ Berhasil' : '✗ Perlu Ditingkatkan'}</span>
-                                                        <span className="text-xs font-black px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-700 shadow-sm">{kpi.period}</span>
+                                                        <span className="text-[10px] font-black tracking-widest px-2 py-1 rounded-md bg-slate-100 text-slate-700 border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] uppercase">{kpi.period}</span>
                                                         {/* Edit button */}
                                                         {!isEditingThis ? (
                                                             <button
                                                                 onClick={() => handleOpenEditKPI(kpi)}
-                                                                className="p-1.5 hover:bg-violet-50 text-slate-400 hover:text-violet-600 rounded-lg transition-colors"
+                                                                className="p-1.5 bg-white border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-violet-100 hover:text-violet-700 rounded-md transition-all text-slate-900"
                                                                 title="Edit KPI"
                                                             >
-                                                                <Edit3 size={12} />
+                                                                <Edit3 size={12} strokeWidth={3} />
                                                             </button>
                                                         ) : (
                                                             <button
                                                                 onClick={() => setEditingKPIId(null)}
-                                                                className="p-1.5 hover:bg-slate-100 text-slate-400 rounded-lg transition-colors"
+                                                                className="p-1.5 bg-slate-900 text-white border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-slate-700 rounded-md transition-all"
                                                                 title="Tutup"
                                                             >
-                                                                <X size={12} />
+                                                                <X size={12} strokeWidth={3} />
                                                             </button>
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-between items-end mb-1">
-                                                    <span className="text-xs font-bold text-slate-500">{kpi.category}</span>
-                                                    <span className="text-xs font-black text-foreground">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
+                                                <div className="flex justify-between items-end mb-1.5">
+                                                    <span className="text-[10px] font-black tracking-widest uppercase text-slate-500">{kpi.category}</span>
+                                                    <span className="text-sm font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border-2 border-slate-300">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
                                                 </div>
-                                                <div className="w-full bg-slate-100 rounded-full h-2 border border-slate-200 overflow-hidden">
-                                                    <div className={`h-2 rounded-full ${pVal >= minCompletionRate ? 'bg-emerald-500' : pVal >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${pVal}%` }} />
+                                                <div className="w-full bg-slate-200 rounded-full h-3 border-[2px] border-slate-900 shadow-inner overflow-hidden">
+                                                    <div className={`h-full border-r-[2px] border-slate-900 transition-all duration-500 ease-out ${pVal >= minCompletionRate ? 'bg-emerald-400' : pVal >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{ width: `${pVal}%` }} />
                                                 </div>
 
                                                 {/* Inline Edit Form */}
