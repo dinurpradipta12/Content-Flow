@@ -540,9 +540,9 @@ export const UserManagement: React.FC = () => {
         <div className="space-y-4 sm:space-y-5 md:space-y-6 flex-1 flex flex-col min-h-0">
             {/* Access guard: Member = no access */}
             {!isAdmin && !isDeveloper && (
-                <div className="flex flex-col items-center justify-center h-[40vh] sm:h-[50vh] text-center space-y-3 sm:space-y-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-2xl bg-slate-50 p-4 sm:p-6">
+                <div className="flex flex-col items-center justify-center h-[40vh] sm:h-[50vh] text-center space-y-3 sm:space-y-4 border-2 border-dashed border-slate-300 rounded-lg sm:rounded-2xl bg-muted p-4 sm:p-6">
                     <Shield className="text-slate-300 w-10 h-10 sm:w-12 sm:h-12" />
-                    <h2 className="text-lg sm:text-2xl font-bold text-slate-400">Akses Ditolak</h2>
+                    <h2 className="text-lg sm:text-2xl font-bold text-mutedForeground">Akses Ditolak</h2>
                     <p className="text-xs sm:text-sm text-slate-500">Halaman ini hanya untuk Developer dan Admin.</p>
                 </div>
             )}
@@ -556,7 +556,7 @@ export const UserManagement: React.FC = () => {
                                 <Users size={16} className="sm:w-5 sm:h-5 md:w-7 md:h-7 text-white" />
                             </div>
                             <div className="min-w-0">
-                                <h2 className="text-base sm:text-2xl md:text-3xl font-heading font-black text-slate-900 leading-tight truncate">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
+                                <h2 className="text-base sm:text-2xl md:text-3xl font-heading font-black text-foreground leading-tight truncate">{config?.page_titles?.['management']?.title || 'User Management'}</h2>
                                 <p className="text-slate-500 font-bold text-[10px] sm:text-sm">Total {users.length} pengguna terdaftar.</p>
                             </div>
                         </div>
@@ -587,9 +587,9 @@ export const UserManagement: React.FC = () => {
                                 </div>
                                 <span className="text-[10px] font-black text-blue-600 dark:text-blue-100 bg-blue-50 dark:bg-blue-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-blue-200 dark:border-blue-300">Growth</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 dark:text-blue-100 uppercase tracking-widest leading-none mb-1">Total Users</h4>
+                            <h4 className="text-xs font-bold text-mutedForeground dark:text-blue-100 uppercase tracking-widest leading-none mb-1">Total Users</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">{users.length}</span>
+                                <span className="text-3xl font-black text-foreground dark:text-white">{users.length}</span>
                                 <span className="text-xs font-bold text-emerald-500 dark:text-emerald-300 flex items-center"><TrendingUp size={12} className="mr-0.5" /> Live</span>
                             </div>
                         </div>
@@ -603,10 +603,10 @@ export const UserManagement: React.FC = () => {
                                 </div>
                                 <span className="text-[10px] font-black text-amber-600 dark:text-amber-100 bg-amber-50 dark:bg-amber-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-amber-200 dark:border-amber-300">Retention</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 dark:text-amber-100 uppercase tracking-widest leading-none mb-1">Masa Tenggang</h4>
+                            <h4 className="text-xs font-bold text-mutedForeground dark:text-amber-100 uppercase tracking-widest leading-none mb-1">Masa Tenggang</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">{expiringUsers.length}</span>
-                                <span className="text-xs font-bold text-slate-400 dark:text-amber-100">User / 5 Hari</span>
+                                <span className="text-3xl font-black text-foreground dark:text-white">{expiringUsers.length}</span>
+                                <span className="text-xs font-bold text-mutedForeground dark:text-amber-100">User / 5 Hari</span>
                             </div>
                         </div>
 
@@ -619,10 +619,10 @@ export const UserManagement: React.FC = () => {
                                 </div>
                                 <span className="text-[10px] font-black text-purple-600 dark:text-purple-100 bg-purple-50 dark:bg-purple-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-purple-200 dark:border-purple-300">Structure</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 dark:text-purple-100 uppercase tracking-widest leading-none mb-1">Admin Roles</h4>
+                            <h4 className="text-xs font-bold text-mutedForeground dark:text-purple-100 uppercase tracking-widest leading-none mb-1">Admin Roles</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">{admins.length}</span>
-                                <span className="text-xs font-bold text-slate-400 dark:text-purple-100">Total Admin</span>
+                                <span className="text-3xl font-black text-foreground dark:text-white">{admins.length}</span>
+                                <span className="text-xs font-bold text-mutedForeground dark:text-purple-100">Total Admin</span>
                             </div>
                         </div>
 
@@ -635,9 +635,9 @@ export const UserManagement: React.FC = () => {
                                 </div>
                                 <span className="text-[10px] font-black text-red-600 dark:text-red-100 bg-red-50 dark:bg-red-400 px-2 py-1 rounded-full uppercase tracking-tighter shadow-sm border border-red-200 dark:border-red-300">Alert</span>
                             </div>
-                            <h4 className="text-xs font-bold text-slate-400 dark:text-red-100 uppercase tracking-widest leading-none mb-1">Non-Aktif / Expired</h4>
+                            <h4 className="text-xs font-bold text-mutedForeground dark:text-red-100 uppercase tracking-widest leading-none mb-1">Non-Aktif / Expired</h4>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white">{inactiveUsers.length}</span>
+                                <span className="text-3xl font-black text-foreground dark:text-white">{inactiveUsers.length}</span>
                                 <span className="text-xs font-bold text-red-500 dark:text-red-200">Warning</span>
                             </div>
                         </div>
@@ -649,7 +649,7 @@ export const UserManagement: React.FC = () => {
                         {/* Mobile: Undang button */}
                         <div className="flex lg:hidden mb-2">
                             <button onClick={() => setShowRegisterModal(true)}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-yellow-300 border-2 border-slate-900 rounded-xl text-sm font-black text-slate-900 shadow-hard active:translate-y-0.5 active:shadow-none transition-all">
+                                className="flex items-center gap-2 px-4 py-2.5 bg-yellow-300 border-2 border-slate-900 rounded-xl text-sm font-black text-foreground shadow-hard active:translate-y-0.5 active:shadow-none transition-all">
                                 <UserPlus size={16} /> Undang Anggota Baru
                             </button>
                         </div>
@@ -687,7 +687,7 @@ export const UserManagement: React.FC = () => {
                                                 className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm font-bold text-foreground outline-none focus:border-accent" placeholder="Min. 6 karakter" />
                                         </div>
                                         <button type="submit" disabled={registering}
-                                            className="w-full py-3 bg-yellow-300 border-2 border-slate-900 rounded-xl text-sm font-black text-slate-900 shadow-hard disabled:opacity-50 flex items-center justify-center gap-2">
+                                            className="w-full py-3 bg-yellow-300 border-2 border-slate-900 rounded-xl text-sm font-black text-foreground shadow-hard disabled:opacity-50 flex items-center justify-center gap-2">
                                             {registering ? <><Loader2 size={14} className="animate-spin" /> Mendaftarkan...</> : <><UserPlus size={14} /> Daftarkan User</>}
                                         </button>
                                     </form>
@@ -699,11 +699,11 @@ export const UserManagement: React.FC = () => {
                         <div className="hidden lg:block w-full lg:w-[380px] shrink-0">
                             <div className="bg-card rounded-2xl border-4 border-slate-900 overflow-hidden sticky top-6 shadow-hard transition-colors">
                                 <div className="p-5 pb-4 border-b-4 border-slate-900 bg-yellow-300 relative">
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/30 rounded-full blur-xl mix-blend-overlay"></div>
-                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] relative z-10">
-                                        <UserPlus className="text-slate-900" size={22} />
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-card/30 rounded-full blur-xl mix-blend-overlay"></div>
+                                    <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center mb-3 border-4 border-slate-900 shadow-[2px_2px_0px_#0f172a] relative z-10">
+                                        <UserPlus className="text-foreground" size={22} />
                                     </div>
-                                    <h3 className="text-xl font-heading font-black text-slate-900 relative z-10">Undang Anggota</h3>
+                                    <h3 className="text-xl font-heading font-black text-foreground relative z-10">Undang Anggota</h3>
                                 </div>
 
                                 <form onSubmit={handleRegister} className="p-5 space-y-4">
@@ -742,7 +742,7 @@ export const UserManagement: React.FC = () => {
                                             <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                                                 className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-10 py-3 text-sm font-bold text-foreground placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 placeholder="Min. 6 Karakter" />
-                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 z-10">
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-foreground z-10">
                                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
                                         </div>
@@ -757,7 +757,7 @@ export const UserManagement: React.FC = () => {
                                                 <input type="datetime-local" value={form.subscription_end} onChange={e => setForm(f => ({ ...f, subscription_end: e.target.value }))}
                                                     className="w-full bg-card border-2 border-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all" />
                                             </div>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-1">Kosongkan untuk akses unlimited.</p>
+                                            <p className="text-[10px] font-bold text-mutedForeground mt-1">Kosongkan untuk akses unlimited.</p>
                                         </div>
                                     )}
 
@@ -791,14 +791,14 @@ export const UserManagement: React.FC = () => {
                                 <div className="px-3 md:px-6 py-2.5 md:py-5 border-b-2 md:border-b-4 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-primary relative gap-2 md:gap-4">
                                     <div className="flex items-center gap-2 md:gap-3">
                                         <div className="bg-card p-1.5 md:p-2 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_#0f172a]">
-                                            <Users className="text-slate-800" size={16} />
+                                            <Users className="text-foreground" size={16} />
                                         </div>
                                         <h3 className="font-heading font-black text-white text-sm md:text-xl">Daftar User ({users.length})</h3>
                                     </div>
 
                                     {/* SEARCH BAR */}
                                     <div className="relative w-full sm:w-64 z-10">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-mutedForeground" size={14} />
                                         <input
                                             type="text"
                                             placeholder="Cari nama / username..."
@@ -810,24 +810,24 @@ export const UserManagement: React.FC = () => {
                                 </div>
                                 <div className="overflow-x-auto bg-card">
                                     <table className="w-full text-left min-w-[500px]">
-                                        <thead className="bg-slate-50 border-b-2 md:border-b-4 border-slate-900">
+                                        <thead className="bg-muted border-b-2 md:border-b-4 border-slate-900">
                                             <tr>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest">User</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Username</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest">Role</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden sm:table-cell">Invited By</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest">Verif</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden md:table-cell">Status</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Package</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest hidden lg:table-cell">Subscription</th>
-                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-slate-800 uppercase tracking-widest text-right">Action</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest">User</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest hidden md:table-cell">Username</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest">Role</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest hidden sm:table-cell">Invited By</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest">Verif</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest hidden md:table-cell">Status</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest hidden lg:table-cell">Package</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest hidden lg:table-cell">Subscription</th>
+                                                <th className="p-2 md:p-4 text-[9px] md:text-sm font-black text-foreground uppercase tracking-widest text-right">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y-2 divide-slate-100">
                                             {loading ? (
-                                                <tr><td colSpan={7} className="p-8 text-center text-slate-400"><div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" size={20} /> Memuat data...</div></td></tr>
+                                                <tr><td colSpan={7} className="p-8 text-center text-mutedForeground"><div className="flex justify-center items-center gap-2"><Loader2 className="animate-spin" size={20} /> Memuat data...</div></td></tr>
                                             ) : users.length === 0 ? (
-                                                <tr><td colSpan={7} className="p-8 text-center text-slate-400 font-bold">Tidak ada user.</td></tr>
+                                                <tr><td colSpan={7} className="p-8 text-center text-mutedForeground font-bold">Tidak ada user.</td></tr>
                                             ) : (
                                                 users
                                                     .filter(u =>
@@ -846,8 +846,8 @@ export const UserManagement: React.FC = () => {
                                                                             <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm ${user.online_status === 'online' ? 'bg-emerald-500' : user.online_status === 'idle' ? 'bg-amber-400' : 'bg-slate-300'}`} title={user.online_status === 'online' ? 'Online' : user.online_status === 'idle' ? 'Idle' : 'Offline'} />
                                                                         </div>
                                                                         <div>
-                                                                            <span className="font-bold text-slate-800 block text-sm">{user.full_name || 'No Name'}</span>
-                                                                            {user.email && <span className="text-[11px] text-slate-400">{user.email}</span>}
+                                                                            <span className="font-bold text-foreground block text-sm">{user.full_name || 'No Name'}</span>
+                                                                            {user.email && <span className="text-[11px] text-mutedForeground">{user.email}</span>}
                                                                         </div>
                                                                     </div>
                                                                 </td>
@@ -862,10 +862,10 @@ export const UserManagement: React.FC = () => {
                                                                     {user.invited_by ? (
                                                                         <div className="flex flex-col">
                                                                             <span className="text-xs font-bold text-slate-700">{user.invited_by}</span>
-                                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Admin Invited</span>
+                                                                            <span className="text-[10px] font-black text-mutedForeground uppercase tracking-tighter">Admin Invited</span>
                                                                         </div>
                                                                     ) : (
-                                                                        <span className="text-xs font-bold text-slate-400">Self Register</span>
+                                                                        <span className="text-xs font-bold text-mutedForeground">Self Register</span>
                                                                     )}
                                                                 </td>
                                                                 <td className="p-4">
@@ -897,12 +897,12 @@ export const UserManagement: React.FC = () => {
                                                                 <td className="p-4 text-xs text-slate-500 hidden lg:table-cell">
                                                                     {user.subscription_end
                                                                         ? `s/d ${new Date(user.subscription_end).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                                        : <span className="text-slate-400">Unlimited</span>
+                                                                        : <span className="text-mutedForeground">Unlimited</span>
                                                                     }
                                                                 </td>
                                                                 <td className="p-4 text-right">
                                                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id, user.username); }}
-                                                                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                        className="p-2 text-mutedForeground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                                                         title="Hapus User" disabled={user.username === 'arunika'}>
                                                                         <Trash2 size={18} />
                                                                     </button>
@@ -934,13 +934,13 @@ export const UserManagement: React.FC = () => {
                                             <p className="text-sm font-bold text-mutedForeground flex items-center gap-2">
                                                 @{selectedUser.username}
                                                 <span className="text-slate-300">•</span>
-                                                <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest ${selectedUser.online_status === 'online' ? 'text-emerald-500' : selectedUser.online_status === 'idle' ? 'text-amber-500' : 'text-slate-400'}`}>
+                                                <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest ${selectedUser.online_status === 'online' ? 'text-emerald-500' : selectedUser.online_status === 'idle' ? 'text-amber-500' : 'text-mutedForeground'}`}>
                                                     <div className={`w-2 h-2 rounded-full ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'}`} />
                                                     {selectedUser.online_status === 'online' ? 'Online' : selectedUser.online_status === 'idle' ? 'Idle' : 'Offline'}
                                                 </span>
                                             </p>
                                             {selectedUser.last_activity_at && selectedUser.online_status !== 'online' && (
-                                                <p className="text-[10px] font-bold text-slate-400 mt-1">
+                                                <p className="text-[10px] font-bold text-mutedForeground mt-1">
                                                     Terakhir aktif: {new Date(selectedUser.last_activity_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                                 </p>
                                             )}
@@ -1018,7 +1018,7 @@ export const UserManagement: React.FC = () => {
                                             <div className={`bg-card rounded-2xl border-2 shadow-[4px_4px_0px_#0f172a] p-4 space-y-4 ${selectedUser.is_verified ? 'border-emerald-500' : 'border-amber-500'}`}>
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center ${selectedUser.is_verified ? 'bg-emerald-300' : 'bg-amber-300'}`}>
-                                                        {selectedUser.is_verified ? <ShieldCheck className="text-slate-900" size={24} /> : <AlertTriangle className="text-slate-900" size={24} />}
+                                                        {selectedUser.is_verified ? <ShieldCheck className="text-foreground" size={24} /> : <AlertTriangle className="text-foreground" size={24} />}
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-black text-foreground">
@@ -1040,15 +1040,15 @@ export const UserManagement: React.FC = () => {
                                                                 type="text"
                                                                 value={verifyCodeInput}
                                                                 onChange={(e) => setVerifyCodeInput(e.target.value.toUpperCase())}
-                                                                className="flex-1 bg-white border-2 border-slate-900 rounded-xl px-4 py-2.5 text-sm font-black text-slate-900 tracking-widest text-center uppercase placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-[2px_2px_0px_#0f172a]"
+                                                                className="flex-1 bg-card border-2 border-slate-900 rounded-xl px-4 py-2.5 text-sm font-black text-foreground tracking-widest text-center uppercase placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-[2px_2px_0px_#0f172a]"
                                                                 placeholder="MASUKKAN KODE"
                                                             />
                                                             <button
                                                                 onClick={() => handleVerifyUser(selectedUser)}
                                                                 disabled={!verifyCodeInput.trim() || verifyCodeInput.trim().toUpperCase() !== (selectedUser.subscription_code || '').trim().toUpperCase()}
                                                                 className={`px-5 py-2.5 rounded-xl font-black text-sm border-2 border-slate-900 transition-all flex items-center gap-2 ${verifyCodeInput.trim() && verifyCodeInput.trim().toUpperCase() === (selectedUser.subscription_code || '').trim().toUpperCase()
-                                                                    ? 'bg-emerald-400 text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-0.5'
-                                                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70'
+                                                                    ? 'bg-emerald-400 text-foreground shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-0.5'
+                                                                    : 'bg-slate-200 text-mutedForeground cursor-not-allowed opacity-70'
                                                                     }`}
                                                             >
                                                                 <ShieldCheck size={16} /> Verifikasi
@@ -1106,7 +1106,7 @@ export const UserManagement: React.FC = () => {
                                                     <div className="space-y-3">
                                                         {userWs.map(ws => (
                                                             <div key={ws.id} className="flex items-center gap-3 p-3 bg-muted rounded-xl border-2 border-slate-900">
-                                                                <Globe className="text-slate-400 shrink-0" size={16} />
+                                                                <Globe className="text-mutedForeground shrink-0" size={16} />
                                                                 <div className="flex-1 min-w-0">
                                                                     <span className="text-sm font-bold text-foreground line-clamp-1">{ws.name}</span>
                                                                 </div>
@@ -1155,7 +1155,7 @@ export const UserManagement: React.FC = () => {
                                             <div className="bg-card rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center ${selectedUser.is_active !== false ? 'bg-emerald-300' : 'bg-red-300'}`}>
-                                                        {selectedUser.is_active !== false ? <CheckCircle className="text-slate-900" size={24} /> : <XCircle className="text-slate-900" size={24} />}
+                                                        {selectedUser.is_active !== false ? <CheckCircle className="text-foreground" size={24} /> : <XCircle className="text-foreground" size={24} />}
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-black text-foreground">
@@ -1171,7 +1171,7 @@ export const UserManagement: React.FC = () => {
                                                     onClick={() => handleToggleActive(selectedUser)}
                                                     className={`relative w-16 h-8 rounded-full border-2 border-slate-900 transition-colors duration-200 shadow-inner ${selectedUser.is_active !== false ? 'bg-emerald-500' : 'bg-slate-300'}`}
                                                 >
-                                                    <div className={`absolute top-0.5 w-6 h-6 bg-white border-2 border-slate-900 rounded-full shadow-[1px_1px_0px_#0f172a] transition-transform duration-200 ${selectedUser.is_active !== false ? 'translate-x-8' : 'translate-x-0.5'}`} />
+                                                    <div className={`absolute top-0.5 w-6 h-6 bg-card border-2 border-slate-900 rounded-full shadow-[1px_1px_0px_#0f172a] transition-transform duration-200 ${selectedUser.is_active !== false ? 'translate-x-8' : 'translate-x-0.5'}`} />
                                                 </button>
                                             </div>
                                         </div>
@@ -1185,7 +1185,7 @@ export const UserManagement: React.FC = () => {
                                             </h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="bg-card rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 text-center">
-                                                    <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Mulai</p>
+                                                    <p className="text-[10px] font-black text-slate-500 dark:text-mutedForeground uppercase tracking-widest mb-1">Mulai</p>
                                                     <p className="text-sm font-black text-foreground">
                                                         {selectedUser.subscription_start
                                                             ? new Date(selectedUser.subscription_start).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -1193,7 +1193,7 @@ export const UserManagement: React.FC = () => {
                                                     </p>
                                                 </div>
                                                 <div className="bg-card rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-3 relative hover:shadow-[4px_4px_0px_#0f172a] transition-all">
-                                                    <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 text-center">Berakhir</p>
+                                                    <p className="text-[10px] font-black text-slate-500 dark:text-mutedForeground uppercase tracking-widest mb-1 text-center">Berakhir</p>
                                                     <input
                                                         type="datetime-local"
                                                         value={formatForDatetimeLocal(selectedUser.subscription_end)}
@@ -1205,21 +1205,21 @@ export const UserManagement: React.FC = () => {
                                                     />
                                                 </div>
                                             </div>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-2 text-center">Kosongkan tanggal berakhir untuk akses unlimited.</p>
+                                            <p className="text-[10px] font-bold text-mutedForeground mt-2 text-center">Kosongkan tanggal berakhir untuk akses unlimited.</p>
                                         </div>
                                     )}
 
                                     {/* Subscription Package - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                                 <Layers size={16} /> Subscription Package
                                             </h4>
-                                            <div className="bg-white rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
+                                            <div className="bg-card rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
                                                 <select
                                                     value={selectedUser.subscription_package || 'Free'}
                                                     onChange={e => handleUpdateSubscriptionPackage(selectedUser.id, e.target.value)}
-                                                    className="w-full bg-white border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
+                                                    className="w-full bg-card border-2 border-slate-900 rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent md:hover:shadow-[2px_2px_0px_#0f172a] focus:shadow-[2px_2px_0px_#0f172a] transition-all"
                                                 >
                                                     <option value="Free">Free</option>
                                                     {availablePackages.map(pkg => (
@@ -1233,37 +1233,37 @@ export const UserManagement: React.FC = () => {
                                     {/* Password User - Developer Only */}
                                     {isDeveloper && (
                                         <div>
-                                            <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                            <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                                 <Key size={16} /> Password User
                                             </h4>
                                             <div className="flex items-center gap-3">
-                                                <div className="flex-1 bg-white rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] px-4 py-3 flex items-center justify-between">
-                                                    <span className="text-sm font-mono font-bold text-slate-900">
+                                                <div className="flex-1 bg-card rounded-xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] px-4 py-3 flex items-center justify-between">
+                                                    <span className="text-sm font-mono font-bold text-foreground">
                                                         {showDetailPassword ? selectedUser.password : '••••••••'}
                                                     </span>
-                                                    <button onClick={() => setShowDetailPassword(!showDetailPassword)} className="text-slate-500 hover:text-slate-900 ml-2">
+                                                    <button onClick={() => setShowDetailPassword(!showDetailPassword)} className="text-slate-500 hover:text-foreground ml-2">
                                                         {showDetailPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                     </button>
                                                 </div>
                                                 <button onClick={() => copyToClipboard(selectedUser.password)}
-                                                    className="p-3 bg-white border-2 border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-slate-900 hover:bg-accent hover:text-white hover:shadow-[4px_4px_0px_#0f172a] transition-all" title="Copy password">
+                                                    className="p-3 bg-card border-2 border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-foreground hover:bg-accent hover:text-white hover:shadow-[4px_4px_0px_#0f172a] transition-all" title="Copy password">
                                                     <Copy size={20} />
                                                 </button>
                                             </div>
-                                            <p className="text-[10px] font-bold text-slate-400 mt-2 italic">Hanya password yang dibuat oleh Admin via Team Space yang terlihat.</p>
+                                            <p className="text-[10px] font-bold text-mutedForeground mt-2 italic">Hanya password yang dibuat oleh Admin via Team Space yang terlihat.</p>
                                         </div>
                                     )}
 
                                     {/* Beri Akses Workspace Lain */}
                                     <div>
-                                        <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-2 uppercase tracking-wide">
+                                        <h4 className="flex items-center gap-2 text-sm font-bold text-foreground mb-2 uppercase tracking-wide">
                                             <Globe size={16} /> Beri Akses Workspace Lain
                                         </h4>
                                         <div className="flex items-center gap-3">
                                             <select
                                                 value={selectedWorkspaceToAssign}
                                                 onChange={(e) => setSelectedWorkspaceToAssign(e.target.value)}
-                                                className="flex-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer"
+                                                className="flex-1 bg-card border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all appearance-none cursor-pointer"
                                             >
                                                 <option value="">Pilih Workspace...</option>
                                                 {workspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
@@ -1285,8 +1285,8 @@ export const UserManagement: React.FC = () => {
                     <Modal isOpen={isGrowthModalOpen} onClose={() => setIsGrowthModalOpen(false)} title="Analisa Pertumbuhan User" maxWidth="max-w-4xl">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-white p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[350px]">
-                                    <h4 className="font-heading font-black text-slate-900 uppercase italic mb-6">Kumulatif User Baru</h4>
+                                <div className="bg-card p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[350px]">
+                                    <h4 className="font-heading font-black text-foreground uppercase italic mb-6">Kumulatif User Baru</h4>
                                     <ResponsiveContainer width="100%" height="80%" minWidth={1} minHeight={1}>
                                         <AreaChart data={growthData}>
                                             <defs>
@@ -1307,17 +1307,17 @@ export const UserManagement: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <h4 className="font-heading font-black text-slate-900 uppercase italic mb-4 flex items-center gap-2">
+                                <h4 className="font-heading font-black text-foreground uppercase italic mb-4 flex items-center gap-2">
                                     <TrendingUp size={18} className="text-accent" /> 5 User Terbaru
                                 </h4>
                                 <div className="space-y-3">
                                     {newestUsers.map(u => (
-                                        <div key={u.id} className="bg-white p-3 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center gap-3">
+                                        <div key={u.id} className="bg-card p-3 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center gap-3">
                                             <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
                                                 className="w-10 h-10 rounded-lg border-2 border-slate-900" alt="" />
                                             <div className="min-w-0">
-                                                <p className="text-xs font-black text-slate-900 line-clamp-1 uppercase tracking-tight">{u.full_name}</p>
-                                                <p className="text-[10px] font-bold text-slate-400">Join: {new Date(u.created_at).toLocaleDateString('id-ID')}</p>
+                                                <p className="text-xs font-black text-foreground line-clamp-1 uppercase tracking-tight">{u.full_name}</p>
+                                                <p className="text-[10px] font-bold text-mutedForeground">Join: {new Date(u.created_at).toLocaleDateString('id-ID')}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -1331,9 +1331,9 @@ export const UserManagement: React.FC = () => {
                         <div className="space-y-4">
                             <p className="text-sm font-bold text-slate-500 mb-2">User yang masa berlangganannya akan habis dalam &lt; 5 hari.</p>
                             {expiringUsers.length === 0 ? (
-                                <div className="bg-slate-50 p-8 rounded-2xl border-2 border-dashed border-slate-200 text-center">
+                                <div className="bg-muted p-8 rounded-2xl border-2 border-dashed border-slate-200 text-center">
                                     <CheckCircle className="mx-auto text-emerald-400 mb-2" size={32} />
-                                    <p className="font-bold text-slate-400">Semua aman. Tidak ada user di masa tenggang.</p>
+                                    <p className="font-bold text-mutedForeground">Semua aman. Tidak ada user di masa tenggang.</p>
                                 </div>
                             ) : (
                                 <div className="grid gap-3">
@@ -1343,21 +1343,21 @@ export const UserManagement: React.FC = () => {
                                             <div
                                                 key={u.id}
                                                 onClick={() => { setSelectedUser(u); setIsDetailOpen(true); setIsExpiringModalOpen(false); }}
-                                                className="bg-white p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini hover:translate-x-1 transition-all cursor-pointer flex items-center justify-between group"
+                                                className="bg-card p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini hover:translate-x-1 transition-all cursor-pointer flex items-center justify-between group"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
                                                         className="w-10 h-10 rounded-lg border-2 border-slate-900" alt="" />
                                                     <div>
-                                                        <p className="font-black text-slate-900 text-sm italic">{u.full_name}</p>
-                                                        <p className="text-xs font-bold text-slate-400">@{u.username}</p>
+                                                        <p className="font-black text-foreground text-sm italic">{u.full_name}</p>
+                                                        <p className="text-xs font-bold text-mutedForeground">@{u.username}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
                                                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${status.color}`}>
                                                         {status.label}
                                                     </span>
-                                                    <p className="text-[10px] font-bold text-slate-400 mt-1">{new Date(u.subscription_end!).toLocaleDateString('id-ID')}</p>
+                                                    <p className="text-[10px] font-bold text-mutedForeground mt-1">{new Date(u.subscription_end!).toLocaleDateString('id-ID')}</p>
                                                 </div>
                                             </div>
                                         );
@@ -1386,26 +1386,26 @@ export const UserManagement: React.FC = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {adminTeamStats.map(admin => (
-                                    <div key={admin.id} className="bg-white p-4 rounded-2xl border-4 border-slate-900 shadow-hard relative group overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-20 h-20 bg-slate-50 rounded-full -mr-10 -mt-10 group-hover:bg-purple-50 transition-colors"></div>
+                                    <div key={admin.id} className="bg-card p-4 rounded-2xl border-4 border-slate-900 shadow-hard relative group overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-20 h-20 bg-muted rounded-full -mr-10 -mt-10 group-hover:bg-purple-50 transition-colors"></div>
                                         <div className="relative z-10">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <img src={admin.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(admin.full_name || 'U')}`}
                                                     className="w-12 h-12 rounded-xl border-2 border-slate-900" alt="" />
                                                 <div>
-                                                    <h5 className="font-black text-slate-900 uppercase italic tracking-tight">{admin.full_name}</h5>
+                                                    <h5 className="font-black text-foreground uppercase italic tracking-tight">{admin.full_name}</h5>
                                                     <span className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full font-bold text-slate-500 uppercase">{admin.subscription_package || 'Free'}</span>
                                                 </div>
                                             </div>
                                             <div
                                                 onClick={() => { setViewingAdminTeam(admin); setIsAdminTeamModalOpen(true); }}
-                                                className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border-2 border-slate-900 cursor-pointer hover:bg-purple-50 transition-colors group/team"
+                                                className="flex items-center justify-between p-3 bg-muted rounded-xl border-2 border-slate-900 cursor-pointer hover:bg-purple-50 transition-colors group/team"
                                             >
                                                 <div>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Team Members</p>
-                                                    <p className="text-2xl font-black text-slate-900">{admin.teamCount}</p>
+                                                    <p className="text-[10px] font-black text-mutedForeground uppercase leading-none mb-1">Team Members</p>
+                                                    <p className="text-2xl font-black text-foreground">{admin.teamCount}</p>
                                                 </div>
-                                                <div className="w-10 h-10 bg-white rounded-lg border-2 border-slate-900 flex items-center justify-center group-hover/team:scale-110 transition-transform">
+                                                <div className="w-10 h-10 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center group-hover/team:scale-110 transition-transform">
                                                     <UserCheck className="text-emerald-500" size={20} />
                                                 </div>
                                             </div>
@@ -1438,24 +1438,24 @@ export const UserManagement: React.FC = () => {
                         maxWidth="max-w-2xl"
                     >
                         <div className="space-y-4">
-                            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border-2 border-slate-900 mb-6">
+                            <div className="flex items-center gap-4 p-4 bg-muted rounded-2xl border-2 border-slate-900 mb-6">
                                 <img
                                     src={viewingAdminTeam?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(viewingAdminTeam?.full_name || 'U')}`}
                                     className="w-14 h-14 rounded-xl border-2 border-slate-900"
                                     alt=""
                                 />
                                 <div>
-                                    <h4 className="font-heading font-black text-xl text-slate-900 uppercase italic">Head of Team</h4>
+                                    <h4 className="font-heading font-black text-xl text-foreground uppercase italic">Head of Team</h4>
                                     <p className="text-sm font-bold text-slate-500">@{viewingAdminTeam?.username} &bull; {viewingAdminTeam?.subscription_package || 'No Package'}</p>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Member Terdaftar ({users.filter(u => u.invited_by === viewingAdminTeam?.username).length})</h5>
+                                <h5 className="text-[10px] font-black text-mutedForeground uppercase tracking-[0.2em] mb-2">Member Terdaftar ({users.filter(u => u.invited_by === viewingAdminTeam?.username).length})</h5>
                                 {users.filter(u => u.invited_by === viewingAdminTeam?.username).length === 0 ? (
-                                    <div className="text-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                                    <div className="text-center py-12 bg-muted rounded-2xl border-2 border-dashed border-slate-200">
                                         <Users size={32} className="mx-auto text-slate-300 mb-2" />
-                                        <p className="font-bold text-slate-400">Belum ada user yang diundang.</p>
+                                        <p className="font-bold text-mutedForeground">Belum ada user yang diundang.</p>
                                     </div>
                                 ) : (
                                     users.filter(u => u.invited_by === viewingAdminTeam?.username).map(member => {
@@ -1463,7 +1463,7 @@ export const UserManagement: React.FC = () => {
                                         return (
                                             <div
                                                 key={member.id}
-                                                className="bg-white p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center justify-between group"
+                                                className="bg-card p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center justify-between group"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <img
@@ -1472,8 +1472,8 @@ export const UserManagement: React.FC = () => {
                                                         alt=""
                                                     />
                                                     <div>
-                                                        <p className="font-black text-slate-900 text-sm leading-none mb-1">{member.full_name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400">@{member.username} &bull; Joined {new Date(member.created_at).toLocaleDateString('id-ID')}</p>
+                                                        <p className="font-black text-foreground text-sm leading-none mb-1">{member.full_name}</p>
+                                                        <p className="text-[10px] font-bold text-mutedForeground">@{member.username} &bull; Joined {new Date(member.created_at).toLocaleDateString('id-ID')}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">

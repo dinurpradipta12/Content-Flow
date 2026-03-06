@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
 import {
-    Plus, Calendar, Instagram, Linkedin, Video, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle, Crown
+    Plus, Calendar, Instagram, Linkedin, Video, Zap, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle, Crown
 } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
@@ -40,47 +40,33 @@ const getPlatformIcon = (platform: Platform) => {
     }
 };
 
+// Helper: Format Status to Sentence Case
+const formatStatus = (status: string) => {
+    if (!status) return '';
+    return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/, c => c.toUpperCase());
+};
+
 // Helper: Get Platform Color for Card Header (Badge Only)
 const getPlatformBadgeStyle = (platform: Platform) => {
     switch (platform) {
-        case Platform.INSTAGRAM: return 'bg-pink-100 text-pink-700 border-pink-200';
-        case Platform.TIKTOK: return 'bg-slate-800 text-white border-slate-900';
-        case Platform.LINKEDIN: return 'bg-blue-100 text-blue-700 border-blue-200';
-        default: return 'bg-slate-100 text-slate-700 border-slate-200';
+        case Platform.INSTAGRAM: return 'bg-pink-100 dark:bg-pink-500/20 text-pink-700 dark:text-pink-400 border-pink-200 dark:border-pink-500/30';
+        case Platform.TIKTOK: return 'bg-foreground text-background border-foreground shadow-hard-mini';
+        case Platform.LINKEDIN: return 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30';
+        default: return 'bg-muted text-mutedForeground border-border';
     }
 };
 
 // Helper: Get Card Base Style based on Status
 const getCardStatusStyle = (status: ContentStatus) => {
-    // If we're not using the default theme (dark, midnight, pastel, etc), 
-    // keep cards uniform by skipping status-specific background colors.
-    const currentTheme = localStorage.getItem('app_ui_theme') || 'light';
-    const isDark = currentTheme === 'dark' || currentTheme === 'midnight';
+    const statusBg = {
+        [ContentStatus.PUBLISHED]: 'bg-emerald-50/40 dark:bg-emerald-500/10',
+        [ContentStatus.IN_PROGRESS]: 'bg-violet-50/40 dark:bg-violet-500/10',
+        [ContentStatus.REVIEW]: 'bg-amber-50/40 dark:bg-amber-500/10',
+        [ContentStatus.REVISION]: 'bg-rose-50/40 dark:bg-rose-500/10',
+        [ContentStatus.SCHEDULED]: 'bg-pink-50/40 dark:bg-pink-500/10',
+    };
 
-    if (currentTheme !== 'light') {
-        return 'bg-card border-border shadow-hard hover:shadow-hard-hover';
-    }
-
-    switch (status) {
-        case ContentStatus.PUBLISHED:
-            // Green Theme for Done
-            return 'bg-emerald-50 border-emerald-300 shadow-[4px_4px_0px_0px_#059669] hover:shadow-[6px_6px_0px_0px_#059669]';
-        case ContentStatus.IN_PROGRESS:
-            // Purple Theme
-            return 'bg-purple-50/60 border-purple-200 shadow-hard hover:shadow-hard-hover';
-        case ContentStatus.REVIEW:
-            // Amber Theme
-            return 'bg-amber-50/60 border-amber-200 shadow-hard hover:shadow-hard-hover';
-        case ContentStatus.REVISION:
-            // Orange Theme for Revision
-            return 'bg-orange-50/60 border-orange-200 shadow-hard hover:shadow-hard-hover';
-        case ContentStatus.SCHEDULED:
-            // Pink Theme
-            return 'bg-pink-50/60 border-pink-200 shadow-hard hover:shadow-hard-hover';
-        default: // TODO (Planning)
-            // White/Slate Theme
-            return 'bg-white border-slate-800 shadow-hard hover:shadow-hard-hover';
-    }
+    return `${statusBg[status] || 'bg-card'} border-[3.5px] border-border shadow-hard hover:shadow-hard-hover`;
 };
 
 // Helper: Get Type Icon
@@ -93,21 +79,21 @@ const getTypeIcon = (type: string) => {
 
 // Helper: Pillar Color Generator (Simple Hash)
 const getPillarStyle = (pillar: string) => {
-    if (!pillar) return 'bg-slate-100 text-slate-500';
+    if (!pillar) return 'bg-slate-100 text-slate-500 border-[2px] border-transparent';
     const colors = [
-        'bg-yellow-100 text-yellow-700 border-yellow-200',
-        'bg-green-100 text-green-700 border-green-200',
-        'bg-purple-100 text-purple-700 border-purple-200',
-        'bg-blue-100 text-blue-700 border-blue-200',
-        'bg-orange-100 text-orange-700 border-orange-200'
+        'bg-yellow-100 text-yellow-800 border-indigo-950 shadow-[1px_1px_0px_#1e1b4b]',
+        'bg-emerald-100 text-emerald-800 border-indigo-950 shadow-[1px_1px_0px_#1e1b4b]',
+        'bg-purple-100 text-purple-800 border-indigo-950 shadow-[1px_1px_0px_#1e1b4b]',
+        'bg-blue-100 text-blue-800 border-indigo-950 shadow-[1px_1px_0px_#1e1b4b]',
+        'bg-orange-100 text-orange-800 border-indigo-950 shadow-[1px_1px_0px_#1e1b4b]'
     ];
     const index = pillar.length % colors.length;
-    return `${colors[index]} border`;
+    return `${colors[index]} border-[2px]`;
 };
 
 // --- RICH TEXT RENDERER COMPONENT ---
 const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => void }> = ({ text, onPdfClick }) => {
-    if (!text) return <span className="text-slate-400 italic">Belum ada script atau catatan yang ditambahkan.</span>;
+    if (!text) return <span className="text-mutedForeground italic">Belum ada script atau catatan yang ditambahkan.</span>;
     return (
         <div className="space-y-1">
             {text.split('\n').map((line, lineIdx) => {
@@ -118,7 +104,7 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                     const isImage = fileUrl.startsWith('data:image');
                     return (
                         <div
-                            className={`my-3 group relative bg-card border-2 border-border rounded-xl p-3 flex items-center gap-4 hover:border-accent hover:shadow-md transition-all ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer hover:bg-muted' : ''
+                            className={`my-3 group relative bg-card border-[3px] border-slate-900 rounded-2xl p-4 flex items-center gap-4 hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 transition-all shadow-[4px_4px_0px_#0f172a] ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer' : ''
                                 }`}
                             onClick={() => {
                                 if ((fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) && onPdfClick) {
@@ -163,21 +149,21 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                 if (parts.length === 3 && parts[0] === '' && parts[2] === '') {
                     const url = parts[1];
                     return (
-                        <a key={lineIdx} href={url} target="_blank" rel="noopener noreferrer" className="my-2 block bg-blue-50/50 border-2 border-blue-100 hover:border-blue-300 rounded-xl p-3 transition-colors group">
+                        <a key={lineIdx} href={url} target="_blank" rel="noopener noreferrer" className="my-2 block bg-card border-[3px] border-border hover:shadow-hard hover:-translate-y-1 rounded-2xl p-4 shadow-hard-mini transition-all group">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                     <ExternalLink size={18} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-0.5">External Link</p>
-                                    <p className="text-sm font-bold text-blue-900 truncate">{url}</p>
+                                    <p className="text-xs font-bold text-blue-500 mb-0.5">External link</p>
+                                    <p className="text-sm font-bold text-foreground truncate">{url}</p>
                                 </div>
                             </div>
                         </a>
                     );
                 }
                 return (
-                    <p key={lineIdx} className="leading-relaxed text-slate-700">
+                    <p key={lineIdx} className="leading-relaxed text-mutedForeground">
                         {parts.map((part, partIdx) => {
                             if (part.match(urlRegex)) {
                                 return <a key={partIdx} href={part} target="_blank" rel="noopener noreferrer" className="text-accent font-bold hover:underline">{part}</a>;
@@ -214,11 +200,11 @@ const KanbanCard: React.FC<{
     const getApprovalBadge = (status?: string) => {
         switch (status) {
             case 'approved':
-                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest animate-in zoom-in duration-500 shadow-md border-2 border-emerald-400"><CheckCircle size={10} fill="currentColor" fillOpacity={0.3} /> Approved</span>;
+                return <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500 text-white dark:bg-emerald-500/20 dark:text-emerald-400 text-[10px] font-black border-[1.5px] border-emerald-700 dark:border-emerald-500/30 shadow-hard-mini"><CheckCircle size={10} strokeWidth={4} /> Approved</span>;
             case 'revision':
-                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest animate-in zoom-in duration-500 shadow-md border-2 border-amber-400"><RefreshCw size={10} /> Revision</span>;
+                return <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-rose-500 text-white dark:bg-rose-500/20 dark:text-rose-400 text-[10px] font-black border-[1.5px] border-rose-700 dark:border-rose-500/30 shadow-hard-mini"><RefreshCw size={10} strokeWidth={4} /> Revision</span>;
             default:
-                return <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 text-slate-500 text-[10px] font-black uppercase tracking-widest border-2 border-slate-300 shadow-sm opacity-80">Draft (Pending)</span>;
+                return null;
         }
     };
 
@@ -227,76 +213,77 @@ const KanbanCard: React.FC<{
             draggable
             onDragStart={(e) => onDragStart(e, item.id)}
             onClick={() => onClick(item)}
-            className={`group rounded-xl border-2 transition-all duration-200 hover:-translate-y-1 cursor-grab active:cursor-grabbing relative mb-4 flex-shrink-0 z-10 hover:z-20 overflow-visible ${getCardStatusStyle(item.status)}`}
+            className={`group rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1.5 cursor-grab active:cursor-grabbing relative mb-4 flex-shrink-0 z-10 hover:z-20 overflow-visible p-4 ${getCardStatusStyle(item.status)}`}
         >
-            {/* Header: Platform & Menu */}
-            <div className={`px-4 py-3 flex justify-between items-center rounded-t-[10px]`}>
+            {/* Header: PIC \u0026 Menu */}
+            <div className={`flex justify-between items-center mb-2.5`}>
                 <div className="flex items-center gap-2">
-                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${getPlatformBadgeStyle(item.platform)}`}>
-                        {getPlatformIcon(item.platform)}
-                        <span>{item.platform}</span>
-                    </div>
-                    {/* Quick Action Badges */}
-                    {isAdmin && item.approval_status !== 'approved' && (
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onApprove(item.id, 'approved'); }}
-                                className="p-1 rounded bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-all shadow-sm"
-                                title="Approve ini"
-                            >
-                                <CheckCircle size={12} />
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onApprove(item.id, 'revision'); }}
-                                className="p-1 rounded bg-amber-100 text-amber-600 hover:bg-amber-200 transition-all shadow-sm flex items-center gap-1"
-                                title="Minta Revisi"
-                            >
-                                <RefreshCw size={12} />
-                                {isFree && <Crown size={10} className="text-amber-500" title="Pro Feature" />}
-                            </button>
+                    {item.pic ? (
+                        <div className="group/pic relative">
+                            {picMember ? (
+                                <img
+                                    src={picMember.avatar}
+                                    alt={picMember.name}
+                                    className="w-8 h-8 rounded-xl border-[2px] border-border shadow-hard-mini object-cover bg-card p-0.5 group-hover/pic:border-accent transition-colors"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-xl bg-violet-400 text-white flex items-center justify-center text-xs font-black border-[2px] border-border shadow-hard-mini">
+                                    {item.pic.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="w-8 h-8 rounded-xl bg-muted border-[2px] border-border shadow-hard-mini flex items-center justify-center">
+                            <User size={14} strokeWidth={3} className="text-mutedForeground" />
                         </div>
                     )}
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-mutedForeground">Assignee</span>
+                        <span className="text-xs font-black text-foreground">{item.pic ? item.pic.split(' ')[0] : 'Unassigned'}</span>
+                    </div>
                 </div>
 
                 <div className="relative">
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                        className="p-1 hover:bg-muted rounded-md text-mutedForeground hover:text-foreground transition-colors"
+                        className="w-7 h-7 flex items-center justify-center bg-card rounded-xl border-[2px] border-border shadow-hard-mini hover:translate-y-[2px] hover:shadow-none transition-all text-foreground"
                     >
-                        <MoreHorizontal size={16} />
+                        <MoreHorizontal size={14} strokeWidth={3} />
                     </button>
                     {showMenu && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}></div>
-                            <div className="absolute right-0 top-full mt-1 w-32 bg-card border-2 border-border rounded-lg shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-100">
+                            <div className="absolute right-0 top-full mt-3 w-52 bg-card border-[3.5px] border-border rounded-2xl shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(item); }}
-                                    className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 font-bold text-foreground"
+                                    className="w-full text-left px-5 py-3.5 hover:bg-muted flex items-center gap-3 font-black text-foreground text-[10px]"
                                 >
-                                    <Edit size={14} className="text-accent" /> Edit
+                                    <Edit size={16} className="text-violet-600" strokeWidth={3} /> Edit Konten
                                 </button>
                                 {isAdmin && (
                                     <>
+                                        <div className="h-[2px] bg-border" />
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'approved'); }}
-                                            className="w-full text-left px-3 py-2 hover:bg-emerald-50 flex items-center gap-2 font-bold text-emerald-600 transition-colors"
+                                            className="w-full text-left px-5 py-3.5 hover:bg-emerald-50 flex items-center gap-3 font-black text-emerald-700 text-[10px] transition-colors"
                                         >
-                                            <CheckCircle size={14} /> Mark as Approved
+                                            <CheckCircle size={16} strokeWidth={3} /> Setujui
                                         </button>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'revision'); }}
-                                            className="w-full text-left px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-50 flex items-center justify-between"
+                                            className="w-full text-left px-5 py-3.5 text-[10px] text-rose-700 hover:bg-rose-50 flex items-center justify-between font-black"
                                         >
-                                            <span className="flex items-center gap-2"><RefreshCw size={14} /> Request Revision</span>
-                                            {isFree && <Crown size={12} className="text-amber-500" title="Pro Feature" />}
+                                            <span className="flex items-center gap-3"><RefreshCw size={16} strokeWidth={3} /> Revisi</span>
+                                            {isFree && <Crown size={12} className="text-amber-500" strokeWidth={3} />}
                                         </button>
                                     </>
                                 )}
+                                <div className="h-[2px] bg-border" />
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(item.id); }}
-                                    className="w-full text-left px-3 py-2 hover:bg-red-500/10 flex items-center gap-2 font-bold text-red-500"
+                                    className="w-full text-left px-5 py-3.5 hover:bg-rose-50 flex items-center gap-3 font-black text-rose-600 text-[10px]"
                                 >
-                                    <Trash2 size={14} /> Delete
+                                    <Trash2 size={16} strokeWidth={3} /> Hapus
                                 </button>
                             </div>
                         </>
@@ -304,56 +291,50 @@ const KanbanCard: React.FC<{
                 </div>
             </div>
 
-            <div className="px-4 pb-4 space-y-3">
-                {/* Title */}
-                <h4 className="font-heading font-bold text-foreground text-sm leading-snug line-clamp-3">
+            {/* Title Section */}
+            <div className="mb-2">
+                <h4 className="font-heading font-black text-foreground text-xs sm:text-sm leading-snug tracking-tight line-clamp-2 group-hover:text-accent transition-colors">
                     {item.title}
                 </h4>
+            </div>
 
-                {/* Approval & Tags */}
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                    {getApprovalBadge(item.approval_status)}
+            {/* Tags & Badges Area */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                {getApprovalBadge(item.approval_status)}
 
-                    {item.pillar && (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getPillarStyle(item.pillar)}`}>
-                            {item.pillar}
-                        </span>
-                    )}
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-muted/50 text-mutedForeground border border-border flex items-center gap-1">
-                        {getTypeIcon(item.type)} {item.type}
+                <span className="px-2 py-1 rounded-md text-[10px] font-black bg-card text-foreground border-[1.5px] border-border shadow-hard-mini flex items-center gap-1">
+                    {getTypeIcon(item.type)} {item.type}
+                </span>
+
+                {item.pillar && (
+                    <span className={`px-2 py-1 rounded-md text-[10px] font-black ${getPillarStyle(item.pillar).replace('border-[2px]', 'border-[1.5px]')}`}>
+                        {item.pillar}
                     </span>
-                </div>
+                )}
+            </div>
 
-                {/* Divider */}
-                <div className="h-px bg-slate-400/20 border-t border-dashed border-slate-400/30 w-full"></div>
-
-                {/* Footer: Date & PIC */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-mutedForeground text-[11px] font-bold bg-muted/60 px-2 py-1 rounded border border-border shrink-0">
-                        <Calendar size={12} className="text-mutedForeground/70" />
-                        <span>{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
+            {/* Footer: Integrated Platform Box */}
+            <div className="mt-auto pt-2">
+                <div className="bg-muted/30 dark:bg-muted/10 rounded-xl border-[1.5px] border-border p-2 flex items-center justify-between shadow-hard-mini group-hover:bg-card transition-colors">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-card border-[1.5px] border-border flex items-center justify-center text-foreground shadow-hard-mini scale-90">
+                            {getPlatformIcon(item.platform)}
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-mutedForeground">Platform</span>
+                            <span className="text-xs font-black text-foreground">{item.platform}</span>
+                        </div>
                     </div>
 
-                    {item.pic ? (
-                        <div className="flex items-center gap-1.5 min-w-0" title={`PIC: ${item.pic}`}>
-                            {picMember ? (
-                                <img
-                                    src={picMember.avatar}
-                                    alt={picMember.name}
-                                    className="w-6 h-6 rounded-full border border-slate-800 shadow-sm object-cover flex-shrink-0"
-                                />
-                            ) : (
-                                <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm flex-shrink-0">
-                                    {item.pic.charAt(0).toUpperCase()}
-                                </div>
-                            )}
-                            <span className="text-[10px] font-bold text-slate-600 truncate max-w-[50px]">{item.pic}</span>
+                    <div className="flex items-center gap-2 border-l-[1.5px] border-border pl-2">
+                        <Calendar size={12} strokeWidth={3} className="text-mutedForeground" />
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black text-mutedForeground">Date</span>
+                            <span className="text-[11px] font-black text-foreground whitespace-nowrap">
+                                {item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                            </span>
                         </div>
-                    ) : (
-                        <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center">
-                            <User size={12} className="text-slate-400" />
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -376,40 +357,43 @@ const KanbanColumn: React.FC<{
     // ... (keep existing handlers) ...
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        e.currentTarget.classList.add('bg-slate-50/50', 'border-accent/50');
+        e.currentTarget.classList.add('bg-muted/50', 'border-accent/50');
     };
 
     const handleDragLeave = (e: React.DragEvent) => {
-        e.currentTarget.classList.remove('bg-slate-50/50', 'border-accent/50');
+        e.currentTarget.classList.remove('bg-muted/50', 'border-accent/50');
     };
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
-        e.currentTarget.classList.remove('bg-slate-50/50', 'border-accent/50');
+        e.currentTarget.classList.remove('bg-muted/50', 'border-accent/50');
         onDropTask(e, status);
     };
 
     return (
         <div
-            className="flex-1 flex-shrink-0 min-w-[260px] sm:min-w-[300px] md:min-w-[340px] lg:min-w-[380px] flex flex-col pb-0"
+            className="flex-1 flex-shrink-0 min-w-[320px] md:min-w-[360px] lg:min-w-[400px] flex flex-col pb-0"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            {/* Column Header */}
-            <div className="flex-shrink-0 mb-4 sm:mb-6 pt-1">
-                <div className="flex items-center justify-between pb-3 sm:pb-4 border-b-2 border-border">
-                    <h3 className={`font-heading font-black text-xs sm:text-sm tracking-widest uppercase ${textColor}`}>
-                        {status}
-                    </h3>
-                    <span className="bg-accent text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center justify-center shadow-sm">
+            {/* Column Header - Bento Style */}
+            <div className="flex-shrink-0 mb-8 pt-1">
+                <div className="flex items-center justify-between pb-5 border-b-[4px] border-border group">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-mutedForeground">Status</span>
+                        <h3 className={`font-heading font-black text-lg sm:text-xl tracking-wide ${textColor} drop-shadow-sm group-hover:translate-x-1 transition-transform`}>
+                            {formatStatus(status)}
+                        </h3>
+                    </div>
+                    <div className="bg-card text-foreground border-[3.5px] border-border w-10 h-10 rounded-2xl text-xs font-black flex items-center justify-center shadow-hard transform rotate-3">
                         {items.length}
-                    </span>
+                    </div>
                 </div>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 px-0 pb-0 flex flex-col gap-3 sm:gap-4">
+            <div className="flex-1 px-0 pb-0 flex flex-col gap-2 transition-colors duration-300 rounded-xl">
                 {items.length > 0 ? (
                     items.map(item => (
                         <KanbanCard
@@ -425,14 +409,15 @@ const KanbanColumn: React.FC<{
                         />
                     ))
                 ) : (
-                    <div className="h-32 border-2 border-dashed border-slate-100 rounded-3xl flex items-center justify-center text-slate-200 text-[10px] font-bold italic select-none tracking-widest">
-                        BELUM ADA TASK
+                    <div className="py-12 border-[3.5px] border-dashed border-slate-300 rounded-[2rem] flex flex-col items-center justify-center text-mutedForeground bg-muted/50 group/empty">
+                        <Layers size={32} className="mb-3 opacity-20 group-hover/empty:opacity-50 transition-opacity" strokeWidth={3} />
+                        <span className="text-[10px] font-black">Kosong</span>
                     </div>
                 )}
             </div>
         </div>
     );
-}
+};
 
 // --- MAIN COMPONENT ---
 
@@ -1605,9 +1590,9 @@ export const ContentPlanDetail: React.FC = () => {
                         Semua
                     </button>
                     {workspaceData.platforms.map(p => (
-                        <button key={p} onClick={() => setFilterPlatform(p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)}
+                        <button key={formatStatus(p)} onClick={() => setFilterPlatform(p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)}
                             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${filterPlatform !== 'all' && (filterPlatform === (p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)) ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
-                            {p}
+                            {formatStatus(p)}
                         </button>
                     ))}
                 </div>
@@ -1629,7 +1614,7 @@ export const ContentPlanDetail: React.FC = () => {
                                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${mobileStatusTab === s.value ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
                                 <div className={`w-2 h-2 rounded-full ${s.color}`} />
                                 {s.label}
-                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full ${mobileStatusTab === s.value ? 'bg-white/20' : 'bg-muted'}`}>{count}</span>
+                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full ${mobileStatusTab === s.value ? 'bg-card/20' : 'bg-muted'}`}>{count}</span>
                             </button>
                         );
                     })}
@@ -1700,7 +1685,7 @@ export const ContentPlanDetail: React.FC = () => {
                         const platformMatch = filterPlatform === 'all' || t.platform === filterPlatform;
                         return statusMatch && platformMatch;
                     }).length === 0 && (
-                            <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
+                            <div className="text-center py-16 border-[3px] border-dashed border-slate-300 rounded-[2.5rem] bg-muted shadow-inner">
                                 <Layers size={28} className="text-accent/40 mx-auto mb-2" />
                                 <p className="text-sm font-bold text-foreground mb-1">Belum ada konten</p>
                                 <button onClick={handleOpenCreateModal} className="mt-2 px-4 py-2 bg-accent text-white rounded-xl text-xs font-bold">
@@ -1715,292 +1700,222 @@ export const ContentPlanDetail: React.FC = () => {
                 DESKTOP VIEW (≥ md) - Original Kanban/Table Layout
                 ═══════════════════════════════════════════════════════════════════ */}
             <div className="hidden md:flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
-                {/* Mobile Header Section - Collapsible */}
-                <div className={`flex flex-col lg:flex-row justify-between items-start lg:items-end gap-2 sm:gap-3 lg:gap-6 border-b-2 border-border pb-2 sm:pb-3 lg:pb-6 flex-shrink-0 w-full max-w-full pl-2 sm:pl-3 md:pl-4 pr-3 sm:pr-4 md:pr-8 sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'py-2 sm:py-3 bg-card/95 backdrop-blur-sm shadow-sm' : 'pt-0'}`}>
-                    {/* LEFT SIDE: Logo -> Info -> Name -> Members */}
-                    <div className="flex flex-col items-start gap-2 sm:gap-3 lg:gap-4 transition-all duration-300 w-full lg:w-auto">
-                        <div className={`flex items-center gap-2 sm:gap-3 lg:gap-4 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                            <button
-                                onClick={() => navigate('/plan')}
-                                className="p-1.5 sm:p-2 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground"
-                            >
-                                <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
-                            </button>
+                {/* Header Section - Premium Bento Style (2 rows) */}
+                <div className={`flex flex-col gap-2 flex-shrink-0 w-full mb-0 transition-all duration-300 ${isScrolled ? 'sticky top-0 z-40 bg-card/95 backdrop-blur-md py-4 border-b-[3.5px] border-slate-900 shadow-sm' : ''}`}>
 
-                            <div className="relative group">
-                                {workspaceData.logo_url ? (
-                                    <img src={workspaceData.logo_url} alt="Logo" className="h-10 sm:h-16 md:h-20 lg:h-32 w-auto object-contain" />
-                                ) : (
-                                    <div className="h-10 w-10 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-32 lg:w-32 bg-accent/20 rounded-xl sm:rounded-2xl md:rounded-3xl border-2 border-slate-200 shadow-hard flex items-center justify-center">
-                                        <Layers size={20} className="sm:w-8 sm:h-8 md:w-10 md:h-10 text-accent" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className={`flex flex-wrap gap-1.5 sm:gap-2 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                            {workspaceData.platforms.map(p => (
-                                <span key={p} className="px-2 sm:px-3 py-0.5 sm:py-1 bg-pink-100 border-2 border-pink-200 text-pink-700 font-black font-heading rounded-lg text-[10px] sm:text-xs transform -rotate-2 shadow-sm inline-block">
-                                    {p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p}
-                                </span>
-                            ))}
-                            {workspaceData.period && (
-                                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-yellow-100 border-2 border-yellow-200 text-yellow-700 font-black font-heading rounded-lg text-[10px] sm:text-xs transform rotate-2 shadow-sm inline-block">
-                                    {new Date(workspaceData.period).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            {isScrolled && (
+                    {/* ROW 1: Identity & Team Info */}
+                    <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start gap-6 px-6">
+                        {/* LEFT: Branding Identity */}
+                        <div className="flex flex-col lg:flex-row items-center gap-8">
+                            {/* 1. Back & Enlarged Logo (No inner box) */}
+                            <div className="flex items-center gap-5 p-1">
                                 <button
                                     onClick={() => navigate('/plan')}
-                                    className="p-1 sm:p-1.5 rounded-lg border-2 border-border hover:border-foreground hover:bg-card transition-all group bg-card shadow-sm text-mutedForeground hover:text-foreground"
+                                    className="w-12 h-12 flex items-center justify-center rounded-2xl border-[3px] border-border bg-card hover:bg-muted text-foreground transition-all shadow-hard-mini active:translate-y-[2px] active:shadow-none"
                                 >
-                                    <ArrowLeft size={14} className="sm:w-4 sm:h-4" />
+                                    <ArrowLeft size={20} strokeWidth={4} />
                                 </button>
-                            )}
-                            <h2 className={`font-extrabold text-slate-800 font-heading tracking-tight drop-shadow-sm leading-tight max-w-full sm:max-w-2xl lg:max-w-3xl transition-all duration-300 ${isScrolled ? 'text-base sm:text-xl md:text-2xl lg:text-3xl' : 'text-2xl sm:text-3xl md:text-5xl lg:text-6xl'}`}>
-                                {workspaceData.name}
-                            </h2>
-                        </div>
 
-                        <div className={`flex items-center gap-2 sm:gap-3 transition-all duration-300 ${isScrolled ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                            <div className="flex -space-x-2 sm:-space-x-3">
-                                {teamMembers.length > 0 ? (
-                                    <>
-                                        {teamMembers
-                                            .slice(0, 3)
-                                            .map((m, i) => (
-                                                <button key={i} onClick={() => setIsMemberModalOpen(true)} className="relative group focus:outline-none">
-                                                    <img src={m.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.name)}`} alt="User" className="w-10 h-10 rounded-full border-2 border-white shadow-sm bg-slate-200 object-cover transition-transform hover:scale-110 hover:z-20" />
-                                                </button>
-                                            ))}
-                                        {teamMembers.length > 3 && (
-                                            <button
-                                                onClick={() => setIsMemberModalOpen(true)}
-                                                className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold z-10 relative hover:bg-slate-200 transition-colors"
-                                            >
-                                                +{teamMembers.length - 3}
-                                            </button>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400">
-                                        <User size={16} />
+                                <div className="w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center transition-transform hover:scale-105 duration-500 select-none">
+                                    {workspaceData.logo_url ? (
+                                        <img
+                                            src={workspaceData.logo_url}
+                                            alt="Logo"
+                                            className="w-full h-full object-contain drop-shadow-[5px_5px_0px_rgba(30,27,75,0.15)]"
+                                        />
+                                    ) : (
+                                        <Layers size={80} className="text-indigo-500" strokeWidth={2.5} />
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-3">
+                                    {workspaceData.period && (
+                                        <span className="px-3 py-1 bg-yellow-400 border-[2.5px] border-border text-foreground font-black rounded-xl text-[9px] shadow-hard-mini">
+                                            {new Date(workspaceData.period).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                        </span>
+                                    )}
+                                    <div className="flex gap-2">
+                                        {workspaceData.platforms.map(p => (
+                                            <span key={formatStatus(p)} className="px-2 py-0.5 bg-violet-400 border-[2.5px] border-border text-white font-black rounded-lg text-[8px] shadow-hard-mini">
+                                                {formatStatus(p)}
+                                            </span>
+                                        ))}
                                     </div>
-                                )}
-                                {(() => {
-                                    // Superuser (Developer) can invite
-                                    // Admin can invite
-                                    // Member cannot invite (per user's new rule)
-                                    const canInvite = currentUserRole === 'Developer' || currentUserRole === 'Admin' || currentUserRole === 'Owner';
+                                </div>
+                                <h2 className="font-heading font-black text-foreground leading-tight text-3xl sm:text-4xl lg:text-5xl tracking-tight">
+                                    {workspaceData.name}
+                                </h2>
+                            </div>
+                        </div>
 
-                                    // User said: "Admin... selama mengambil paket team" 
-                                    // If currentUserRole is Admin, check package
-                                    if (currentUserRole === 'Admin' && (!currentUserPackage || !currentUserPackage.toLowerCase().includes('team'))) {
-                                        // For now, let's keep it simple as requested, if Admin but not Team, maybe limit?
-                                        // But the user specifically said: "Member tidak bisa mengundang"
-                                        // Let's stick to: Superuser & Admin can invite, Members cannot.
-                                    }
-
-                                    if (!canInvite) return null;
-
-                                    return (
-                                        <button
-                                            onClick={() => {
-                                                if (isFree && teamMembers.length >= 3) {
-                                                    window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Paket Free maksimal mengundang 2 anggota. Silakan upgrade ke Premium.' } }));
-                                                    return;
-                                                }
-                                                setIsInviteModalOpen(true);
-                                            }}
-                                            className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 hover:bg-accent hover:text-white text-slate-500 flex items-center justify-center transition-colors shadow-sm z-10"
-                                            title="Invite"
-                                        >
-                                            <UserPlus size={16} />
+                        {/* 2. Team & Integrated Socials */}
+                        <div className="flex flex-col sm:flex-row items-center gap-6 bg-card border-[3.5px] border-border rounded-[2.5rem] p-4 shadow-hard">
+                            {/* Team Bubbles */}
+                            <div className="flex items-center gap-3 pr-6 border-r-[3px] border-indigo-50">
+                                <div className="flex -space-x-3">
+                                    {teamMembers.slice(0, 4).map((m, i) => (
+                                        <button key={i} onClick={() => setIsMemberModalOpen(true)} className="relative group transition-transform hover:scale-110 hover:z-20">
+                                            <img
+                                                src={m.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.name)}`}
+                                                alt={m.name}
+                                                className="w-10 h-10 rounded-xl border-[2.5px] border-border shadow-hard-mini bg-card object-cover group-hover:border-accent"
+                                            />
                                         </button>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* RIGHT SIDE: Actions & Account Info */}
-                    <div className="flex flex-col items-end gap-3 w-full lg:w-auto mt-4 lg:mt-0">
-                        <div className="flex items-center gap-3">
-                            {/* Member Count Button Added Here */}
-                            <button
-                                onClick={() => setIsMemberModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 border-2 border-slate-200 rounded-xl hover:bg-slate-200 transition-all group"
-                            >
-                                <Users size={16} className="text-slate-500 group-hover:text-slate-700" />
-                                <span className="text-xs font-black text-slate-600">
-                                    {teamMembers.length || 1} Member(s)
-                                </span>
-                                <ChevronDown size={14} className="text-slate-400" />
-                            </button>
-
-                            <div className="flex items-center gap-2 bg-muted p-1 rounded-lg border border-border">
-                                <button
-                                    onClick={() => setViewMode('kanban')}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'kanban' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
-                                >
-                                    <LayoutGrid size={16} />
-                                    <span>Board</span>
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('table')}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'table' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
-                                >
-                                    <Table size={16} />
-                                    <span>Table</span>
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('brand_asset')}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'brand_asset' ? 'bg-card text-accent shadow-sm' : 'text-mutedForeground hover:text-foreground'}`}
-                                >
-                                    <Palette size={16} />
-                                    <span>Brand Asset</span>
-                                </button>
+                                    ))}
+                                    {teamMembers.length > 4 && (
+                                        <button
+                                            onClick={() => setIsMemberModalOpen(true)}
+                                            className="w-10 h-10 rounded-xl border-[2.5px] border-border shadow-hard-mini bg-foreground text-background flex items-center justify-center text-[10px] font-black z-10 hover:bg-mutedForeground"
+                                        >
+                                            +{teamMembers.length - 4}
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[9px] font-black text-mutedForeground whitespace-nowrap">Collaborators</span>
+                                    <button
+                                        onClick={() => setIsMemberModalOpen(true)}
+                                        className="text-[10px] font-black text-foreground hover:text-violet-600 flex items-center gap-1"
+                                    >
+                                        {teamMembers.length || 1} People <ChevronDown size={14} strokeWidth={4} />
+                                    </button>
+                                </div>
                             </div>
 
-                            <Button
-                                icon={<Plus size={18} />}
-                                className="whitespace-nowrap h-[46px]"
-                                onClick={handleOpenCreateModal}
-                            >
-                                Konten Baru
-                            </Button>
-                        </div>
-
-                        <div className="text-right py-2">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Content Plan For</p>
-                            <div className="flex gap-2 justify-end">
-                                {/* Render buttons for each platform if link exists, otherwise fallback to account name badge */}
-                                {workspaceData.platforms.length > 0 ? (
-                                    workspaceData.platforms.map(p => {
-                                        // TODO: In real app, these links should come from workspaceData.profileLinks[p]
-                                        // For now we simulate or use a placeholder if we haven't migrated DB yet
+                            {/* Linked Accounts - Integrated */}
+                            <div className="flex items-center gap-3">
+                                <span className="text-[9px] font-black text-mutedForeground rotate-90 sm:rotate-0">Socials</span>
+                                <div className="flex gap-2">
+                                    {workspaceData.platforms.map(p => {
                                         const link = `https://${p === 'IG' ? 'instagram.com' : p === 'TK' ? 'tiktok.com' : 'example.com'}/${workspaceData.account_name.replace('@', '')}`;
-
                                         return (
                                             <a
-                                                key={p}
+                                                key={formatStatus(p)}
                                                 href={link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="bg-muted border-2 border-border rounded-lg px-3 py-2 shadow-hard hover:translate-y-0.5 hover:shadow-sm transition-all flex items-center gap-2 text-foreground font-bold text-sm group"
-                                                title={`Visit ${p} Profile`}
+                                                className="w-10 h-10 flex items-center justify-center bg-muted/30 border-[2.5px] border-border rounded-xl shadow-hard-mini hover:-translate-y-1 hover:bg-card transition-all text-foreground"
+                                                title={`${formatStatus(p)}: ${workspaceData.account_name}`}
                                             >
-                                                {getPlatformIcon(p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : p === 'YT' ? Platform.YOUTUBE : p === 'LI' ? Platform.LINKEDIN : p === 'FB' ? Platform.FACEBOOK : Platform.THREADS)}
-                                                <span>{workspaceData.account_name || 'Profile'}</span>
-                                                <ExternalLink size={12} className="text-mutedForeground group-hover:text-accent" />
+                                                {getPlatformIcon(p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : Platform.YOUTUBE)}
                                             </a>
                                         );
-                                    })
-                                ) : (
-                                    <div className="bg-muted border-2 border-border rounded-lg px-4 py-2 shadow-hard inline-block">
-                                        <h3 className="font-heading font-black text-lg text-accent flex items-center gap-2 justify-end">
-                                            {workspaceData.account_name || '@username'}
-                                            <CheckCircle size={16} className="text-accent" />
-                                        </h3>
-                                    </div>
-                                )}
+                                    })}
+                                    {(currentUserRole === 'Developer' || currentUserRole === 'Admin' || currentUserRole === 'Owner') && (
+                                        <button
+                                            onClick={() => setIsInviteModalOpen(true)}
+                                            className="w-10 h-10 rounded-xl border-[2.5px] border-dashed border-indigo-200 text-mutedForeground flex items-center justify-center hover:border-violet-500 hover:text-violet-500 hover:bg-violet-50 transition-all"
+                                            title="Invite Team"
+                                        >
+                                            <Plus size={18} strokeWidth={3} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Background Logo Decoration Removed */}
                 </div>
 
-                {/* Global Filters */}
+                {/* ROW 2: Navigation & Filters Toolbar - Borderless with Divider */}
                 {viewMode !== 'brand_asset' && (
-                    <div className="flex flex-wrap items-center gap-3 mt-6 mb-8 px-2">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
-                            <Filter size={14} /> Filter Platform
+                    <div className={`pb-4 mb-4 mx-6 flex flex-col xl:flex-row gap-4 items-center justify-between transition-all duration-300 border-b-[3px] border-dashed border-border/50 ${isScrolled ? 'sticky top-24 z-30 bg-card/90 backdrop-blur-md px-6 py-4 rounded-3xl border-transparent shadow-hard-mini scale-[0.98]' : ''}`}>
+                        <div className="flex flex-wrap items-center gap-6 justify-center lg:justify-start">
+                            {/* View Switcher Integrated */}
+                            <div className="flex items-center gap-1.5 p-1.5 rounded-2xl">
+                                {[
+                                    { id: 'kanban', label: 'Board', icon: LayoutGrid, color: 'text-foreground' },
+                                    { id: 'table', label: 'Table', icon: Table, color: 'text-foreground' },
+                                    { id: 'brand_asset', label: 'Asset', icon: Palette, color: 'text-foreground' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setViewMode(tab.id as any)}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[11px] font-black ${viewMode === tab.id ? `bg-card ${tab.color} shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
+                                    >
+                                        <tab.icon size={14} strokeWidth={4} />
+                                        <span>{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="h-8 w-[2px] bg-indigo-100/50 hidden lg:block" />
+
+                            {/* Platform Filters */}
+                            <div className="flex flex-wrap items-center gap-3 justify-center">
+                                <button
+                                    onClick={() => setFilterPlatform('all')}
+                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[10px] transition-all flex items-center gap-2 ${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
+                                >
+                                    Semua
+                                </button>
+
+                                {Object.values(Platform).filter(p => {
+                                    const code = p === Platform.INSTAGRAM ? 'IG' :
+                                        p === Platform.TIKTOK ? 'TK' :
+                                            p === Platform.YOUTUBE ? 'YT' :
+                                                p === Platform.LINKEDIN ? 'LI' :
+                                                    p === Platform.FACEBOOK ? 'FB' :
+                                                        p === Platform.THREADS ? 'TH' : '';
+                                    return workspaceData.platforms.includes(code);
+                                }).map(p => (
+                                    <button
+                                        key={formatStatus(p)}
+                                        onClick={() => setFilterPlatform(p)}
+                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[10px] transition-all flex items-center gap-2 ${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
+                                    >
+                                        {getPlatformIcon(p)}
+                                        {formatStatus(p)}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        <button
-                            onClick={() => setFilterPlatform('all')}
-                            className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
-                        >
-                            <Layers size={14} />
-                            All Platforms
-                        </button>
-
-                        {Object.values(Platform).filter(p => {
-                            // Only show platforms that are selected in workspace settings
-                            const code = p === Platform.INSTAGRAM ? 'IG' :
-                                p === Platform.TIKTOK ? 'TK' :
-                                    p === Platform.YOUTUBE ? 'YT' :
-                                        p === Platform.LINKEDIN ? 'LI' :
-                                            p === Platform.FACEBOOK ? 'FB' :
-                                                p === Platform.THREADS ? 'TH' : '';
-                            return workspaceData.platforms.includes(code);
-                        }).map(p => (
-                            <button
-                                key={p}
-                                onClick={() => setFilterPlatform(p)}
-                                className={`px-5 py-2.5 rounded-2xl border-2 font-bold text-xs transition-all flex items-center gap-2 shadow-hard-mini ${filterPlatform === p ? 'bg-accent text-white border-slate-900 translate-y-0.5 shadow-none' : 'bg-white border-slate-900 text-slate-900 hover:-translate-y-0.5 hover:bg-slate-50'}`}
-                            >
-                                {getPlatformIcon(p)}
-                                {p}
-                            </button>
-                        ))}
-
-                        {/* Date Period Filter - Right Side */}
-                        <div className="ml-auto flex items-center gap-3">
-                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-1 uppercase tracking-[0.2em]">
-                                <Calendar size={14} /> Periode
-                            </div>
-                            <div className="flex items-center gap-2">
+                        {/* Date Period & CTA */}
+                        <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-end w-full xl:w-auto">
+                            <div className="flex items-center gap-3 bg-muted/20 p-2.5 rounded-[1.25rem] border-[3px] border-indigo-950/20 shadow-hard-mini-mini">
+                                <Calendar size={18} strokeWidth={3} className="ml-2 text-indigo-500" />
                                 <input
                                     type="date"
                                     value={filterDateFrom}
                                     onChange={(e) => setFilterDateFrom(e.target.value)}
-                                    className="px-3 py-2 rounded-xl border-2 border-slate-900 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini bg-white text-slate-900 hover:bg-slate-50 focus:ring-2 focus:ring-accent/30"
-                                    title="Dari tanggal"
+                                    className="px-4 py-2.5 rounded-xl border-[2.5px] border-indigo-950 text-[13px] font-bold outline-none bg-card shadow-button-mini active:scale-95 transition-all"
                                 />
-                                <span className="text-xs font-black text-slate-400">—</span>
+                                <span className="text-[13px] font-black text-indigo-300">→</span>
                                 <input
                                     type="date"
                                     value={filterDateTo}
                                     onChange={(e) => setFilterDateTo(e.target.value)}
-                                    className="px-3 py-2 rounded-xl border-2 border-slate-900 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini bg-white text-slate-900 hover:bg-slate-50 focus:ring-2 focus:ring-accent/30"
-                                    title="Sampai tanggal"
+                                    className="px-4 py-2.5 rounded-xl border-[2.5px] border-indigo-950 text-[13px] font-bold outline-none bg-card shadow-button-mini active:scale-95 transition-all"
                                 />
-                                {(filterDateFrom || filterDateTo) && (
-                                    <button
-                                        onClick={() => { setFilterDateFrom(''); setFilterDateTo(''); }}
-                                        className="p-1.5 rounded-lg border-2 border-red-300 bg-red-50 text-red-500 hover:bg-red-100 transition-all"
-                                        title="Reset filter tanggal"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
                             </div>
 
-                            {/* Status Filter for Table View */}
+                            <div className="h-8 w-[2px] bg-indigo-100/50 hidden xl:block" />
+
                             {viewMode === 'table' && (
-                                <>
-                                    <div className="w-px h-8 bg-slate-200 mx-1" />
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mr-2 uppercase tracking-[0.2em]">
-                                        Status
-                                    </div>
-                                    <div className="relative">
-                                        <select
-                                            value={filterStatus}
-                                            onChange={(e) => setFilterStatus(e.target.value)}
-                                            className={`appearance-none pl-4 pr-10 py-2.5 rounded-2xl border-2 text-xs font-bold outline-none cursor-pointer transition-all shadow-hard-mini ${filterStatus !== 'all' ? 'bg-blue-50 border-slate-900 text-blue-700' : 'bg-white border-slate-900 text-slate-600 hover:bg-slate-50'}`}
-                                        >
-                                            <option value="all">All Status</option>
-                                            {Object.values(ContentStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-900" />
-                                    </div>
-                                </>
+                                <div className="relative">
+                                    <select
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value)}
+                                        className="appearance-none pl-5 pr-12 py-3.5 rounded-2xl border-[3px] border-indigo-950 text-[13px] font-bold outline-none bg-card shadow-hard-mini cursor-pointer hover:bg-muted transition-all active:scale-95"
+                                    >
+                                        <option value="all">Semua Status</option>
+                                        {Object.values(ContentStatus).map(s => (
+                                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={16} strokeWidth={3} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-500" />
+                                </div>
                             )}
+
+                            <Button
+                                icon={<Plus size={20} strokeWidth={4} />}
+                                className="h-14 px-10 text-[13px] font-black shadow-hard border-[3px] border-indigo-950 translate-x-1 active:translate-x-0 active:translate-y-1 active:shadow-none bg-violet-600 hover:bg-violet-700 rounded-2xl whitespace-nowrap"
+                                onClick={handleOpenCreateModal}
+                            >
+                                Konten Baru
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -2015,7 +1930,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     status={status}
                                     items={tasks.filter(t => t.status === status && (filterPlatform === 'all' || t.platform === filterPlatform) && matchesDateFilter(t.date))}
                                     textColor={
-                                        status === ContentStatus.TODO ? 'text-slate-900' :
+                                        status === ContentStatus.TODO ? 'text-foreground' :
                                             status === ContentStatus.IN_PROGRESS ? 'text-blue-500' :
                                                 status === ContentStatus.REVIEW ? 'text-pink-500' :
                                                     status === ContentStatus.REVISION ? 'text-orange-500' :
@@ -2064,7 +1979,7 @@ export const ContentPlanDetail: React.FC = () => {
 
                         {/* Gallery Grid */}
                         {brandAssets.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-border rounded-3xl bg-card/50">
+                            <div className="flex flex-col items-center justify-center py-24 border-[3px] border-dashed border-slate-300 rounded-[32px] bg-card shadow-[4px_4px_0px_#0f172a]">
                                 <div className="w-20 h-20 bg-accent/10 rounded-3xl flex items-center justify-center mb-6">
                                     <Palette size={36} className="text-accent" />
                                 </div>
@@ -2088,7 +2003,7 @@ export const ContentPlanDetail: React.FC = () => {
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                                 {brandAssets.map(asset => (
-                                    <div key={asset.id} className="bg-card border-2 border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-hard hover:-translate-y-1 transition-all group relative">
+                                    <div key={asset.id} className="bg-card border-[3px] border-slate-900 rounded-2xl overflow-hidden shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 transition-all group relative">
                                         {/* Delete Button */}
                                         <button
                                             onClick={() => handleDeleteBrandAsset(asset.id)}
@@ -2113,7 +2028,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </div>
                                                 <div className="relative z-10 flex flex-col items-center">
                                                     <FileText size={36} className="text-red-500 mb-2" />
-                                                    <span className="text-xs font-black text-red-600 uppercase">PDF Preview</span>
+                                                    <span className="text-xs font-black text-red-600">PDF Preview</span>
                                                     <span className="text-[10px] font-bold text-red-400 mt-1 flex items-center gap-1">
                                                         <Eye size={10} /> Klik untuk buka
                                                     </span>
@@ -2150,7 +2065,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-bold text-foreground text-sm truncate">{asset.title}</h4>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${asset.type === 'note' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${asset.type === 'note' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
                                                             asset.type === 'link' ? 'bg-blue-100 text-blue-700 border-blue-200' :
                                                                 asset.type === 'image' ? 'bg-pink-100 text-pink-700 border-pink-200' :
                                                                     asset.type === 'pdf' ? 'bg-red-100 text-red-700 border-red-200' :
@@ -2190,12 +2105,12 @@ export const ContentPlanDetail: React.FC = () => {
                                         setNewAssetFileName('');
                                         setIsAddAssetModalOpen(true);
                                     }}
-                                    className="border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center py-16 hover:border-accent hover:bg-accent/5 transition-all group/add"
+                                    className="bg-card border-[3px] border-dashed border-slate-300 rounded-[32px] shadow-[4px_4px_0px_#0f172a] flex flex-col items-center justify-center py-16 hover:border-slate-900 hover:bg-muted transition-all group/add hover:-translate-y-1 active:scale-95"
                                 >
-                                    <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-3 group-hover/add:bg-accent/10 transition-colors">
-                                        <Plus size={24} className="text-mutedForeground group-hover/add:text-accent" />
+                                    <div className="w-16 h-16 rounded-[24px] bg-card border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] flex items-center justify-center mb-4 group-hover/add:bg-violet-50 transition-colors">
+                                        <Plus size={32} className="text-foreground group-hover/add:text-accent" strokeWidth={3} />
                                     </div>
-                                    <span className="text-xs font-bold text-mutedForeground group-hover/add:text-accent">Tambah Asset</span>
+                                    <span className="text-sm font-black text-foreground group-hover/add:text-accent">Tambah Asset</span>
                                 </button>
                             </div>
                         )}
@@ -2203,26 +2118,29 @@ export const ContentPlanDetail: React.FC = () => {
                 ) : (
                     <div className="flex-1 w-full flex flex-col pt-2 pb-6 px-1">
                         {/* Table View Header */}
-                        <div className="px-2 mb-4">
-                            <h3 className="text-xl font-heading font-black text-slate-900">Summary List</h3>
+                        <div className="px-4 mb-6 flex items-center justify-between">
+                            <h3 className="text-2xl font-heading font-black text-foreground tracking-tight">Summary List</h3>
+                            <div className="h-[3px] flex-1 bg-slate-100 mx-6 rounded-full" />
                         </div>
 
                         {/* Table Container - Custom Scrollbar */}
-                        <div className="flex-1 pb-4 overflow-x-auto">
-                            <table className="w-full min-w-[600px] text-left border-separate border-spacing-y-3 px-1">
+                        <div className="flex-1 pb-4 overflow-x-auto no-scrollbar">
+                            <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-3 px-2">
                                 {/* Header */}
                                 <thead className="sticky top-0 z-20">
                                     <tr>
-                                        <th className="px-4 py-3 bg-muted rounded-l-xl text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Status</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Platform</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-slate-200 transition-colors" onClick={() => setTableSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>Tanggal {tableSortOrder === 'asc' ? '↑' : '↓'}</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider min-w-[200px]">Judul</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">Pillar</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Script</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap">PIC</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider whitespace-nowrap text-center">Apprv</th>
-                                        <th className="px-4 py-3 bg-muted text-mutedForeground text-xs font-bold uppercase tracking-wider min-w-[150px]">Link Postingan</th>
-                                        <th className="px-4 py-3 bg-muted rounded-r-xl text-mutedForeground text-xs font-bold uppercase tracking-wider text-right">Action</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Status</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Platform</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors" onClick={() => setTableSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+                                            <div className="flex items-center gap-2">Tanggal {tableSortOrder === 'asc' ? '↑' : '↓'}</div>
+                                        </th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider min-w-[200px]">Judul Konten</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Pillar</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider text-center">Script</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider">Project Lead</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider text-center">Approval</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider min-w-[150px]">Social Link</th>
+                                        <th className="px-5 py-3 text-mutedForeground text-[10px] font-bold uppercase tracking-wider text-right pr-8">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-transparent">
@@ -2230,147 +2148,138 @@ export const ContentPlanDetail: React.FC = () => {
                                         filteredTableTasks.map((task) => (
                                             <tr
                                                 key={task.id}
-                                                className="bg-card group transition-all duration-200 hover:-translate-y-1 hover:shadow-hard shadow-sm rounded-xl relative"
+                                                className="group relative"
                                             >
                                                 {/* 1. Status (Interactive Dropdown) */}
-                                                <td className="p-3 border-y border-l border-border rounded-l-xl first:border-l-2">
+                                                <td className="p-3 border-y-[2.5px] border-l-[2.5px] border-slate-900 rounded-l-2xl bg-card group-hover:bg-slate-50 transition-colors shadow-none">
                                                     <div className="relative">
                                                         <select
                                                             value={task.status}
                                                             onChange={(e) => handleQuickUpdateStatus(task.id, e.target.value as ContentStatus)}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className={`appearance-none outline-none font-bold text-xs py-1.5 pl-3 pr-8 rounded-full border-2 cursor-pointer transition-colors w-full min-w-[120px] ${task.status === ContentStatus.TODO ? 'bg-slate-50 border-slate-300 text-slate-600' :
-                                                                task.status === ContentStatus.IN_PROGRESS ? 'bg-purple-50 border-purple-300 text-purple-700' :
-                                                                    task.status === ContentStatus.REVIEW ? 'bg-amber-50 border-amber-300 text-amber-700' :
-                                                                        task.status === ContentStatus.REVISION ? 'bg-orange-50 border-orange-300 text-orange-700' :
-                                                                            task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 border-pink-300 text-pink-700' :
-                                                                                'bg-emerald-50 border-emerald-300 text-emerald-700'
+                                                            className={`appearance-none outline-none font-bold text-[11px] py-1.5 pl-3 pr-8 rounded-lg border cursor-pointer transition-all w-full min-w-[130px] ${task.status === ContentStatus.TODO ? 'bg-card border-border text-foreground' :
+                                                                task.status === ContentStatus.IN_PROGRESS ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' :
+                                                                    task.status === ContentStatus.REVIEW ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
+                                                                        task.status === ContentStatus.REVISION ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20' :
+                                                                            task.status === ContentStatus.SCHEDULED ? 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-500/10 dark:text-pink-400 dark:border-pink-500/20' :
+                                                                                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
                                                                 }`}
                                                         >
                                                             {Object.values(ContentStatus).map((s) => (
-                                                                <option key={s} value={s}>{s}</option>
+                                                                <option key={s} value={s}>{formatStatus(s)}</option>
                                                             ))}
                                                         </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
-                                                            <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                                                        </div>
+                                                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-mutedForeground" />
                                                     </div>
                                                 </td>
 
                                                 {/* 2. Platform */}
-                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
-                                                    <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border ${getPlatformBadgeStyle(task.platform)}`}>
-                                                        {getPlatformIcon(task.platform)}
-                                                        <span className="hidden xl:inline">{task.platform}</span>
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`p-1.5 rounded-md border-[2px] border-indigo-950 bg-card shadow-[2px_2px_0px_#1e1b4b] transform -rotate-2`}>
+                                                            {getPlatformIcon(task.platform)}
+                                                        </div>
+                                                        <span className="text-[11px] font-bold text-foreground">{task.platform}</span>
                                                     </div>
                                                 </td>
 
                                                 {/* 3. Tanggal */}
-                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
-                                                    <div className="flex items-center gap-1.5 text-mutedForeground font-bold text-xs whitespace-nowrap">
-                                                        <Calendar size={12} className="text-mutedForeground/60" />
-                                                        {task.date ? new Date(task.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] font-bold text-mutedForeground mb-0.5">Upload Date</span>
+                                                        <div className="flex items-center gap-1.5 text-foreground font-bold text-[11px] whitespace-nowrap">
+                                                            <Calendar size={12} className="text-violet-500" />
+                                                            {task.date ? new Date(task.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                                        </div>
                                                     </div>
                                                 </td>
 
                                                 {/* 4. Judul */}
-                                                <td className="p-3 border-y border-border cursor-pointer" onClick={() => handleCardClick(task)}>
-                                                    <div className="font-bold text-foreground text-sm line-clamp-2 min-w-[150px]" title={task.title}>
-                                                        {task.title}
-                                                    </div>
-                                                    <div className="flex items-center gap-1 mt-1">
-                                                        <span className="text-[10px] font-bold text-mutedForeground border border-border px-1 rounded flex items-center gap-1">
-                                                            {getTypeIcon(task.type)} {task.type}
-                                                        </span>
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <div className="font-heading font-black text-foreground text-[13px] line-clamp-1 tracking-tight" title={task.title}>
+                                                            {task.title}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[9px] font-bold text-violet-600 bg-violet-50 border border-violet-200 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                {getTypeIcon(task.type)} {task.type}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </td>
 
                                                 {/* 5. Pillar */}
-                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     {task.pillar ? (
-                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold whitespace-nowrap ${getPillarStyle(task.pillar)}`}>
+                                                        <span className="px-2 py-1 rounded w-fit text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 whitespace-nowrap">
                                                             {task.pillar}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-mutedForeground text-xs">-</span>
+                                                        <span className="text-mutedForeground font-bold text-xs">—</span>
                                                     )}
                                                 </td>
 
                                                 {/* 6. Script Preview Button */}
-                                                <td className="p-3 border-y border-border text-center">
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer text-center">
                                                     <button
                                                         onClick={() => handleCardClick(task)}
-                                                        className={`p-1.5 rounded-lg border-2 transition-colors ${task.script ? 'bg-yellow-50 border-yellow-200 text-yellow-600 hover:bg-yellow-100' : 'bg-muted border-border text-mutedForeground'}`}
-                                                        title={task.script ? 'Lihat Script' : 'Belum ada script'}
+                                                        className={`w-8 h-8 rounded-lg border transition-all hover:scale-105 flex items-center justify-center mx-auto ${task.script ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : 'bg-muted/50 border-transparent text-mutedForeground'}`}
                                                     >
                                                         <FileText size={16} />
                                                     </button>
                                                 </td>
 
                                                 {/* 7. PIC */}
-                                                <td className="p-3 border-y border-border" onClick={() => handleCardClick(task)}>
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleCardClick(task)}>
                                                     {task.pic ? (
-                                                        <div className="flex items-center gap-1.5" title={task.pic}>
-                                                            <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] font-bold border border-slate-800 shadow-sm shrink-0">
-                                                                {task.pic.charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <span className="text-xs font-bold text-mutedForeground truncate max-w-[80px]">{task.pic}</span>
+                                                        <div className="flex items-center gap-2" title={task.pic}>
+                                                            <img
+                                                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(task.pic)}`}
+                                                                alt={task.pic}
+                                                                className="w-7 h-7 rounded-full border border-border bg-card object-cover"
+                                                            />
+                                                            <span className="text-[10px] font-bold text-foreground truncate max-w-[80px]">{task.pic}</span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-mutedForeground opacity-50 text-xs">-</span>
+                                                        <span className="text-mutedForeground font-bold text-xs">—</span>
                                                     )}
                                                 </td>
 
                                                 {/* 7.5 Approval Status (NEW) */}
-                                                <td className="p-3 border-y border-border text-center">
-                                                    <div className="flex flex-col items-center justify-center gap-1">
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors text-center">
+                                                    <div className="flex flex-col items-center justify-center gap-1.5">
                                                         {(() => {
                                                             const status = task.approval_status;
-                                                            if (status === 'approved') return <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[8px] font-black uppercase tracking-wider">Approved</span>;
-                                                            if (status === 'revision') return <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider">Revision</span>;
-                                                            return <span className="px-2 py-0.5 rounded-full bg-slate-300 text-slate-600 text-[8px] font-black uppercase tracking-wider">Pending</span>;
+                                                            if (status === 'approved') return <span className="px-2 py-0.5 rounded w-fit bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20 text-[9px] font-bold">Approved</span>;
+                                                            if (status === 'revision') return <span className="px-2 py-0.5 rounded w-fit bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20 text-[9px] font-bold">Revision</span>;
+                                                            return <span className="px-2 py-0.5 rounded w-fit bg-slate-50 text-slate-500 border border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20 text-[9px] font-bold">Pending</span>;
                                                         })()}
                                                         {(currentUserRole === 'Admin' || currentUserRole === 'Owner' || currentUserRole === 'Developer') && (
-                                                            <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'approved'); }} className="p-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors" title="Approve"><Check size={10} /></button>
-                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'revision'); }} className="p-1 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors" title="Revision"><RefreshCw size={10} /></button>
+                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'approved'); }} className="p-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500 dark:hover:text-white transition-all" title="Approve"><Check size={12} /></button>
+                                                                <button onClick={(e) => { e.stopPropagation(); handleApprove(task.id, 'revision'); }} className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500 dark:hover:text-white transition-all" title="Revision"><RefreshCw size={12} /></button>
                                                             </div>
                                                         )}
                                                     </div>
                                                 </td>
 
                                                 {/* 8. Link Input (Interactive - Controlled) */}
-                                                <td className="p-3 border-y border-border">
-                                                    <div className="relative flex items-center group/input">
-                                                        <LinkIcon size={14} className={`absolute left-2 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
+                                                <td className="p-3 border-y-[2.5px] border-slate-900 bg-card group-hover:bg-slate-50 transition-colors">
+                                                    <div className="relative flex items-center">
+                                                        <LinkIcon size={12} className={`absolute left-2.5 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
                                                         <input
                                                             type="text"
-                                                            value={task.contentLink || ''} // CONTROLLED INPUT
-                                                            placeholder="Paste Link..."
+                                                            value={task.contentLink || ''}
+                                                            placeholder="Drop link..."
                                                             onChange={(e) => {
                                                                 const newVal = e.target.value;
-                                                                // Update Local State for typing
                                                                 setTasks(prev => prev.map(t => t.id === task.id ? { ...t, contentLink: newVal } : t));
                                                             }}
                                                             onBlur={(e) => handleQuickUpdateLink(task.id, e.target.value)}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    handleQuickUpdateLink(task.id, e.currentTarget.value);
-                                                                    e.currentTarget.blur();
-                                                                }
-                                                            }}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className={`w-full bg-muted border-2 border-border text-xs text-foreground rounded-lg pl-7 pr-2 py-1.5 outline-none focus:border-blue-400 focus:bg-card focus:shadow-sm transition-all placeholder:text-mutedForeground ${task.contentLink ? 'font-medium' : ''}`}
+                                                            className="w-full bg-card border-[2px] border-slate-900 text-[10px] font-medium text-foreground rounded-lg pl-7 pr-7 py-2 outline-none focus:ring-1 focus:ring-accent transition-all min-w-[120px]"
                                                         />
                                                         {task.contentLink && (
-                                                            <a
-                                                                href={task.contentLink}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="absolute right-2 text-mutedForeground hover:text-blue-600 p-0.5"
-                                                                title="Buka Link"
-                                                            >
+                                                            <a href={task.contentLink} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="absolute right-2.5 text-mutedForeground hover:text-blue-600">
                                                                 <ExternalLink size={12} />
                                                             </a>
                                                         )}
@@ -2378,31 +2287,31 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </td>
 
                                                 {/* 9. Action (Menu) */}
-                                                <td className="p-3 border-y border-r border-border rounded-r-xl first:border-r-2 text-right relative">
+                                                <td className="p-3 border-y-[2.5px] border-r-[2.5px] border-slate-900 rounded-r-2xl bg-card group-hover:bg-slate-50 transition-colors text-right pr-5 relative">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setActiveRowMenu(activeRowMenu === task.id ? null : task.id);
                                                         }}
-                                                        className={`p-1.5 rounded-md text-mutedForeground hover:text-foreground hover:bg-muted transition-colors ${activeRowMenu === task.id ? 'bg-muted text-foreground' : ''}`}
+                                                        className={`w-8 h-8 inline-flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-foreground`}
                                                     >
-                                                        <MoreHorizontal size={18} />
+                                                        <MoreHorizontal size={16} />
                                                     </button>
 
                                                     {/* Dropdown Menu */}
                                                     {activeRowMenu === task.id && (
-                                                        <div className="absolute right-8 top-8 w-32 bg-card border-2 border-border rounded-lg shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                                                        <div className="absolute right-12 top-1/2 -translate-y-1/2 w-48 bg-card border border-border rounded-xl shadow-hard-mini z-50 overflow-hidden transform animate-in fade-in zoom-in-95 duration-200">
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setActiveRowMenu(null); handleOpenEditModal(task); }}
-                                                                className="w-full text-left px-3 py-2 hover:bg-muted flex items-center gap-2 font-bold text-foreground transition-colors"
+                                                                className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-2 font-bold text-[10px] text-foreground transition-colors border-b border-border"
                                                             >
-                                                                <Edit size={14} className="text-accent" /> Edit
+                                                                <Edit size={14} className="text-violet-600" /> Edit Konten
                                                             </button>
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); setActiveRowMenu(null); handleDeleteContent(task.id); }}
-                                                                className="w-full text-left px-3 py-2 hover:bg-red-500/10 flex items-center gap-2 font-bold text-red-500 transition-colors"
+                                                                className="w-full text-left px-4 py-3 hover:bg-rose-50 flex items-center gap-2 font-bold text-[10px] text-rose-600 transition-colors"
                                                             >
-                                                                <Trash2 size={14} /> Delete
+                                                                <Trash2 size={14} /> Hapus Konten
                                                             </button>
                                                         </div>
                                                     )}
@@ -2411,7 +2320,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={9} className="p-8 text-center text-slate-400 font-bold border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 mt-2 block w-full">
+                                            <td colSpan={9} className="p-8 text-center text-slate-600 text-[10px] font-black border-[3px] border-dashed border-slate-300 rounded-xl bg-card shadow-[2px_2px_0px_#0f172a] mt-2 block w-full">
                                                 Tidak ada konten yang ditemukan.
                                             </td>
                                         </tr>
@@ -2421,847 +2330,796 @@ export const ContentPlanDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
-            </div>
+            </div >
 
             {/* --- DETAIL MODAL --- */}
-            {selectedTask && (
-                <Modal
-                    isOpen={isDetailModalOpen}
-                    onClose={() => {
-                        setIsDetailModalOpen(false);
-                        setIsPdfPreviewOpen(false);
-                        setIsDrivePreviewOpen(false);
-                        setIsResultModalOpen(false);
-                        setPdfUrl(null);
-                    }}
-                    title="Detail Konten"
-                    maxWidth={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? "max-w-full md:max-w-[48vw]" : "max-w-4xl"}
-                    duration={800}
-                    zIndex={9990}
-                    overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-slate-900/20 backdrop-blur-none transition-all' : 'bg-slate-900/60 backdrop-blur-sm'}
-                    className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[50.5%] shadow-2xl' : 'translate-x-0'}
-                >
-                    <div className="space-y-4 md:space-y-8 px-1 md:px-2 h-[80vh] md:h-[75vh] overflow-y-auto no-scrollbar">
-                        {/* Header: Title & Platform */}
-                        <div className="flex flex-col-reverse md:flex-row md:items-start justify-between gap-2 md:gap-4">
-                            <h2 className="text-xl md:text-3xl lg:text-5xl font-black font-heading text-slate-800 leading-tight">
-                                {selectedTask.title}
-                            </h2>
-
-                            <div className={`shrink-0 px-3 md:px-5 py-1.5 md:py-2.5 rounded-xl text-xs md:text-sm font-bold border-2 border-slate-900 shadow-hard md:-rotate-2 transform transition-transform hover:rotate-0 self-start ${getPlatformBadgeStyle(selectedTask.platform)}`}>
-                                <div className="flex items-center gap-1.5 md:gap-2">
-                                    {getPlatformIcon(selectedTask.platform)}
-                                    <span>{selectedTask.platform}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Metadata Grid - 2 cols on mobile, 4 on desktop */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
-                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Tanggal</span>
-                                <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
-                                    <Calendar size={12} className="text-slate-400 md:w-[18px] md:h-[18px]" />
-                                    {selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
-                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Tipe</span>
-                                <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
-                                    {getTypeIcon(selectedTask.type)}
-                                    <span className="truncate max-w-[60px] md:max-w-none">{selectedTask.type}</span>
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
-                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">Prioritas</span>
-                                <div className={`mt-0.5 md:mt-1 px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-[10px] md:text-sm font-black tracking-wide border ${selectedTask.priority === ContentPriority.HIGH ? 'bg-red-100 border-red-300 text-red-600' :
-                                    selectedTask.priority === ContentPriority.MEDIUM ? 'bg-amber-100 border-amber-300 text-amber-600' :
-                                        'bg-slate-100 border-slate-300 text-slate-600'
-                                    }`}>
-                                    {selectedTask.priority}
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-200 p-2.5 md:p-4 rounded-xl md:rounded-2xl flex flex-col justify-center items-center text-center">
-                                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 tracking-wider">PIC</span>
-                                <div className="font-bold text-slate-800 text-xs md:text-lg flex items-center gap-1 md:gap-2 mt-0.5 md:mt-1">
-                                    {(() => {
-                                        const picMember = teamMembers.find(m => m.name === selectedTask.pic);
-                                        return picMember ? (
-                                            <img
-                                                src={picMember.avatar}
-                                                alt={picMember.name}
-                                                className="w-6 h-6 rounded-full border border-slate-900 shadow-sm object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-6 h-6 rounded-full bg-accent text-white flex items-center justify-center text-[10px] border border-slate-900 shadow-sm">
-                                                {selectedTask.pic ? selectedTask.pic.charAt(0).toUpperCase() : <User size={12} />}
-                                            </div>
-                                        );
-                                    })()}
-                                    <span className="truncate max-w-[100px]">{selectedTask.pic || '-'}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Status & Tags */}
-                        <div className="flex flex-wrap gap-2 items-center py-1.5 md:py-2 border-y border-slate-100 border-dashed">
-                            <span className="text-[9px] md:text-xs font-bold text-slate-400 tracking-wide mr-1 md:mr-2">Status:</span>
-
-                            <div className={`px-2.5 md:px-4 py-1 md:py-1.5 rounded-full border text-[10px] md:text-sm font-bold flex items-center gap-1.5 md:gap-2 ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-100 border-slate-300 text-slate-600' :
-                                selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-purple-100 border-purple-300 text-purple-700' :
-                                    selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-100 border-amber-300 text-amber-700' :
-                                        selectedTask.status === ContentStatus.REVISION ? 'bg-orange-100 border-orange-300 text-orange-700' :
-                                            selectedTask.status === ContentStatus.SCHEDULED ? 'bg-pink-100 border-pink-300 text-pink-700' :
-                                                'bg-emerald-100 border-emerald-300 text-emerald-700'
-                                }`}>
-                                <div className={`w-2 h-2 rounded-full ${selectedTask.status === ContentStatus.PUBLISHED ? 'bg-emerald-500' : 'bg-current'
-                                    }`}></div>
-                                {selectedTask.status}
-                            </div>
-
-                            {selectedTask.pillar && (
-                                <div className="bg-yellow-50 border-2 border-yellow-200 text-yellow-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
-                                    <Hash size={14} /> {selectedTask.pillar}
-                                </div>
-                            )}
-
-                            {selectedTask.approval && (
-                                <div className="bg-blue-50 border-2 border-blue-200 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
-                                    {(() => {
-                                        const approvalMember = teamMembers.find(m => m.name === selectedTask.approval);
-                                        return approvalMember ? (
-                                            <img
-                                                src={approvalMember.avatar}
-                                                alt={approvalMember.name}
-                                                className="w-4 h-4 rounded-full border border-blue-300 object-cover"
-                                            />
-                                        ) : (
-                                            <CheckCircle size={14} />
-                                        );
-                                    })()}
-                                    Acc: {selectedTask.approval}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* --- CONTENT RESULTS SECTION --- */}
-                        <div className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-4 group ${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400' : 'bg-slate-50 border-slate-200 hover:border-accent'}`}
-                            onClick={() => setIsResultModalOpen(true)}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-100 text-emerald-600 border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white' : 'bg-slate-100 text-slate-400 border-slate-200 group-hover:bg-accent group-hover:text-white'}`}>
-                                    {selectedTask.result_type === 'video' ? <Video size={20} /> : <ImageIcon size={20} />}
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="font-bold text-slate-800 text-sm">Hasil Produksi Konten</p>
-                                    <p className="text-xs text-slate-500 truncate max-w-[200px]">
-                                        {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0
-                                            ? `${selectedTask.result_type === 'video' ? 'Link Video Drive tersedia' : `${(selectedTask.result_assets as any[]).length} foto di galeri`}`
-                                            : 'Belum ada hasil konten yang diupload.'}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm flex items-center gap-2 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}>
-                                {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'Lihat Hasil' : 'Upload Hasil'} <Plus size={14} />
-                            </div>
-                        </div>
-
-                        {/* Post Link Section */}
-                        <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl flex items-center justify-between gap-4 transition-colors hover:border-blue-400 group">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center border border-blue-200 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                    <LinkIcon size={20} />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-slate-800 text-sm">Link Postingan (Analisa)</p>
-                                    <p className="text-xs text-slate-500">
-                                        {selectedTask.contentLink ? 'Klik tombol untuk melihat postingan atau analisa di menu Insight.' : 'Input link ini agar bisa dianalisa.'}
-                                    </p>
-                                </div>
-                            </div>
-                            {selectedTask.contentLink ? (
-                                <a
-                                    href={selectedTask.contentLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
-                                >
-                                    Buka Postingan <ExternalLink size={14} />
-                                </a>
-                            ) : (
-                                <div className="px-4 py-2 bg-slate-200 text-slate-400 font-bold text-sm rounded-lg cursor-not-allowed select-none">
-                                    Belum Tersedia
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ── Asset Upload Section ── */}
-                        <div className="space-y-2 md:space-y-3">
-                            <div className="flex items-center gap-2 mb-0.5 md:mb-1">
-                                <HardDrive size={14} className="text-accent md:w-4 md:h-4" />
-                                <h4 className="font-black text-xs md:text-sm text-foreground">Aset Konten</h4>
-                            </div>
-
-                            {/* Hidden file input */}
-                            <input
-                                ref={assetInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                className="hidden"
-                                onChange={handleAssetUpload}
-                            />
-
-                            {/* Determine content type for guidance */}
-                            {(() => {
-                                const isVideo = (selectedTask.type || '').toLowerCase().includes('video') || (selectedTask.type || '').toLowerCase().includes('reels');
-                                return (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {/* Left: Image Upload (for carousel/static) */}
-                                        <div className={`border-2 rounded-xl p-4 transition-all ${isVideo ? 'border-dashed border-border opacity-60' : 'border-border hover:border-accent'}`}>
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <ImageIcon size={14} className="text-accent" />
-                                                <span className="text-xs font-black text-foreground">Upload Gambar</span>
-                                                {isVideo && <span className="text-[9px] text-mutedForeground">(untuk video, gunakan Drive)</span>}
-                                            </div>
-
-                                            {(selectedTask as any).asset_url ? (
-                                                <div className="relative group">
-                                                    <img
-                                                        src={(selectedTask as any).asset_url}
-                                                        alt="Asset"
-                                                        className="w-full h-32 object-cover rounded-lg border border-border"
-                                                    />
-                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                                                        <button
-                                                            onClick={() => assetInputRef.current?.click()}
-                                                            className="px-3 py-1.5 bg-white text-slate-900 font-bold text-xs rounded-lg hover:bg-slate-100 transition-colors"
-                                                        >
-                                                            Ganti
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                await supabase.from('content_items').update({ asset_url: null }).eq('id', selectedTask.id);
-                                                                setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, asset_url: undefined } : t));
-                                                                setSelectedTask(prev => prev ? { ...prev, asset_url: undefined } : null);
-                                                            }}
-                                                            className="px-3 py-1.5 bg-red-500 text-white font-bold text-xs rounded-lg hover:bg-red-600 transition-colors"
-                                                        >
-                                                            Hapus
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => !isVideo && assetInputRef.current?.click()}
-                                                    disabled={isVideo || savingAsset}
-                                                    className={`w-full h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 transition-all ${isVideo ? 'border-border cursor-not-allowed' : 'border-accent/40 hover:border-accent hover:bg-accent/5 cursor-pointer'}`}
-                                                >
-                                                    {savingAsset ? (
-                                                        <Loader2 size={20} className="animate-spin text-accent" />
+            {
+                selectedTask && (
+                    <Modal
+                        isOpen={isDetailModalOpen}
+                        onClose={() => {
+                            setIsDetailModalOpen(false);
+                            setIsPdfPreviewOpen(false);
+                            setIsDrivePreviewOpen(false);
+                            setIsResultModalOpen(false);
+                            setPdfUrl(null);
+                        }}
+                        title={<div className="flex items-center gap-2"><div className="p-1.5 bg-violet-500 rounded-lg shadow-hard-mini"><FileText size={18} className="text-white" /></div><span className="text-foreground">Detail Konten</span></div>}
+                        maxWidth={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? "max-w-full md:max-w-[48vw]" : "max-w-7xl"}
+                        duration={800}
+                        zIndex={9990}
+                        overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-indigo-950/20 backdrop-blur-none transition-all' : 'bg-indigo-950/60 backdrop-blur-sm'}
+                        className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[50.5%] shadow-2xl' : 'translate-x-0'}
+                    >
+                        <div className="h-[88vh] md:h-[85vh] overflow-y-auto no-scrollbar px-6 md:px-10 pt-8 pb-10">
+                            <div className="flex flex-col lg:flex-row gap-10 items-start">
+                                {/* MAIN CONTENT (LEFT) */}
+                                <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
+                                    <div className="space-y-4">
+                                        <div className="flex items-start justify-between gap-6">
+                                            <div className="space-y-4">
+                                                {/* Platform Sticker/Badge */}
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {selectedTask.platform === Platform.INSTAGRAM ? (
+                                                        <div className="px-4 py-1.5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white rounded-full border-[3px] border-slate-900 shadow-hard-mini-mini text-[11px] font-black flex items-center gap-2 transform -rotate-2 hover:rotate-0 transition-transform">
+                                                            <Instagram size={14} strokeWidth={3} /> Instagram
+                                                        </div>
+                                                    ) : selectedTask.platform === Platform.TIKTOK ? (
+                                                        <div className="px-4 py-1.5 bg-slate-900 text-white rounded-full border-[3px] border-slate-950 shadow-[2px_2px_0px_#ff0050,-2px_-2px_0px_#00f2ea] text-[11px] font-black flex items-center gap-2 transform rotate-2 hover:rotate-0 transition-transform">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>
+                                                            TikTok
+                                                        </div>
                                                     ) : (
-                                                        <>
-                                                            <Upload size={20} className={isVideo ? 'text-mutedForeground' : 'text-accent'} />
-                                                            <span className="text-[10px] font-bold text-mutedForeground">JPG / PNG (Max 5MB)</span>
-                                                        </>
+                                                        <div className="px-4 py-1.5 bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full border-[3px] border-slate-900 shadow-hard-mini-mini text-[11px] font-black flex items-center gap-2 transform -rotate-1">
+                                                            {getPlatformIcon(selectedTask.platform)} {selectedTask.platform}
+                                                        </div>
                                                     )}
-                                                </button>
-                                            )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <span className="text-[10px] font-black text-mutedForeground">Campaign Title</span>
+                                                    <h2 className="text-2xl md:text-3xl lg:text-5xl font-black font-heading text-foreground leading-tight tracking-tight">
+                                                        {selectedTask.title}
+                                                    </h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Brief & Script - Priority Item */}
+                                    <div className="bg-card rounded-[2.5rem] border-[3.5px] border-border shadow-hard relative overflow-hidden group/script hover:shadow-hard-xl transition-all">
+                                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover/script:opacity-20 transition-opacity pointer-events-none">
+                                            <StickyNote size={120} strokeWidth={3} className="text-foreground" />
+                                        </div>
+                                        <div className="p-8 pb-4 relative z-10 flex items-center gap-4">
+                                            <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-[3px] border-border shadow-hard-mini">
+                                                <FileText size={24} strokeWidth={3} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <h4 className="font-heading font-black text-foreground text-xl tracking-tight">Brief & Content Script</h4>
+                                                <p className="text-[10px] font-black text-mutedForeground">Detailed instructions for production</p>
+                                            </div>
                                         </div>
 
-                                        {/* Right: Google Drive Folder Link */}
-                                        <div className="border-2 border-border rounded-xl p-4 hover:border-accent transition-all">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <FolderOpen size={14} className="text-emerald-600" />
-                                                <span className="text-xs font-black text-foreground">Google Drive Folder</span>
+                                        <div className="p-8 pt-0 relative z-10">
+                                            <div className="bg-muted border-[3px] border-border shadow-inner rounded-2xl p-6 min-h-[150px] font-medium font-sans text-foreground leading-relaxed text-base">
+                                                <RichTextRenderer
+                                                    text={(selectedTask as any).script || '<i class="text-mutedForeground italic">Belum ada script atau catatan untuk konten ini.</i>'}
+                                                    onPdfClick={(url) => {
+                                                        const finalUrl = url.startsWith('http')
+                                                            ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+                                                            : url;
+                                                        setPdfUrl(finalUrl);
+                                                        setIsPdfPreviewOpen(true);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Content Results */}
+                                    <div className={`p-8 rounded-[2.5rem] border-[3.5px] border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 group ${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50/40 dark:bg-emerald-500/5' : 'bg-card'}`}
+                                        onClick={() => setIsResultModalOpen(true)}
+                                    >
+                                        <div className="flex items-center gap-5 w-full">
+                                            <div className={`w-16 h-16 flex items-center justify-center rounded-[1.5rem] border-[3px] border-border shadow-hard-mini transition-all group-hover:scale-110 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white' : 'bg-background text-foreground'}`}>
+                                                {selectedTask.result_type === 'video' ? <Video size={28} strokeWidth={3} /> : <ImageIcon size={28} strokeWidth={3} />}
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <p className="font-heading font-black text-foreground text-lg tracking-tight">Hasil Produksi Konten</p>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`w-2 h-2 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-mutedForeground'}`} />
+                                                    <p className="text-[10px] font-black text-accent">
+                                                        {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0
+                                                            ? `${selectedTask.result_type === 'video' ? 'Video asset available' : `${(selectedTask.result_assets as any[]).length} photo(s) in gallery`}`
+                                                            : 'No content results uploaded yet'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className={`shrink-0 px-8 py-4 rounded-[1.5rem] font-black text-xs transition-all border-[3px] border-border shadow-hard-mini flex items-center gap-3 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-foreground text-background dark:bg-muted dark:text-foreground hover:bg-foreground/10'}`}>
+                                            {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'Lihat Hasil' : 'Upload Hasil'} <Plus size={16} strokeWidth={4} />
+                                        </div>
+                                    </div>
+
+                                    {/* Assets Storage Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {(() => {
+                                            const isVideo = (selectedTask.type || '').toLowerCase().includes('video') || (selectedTask.type || '').toLowerCase().includes('reels');
+                                            return (
+                                                <div className={`border-[3.5px] rounded-[2rem] p-6 transition-all bg-card relative overflow-hidden group ${isVideo ? 'border-dashed border-border bg-muted/30 opacity-60' : 'border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl'}`}>
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-xl text-violet-600 dark:text-violet-400 border-[2px] border-border">
+                                                                <ImageIcon size={18} strokeWidth={3} />
+                                                            </div>
+                                                            <span className="text-xs font-black text-foreground">Upload Image</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {(selectedTask as any).asset_url ? (
+                                                        <div className="relative group/asset rounded-2xl overflow-hidden border-[3px] border-border shadow-hard-mini transform transition-transform hover:scale-[1.02]">
+                                                            <img src={(selectedTask as any).asset_url} alt="Asset" className="w-full h-32 object-cover" />
+                                                            <div className="absolute inset-0 bg-foreground/80 opacity-0 group-hover/asset:opacity-100 transition-all flex items-center justify-center gap-2">
+                                                                <button onClick={() => assetInputRef.current?.click()} className="p-2 bg-card text-foreground rounded-lg border-[2px] border-border shadow-hard-mini active:translate-y-0.5"><Edit size={16} /></button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        await supabase.from('content_items').update({ asset_url: null }).eq('id', selectedTask.id);
+                                                                        setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, asset_url: undefined } : t));
+                                                                        setSelectedTask(prev => prev ? { ...prev, asset_url: undefined } : null);
+                                                                    }}
+                                                                    className="p-2 bg-rose-500 text-white rounded-lg border-[2px] border-border shadow-hard-mini active:translate-y-0.5"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => !isVideo && assetInputRef.current?.click()}
+                                                            disabled={isVideo || savingAsset}
+                                                            className={`w-full h-32 border-[3px] border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-all ${isVideo ? 'border-border cursor-not-allowed' : 'border-violet-300 dark:border-violet-500/30 bg-violet-50/50 dark:bg-violet-500/5 hover:bg-violet-50 hover:border-violet-500 cursor-pointer text-violet-500'}`}
+                                                        >
+                                                            {savingAsset ? <Loader2 size={24} className="animate-spin" /> : <Upload size={24} strokeWidth={3} />}
+                                                            <span className="text-[11px] font-black">JPG / PNG</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
+                                        <div className="border-[3.5px] border-border bg-card rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all relative overflow-hidden">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 border-[2px] border-border">
+                                                        <FolderOpen size={18} strokeWidth={3} />
+                                                    </div>
+                                                    <span className="text-xs font-black text-foreground">Google Drive</span>
+                                                </div>
                                             </div>
 
                                             {(selectedTask as any).drive_folder_url ? (
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                                                        <FolderOpen size={14} className="text-emerald-600 flex-shrink-0" />
-                                                        <span className="text-xs font-bold text-emerald-700 truncate flex-1">{(selectedTask as any).drive_folder_url}</span>
-                                                    </div>
-                                                    <div className="flex gap-2">
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2">
                                                         <button
                                                             onClick={() => {
                                                                 const embedUrl = getDriveEmbedUrl((selectedTask as any).drive_folder_url);
                                                                 setDrivePreviewUrl(embedUrl);
                                                                 setIsDrivePreviewOpen(true);
                                                             }}
-                                                            className="flex-1 px-3 py-1.5 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                                                            className="flex-1 py-2.5 bg-emerald-500 text-white font-black text-[11px] border-[2.5px] border-border rounded-xl shadow-hard-mini active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
                                                         >
-                                                            <FolderOpen size={12} /> Preview
+                                                            <Eye size={14} /> Preview
                                                         </button>
-                                                        <a
-                                                            href={(selectedTask as any).drive_folder_url}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="flex-1 px-3 py-1.5 bg-muted border border-border text-foreground font-bold text-xs rounded-lg hover:border-accent transition-colors flex items-center justify-center gap-1"
-                                                        >
-                                                            <ExternalLink size={12} /> Buka
-                                                        </a>
                                                         <button
                                                             onClick={async () => {
                                                                 await supabase.from('content_items').update({ drive_folder_url: null }).eq('id', selectedTask.id);
                                                                 setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, drive_folder_url: undefined } : t));
                                                                 setSelectedTask(prev => prev ? { ...prev, drive_folder_url: undefined } : null);
                                                             }}
-                                                            className="px-2 py-1.5 bg-red-50 border border-red-200 text-red-500 font-bold text-xs rounded-lg hover:bg-red-100 transition-colors"
+                                                            className="p-2.5 bg-card border-[2.5px] border-border text-rose-500 rounded-xl shadow-hard-mini active:translate-y-0.5"
                                                         >
-                                                            <X size={12} />
+                                                            <Trash2 size={14} />
                                                         </button>
                                                     </div>
+                                                    <a href={(selectedTask as any).drive_folder_url} target="_blank" rel="noreferrer" className="block text-center text-[8px] font-black text-mutedForeground hover:text-accent truncate px-2">Open Full Url</a>
                                                 </div>
                                             ) : (
-                                                <div className="space-y-2">
+                                                <div className="flex flex-col gap-2">
                                                     <input
                                                         type="url"
-                                                        placeholder="https://drive.google.com/drive/folders/..."
+                                                        placeholder="Paste link drive..."
                                                         value={driveUrlInput}
                                                         onChange={e => setDriveUrlInput(e.target.value)}
-                                                        className="w-full px-3 py-2 bg-muted border-2 border-border rounded-lg text-xs font-medium text-foreground placeholder:text-mutedForeground focus:border-emerald-400 outline-none transition-colors"
+                                                        className="w-full px-4 py-2 bg-muted border-[2.5px] border-border rounded-xl text-[11px] font-black placeholder:text-mutedForeground focus:bg-card outline-none"
                                                     />
                                                     <button
                                                         onClick={handleSaveDriveUrl}
                                                         disabled={!driveUrlInput.trim() || savingDriveUrl}
-                                                        className="w-full px-3 py-2 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                                                        className="py-2.5 bg-emerald-500 text-white font-black text-[10px] border-[2.5px] border-border shadow-hard-mini rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                                     >
-                                                        {savingDriveUrl ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                                                        Simpan Link Drive
+                                                        Link Drive
                                                     </button>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                );
-                            })()}
-                        </div>
+                                </div>
 
-                        {/* Script / Notes Area */}
-                        <div className="bg-muted p-3 md:p-5 rounded-xl md:rounded-2xl border border-border md:border-2 relative">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-[10px] md:text-xs font-black text-mutedForeground uppercase tracking-wider">Brief / Script</span>
-                            </div>
+                                {/* SIDEBAR (RIGHT) */}
+                                <div className="w-full lg:w-80 space-y-6 order-1 lg:order-2 shrink-0">
+                                    {/* 1. Status Indicator */}
+                                    <div className="bg-foreground text-background p-6 rounded-[2.5rem] border-[3.5px] border-foreground shadow-hard space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black opacity-60">Status Konten</span>
+                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse border-[2px] border-background" />
+                                        </div>
+                                        <div className="px-5 py-3 rounded-2xl border-[3px] border-background shadow-hard-mini bg-background text-foreground text-xs font-black flex items-center justify-center gap-3">
+                                            {formatStatus(selectedTask.status)}
+                                        </div>
+                                        {selectedTask.approval && (
+                                            <div className="bg-sky-500 text-white p-4 rounded-2xl border-[3px] border-background shadow-hard-mini space-y-2">
+                                                <p className="text-[8px] font-black opacity-80">Approved by:</p>
+                                                <div className="flex items-center gap-3 font-black text-[11px]">
+                                                    <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedTask.approval}`} className="w-6 h-6 rounded-lg border-[1.5px] border-white" alt="" />
+                                                    {selectedTask.approval}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
 
-                            <div className="text-foreground font-medium font-sans text-sm md:text-base min-h-[80px] md:min-h-[100px] overflow-hidden">
-                                <RichTextRenderer
-                                    text={(selectedTask as any).script}
-                                    onPdfClick={(url) => {
-                                        // Use Google Docs Viewer for external URLs, direct for data URIs
-                                        const finalUrl = url.startsWith('http')
-                                            ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
-                                            : url;
-                                        setPdfUrl(finalUrl);
-                                        setIsPdfPreviewOpen(true);
-                                    }}
-                                />
+                                    {/* 2. Metadata Bento Sidebar */}
+                                    <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-6 space-y-6">
+                                        <h5 className="text-[10px] font-black text-mutedForeground mb-2 px-1">Details & Context</h5>
+
+                                        {[
+                                            { icon: <Calendar size={18} strokeWidth={3} />, label: 'Deadline', value: selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-', color: 'violet' },
+                                            { icon: getPlatformIcon(selectedTask.platform), label: 'Platform', value: formatStatus(selectedTask.platform), color: 'default' },
+                                            { icon: getTypeIcon(selectedTask.type), label: 'Type', value: selectedTask.type, color: 'default' },
+                                            { icon: <Zap size={18} strokeWidth={3} />, label: 'Priority', value: formatStatus(selectedTask.priority), color: selectedTask.priority === ContentPriority.HIGH ? 'rose' : 'amber' },
+                                            { icon: <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedTask.pic || 'user'}`} className="w-full h-full object-cover" alt="" />, label: 'Assignee', value: selectedTask.pic || 'Unassigned', color: 'image' },
+                                            ...(selectedTask.pillar ? [{ icon: <Hash size={18} strokeWidth={3} />, label: 'Category', value: selectedTask.pillar, color: 'amber' }] : [])
+                                        ].map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-4 group">
+                                                <div className={`w-10 h-10 rounded-xl border-[2px] border-border flex items-center justify-center shadow-hard-mini-mini transition-transform group-hover:scale-110 overflow-hidden ${item.color === 'violet' ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400' :
+                                                    item.color === 'rose' ? 'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400' :
+                                                        item.color === 'amber' ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400' :
+                                                            'bg-muted text-foreground'
+                                                    }`}>
+                                                    {item.icon}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-[8px] font-black text-mutedForeground">{item.label}</span>
+                                                    <span className="text-[11px] font-black text-foreground truncate">{item.value}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* 3. Post Link (Compact) */}
+                                    <div className="bg-sky-50 dark:bg-sky-500/10 p-5 rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-card rounded-xl border-[2px] border-border shadow-hard-mini flex items-center justify-center text-sky-500">
+                                                <LinkIcon size={18} strokeWidth={3} />
+                                            </div>
+                                            <p className="font-black text-[10px] text-foreground">Postingan Live</p>
+                                        </div>
+                                        {selectedTask.contentLink ? (
+                                            <a
+                                                href={selectedTask.contentLink}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="w-full py-3 bg-sky-500 text-white font-black text-[10px] border-[2.5px] border-border rounded-xl hover:bg-sky-600 transition-all shadow-hard-mini flex items-center justify-center gap-2 active:translate-y-0.5"
+                                            >
+                                                Buka Link <ExternalLink size={14} strokeWidth={3} />
+                                            </a>
+                                        ) : (
+                                            <div className="w-full py-3 bg-muted text-mutedForeground font-black text-[9px] border-[2.5px] border-border rounded-xl text-center grayscale opacity-60 italic">
+                                                No link added
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 4. Action Block */}
+                                    <div className="grid grid-cols-2 gap-4 pt-4">
+                                        <button
+                                            onClick={() => {
+                                                setIsDetailModalOpen(false);
+                                                handleOpenEditModal(selectedTask);
+                                            }}
+                                            className="py-4 bg-violet-600 text-white font-black text-[10px] border-[3px] border-border rounded-2xl hover:bg-violet-700 transition-all shadow-hard active:translate-y-1 flex items-center justify-center gap-2"
+                                        >
+                                            <Edit size={16} strokeWidth={3} /> Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteContent(selectedTask.id)}
+                                            className="py-4 bg-card text-rose-500 font-black text-[10px] border-[3px] border-border rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-hard active:translate-y-1 flex items-center justify-center gap-2"
+                                        >
+                                            <Trash2 size={16} strokeWidth={3} /> Delete
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        {/* Actions Footer */}
-                        <div className="pt-4 flex flex-col-reverse md:flex-row justify-between items-center gap-4">
-                            <button
-                                onClick={() => handleDeleteContent(selectedTask.id)}
-                                className="text-slate-400 hover:text-red-500 font-bold text-sm flex items-center gap-2 px-4 py-3 hover:bg-red-50 rounded-xl transition-colors w-full md:w-auto justify-center"
-                            >
-                                <Trash2 size={18} /> Hapus Konten
-                            </button>
-                            <div className="flex gap-4 w-full md:w-auto">
-                                <button
-                                    onClick={() => {
-                                        setIsDetailModalOpen(false);
-                                        setIsPdfPreviewOpen(false);
-                                        setPdfUrl(null);
-                                    }}
-                                    className="px-6 py-2.5 rounded-full border-2 border-border font-bold text-foreground hover:bg-muted transition-colors"
-                                >
-                                    Tutup
-                                </button>
-                                <Button
-                                    onClick={() => {
-                                        setIsDetailModalOpen(false);
-                                        setIsPdfPreviewOpen(false);
-                                        handleOpenEditModal(selectedTask);
-                                    }}
-                                    icon={<Edit size={18} />}
-                                >
-                                    Edit Konten
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+                    </Modal>
+                )
+            }
 
             {/* --- PDF PREVIEW MODAL --- */}
             {/* Desktop: side-by-side | Mobile: full screen */}
-            {pdfMounted && pdfUrl && (
-                <>
-                    {/* Mobile: full screen overlay */}
-                    <div className={`md:hidden fixed inset-0 z-[10001] bg-slate-900 flex flex-col transition-all duration-300 ${isPdfPreviewOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                        <div className="flex items-center justify-between p-3 bg-slate-800 text-white">
-                            <div className="flex items-center gap-2">
-                                <FileText size={16} />
-                                <span className="text-sm font-bold">PDF Preview</span>
-                            </div>
-                            <button onClick={() => setIsPdfPreviewOpen(false)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20">
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <iframe src={pdfUrl} className="flex-1 w-full border-none" title="PDF Content" />
-                    </div>
-                    {/* Desktop: side-by-side */}
-                    <Modal
-                        isOpen={isPdfPreviewOpen}
-                        onClose={() => setIsPdfPreviewOpen(false)}
-                        title={<div className="flex items-center gap-2"><div className="p-1 bg-white/20 rounded"><FileText size={18} /></div><span>PDF Preview</span></div>}
-                        maxWidth="max-w-[95vw] md:max-w-[48vw]"
-                        duration={800}
-                        zIndex={10000}
-                        overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
-                        className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
-                    >
-                        <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
-                            {pdfUrl && <iframe src={pdfUrl} className="w-full h-full border-none" title="PDF Content" />}
-                        </div>
-                    </Modal>
-                </>
-            )}
-
-            {/* --- DRIVE PREVIEW MODAL --- */}
-            {/* Desktop: side-by-side | Mobile: full screen */}
-            {driveMounted && drivePreviewUrl && (
-                <>
-                    {/* Mobile: full screen overlay */}
-                    <div className={`md:hidden fixed inset-0 z-[10001] bg-slate-900 flex flex-col transition-all duration-300 ${isDrivePreviewOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                        <div className="flex items-center justify-between p-3 bg-slate-800 text-white">
-                            <div className="flex items-center gap-2">
-                                <FolderOpen size={16} />
-                                <span className="text-sm font-bold">Google Drive</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <a href={selectedTask?.drive_folder_url || ''} target="_blank" rel="noreferrer"
-                                    className="px-2 py-1 bg-white/10 text-white text-xs font-bold rounded-lg flex items-center gap-1">
-                                    <ExternalLink size={12} /> Buka
-                                </a>
-                                <button onClick={() => setIsDrivePreviewOpen(false)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20">
+            {
+                pdfMounted && pdfUrl && (
+                    <>
+                        {/* Mobile: full screen overlay */}
+                        <div className={`md:hidden fixed inset-0 z-[10001] bg-indigo-950 flex flex-col transition-all duration-300 ${isPdfPreviewOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            <div className="flex items-center justify-between p-3 bg-slate-800 text-white">
+                                <div className="flex items-center gap-2">
+                                    <FileText size={16} />
+                                    <span className="text-sm font-bold">PDF Preview</span>
+                                </div>
+                                <button onClick={() => setIsPdfPreviewOpen(false)} className="p-1.5 rounded-lg bg-card/10 hover:bg-card/20">
                                     <X size={16} />
                                 </button>
                             </div>
+                            <iframe src={pdfUrl} className="flex-1 w-full border-none" title="PDF Content" />
                         </div>
-                        <iframe src={drivePreviewUrl} className="flex-1 w-full border-none" title="Google Drive Preview" allow="autoplay" />
-                    </div>
-                    {/* Desktop: side-by-side */}
+                        {/* Desktop: side-by-side */}
+                        <Modal
+                            isOpen={isPdfPreviewOpen}
+                            onClose={() => setIsPdfPreviewOpen(false)}
+                            title={<div className="flex items-center gap-2"><div className="p-1 bg-card/20 rounded"><FileText size={18} /></div><span>PDF Preview</span></div>}
+                            maxWidth="max-w-[95vw] md:max-w-[48vw]"
+                            duration={800}
+                            zIndex={10000}
+                            overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
+                            className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
+                        >
+                            <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
+                                {pdfUrl && <iframe src={pdfUrl} className="w-full h-full border-none" title="PDF Content" />}
+                            </div>
+                        </Modal>
+                    </>
+                )
+            }
+
+            {/* --- DRIVE PREVIEW MODAL --- */}
+            {/* Desktop: side-by-side | Mobile: full screen */}
+            {
+                driveMounted && drivePreviewUrl && (
+                    <>
+                        {/* Mobile: full screen overlay */}
+                        <div className={`md:hidden fixed inset-0 z-[10001] bg-indigo-950 flex flex-col transition-all duration-300 ${isDrivePreviewOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            <div className="flex items-center justify-between p-3 bg-slate-800 text-white">
+                                <div className="flex items-center gap-2">
+                                    <FolderOpen size={16} />
+                                    <span className="text-sm font-bold">Google Drive</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <a href={selectedTask?.drive_folder_url || ''} target="_blank" rel="noreferrer"
+                                        className="px-2 py-1 bg-card/10 text-white text-xs font-bold rounded-lg flex items-center gap-1">
+                                        <ExternalLink size={12} /> Buka
+                                    </a>
+                                    <button onClick={() => setIsDrivePreviewOpen(false)} className="p-1.5 rounded-lg bg-card/10 hover:bg-card/20">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                            <iframe src={drivePreviewUrl} className="flex-1 w-full border-none" title="Google Drive Preview" allow="autoplay" />
+                        </div>
+                        {/* Desktop: side-by-side */}
+                        <Modal
+                            isOpen={isDrivePreviewOpen}
+                            onClose={() => setIsDrivePreviewOpen(false)}
+                            title={<div className="flex items-center gap-2"><div className="p-1 bg-card/20 rounded"><FolderOpen size={18} /></div><span>Google Drive Preview</span></div>}
+                            maxWidth="max-w-[95vw] md:max-w-[48vw]"
+                            duration={800}
+                            zIndex={10000}
+                            overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
+                            className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
+                        >
+                            <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
+                                <div className="absolute top-2 right-2 z-10 flex gap-2">
+                                    <a href={selectedTask?.drive_folder_url || ''} target="_blank" rel="noreferrer"
+                                        className="px-3 py-1.5 bg-card/90 text-slate-800 font-bold text-xs rounded-lg shadow-sm hover:bg-card transition-colors flex items-center gap-1.5 border border-slate-200">
+                                        <ExternalLink size={12} /> Buka di Drive
+                                    </a>
+                                </div>
+                                {drivePreviewUrl && <iframe src={drivePreviewUrl} className="w-full h-full border-none" title="Google Drive Preview" allow="autoplay" />}
+                            </div>
+                        </Modal>
+                    </>
+                )
+            }
+
+            {/* --- RESULT UPLOAD MODAL --- */}
+            {
+                resultMounted && selectedTask && (
                     <Modal
-                        isOpen={isDrivePreviewOpen}
-                        onClose={() => setIsDrivePreviewOpen(false)}
-                        title={<div className="flex items-center gap-2"><div className="p-1 bg-white/20 rounded"><FolderOpen size={18} /></div><span>Google Drive Preview</span></div>}
+                        isOpen={isResultModalOpen}
+                        onClose={() => setIsResultModalOpen(false)}
+                        title={<div className="flex items-center gap-2"><div className="p-1 bg-emerald-500 rounded"><CheckCircle size={18} className="text-white" /></div><span className="text-emerald-950">Upload Hasil Konten</span></div>}
                         maxWidth="max-w-[95vw] md:max-w-[48vw]"
                         duration={800}
                         zIndex={10000}
                         overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
                         className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
                     >
-                        <div className="h-[75vh] bg-slate-100 -m-6 md:-m-8 relative overflow-hidden rounded-b-xl">
-                            <div className="absolute top-2 right-2 z-10 flex gap-2">
-                                <a href={selectedTask?.drive_folder_url || ''} target="_blank" rel="noreferrer"
-                                    className="px-3 py-1.5 bg-white/90 text-slate-800 font-bold text-xs rounded-lg shadow-sm hover:bg-white transition-colors flex items-center gap-1.5 border border-slate-200">
-                                    <ExternalLink size={12} /> Buka di Drive
-                                </a>
+                        <div className="h-[75vh] p-4 md:p-8 space-y-4 md:space-y-8 overflow-y-auto no-scrollbar bg-card">
+                            {/* Desktop Header Info */}
+                            <div className="hidden md:block">
+                                <h3 className="text-2xl font-black text-slate-800 mb-1">Manajemen Hasil Produksi</h3>
+                                <p className="text-sm text-slate-500 font-medium">Upload hasil final konten Anda untuk di-review oleh tim.</p>
                             </div>
-                            {drivePreviewUrl && <iframe src={drivePreviewUrl} className="w-full h-full border-none" title="Google Drive Preview" allow="autoplay" />}
-                        </div>
-                    </Modal>
-                </>
-            )}
 
-            {/* --- RESULT UPLOAD MODAL --- */}
-            {resultMounted && selectedTask && (
-                <Modal
-                    isOpen={isResultModalOpen}
-                    onClose={() => setIsResultModalOpen(false)}
-                    title={<div className="flex items-center gap-2"><div className="p-1 bg-emerald-500 rounded"><CheckCircle size={18} className="text-white" /></div><span className="text-emerald-950">Upload Hasil Konten</span></div>}
-                    maxWidth="max-w-[95vw] md:max-w-[48vw]"
-                    duration={800}
-                    zIndex={10000}
-                    overlayClassName="md:bg-transparent md:backdrop-blur-none md:pointer-events-none"
-                    className="pointer-events-auto shadow-2xl overflow-hidden md:translate-x-[50.5%]"
-                >
-                    <div className="h-[75vh] p-4 md:p-8 space-y-4 md:space-y-8 overflow-y-auto no-scrollbar bg-card">
-                        {/* Desktop Header Info */}
-                        <div className="hidden md:block">
-                            <h3 className="text-2xl font-black text-slate-800 mb-1">Manajemen Hasil Produksi</h3>
-                            <p className="text-sm text-slate-500 font-medium">Upload hasil final konten Anda untuk di-review oleh tim.</p>
-                        </div>
-
-                        {/* Content Result Type Selector */}
-                        <div className="flex bg-slate-100 p-1.5 rounded-2xl border-2 border-slate-200">
-                            <button
-                                onClick={() => setResultResultType('photo')}
-                                className={`flex-1 py-3 flex items-center justify-center gap-3 rounded-xl font-bold text-sm transition-all ${resultResultType === 'photo' ? 'bg-white text-accent shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                <ImageIcon size={18} /> Foto (Galeri)
-                            </button>
-                            <button
-                                onClick={() => setResultResultType('video')}
-                                className={`flex-1 py-3 flex items-center justify-center gap-3 rounded-xl font-bold text-sm transition-all ${resultResultType === 'video' ? 'bg-white text-emerald-600 shadow-md border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}
-                            >
-                                <Video size={18} /> Video (Drive)
-                            </button>
-                        </div>
-
-                        {resultResultType === 'photo' ? (
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between px-1">
-                                    <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Pilih Foto (Maks 15)</h5>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-xs font-black px-2 py-0.5 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length >= 15 ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'}`}>
-                                            {(selectedTask?.result_assets as any[] || []).length} / 15
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <input
-                                    ref={resultInputRef}
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleResultUpload}
-                                />
-
+                            {/* Content Result Type Selector */}
+                            <div className="flex bg-slate-100 p-1.5 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] mb-6">
                                 <button
-                                    onClick={() => resultInputRef.current?.click()}
-                                    disabled={uploadingResults || (selectedTask?.result_assets as any[] || []).length >= 15}
-                                    className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98] ${uploadingResults ? 'bg-slate-50 border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                    onClick={() => setResultResultType('photo')}
+                                    className={`flex-1 py-3 flex items-center justify-center gap-3 rounded-xl font-black text-sm transition-all border-[3px] ${resultResultType === 'photo' ? 'bg-card text-violet-600 shadow-[2px_2px_0px_#0f172a] border-slate-900' : 'border-transparent text-slate-500 hover:text-foreground'}`}
                                 >
-                                    {uploadingResults ? (
-                                        <div className="flex items-center gap-3">
-                                            <Loader2 size={24} className="animate-spin text-accent" />
-                                            <span className="text-sm font-black text-accent animate-pulse">Memproses file...</span>
+                                    <ImageIcon size={18} strokeWidth={2.5} /> Foto (Galeri)
+                                </button>
+                                <button
+                                    onClick={() => setResultResultType('video')}
+                                    className={`flex-1 py-3 flex items-center justify-center gap-3 rounded-xl font-black text-sm transition-all border-[3px] ${resultResultType === 'video' ? 'bg-card text-emerald-600 shadow-[2px_2px_0px_#0f172a] border-slate-900' : 'border-transparent text-slate-500 hover:text-foreground'}`}
+                                >
+                                    <Video size={18} strokeWidth={2.5} /> Video (Drive)
+                                </button>
+                            </div>
+
+                            {resultResultType === 'photo' ? (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between px-1">
+                                        <h5 className="text-xs font-black text-mutedForeground">Pilih Foto (Maks 15)</h5>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs font-black px-2 py-0.5 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length >= 15 ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'}`}>
+                                                {(selectedTask?.result_assets as any[] || []).length} / 15
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <input
+                                        ref={resultInputRef}
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleResultUpload}
+                                    />
+
+                                    <button
+                                        onClick={() => resultInputRef.current?.click()}
+                                        disabled={uploadingResults || (selectedTask?.result_assets as any[] || []).length >= 15}
+                                        className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98] ${uploadingResults ? 'bg-muted border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-muted border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                    >
+                                        {uploadingResults ? (
+                                            <div className="flex items-center gap-3">
+                                                <Loader2 size={24} className="animate-spin text-accent" />
+                                                <span className="text-sm font-black text-accent animate-pulse">Memproses file...</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="w-10 h-10 bg-accent text-white rounded-2xl flex items-center justify-center shadow-lg shadow-accent/30 group-hover:rotate-6 transition-transform">
+                                                    <Upload size={20} />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-black text-slate-800">Upload Hasil Foto</p>
+                                                    <p className="text-[10px] font-bold text-mutedForeground">Click atau Drop file di sini</p>
+                                                </div>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {/* GALLERY PREVIEW */}
+                                    {selectedTask?.result_assets && (selectedTask.result_assets as any[]).length > 0 && (
+                                        <div className="space-y-4">
+                                            <h5 className="text-xs font-black text-mutedForeground px-1">Pratinjau Galeri</h5>
+                                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {(selectedTask.result_assets as string[]).map((asset, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="relative aspect-square rounded-2xl overflow-hidden border-[3px] border-slate-900 group shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 transition-all cursor-pointer"
+                                                        onClick={() => {
+                                                            setImagePreviewUrl(asset);
+                                                            setIsImagePreviewOpen(true);
+                                                        }}
+                                                    >
+                                                        <img src={asset} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    const currentAssets = (selectedTask.result_assets as any[]) || [];
+                                                                    const updated = currentAssets.filter((_, i) => i !== idx);
+                                                                    const { error } = await supabase.from('content_items').update({ result_assets: updated }).eq('id', selectedTask.id);
+                                                                    if (!error) {
+                                                                        const ut = { ...selectedTask, result_assets: updated };
+                                                                        setSelectedTask(ut);
+                                                                        setTasks(prev => prev.map(t => t.id === selectedTask.id ? ut : t));
+                                                                    }
+                                                                }}
+                                                                className="w-10 h-10 bg-red-500 text-white rounded-xl shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
+                                                            >
+                                                                <Trash2 size={20} />
+                                                            </button>
+                                                        </div>
+                                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 text-white text-[10px] font-bold rounded-md backdrop-blur-sm">
+                                                            {idx + 1}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* ═══ COMMENT SECTION ═══ */}
+                                    {isFree ? (
+                                        <div className="border-t-2 border-slate-100 pt-5 space-y-4 pb-4">
+                                            <PremiumLockScreen
+                                                title="Komentar Revisi Terkunci"
+                                                description="Berikan catatan, feedback, dan diskusikan revisi konten langsung dengan tim Anda. Upgrade ke paket Pro untuk menggunakan fitur ini."
+                                            />
                                         </div>
                                     ) : (
-                                        <>
-                                            <div className="w-10 h-10 bg-accent text-white rounded-2xl flex items-center justify-center shadow-lg shadow-accent/30 group-hover:rotate-6 transition-transform">
-                                                <Upload size={20} />
+                                        <div className="border-t-2 border-slate-100 pt-5 space-y-4">
+                                            <div className="flex items-center gap-2 px-1">
+                                                <MessageCircle size={16} className="text-mutedForeground" />
+                                                <h5 className="text-xs font-black text-mutedForeground">Komentar Revisi</h5>
+                                                {resultComments.length > 0 && (
+                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent">{resultComments.length}</span>
+                                                )}
                                             </div>
-                                            <div className="text-center">
-                                                <p className="text-sm font-black text-slate-800">Upload Hasil Foto</p>
-                                                <p className="text-[10px] font-bold text-slate-400">Click atau Drop file di sini</p>
-                                            </div>
-                                        </>
-                                    )}
-                                </button>
 
-                                {/* GALLERY PREVIEW */}
-                                {selectedTask?.result_assets && (selectedTask.result_assets as any[]).length > 0 && (
-                                    <div className="space-y-4">
-                                        <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Pratinjau Galeri</h5>
-                                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {(selectedTask.result_assets as string[]).map((asset, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-200 group shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                                    onClick={() => {
-                                                        setImagePreviewUrl(asset);
-                                                        setIsImagePreviewOpen(true);
-                                                    }}
-                                                >
-                                                    <img src={asset} className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <button
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                const currentAssets = (selectedTask.result_assets as any[]) || [];
-                                                                const updated = currentAssets.filter((_, i) => i !== idx);
-                                                                const { error } = await supabase.from('content_items').update({ result_assets: updated }).eq('id', selectedTask.id);
-                                                                if (!error) {
-                                                                    const ut = { ...selectedTask, result_assets: updated };
-                                                                    setSelectedTask(ut);
-                                                                    setTasks(prev => prev.map(t => t.id === selectedTask.id ? ut : t));
-                                                                }
-                                                            }}
-                                                            className="w-10 h-10 bg-red-500 text-white rounded-xl shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
-                                                        >
-                                                            <Trash2 size={20} />
-                                                        </button>
+                                            {/* Comment List */}
+                                            <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 no-scrollbar">
+                                                {resultComments.length === 0 ? (
+                                                    <div className="text-center py-8">
+                                                        <MessageCircle size={32} className="mx-auto text-slate-200 mb-2" />
+                                                        <p className="text-xs font-bold text-slate-300">Belum ada komentar.</p>
+                                                        <p className="text-[10px] text-slate-300">Berikan feedback untuk hasil konten ini.</p>
                                                     </div>
-                                                    <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 text-white text-[10px] font-bold rounded-md backdrop-blur-sm">
-                                                        {idx + 1}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                                ) : (
+                                                    (() => {
+                                                        const topLevel = resultComments.filter(c => !c.parent_id);
+                                                        const replies = resultComments.filter(c => c.parent_id);
+                                                        const currentUserId = localStorage.getItem('user_id') || '';
 
-                                {/* ═══ COMMENT SECTION ═══ */}
-                                {isFree ? (
-                                    <div className="border-t-2 border-slate-100 pt-5 space-y-4 pb-4">
-                                        <PremiumLockScreen
-                                            title="Komentar Revisi Terkunci"
-                                            description="Berikan catatan, feedback, dan diskusikan revisi konten langsung dengan tim Anda. Upgrade ke paket Pro untuk menggunakan fitur ini."
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="border-t-2 border-slate-100 pt-5 space-y-4">
-                                        <div className="flex items-center gap-2 px-1">
-                                            <MessageCircle size={16} className="text-slate-400" />
-                                            <h5 className="text-xs font-black uppercase tracking-widest text-slate-400">Komentar Revisi</h5>
-                                            {resultComments.length > 0 && (
-                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-accent/10 text-accent">{resultComments.length}</span>
-                                            )}
-                                        </div>
+                                                        const renderComment = (comment: ResultComment, isReply = false) => {
+                                                            const isOwn = comment.user_id === currentUserId;
+                                                            const commentReplies = replies.filter(r => r.parent_id === comment.id);
+                                                            const timeAgo = (() => {
+                                                                const diff = Date.now() - new Date(comment.created_at).getTime();
+                                                                const m = Math.floor(diff / 60000);
+                                                                if (m < 1) return 'baru saja';
+                                                                if (m < 60) return `${m}m`;
+                                                                const h = Math.floor(m / 60);
+                                                                if (h < 24) return `${h}j`;
+                                                                return `${Math.floor(h / 24)}h`;
+                                                            })();
 
-                                        {/* Comment List */}
-                                        <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 no-scrollbar">
-                                            {resultComments.length === 0 ? (
-                                                <div className="text-center py-8">
-                                                    <MessageCircle size={32} className="mx-auto text-slate-200 mb-2" />
-                                                    <p className="text-xs font-bold text-slate-300">Belum ada komentar.</p>
-                                                    <p className="text-[10px] text-slate-300">Berikan feedback untuk hasil konten ini.</p>
-                                                </div>
-                                            ) : (
-                                                (() => {
-                                                    const topLevel = resultComments.filter(c => !c.parent_id);
-                                                    const replies = resultComments.filter(c => c.parent_id);
-                                                    const currentUserId = localStorage.getItem('user_id') || '';
-
-                                                    const renderComment = (comment: ResultComment, isReply = false) => {
-                                                        const isOwn = comment.user_id === currentUserId;
-                                                        const commentReplies = replies.filter(r => r.parent_id === comment.id);
-                                                        const timeAgo = (() => {
-                                                            const diff = Date.now() - new Date(comment.created_at).getTime();
-                                                            const m = Math.floor(diff / 60000);
-                                                            if (m < 1) return 'baru saja';
-                                                            if (m < 60) return `${m}m`;
-                                                            const h = Math.floor(m / 60);
-                                                            if (h < 24) return `${h}j`;
-                                                            return `${Math.floor(h / 24)}h`;
-                                                        })();
-
-                                                        return (
-                                                            <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
-                                                                <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-slate-50 ${isReply ? '' : ''}`}>
-                                                                    {/* Avatar */}
-                                                                    <div className="flex-shrink-0 pt-0.5">
-                                                                        {comment.user_avatar ? (
-                                                                            <img src={comment.user_avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200" />
-                                                                        ) : (
-                                                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-[10px] font-black">
-                                                                                {comment.user_name.charAt(0).toUpperCase()}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-
-                                                                    {/* Content */}
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
-                                                                            <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
-                                                                        </div>
-
-                                                                        {/* Reply indicator */}
-                                                                        {comment.parent_id && (() => {
-                                                                            const parent = resultComments.find(c => c.id === comment.parent_id);
-                                                                            return parent ? (
-                                                                                <div className="text-[9px] text-slate-400 font-bold flex items-center gap-1 mb-0.5">
-                                                                                    <Reply size={9} /> membalas {parent.user_name}
+                                                            return (
+                                                                <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
+                                                                    <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-muted ${isReply ? '' : ''}`}>
+                                                                        {/* Avatar */}
+                                                                        <div className="flex-shrink-0 pt-0.5">
+                                                                            {comment.user_avatar ? (
+                                                                                <img src={comment.user_avatar} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-200" />
+                                                                            ) : (
+                                                                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-[10px] font-black">
+                                                                                    {comment.user_name.charAt(0).toUpperCase()}
                                                                                 </div>
-                                                                            ) : null;
-                                                                        })()}
+                                                                            )}
+                                                                        </div>
 
-                                                                        <p className="text-[13px] text-slate-600 leading-relaxed break-words">{comment.message}</p>
-
-                                                                        {/* Reactions display */}
-                                                                        {comment.reactions && Object.keys(comment.reactions).length > 0 && (
-                                                                            <div className="flex flex-wrap gap-1 mt-1.5">
-                                                                                {Object.entries(comment.reactions).map(([emoji, users]) => (
-                                                                                    <button
-                                                                                        key={emoji}
-                                                                                        onClick={() => handleToggleReaction(comment.id, emoji)}
-                                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
-                                                                                            ? 'bg-accent/10 border-accent/30 text-accent'
-                                                                                            : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-accent/30'
-                                                                                            }`}
-                                                                                    >
-                                                                                        <span>{emoji}</span>
-                                                                                        <span>{(users as string[]).length}</span>
-                                                                                    </button>
-                                                                                ))}
+                                                                        {/* Content */}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
+                                                                                <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
                                                                             </div>
-                                                                        )}
 
-                                                                        {/* Action buttons */}
-                                                                        <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            <button
-                                                                                onClick={() => { setReplyingTo(comment); commentInputRef.current?.focus(); }}
-                                                                                className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
-                                                                            >
-                                                                                <Reply size={10} /> Balas
-                                                                            </button>
-                                                                            <div className="relative">
-                                                                                <button
-                                                                                    onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
-                                                                                    className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
-                                                                                >
-                                                                                    <SmilePlus size={10} /> React
-                                                                                </button>
-                                                                                {showEmojiPicker === comment.id && (
-                                                                                    <div className="absolute bottom-full left-0 mb-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg p-1.5 flex gap-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                                                                                        {['👍', '❤️', '😂', '🔥', '👎'].map(emoji => (
-                                                                                            <button
-                                                                                                key={emoji}
-                                                                                                onClick={() => handleToggleReaction(comment.id, emoji)}
-                                                                                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-base transition-transform hover:scale-125"
-                                                                                            >
-                                                                                                {emoji}
-                                                                                            </button>
-                                                                                        ))}
+                                                                            {/* Reply indicator */}
+                                                                            {comment.parent_id && (() => {
+                                                                                const parent = resultComments.find(c => c.id === comment.parent_id);
+                                                                                return parent ? (
+                                                                                    <div className="text-[9px] text-mutedForeground font-bold flex items-center gap-1 mb-0.5">
+                                                                                        <Reply size={9} /> membalas {parent.user_name}
                                                                                     </div>
-                                                                                )}
+                                                                                ) : null;
+                                                                            })()}
+
+                                                                            <p className="text-[13px] text-slate-600 leading-relaxed break-words">{comment.message}</p>
+
+                                                                            {/* Reactions display */}
+                                                                            {comment.reactions && Object.keys(comment.reactions).length > 0 && (
+                                                                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                                    {Object.entries(comment.reactions).map(([emoji, users]) => (
+                                                                                        <button
+                                                                                            key={emoji}
+                                                                                            onClick={() => handleToggleReaction(comment.id, emoji)}
+                                                                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
+                                                                                                ? 'bg-accent/10 border-accent/30 text-accent'
+                                                                                                : 'bg-muted border-slate-200 text-slate-500 hover:border-accent/30'
+                                                                                                }`}
+                                                                                        >
+                                                                                            <span>{emoji}</span>
+                                                                                            <span>{(users as string[]).length}</span>
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Action buttons */}
+                                                                            <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                <button
+                                                                                    onClick={() => { setReplyingTo(comment); commentInputRef.current?.focus(); }}
+                                                                                    className="flex items-center gap-1 text-[10px] font-bold text-mutedForeground hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
+                                                                                >
+                                                                                    <Reply size={10} /> Balas
+                                                                                </button>
+                                                                                <div className="relative">
+                                                                                    <button
+                                                                                        onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
+                                                                                        className="flex items-center gap-1 text-[10px] font-bold text-mutedForeground hover:text-accent px-1.5 py-0.5 rounded-md hover:bg-accent/5 transition-colors"
+                                                                                    >
+                                                                                        <SmilePlus size={10} /> React
+                                                                                    </button>
+                                                                                    {showEmojiPicker === comment.id && (
+                                                                                        <div className="absolute bottom-full left-0 mb-1 bg-card border-[3px] border-slate-900 rounded-xl shadow-[4px_4px_0px_#0f172a] p-1.5 flex gap-1 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                                                                            {['👍', '❤️', '😂', '🔥', '👎'].map(emoji => (
+                                                                                                <button
+                                                                                                    key={emoji}
+                                                                                                    onClick={() => handleToggleReaction(comment.id, emoji)}
+                                                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-base transition-transform hover:scale-125"
+                                                                                                >
+                                                                                                    {emoji}
+                                                                                                </button>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
 
-                                                                {/* Render replies */}
-                                                                {commentReplies.map(reply => renderComment(reply, true))}
+                                                                    {/* Render replies */}
+                                                                    {commentReplies.map(reply => renderComment(reply, true))}
+                                                                </div>
+                                                            );
+                                                        };
+
+                                                        return topLevel.map(c => renderComment(c));
+                                                    })()
+                                                )}
+                                                <div ref={commentEndRef} />
+                                            </div>
+
+                                            {/* Reply indicator */}
+                                            {replyingTo && (
+                                                <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-xl animate-in slide-in-from-bottom-2">
+                                                    <Reply size={12} className="text-accent" />
+                                                    <span className="text-[11px] font-bold text-accent flex-1 truncate">Membalas {replyingTo.user_name}: "{replyingTo.message.slice(0, 50)}..."</span>
+                                                    <button onClick={() => setReplyingTo(null)} className="text-mutedForeground hover:text-red-500"><X size={14} /></button>
+                                                </div>
+                                            )}
+
+                                            {/* Comment Input */}
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-shrink-0">
+                                                    {(() => {
+                                                        const av = localStorage.getItem('user_avatar');
+                                                        return av ? (
+                                                            <img src={av} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                                        ) : (
+                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-xs font-black">
+                                                                {(localStorage.getItem('user_name') || 'U').charAt(0).toUpperCase()}
                                                             </div>
                                                         );
-                                                    };
-
-                                                    return topLevel.map(c => renderComment(c));
-                                                })()
-                                            )}
-                                            <div ref={commentEndRef} />
+                                                    })()}
+                                                </div>
+                                                <div className="flex-1 relative">
+                                                    <input
+                                                        ref={commentInputRef}
+                                                        type="text"
+                                                        placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
+                                                        value={commentInput}
+                                                        onChange={e => setCommentInput(e.target.value)}
+                                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                                                        className="w-full px-4 py-3 bg-card border-[3px] border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-sm font-black text-slate-800 placeholder:text-mutedForeground focus:border-violet-500 focus:shadow-[4px_4px_0px_#0f172a] outline-none transition-all pr-12"
+                                                    />
+                                                    <button
+                                                        onClick={handleSendComment}
+                                                        disabled={!commentInput.trim() || sendingComment}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/90 transition-all active:scale-90"
+                                                    >
+                                                        {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-
-                                        {/* Reply indicator */}
-                                        {replyingTo && (
-                                            <div className="flex items-center gap-2 px-3 py-2 bg-accent/5 border border-accent/20 rounded-xl animate-in slide-in-from-bottom-2">
-                                                <Reply size={12} className="text-accent" />
-                                                <span className="text-[11px] font-bold text-accent flex-1 truncate">Membalas {replyingTo.user_name}: "{replyingTo.message.slice(0, 50)}..."</span>
-                                                <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <h5 className="text-xs font-black text-mutedForeground px-1">Link Hasil Produksi (Drive)</h5>
+                                    <div className="space-y-4 pt-4">
+                                        <div className="bg-emerald-50 border-[3px] border-slate-900 p-6 rounded-[32px] space-y-4 shadow-[4px_4px_0px_#0f172a]">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-card border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] text-emerald-600 rounded-2xl flex items-center justify-center">
+                                                    <FolderOpen size={24} strokeWidth={2.5} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-emerald-950 text-sm">Google Drive Link</p>
+                                                    <p className="text-[10px] text-emerald-700 font-bold mt-0.5">Pastikan akses link "Anyone with link"</p>
+                                                </div>
                                             </div>
-                                        )}
 
-                                        {/* Comment Input */}
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex-shrink-0">
-                                                {(() => {
-                                                    const av = localStorage.getItem('user_avatar');
-                                                    return av ? (
-                                                        <img src={av} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                                                    ) : (
-                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-xs font-black">
-                                                            {(localStorage.getItem('user_name') || 'U').charAt(0).toUpperCase()}
-                                                        </div>
-                                                    );
-                                                })()}
-                                            </div>
-                                            <div className="flex-1 relative">
+                                            <div className="space-y-3">
                                                 <input
-                                                    ref={commentInputRef}
-                                                    type="text"
-                                                    placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
-                                                    value={commentInput}
-                                                    onChange={e => setCommentInput(e.target.value)}
-                                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
-                                                    className="w-full px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-accent focus:bg-white outline-none transition-all pr-12"
+                                                    type="url"
+                                                    placeholder="https://drive.google.com/..."
+                                                    className="w-full px-5 py-4 bg-card border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-2xl text-sm font-black text-foreground placeholder:text-mutedForeground focus:border-emerald-500 focus:shadow-[4px_4px_0px_#0f172a] outline-none transition-all"
+                                                    defaultValue={selectedTask.result_type === 'video' ? (selectedTask.result_assets as string[])?.[0] : ''}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = (e.target as HTMLInputElement).value;
+                                                            if (val) handleSaveResultVideoUrl(val);
+                                                        }
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val) handleSaveResultVideoUrl(val);
+                                                    }}
                                                 />
                                                 <button
-                                                    onClick={handleSendComment}
-                                                    disabled={!commentInput.trim() || sendingComment}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-accent/90 transition-all active:scale-90"
+                                                    onClick={() => {
+                                                        const input = document.querySelector('input[placeholder="https://drive.google.com/..."]') as HTMLInputElement;
+                                                        if (input?.value) handleSaveResultVideoUrl(input.value);
+                                                    }}
+                                                    className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black text-sm border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:bg-emerald-400 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all active:translate-y-0 active:shadow-[2px_2px_0px_#0f172a]"
                                                 >
-                                                    {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                    Simpan Link Produksi
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="space-y-6">
-                                <h5 className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Link Hasil Produksi (Drive)</h5>
-                                <div className="space-y-4">
-                                    <div className="bg-emerald-50 border-2 border-emerald-100 p-6 rounded-[32px] space-y-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
-                                                <FolderOpen size={24} />
-                                            </div>
-                                            <div>
-                                                <p className="font-black text-emerald-950">Google Drive Link</p>
-                                                <p className="text-xs text-emerald-600 font-bold">Pastikan akses link "Anyone with link" (Viewer)</p>
-                                            </div>
-                                        </div>
 
-                                        <div className="space-y-3">
-                                            <input
-                                                type="url"
-                                                placeholder="Tempel url google drive di sini..."
-                                                className="w-full px-5 py-4 bg-white border-2 border-emerald-200 rounded-2xl text-sm font-bold text-slate-800 placeholder:text-slate-300 focus:border-emerald-500 outline-none transition-all shadow-inner"
-                                                defaultValue={selectedTask.result_type === 'video' ? (selectedTask.result_assets as string[])?.[0] : ''}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        const val = (e.target as HTMLInputElement).value;
-                                                        if (val) handleSaveResultVideoUrl(val);
-                                                    }
-                                                }}
-                                                onBlur={(e) => {
-                                                    const val = e.target.value;
-                                                    if (val) handleSaveResultVideoUrl(val);
-                                                }}
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    const input = document.querySelector('input[placeholder="Tempel url google drive di sini..."]') as HTMLInputElement;
-                                                    if (input.value) handleSaveResultVideoUrl(input.value);
-                                                }}
-                                                className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-95"
-                                            >
-                                                Simpan Link Produksi
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {selectedTask.result_type === 'video' && (selectedTask.result_assets as string[])?.[0] && (
-                                        <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-emerald-500">
-                                                    <ExternalLink size={20} />
+                                        {selectedTask.result_type === 'video' && (selectedTask.result_assets as string[])?.[0] && (
+                                            <div className="p-4 bg-card border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] rounded-2xl flex items-center justify-between gap-4 mt-6">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-10 h-10 bg-card border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl flex items-center justify-center text-emerald-500">
+                                                        <ExternalLink size={20} strokeWidth={2.5} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs font-black text-slate-800">Preview Link Aktif</p>
+                                                        <p className="text-[10px] text-slate-500 font-bold truncate">{(selectedTask.result_assets as string[])[0]}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs font-black text-slate-800">Preview Link Aktif</p>
-                                                    <p className="text-[10px] text-slate-400 truncate">{(selectedTask.result_assets as string[])[0]}</p>
-                                                </div>
+                                                <a
+                                                    href={(selectedTask.result_assets as string[])[0]}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="px-4 py-3 bg-indigo-950 text-white border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl text-[10px] font-black hover:bg-slate-800 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f2e1b4b] transition-all shrink-0"
+                                                >
+                                                    Buka
+                                                </a>
                                             </div>
-                                            <a
-                                                href={(selectedTask.result_assets as string[])[0]}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-black hover:bg-slate-900 transition-colors shrink-0"
-                                            >
-                                                Buka
-                                            </a>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="pt-6 border-t border-slate-100">
-                            <button
-                                onClick={() => setIsResultModalOpen(false)}
-                                className="w-full py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-sm hover:bg-slate-200 transition-colors"
-                            >
-                                Tutup Panel Hasil
-                            </button>
+                            <div className="pt-6 border-t border-slate-100">
+                                <button
+                                    onClick={() => setIsResultModalOpen(false)}
+                                    className="w-full py-4 rounded-2xl bg-slate-100 text-slate-600 font-black text-sm hover:bg-slate-200 transition-colors"
+                                >
+                                    Tutup Panel Hasil
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </Modal>
-            )}
+                    </Modal>
+                )
+            }
 
             {/* --- IMAGE PREVIEW MODAL --- */}
             <Modal
@@ -3271,7 +3129,7 @@ export const ContentPlanDetail: React.FC = () => {
                 maxWidth="max-w-5xl"
                 zIndex={10020}
             >
-                <div className="flex items-center justify-center p-2 bg-slate-900/5 rounded-2xl">
+                <div className="flex items-center justify-center p-2 bg-indigo-950/5 rounded-2xl">
                     {imagePreviewUrl && (
                         <img
                             src={imagePreviewUrl}
@@ -3283,191 +3141,290 @@ export const ContentPlanDetail: React.FC = () => {
                 <div className="mt-6 flex justify-center">
                     <button
                         onClick={() => setIsImagePreviewOpen(false)}
-                        className="px-8 py-3 bg-slate-900 text-white font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                        className="px-8 py-3 bg-indigo-950 text-white font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg active:scale-95"
                     >
                         Tutup Pratinjau
                     </button>
                 </div>
             </Modal>
 
-            {/* Modal Create/Edit Content */}
+            {/* Modal Create/Edit Content - Redesigned to Dashboard Layout */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={modalMode === 'create' ? "✨ Buat Konten Baru" : "✏️ Edit Konten"}
+                maxWidth="max-w-7xl"
             >
-                <form onSubmit={handleSaveContent} className="space-y-6 pb-4">
+                <form onSubmit={handleSaveContent} className="relative">
+                    <div className="h-[85vh] md:h-[80vh] overflow-y-auto no-scrollbar px-1 pt-2 pb-10">
+                        <div className="flex flex-col lg:flex-row gap-10 items-start">
 
-                    {/* 1. INFORMASI UTAMA */}
-                    <div className="bg-purple-500/10 p-5 rounded-2xl border-2 border-purple-500/30 shadow-[4px_4px_0px_0px_rgba(139,92,246,0.3)] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/20 rounded-bl-full opacity-50"></div>
-                        <h4 className="font-heading font-black text-purple-600 flex items-center gap-2 mb-4 text-lg">
-                            <FileText className="text-purple-600" /> Informasi Utama
-                        </h4>
-                        <div className="space-y-4 relative z-10">
-                            <Input
-                                label="Judul Konten"
-                                placeholder="Contoh: Tutorial React 2024"
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                required
-                                className="border-purple-200 focus:border-purple-600 focus:shadow-none"
-                            />
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Tanggal Posting"
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                    required
-                                    className="border-purple-200 focus:border-purple-600"
-                                />
-                                <Select
-                                    label="Platform"
-                                    value={formData.platform}
-                                    onChange={(e) => setFormData({ ...formData, platform: e.target.value as Platform })}
-                                    options={[
-                                        { label: 'Instagram', value: Platform.INSTAGRAM },
-                                        { label: 'TikTok', value: Platform.TIKTOK },
-                                        { label: 'Threads', value: Platform.THREADS },
-                                        { label: 'LinkedIn', value: Platform.LINKEDIN },
-                                        { label: 'YouTube', value: Platform.YOUTUBE },
-                                        { label: 'Facebook', value: Platform.FACEBOOK },
-                                    ]}
-                                    className="border-purple-200 focus:border-purple-600"
-                                />
+                            {/* LEFT SIDE: MAIN WRITING AREA */}
+                            <div className="flex-1 space-y-8 min-w-0">
+                                {/* 1. HERO TITLE */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400 border-[2px] border-border shadow-hard-mini-mini">
+                                            <FileText size={18} strokeWidth={3} />
+                                        </div>
+                                        <span className="text-[13px] font-black text-mutedForeground">Judul Konten</span>
+                                    </div>
+                                    <input
+                                        placeholder="Tulis Judul Konten Kamu Disini..."
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                        required
+                                        className="w-full bg-transparent border-none outline-none font-heading font-black text-3xl md:text-5xl text-foreground placeholder:text-mutedForeground/30 focus:ring-0 p-0 tracking-tight"
+                                    />
+                                </div>
+
+                                {/* 2. PLATFORM SELECTOR (VISUAL) */}
+                                <div className="space-y-4">
+                                    <label className="text-[14px] font-black text-mutedForeground px-1">Social Platform</label>
+                                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                                        {[
+                                            { id: Platform.INSTAGRAM, icon: <Instagram size={20} />, active: 'bg-pink-500 text-white shadow-hard-mini' },
+                                            { id: Platform.TIKTOK, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>, active: 'bg-foreground text-background shadow-hard-mini dark:bg-muted dark:text-foreground' },
+                                            { id: Platform.YOUTUBE, icon: <Youtube size={20} />, active: 'bg-rose-600 text-white shadow-hard-mini' },
+                                            { id: Platform.LINKEDIN, icon: <Linkedin size={20} />, active: 'bg-blue-600 text-white shadow-hard-mini' },
+                                            { id: Platform.THREADS, icon: <AtSign size={20} />, active: 'bg-indigo-600 text-white shadow-hard-mini' },
+                                            { id: Platform.FACEBOOK, icon: <Facebook size={20} />, active: 'bg-sky-600 text-white shadow-hard-mini' },
+                                        ].map((p) => (
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, platform: p.id })}
+                                                className={`h-14 flex items-center justify-center rounded-2xl border-[3.5px] border-border transition-all transform active:translate-y-1 ${formData.platform === p.id ? p.active : 'bg-card text-mutedForeground hover:border-accent hover:text-accent'}`}
+                                                title={p.id}
+                                            >
+                                                {p.icon}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 3. SCRIPT & RESOURCES */}
+                                <div className="space-y-4">
+                                    <label className="text-[14px] font-black text-mutedForeground px-1">Production Brief / Script</label>
+                                    <div className="bg-emerald-50/40 dark:bg-emerald-500/5 p-8 rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-6 text-foreground">
+                                        {/* Brief Input */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <StickyNote size={18} className="text-emerald-500" />
+                                                <span className="text-[13px] font-black text-foreground">Script & Link Dokumen</span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <input
+                                                    className="flex-1 px-5 py-4 bg-background border-[3px] border-border rounded-2xl outline-none focus:border-emerald-500 focus:shadow-hard-mini transition-all font-sans font-bold text-[14px] text-foreground placeholder:text-mutedForeground/50"
+                                                    placeholder="Paste Link Google Doc atau Tulis Brief singkat..."
+                                                    value={formData.script}
+                                                    onChange={(e) => setFormData({ ...formData, script: e.target.value })}
+                                                />
+                                                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="w-16 flex items-center justify-center bg-card border-[3px] border-dashed border-emerald-500 rounded-2xl hover:bg-emerald-50 transition-all text-emerald-500 shadow-hard-mini active:translate-y-1"
+                                                >
+                                                    <Upload size={24} strokeWidth={3} />
+                                                </button>
+                                            </div>
+                                            <p className="text-[11px] font-black text-emerald-600 px-1">Tip: Paste link dokumen atau upload file script kamu.</p>
+                                        </div>
+
+                                        {/* Result Link */}
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <ExternalLink size={18} className="text-sky-500" />
+                                                <span className="text-[13px] font-black text-foreground">Live Content Link (Optional)</span>
+                                            </div>
+                                            <input
+                                                placeholder="https://social-media-post-url.com/..."
+                                                value={formData.contentLink}
+                                                onChange={(e) => setFormData({ ...formData, contentLink: e.target.value })}
+                                                className="w-full px-5 py-4 bg-background border-[3px] border-border rounded-2xl outline-none focus:border-sky-500 focus:shadow-hard-mini transition-all font-sans font-bold text-[14px] text-foreground placeholder:text-mutedForeground/50"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 4. TEAM & CATEGORY */}
+                                <div className="space-y-4">
+                                    <label className="text-[14px] font-black text-mutedForeground px-1">Team & Category</label>
+                                    <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-7 relative overflow-visible">
+                                        {/* Background Effect Container - Clipped */}
+                                        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
+                                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 -ml-16 -mb-16 rounded-full blur-3xl" />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                                            {/* PIC */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg border-2 border-border text-emerald-600 dark:text-emerald-400">
+                                                        <User size={14} className="currentColor" />
+                                                    </div>
+                                                    <span className="text-[13px] font-black text-foreground">Project Lead / PIC</span>
+                                                </div>
+                                                <CreatableSelect
+                                                    placeholder="Assign To..."
+                                                    value={formData.pic}
+                                                    onChange={(val) => setFormData({ ...formData, pic: val })}
+                                                    colorTheme="yellow"
+                                                    className="!border-[3px] !rounded-2xl !font-black !text-[14px]"
+                                                    options={teamMembers.map(m => ({ label: m.name, value: m.name }))}
+                                                />
+                                            </div>
+
+                                            {/* Approval */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="p-2 bg-sky-100 dark:bg-sky-500/20 rounded-lg border-2 border-border text-sky-600 dark:text-sky-400">
+                                                        <CheckCircle size={14} className="currentColor" />
+                                                    </div>
+                                                    <span className="text-[13px] font-black text-foreground">Final Approval By</span>
+                                                </div>
+                                                <CreatableSelect
+                                                    placeholder="Approver..."
+                                                    value={formData.approval}
+                                                    onChange={(val) => setFormData({ ...formData, approval: val })}
+                                                    colorTheme="yellow"
+                                                    className="!border-[3px] !rounded-2xl !font-black !text-[14px]"
+                                                    options={teamMembers.map(m => ({ label: m.name, value: m.name }))}
+                                                />
+                                            </div>
+
+                                            {/* Pillar */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg border-2 border-border text-amber-600 dark:text-amber-400">
+                                                        <Hash size={14} className="currentColor" />
+                                                    </div>
+                                                    <span className="text-[13px] font-black text-foreground">Pillar / Category</span>
+                                                </div>
+                                                <input
+                                                    placeholder="E.g. Edukasi, Promo..."
+                                                    value={formData.pillar}
+                                                    onChange={(e) => setFormData({ ...formData, pillar: e.target.value })}
+                                                    className="w-full h-[52px] bg-background border-[3px] border-border rounded-2xl px-5 font-black text-[14px] focus:border-amber-500 focus:shadow-hard-mini-mini outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT SIDE: SIDEBAR METADATA */}
+                            <div className="w-full lg:w-80 space-y-6 shrink-0">
+                                {/* 1. STATUS & PRIORITY BENTO */}
+                                <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-7 space-y-8 relative">
+                                    <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 -mr-16 -mt-16 rounded-full blur-3xl" />
+                                    </div>
+                                    <div className="relative z-10 space-y-8">
+                                        <h5 className="text-[14px] font-black text-mutedForeground px-1">Config & Timeline</h5>
+
+                                        {/* Date */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-lg border-2 border-border text-violet-600 dark:text-violet-400">
+                                                    <Calendar size={14} className="currentColor" />
+                                                </div>
+                                                <span className="text-[13px] font-black text-foreground">Deadline Posting</span>
+                                            </div>
+                                            <input
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                                required
+                                                className="w-full bg-background border-[3px] border-border rounded-2xl px-5 py-4 font-black text-[14px] focus:border-violet-500 focus:shadow-hard-mini-mini outline-none transition-all"
+                                            />
+                                        </div>
+
+                                        {/* Status */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg border-2 border-border text-amber-600 dark:text-amber-400">
+                                                    <RefreshCw size={14} className="currentColor" />
+                                                </div>
+                                                <span className="text-[13px] font-black text-foreground">Status Tahapan</span>
+                                            </div>
+                                            <CreatableSelect
+                                                value={formData.status}
+                                                onChange={(val) => setFormData({ ...formData, status: val })}
+                                                colorTheme="yellow"
+                                                options={Object.values(ContentStatus).map(s => ({ label: s.charAt(0).toUpperCase() + s.slice(1), value: s }))}
+                                                className="!border-[3px] !rounded-2xl !font-black !text-[14px]"
+                                            />
+                                        </div>
+
+                                        {/* Type */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="p-2 bg-sky-100 dark:bg-sky-500/20 rounded-lg border-2 border-border text-sky-600 dark:text-sky-400">
+                                                    <Layers size={14} className="currentColor" />
+                                                </div>
+                                                <span className="text-[13px] font-black text-foreground">Format Konten</span>
+                                            </div>
+                                            <CreatableSelect
+                                                value={formData.type}
+                                                onChange={(val) => setFormData({ ...formData, type: val })}
+                                                colorTheme="pink"
+                                                className="!border-[3px] !rounded-2xl !font-black !text-[14px]"
+                                                options={[
+                                                    { label: 'Carousel', value: 'Carousel' },
+                                                    { label: 'Reels / Video', value: 'Reels' },
+                                                    { label: 'Single Image', value: 'Single Image' },
+                                                    { label: 'Story', value: 'Story' },
+                                                ]}
+                                            />
+                                        </div>
+
+                                        {/* Priority */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="p-2 bg-rose-100 dark:bg-rose-500/20 rounded-lg border-2 border-border text-rose-600 dark:text-rose-400">
+                                                    <Zap size={14} className="currentColor" />
+                                                </div>
+                                                <span className="text-[13px] font-black text-foreground">Urgency Level</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {[ContentPriority.LOW, ContentPriority.MEDIUM, ContentPriority.HIGH].map((p) => (
+                                                    <button
+                                                        key={formatStatus(p)}
+                                                        type="button"
+                                                        onClick={() => setFormData({ ...formData, priority: p })}
+                                                        className={`flex-1 py-3.5 rounded-2xl border-[3px] text-[14px] font-black transition-all ${formData.priority === p
+                                                            ? 'bg-rose-500 border-border text-white shadow-hard-mini-mini'
+                                                            : 'bg-background border-border text-mutedForeground hover:border-rose-400 hover:shadow-hard-mini-mini active:scale-95'}`}
+                                                    >
+                                                        {p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 2. ACTION BUTTONS SIDEBAR */}
+                                    <div className="space-y-3 pt-2">
+                                        <Button
+                                            type="submit"
+                                            size="large"
+                                            className="w-full h-20 rounded-[2rem] shadow-hard-xl text-[14px] font-black"
+                                        >
+                                            {modalMode === 'create' ? 'Simpan Konten' : 'Simpan Perubahan'}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            onClick={() => setIsModalOpen(false)}
+                                            className="w-full h-14 rounded-[1.5rem] text-[14px] font-black"
+                                        >
+                                            Batal
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* 2. DETAIL & JENIS */}
-                    <div className="bg-pink-500/10 p-5 rounded-2xl border-2 border-pink-500/30 shadow-[4px_4px_0px_0px_rgba(236,72,153,0.3)] relative">
-                        <div className="absolute bottom-0 left-0 w-12 h-12 bg-pink-500/20 rounded-tr-full rounded-bl-2xl opacity-50"></div>
-                        <h4 className="font-heading font-black text-pink-600 flex items-center gap-2 mb-4 text-lg relative z-10">
-                            <Film className="text-pink-600" /> Detail & Jenis
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4 relative z-10">
-                            <CreatableSelect
-                                label="Jenis Konten"
-                                value={formData.type}
-                                onChange={(val) => setFormData({ ...formData, type: val })}
-                                colorTheme="pink"
-                                options={[
-                                    { label: 'Carousel', value: 'Carousel' },
-                                    { label: 'Reels / Video', value: 'Reels' },
-                                    { label: 'Single Image', value: 'Single Image' },
-                                    { label: 'Threads', value: 'Threads' },
-                                    { label: 'Story', value: 'Story' },
-                                ]}
-                                className="border-pink-200"
-                            />
-                            <Input
-                                label="Konten Pillar"
-                                placeholder="Edukasi, Hiburan..."
-                                value={formData.pillar}
-                                onChange={(e) => setFormData({ ...formData, pillar: e.target.value })}
-                                className="border-pink-200 focus:border-pink-500 focus:shadow-none"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 3. STATUS & PIC */}
-                    <div className="bg-amber-500/10 p-5 rounded-2xl border-2 border-amber-500/30 shadow-[4px_4px_0px_0px_rgba(245,158,11,0.3)] relative">
-                        <h4 className="font-heading font-black text-amber-500 flex items-center gap-2 mb-4 text-lg">
-                            <CheckCircle className="text-amber-500" /> Status & Tim
-                        </h4>
-                        <div className="grid grid-cols-2 gap-4">
-                            <CreatableSelect
-                                label="Status"
-                                value={formData.status}
-                                onChange={(val) => setFormData({ ...formData, status: val })}
-                                colorTheme="yellow"
-                                options={Object.values(ContentStatus).map(s => ({ label: s, value: s }))}
-                            />
-                            <Select
-                                label="Prioritas"
-                                value={formData.priority}
-                                onChange={(e) => setFormData({ ...formData, priority: e.target.value as ContentPriority })}
-                                options={[
-                                    { label: 'High 🔥', value: ContentPriority.HIGH },
-                                    { label: 'Medium ⚡', value: ContentPriority.MEDIUM },
-                                    { label: 'Low ☕', value: ContentPriority.LOW },
-                                ]}
-                                className="border-yellow-200 focus:border-yellow-500"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 mt-4">
-                            <CreatableSelect
-                                label="PIC (Penanggung Jawab)"
-                                placeholder="Pilih atau ketik nama..."
-                                value={formData.pic}
-                                onChange={(val) => setFormData({ ...formData, pic: val })}
-                                colorTheme="yellow"
-                                options={teamMembers.map(m => ({ label: m.name, value: m.name }))}
-                                className="border-yellow-200"
-                            />
-                            <CreatableSelect
-                                label="Approval By"
-                                placeholder="Pilih atau ketik nama..."
-                                value={formData.approval}
-                                onChange={(val) => setFormData({ ...formData, approval: val })}
-                                colorTheme="yellow"
-                                options={teamMembers.map(m => ({ label: m.name, value: m.name }))}
-                                className="border-yellow-200"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 4. SCRIPT & FILES */}
-                    <div className="bg-emerald-500/10 p-5 rounded-2xl border-2 border-emerald-500/30 shadow-[4px_4px_0px_0px_rgba(16,185,129,0.3)]">
-                        <label className="font-heading font-black text-emerald-500 text-sm mb-2 flex items-center gap-2">
-                            <File className="text-emerald-500" /> Script / Resources
-                        </label>
-
-                        {/* NEW INPUT: Link Postingan */}
-                        <div className="mb-3">
-                            <Input
-                                label="Link Postingan (untuk Analisa)"
-                                placeholder="https://instagram.com/p/..."
-                                value={formData.contentLink}
-                                onChange={(e) => setFormData({ ...formData, contentLink: e.target.value })}
-                                className="border-emerald-200 focus:border-emerald-600"
-                                icon={<ExternalLink size={16} />}
-                            />
-                        </div>
-
-                        <div className="flex gap-2">
-                            <div className="flex-1 relative">
-                                <LinkIcon className="absolute left-3 top-3.5 text-emerald-400" size={16} />
-                                <input
-                                    className="w-full pl-10 pr-4 py-3 bg-card border-2 border-emerald-500/30 rounded-lg outline-none focus:border-emerald-500 transition-all placeholder:text-mutedForeground font-medium text-foreground"
-                                    placeholder="Paste Link Dokumen / Brief disini..."
-                                    value={formData.script}
-                                    onChange={(e) => setFormData({ ...formData, script: e.target.value })}
-                                />
-                            </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className="w-12 h-[50px] flex items-center justify-center bg-card border-2 border-dashed border-emerald-500/50 rounded-lg cursor-pointer hover:bg-emerald-500/10 hover:border-emerald-500 transition-colors group"
-                                title="Upload File"
-                            >
-                                <Upload size={20} className="text-emerald-500 group-hover:text-emerald-600" />
-                            </div>
-                        </div>
-                        <p className="text-[10px] text-emerald-500 mt-2 italic">* Upload file akan disimpan sebagai lampiran di dalam script (max 2MB).</p>
-                    </div>
-
-                    <div className="pt-4 border-t-2 border-slate-100 flex justify-end gap-3">
-                        <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                        <Button type="submit" icon={<CheckCircle size={18} />}>
-                            {modalMode === 'create' ? 'Buat Konten' : 'Simpan Perubahan'}
-                        </Button>
                     </div>
                 </form>
             </Modal>
@@ -3478,7 +3435,6 @@ export const ContentPlanDetail: React.FC = () => {
                 onClose={() => setIsInviteModalOpen(false)}
                 title="Undang Member"
             >
-                {/* Same as before... */}
                 <div className="space-y-6 text-center py-4">
                     <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
                         <UserPlus size={32} className="text-accent" />
@@ -3489,13 +3445,13 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
 
                     {workspaceData.invite_code === 'SETUP-REQ' ? (
-                        <div className="p-6 bg-red-500/10 border-2 border-dashed border-red-500/50 rounded-xl relative">
-                            <p className="font-bold text-red-500 mb-2">Setup Database Diperlukan</p>
-                            <p className="text-xs text-red-400">Kolom 'invite_code' belum ada di database.</p>
+                        <div className="p-6 bg-rose-50 border-[3px] border-dashed border-rose-500 rounded-xl relative shadow-[4px_4px_0px_#0f172a]">
+                            <p className="font-black text-rose-600 mb-2 text-sm">Setup Database Diperlukan</p>
+                            <p className="text-xs font-bold text-rose-500">Kolom 'invite_code' belum ada di database.</p>
                         </div>
                     ) : (
-                        <div className="p-6 bg-muted border-2 border-dashed border-border rounded-xl relative group transition-colors hover:border-accent">
-                            <p className="font-mono text-4xl font-bold tracking-widest text-foreground select-all">
+                        <div className="p-6 bg-card border-[3px] border-dashed border-slate-300 rounded-xl relative group transition-all hover:border-violet-500 hover:shadow-[4px_4px_0px_#0f172a]">
+                            <p className="font-mono text-4xl font-black tracking-widest text-foreground select-all">
                                 {workspaceData.invite_code}
                             </p>
                         </div>
@@ -3524,38 +3480,38 @@ export const ContentPlanDetail: React.FC = () => {
             >
                 <div className="p-1">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="w-12 h-12 bg-accent/20 rounded-2xl flex items-center justify-center border-2 border-accent/20">
-                            <Users size={24} className="text-accent" />
+                        <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                            <Users size={24} className="text-violet-600" strokeWidth={2.5} />
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-foreground">Anggota Workspace</h3>
-                            <p className="text-xs font-bold text-mutedForeground">Tim yang berkolaborasi di {workspaceData.name}</p>
+                            <p className="text-[10px] font-black text-slate-500 mt-1">Tim yang berkolaborasi di {workspaceData.name}</p>
                         </div>
                     </div>
 
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2 mb-4">
                         {teamMembers.map((member) => (
                             <div
                                 key={member.id}
-                                className="flex items-center gap-4 p-3 rounded-2xl border-2 border-slate-100 hover:border-slate-200 transition-all bg-card shadow-sm"
+                                className="flex items-center gap-4 p-3 rounded-2xl border-[3px] border-slate-900 hover:-translate-y-1 transition-all bg-card shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a]"
                             >
                                 <div className="relative shrink-0">
-                                    <div className="w-12 h-12 rounded-full border-2 border-slate-200 overflow-hidden bg-slate-100">
+                                    <div className="w-12 h-12 rounded-xl border-[2px] border-slate-900 overflow-hidden bg-slate-100 shadow-[2px_2px_0px_#0f172a]">
                                         {member.avatar ? (
                                             <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                <User size={20} />
+                                            <div className="w-full h-full flex items-center justify-center text-mutedForeground">
+                                                <User size={20} strokeWidth={2.5} />
                                             </div>
                                         )}
                                     </div>
-                                    <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-card ${getStatusDot(member.online_status || 'offline')}`}></div>
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[2px] border-slate-900 ${getStatusDot(member.online_status || 'offline')}`}></div>
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-bold text-foreground truncate">{member.name}</h4>
-                                        <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${member.role === 'Developer'
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border ${member.role === 'Developer'
                                             ? 'bg-purple-100 text-purple-700 border-purple-200'
                                             : member.role === 'Admin' || member.role === 'Owner'
                                                 ? 'bg-amber-100 text-amber-700 border-amber-200'
@@ -3609,26 +3565,29 @@ export const ContentPlanDetail: React.FC = () => {
                 isOpen={isAddAssetModalOpen}
                 onClose={() => setIsAddAssetModalOpen(false)}
                 title="Tambah Brand Asset"
-                maxWidth="max-w-lg"
+                maxWidth="max-w-xl"
             >
                 <div className="space-y-5">
                     {/* Type Selector */}
                     <div>
-                        <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Tipe Asset</label>
+                        <label className="block text-xs font-black text-mutedForeground mb-2">Tipe Asset</label>
                         <div className="flex flex-wrap gap-2">
                             {([
-                                { value: 'note', label: 'Catatan', icon: <StickyNote size={14} />, color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
-                                { value: 'link', label: 'Link', icon: <Globe size={14} />, color: 'bg-blue-100 text-blue-700 border-blue-300' },
-                                { value: 'image', label: 'Gambar', icon: <ImageIcon size={14} />, color: 'bg-pink-100 text-pink-700 border-pink-300' },
-                                { value: 'pdf', label: 'PDF', icon: <FileText size={14} />, color: 'bg-red-100 text-red-700 border-red-300' },
-                                { value: 'file', label: 'File', icon: <File size={14} />, color: 'bg-slate-100 text-slate-700 border-slate-300' },
-                                { value: 'color', label: 'Warna', icon: <Palette size={14} />, color: 'bg-purple-100 text-purple-700 border-purple-300' }
+                                { value: 'note', label: 'Catatan', icon: <StickyNote size={16} />, color: 'bg-yellow-50 text-yellow-700 border-yellow-400' },
+                                { value: 'link', label: 'Link', icon: <Globe size={16} />, color: 'bg-blue-50 text-blue-700 border-blue-400' },
+                                { value: 'image', label: 'Gambar', icon: <ImageIcon size={16} />, color: 'bg-pink-50 text-pink-700 border-pink-400' },
+                                { value: 'pdf', label: 'PDF', icon: <FileText size={16} />, color: 'bg-red-50 text-red-700 border-red-400' },
+                                { value: 'file', label: 'File', icon: <File size={16} />, color: 'bg-muted text-slate-700 border-slate-400' },
+                                { value: 'color', label: 'Warna', icon: <Palette size={16} />, color: 'bg-violet-50 text-violet-700 border-violet-400' }
                             ] as { value: typeof newAssetType, label: string, icon: React.ReactNode, color: string }[]).map(t => (
                                 <button
                                     key={t.value}
                                     type="button"
                                     onClick={() => setNewAssetType(t.value)}
-                                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${newAssetType === t.value ? t.color + ' shadow-sm' : 'bg-card border-border text-mutedForeground hover:border-slate-300'}`}
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black border-[3px] transition-all hover:-translate-y-1 active:scale-95 ${newAssetType === t.value
+                                        ? 'bg-card border-slate-900 text-foreground shadow-[4px_4px_0px_#0f172a]'
+                                        : 'bg-muted border-slate-200 text-mutedForeground hover:border-slate-900 hover:text-foreground hover:shadow-[4px_4px_0px_#0f172a]'
+                                        }`}
                                 >
                                     {t.icon} {t.label}
                                 </button>
@@ -3638,59 +3597,59 @@ export const ContentPlanDetail: React.FC = () => {
 
                     {/* Title */}
                     <div>
-                        <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Judul</label>
+                        <label className="block text-xs font-black text-foreground mb-2">Judul</label>
                         <input
                             type="text"
                             value={newAssetTitle}
                             onChange={e => setNewAssetTitle(e.target.value)}
                             placeholder="Nama asset..."
-                            className="w-full px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card"
+                            className="w-full px-4 py-3 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl text-sm font-black text-foreground placeholder:text-mutedForeground outline-none focus:border-violet-500 focus:shadow-[4px_4px_0px_#0f172a] transition-all bg-card"
                         />
                     </div>
 
                     {/* Content - Dynamic based on type */}
                     {newAssetType === 'note' && (
                         <div>
-                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Catatan</label>
+                            <label className="block text-xs font-black text-foreground mb-2">Catatan</label>
                             <textarea
                                 value={newAssetContent}
                                 onChange={e => setNewAssetContent(e.target.value)}
                                 placeholder="Tulis catatan brand..."
                                 rows={4}
-                                className="w-full px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card resize-none"
+                                className="w-full px-4 py-3 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl text-sm font-black text-foreground placeholder:text-mutedForeground outline-none focus:border-violet-500 focus:shadow-[4px_4px_0px_#0f172a] transition-all bg-card resize-none"
                             />
                         </div>
                     )}
 
                     {newAssetType === 'link' && (
                         <div>
-                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">URL</label>
+                            <label className="block text-xs font-black text-foreground mb-2">URL</label>
                             <input
                                 type="url"
                                 value={newAssetContent}
                                 onChange={e => setNewAssetContent(e.target.value)}
                                 placeholder="https://example.com"
-                                className="w-full px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card"
+                                className="w-full px-4 py-3 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl text-sm font-black text-foreground placeholder:text-mutedForeground outline-none focus:border-violet-500 focus:shadow-[4px_4px_0px_#0f172a] transition-all bg-card"
                             />
                         </div>
                     )}
 
                     {newAssetType === 'color' && (
                         <div>
-                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">Kode Warna</label>
+                            <label className="block text-xs font-black text-foreground mb-2">Kode Warna</label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"
                                     value={newAssetContent || '#6366f1'}
                                     onChange={e => setNewAssetContent(e.target.value)}
-                                    className="w-12 h-12 rounded-xl border-2 border-border cursor-pointer"
+                                    className="w-12 h-12 rounded-xl border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
                                 />
                                 <input
                                     type="text"
                                     value={newAssetContent}
                                     onChange={e => setNewAssetContent(e.target.value)}
                                     placeholder="#6366f1"
-                                    className="flex-1 px-4 py-3 border-2 border-border rounded-xl text-sm font-bold text-foreground outline-none focus:border-accent transition-colors bg-card font-mono"
+                                    className="flex-1 px-4 py-3 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-xl text-sm font-black text-foreground placeholder:text-mutedForeground outline-none focus:border-violet-500 focus:shadow-[4px_4px_0px_#0f172a] transition-all bg-card font-mono"
                                 />
                             </div>
                         </div>
@@ -3698,37 +3657,51 @@ export const ContentPlanDetail: React.FC = () => {
 
                     {(newAssetType === 'image' || newAssetType === 'pdf' || newAssetType === 'file') && (
                         <div>
-                            <label className="block text-xs font-black text-mutedForeground uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-black text-foreground mb-2">
                                 Upload {newAssetType === 'image' ? 'Gambar' : newAssetType === 'pdf' ? 'PDF' : 'File'}
                             </label>
                             <div
                                 onClick={() => brandFileInputRef.current?.click()}
-                                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-all"
+                                className="border-[3px] border-dashed border-slate-300 rounded-[24px] p-10 text-center cursor-pointer hover:border-violet-500 hover:bg-violet-50 transition-all bg-card relative group overflow-hidden shadow-[4px_4px_0px_#0f172a]"
                             >
+                                <div className="absolute inset-0 bg-violet-500/0 group-hover:bg-violet-500/5 transition-colors pointer-events-none" />
                                 {newAssetContent ? (
-                                    <div className="flex flex-col items-center gap-2">
+                                    <div className="flex flex-col items-center gap-4 relative z-10">
                                         {newAssetType === 'image' && (
-                                            <img src={newAssetContent} alt="Preview" className="w-32 h-32 object-cover rounded-xl border-2 border-border" />
+                                            <div className="relative">
+                                                <img src={newAssetContent} alt="Preview" className="w-48 h-48 object-cover rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a]" />
+                                                <div className="absolute -top-3 -right-3 w-10 h-10 rounded-xl bg-violet-600 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center justify-center text-white">
+                                                    <RefreshCw size={18} strokeWidth={3} className="animate-spin-slow" />
+                                                </div>
+                                            </div>
                                         )}
                                         {newAssetType === 'pdf' && (
-                                            <div className="flex items-center gap-2 text-red-600">
-                                                <FileText size={24} />
-                                                <span className="font-bold text-sm">{newAssetFileName}</span>
+                                            <div className="flex flex-col items-center gap-2 text-rose-600">
+                                                <div className="w-16 h-16 rounded-2xl bg-rose-50 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] flex items-center justify-center mb-2">
+                                                    <FileText size={32} strokeWidth={3} />
+                                                </div>
+                                                <span className="font-black text-xs">{newAssetFileName}</span>
                                             </div>
                                         )}
                                         {newAssetType === 'file' && (
-                                            <div className="flex items-center gap-2 text-slate-600">
-                                                <File size={24} />
-                                                <span className="font-bold text-sm">{newAssetFileName}</span>
+                                            <div className="flex flex-col items-center gap-2 text-foreground">
+                                                <div className="w-16 h-16 rounded-2xl bg-muted border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] flex items-center justify-center mb-2">
+                                                    <File size={32} strokeWidth={3} />
+                                                </div>
+                                                <span className="font-black text-xs">{newAssetFileName}</span>
                                             </div>
                                         )}
-                                        <span className="text-[10px] font-bold text-accent">Klik untuk ganti file</span>
+                                        <span className="text-[10px] font-black text-violet-600 bg-violet-100 px-3 py-1 rounded-full border-2 border-violet-200 mt-2">Klik untuk ganti file</span>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Upload size={28} className="text-mutedForeground" />
-                                        <span className="text-sm font-bold text-mutedForeground">Klik untuk upload file</span>
-                                        <span className="text-[10px] text-mutedForeground">Max 10MB</span>
+                                    <div className="flex flex-col items-center gap-4 relative z-10">
+                                        <div className="w-16 h-16 rounded-[20px] bg-muted border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] flex items-center justify-center mb-2 group-hover:bg-violet-50 group-hover:scale-110 transition-all">
+                                            <Upload size={32} strokeWidth={3} className="text-foreground" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-sm font-black text-foreground block">Klik untuk upload file</span>
+                                            <span className="text-[10px] font-black text-mutedForeground">Maksimal Kapasitas 10MB</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -3773,7 +3746,7 @@ export const ContentPlanDetail: React.FC = () => {
                     {brandPdfPreviewUrl && (
                         <iframe
                             src={brandPdfPreviewUrl}
-                            className="w-full h-full rounded-xl border-2 border-border"
+                            className="w-full h-full rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a]"
                             title="Brand PDF Preview"
                         />
                     )}

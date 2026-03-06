@@ -66,12 +66,12 @@ import { PremiumLockScreen } from '../components/PremiumLockScreen';
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] rounded-xl pointer-events-none">
-                {label && <p className="text-slate-400 font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
+            <div className="bg-card p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] rounded-xl pointer-events-none">
+                {label && <p className="text-mutedForeground font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></div>
-                        <p className="text-slate-900 font-black text-xs">
+                        <p className="text-foreground font-black text-xs">
                             <span className="opacity-50 font-bold">{entry.name}:</span> {entry.value.toLocaleString()}{entry.name === 'value' && entry.dataKey === 'er' ? '%' : ''}
                         </p>
                     </div>
@@ -660,7 +660,7 @@ export const ContentDataInsight: React.FC = () => {
                         <p className="text-[9px] font-black uppercase tracking-wider opacity-80 mb-0.5">Interactions</p>
                         <p className="text-xl font-black">{summaryStats.interactions.toLocaleString()}</p>
                     </div>
-                    <div className="bg-yellow-400 rounded-xl p-3 text-slate-900">
+                    <div className="bg-yellow-400 rounded-xl p-3 text-foreground">
                         <p className="text-[9px] font-black uppercase tracking-wider opacity-70 mb-0.5">Views</p>
                         <p className="text-xl font-black">{summaryStats.views.toLocaleString()}</p>
                     </div>
@@ -828,7 +828,7 @@ export const ContentDataInsight: React.FC = () => {
                 {/* ... Header ... */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 sm:gap-3 md:gap-4 pb-1 sm:pb-2">
                     <div>
-                        <h2 className="text-base md:text-2xl lg:text-4xl font-extrabold text-slate-800 font-heading tracking-tight flex items-center gap-2 sm:gap-3">
+                        <h2 className="text-base md:text-2xl lg:text-4xl font-extrabold text-foreground font-heading tracking-tight flex items-center gap-2 sm:gap-3">
                             {config?.page_titles?.['insight']?.title || 'Content Data Insight'}
                         </h2>
                         <p className="text-slate-500 font-medium mt-0.5 md:mt-2 text-xs sm:text-sm hidden md:block">
@@ -839,8 +839,8 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Period Badge + Report Button */}
                     <div className="flex items-center gap-3">
                         {/* Period Indicator Badge */}
-                        <div className="bg-white border-2 border-slate-800 px-2 sm:px-4 py-1 sm:py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default text-[10px] sm:text-sm">
-                            <span className="font-heading font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                        <div className="bg-card border-2 border-slate-800 px-2 sm:px-4 py-1 sm:py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default text-[10px] sm:text-sm">
+                            <span className="font-heading font-black text-foreground uppercase tracking-wide flex items-center gap-2">
                                 <Calendar size={14} className="text-accent" />
                                 <span className="hidden sm:inline">{getPeriodLabel()}</span>
                             </span>
@@ -928,12 +928,12 @@ export const ContentDataInsight: React.FC = () => {
                         <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-20 group-hover:opacity-30 transition-opacity">
                             <Eye size={60} className="text-black" />
                         </div>
-                        <div className="relative z-10 text-slate-900">
+                        <div className="relative z-10 text-foreground">
                             <p className="text-[8px] sm:text-xs font-black uppercase tracking-wider mb-1 opacity-80">Content Views</p>
                             <h3 className="text-2xl sm:text-3xl font-black">{summaryStats.views.toLocaleString()}</h3>
                         </div>
                         <div className="relative z-10 mt-auto pt-2">
-                            <span className="inline-block bg-black/10 text-slate-900 text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
+                            <span className="inline-block bg-black/10 text-foreground text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -950,10 +950,10 @@ export const ContentDataInsight: React.FC = () => {
                     >
                         <div className="space-y-6">
                             {/* Header Info */}
-                            <div className="bg-slate-50 border-2 border-slate-200 p-4 rounded-xl flex justify-between items-center">
+                            <div className="bg-muted border-2 border-slate-200 p-4 rounded-xl flex justify-between items-center">
                                 <div>
                                     <p className="text-xs font-bold text-slate-500 uppercase">Periode Data</p>
-                                    <p className="font-black text-slate-800 text-lg">{getPeriodLabel()}</p>
+                                    <p className="font-black text-foreground text-lg">{getPeriodLabel()}</p>
                                 </div>
                                 <div className={`px-4 py-2 rounded-lg font-bold text-white uppercase text-sm ${selectedMetric === 'reach' ? 'bg-blue-500' :
                                     selectedMetric === 'er' ? 'bg-pink-500' :
@@ -964,7 +964,7 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
 
                             {/* Chart Area */}
-                            <div className="h-[180px] sm:h-[300px] w-full bg-white border-2 border-slate-800 rounded-xl p-3 sm:p-4 shadow-hard relative">
+                            <div className="h-[180px] sm:h-[300px] w-full bg-card border-2 border-slate-800 rounded-xl p-3 sm:p-4 shadow-hard relative">
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <AreaChart data={chartData}>
                                         <defs>
@@ -1004,8 +1004,8 @@ export const ContentDataInsight: React.FC = () => {
                             {/* Analysis Box */}
                             <div className="bg-[#FFFDF5] border-2 border-slate-800 rounded-xl p-6 shadow-hard relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-2 h-full bg-slate-800"></div>
-                                <h4 className="font-heading font-black text-xl text-slate-800 mb-2 flex items-center gap-2">
-                                    <TrendingUp size={24} className="text-slate-800" />
+                                <h4 className="font-heading font-black text-xl text-foreground mb-2 flex items-center gap-2">
+                                    <TrendingUp size={24} className="text-foreground" />
                                     Hipotesa & Analisa Singkat
                                 </h4>
                                 <p className="text-slate-700 font-medium leading-relaxed">
@@ -1013,9 +1013,9 @@ export const ContentDataInsight: React.FC = () => {
                                 </p>
                                 <div className="mt-4 flex gap-2">
                                     {chartData.slice(-3).map((d, i) => (
-                                        <div key={i} className="bg-white border border-slate-200 p-2 rounded-lg text-xs">
-                                            <span className="block font-bold text-slate-400">{d.name}</span>
-                                            <span className="font-black text-slate-800">{d.value.toLocaleString()}</span>
+                                        <div key={i} className="bg-card border border-slate-200 p-2 rounded-lg text-xs">
+                                            <span className="block font-bold text-mutedForeground">{d.name}</span>
+                                            <span className="font-black text-foreground">{d.value.toLocaleString()}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -1056,13 +1056,13 @@ export const ContentDataInsight: React.FC = () => {
                                 />
                             </div>
                             <div className="flex items-center gap-1 sm:gap-2 border rounded-lg px-1 sm:px-2 h-8 sm:h-9">
-                                <span className="text-[7px] sm:text-[10px] font-bold text-slate-400 uppercase">Periode</span>
+                                <span className="text-[7px] sm:text-[10px] font-bold text-mutedForeground uppercase">Periode</span>
                                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-[7px] sm:text-xs font-bold outline-none bg-transparent w-20 sm:w-24" />
                                 <span className="text-slate-300 text-xs">-</span>
                                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-[7px] sm:text-xs font-bold outline-none bg-transparent w-20 sm:w-24" />
                             </div>
                             {(filterPlatform !== 'all' || filterAccount !== 'all' || startDate || endDate) && (
-                                <button onClick={resetFilters} className="p-1 sm:p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                <button onClick={resetFilters} className="p-1 sm:p-2 text-mutedForeground hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                                     <X size={14} />
                                 </button>
                             )}
@@ -1075,7 +1075,7 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Data Table */}
                     <div className="flex-1 overflow-x-auto">
                         <table className="w-full text-left border-collapse text-[10px] sm:text-sm">
-                            <thead className="border-b-2 border-slate-100 sticky top-0 z-10 shadow-sm bg-white">
+                            <thead className="border-b-2 border-border/50 sticky top-0 z-10 shadow-sm bg-card">
                                 <tr>
                                     <th className="p-2 sm:p-3 md:p-4 w-8 sm:w-10"></th>
                                     <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tanggal</th>
@@ -1088,7 +1088,7 @@ export const ContentDataInsight: React.FC = () => {
                             <tbody className="divide-y divide-slate-100">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-slate-400">
+                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-mutedForeground">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Loader2 className="animate-spin text-accent" size={24} sm:size={32} />
                                                 <span className="text-xs sm:text-sm">Mengambil data...</span>
@@ -1097,7 +1097,7 @@ export const ContentDataInsight: React.FC = () => {
                                     </tr>
                                 ) : filteredData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-slate-400 italic bg-slate-50/50 text-xs sm:text-sm">
+                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-mutedForeground italic bg-muted/50 text-xs sm:text-sm">
                                             Tidak ada konten published yang ditemukan.
                                         </td>
                                     </tr>
@@ -1105,20 +1105,20 @@ export const ContentDataInsight: React.FC = () => {
                                     filteredData.map((item) => (
                                         <React.Fragment key={item.id}>
                                             <tr
-                                                className={`transition-colors cursor-pointer text-[9px] sm:text-sm ${expandedRowId === item.id ? 'bg-purple-500/10' : 'hover:bg-slate-500/5'}`}
+                                                className={`transition-colors cursor-pointer text-[9px] sm:text-sm ${expandedRowId === item.id ? 'bg-purple-500/10' : 'hover:bg-muted0/5'}`}
                                                 onClick={() => toggleRow(item.id)}
                                             >
                                                 <td className="p-2 sm:p-3 md:p-4 text-center">
-                                                    {expandedRowId === item.id ? <ChevronUp size={14} className="text-accent" /> : <ChevronDown size={14} className="text-slate-400" />}
+                                                    {expandedRowId === item.id ? <ChevronUp size={14} className="text-accent" /> : <ChevronDown size={14} className="text-mutedForeground" />}
                                                 </td>
                                                 <td className="p-2 sm:p-3 md:p-4 align-middle">
                                                     <div className="flex items-center gap-1 sm:gap-2 font-bold text-slate-600">
-                                                        <Calendar size={12} sm:size={16} className="text-slate-400 flex-shrink-0" />
+                                                        <Calendar size={12} sm:size={16} className="text-mutedForeground flex-shrink-0" />
                                                         <span className="text-[7px] sm:text-sm whitespace-nowrap">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="p-2 sm:p-3 md:p-4 align-middle max-w-[120px] sm:max-w-xs">
-                                                    <p className="font-bold text-slate-800 text-[8px] sm:text-sm line-clamp-1 mb-0.5 sm:mb-1" title={item.title}>{item.title}</p>
+                                                    <p className="font-bold text-foreground text-[8px] sm:text-sm line-clamp-1 mb-0.5 sm:mb-1" title={item.title}>{item.title}</p>
                                                     <div className="flex items-center gap-1 sm:gap-2">
                                                         <span className="text-[6px] sm:text-[10px] px-1 sm:px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-500 font-bold uppercase">{item.type}</span>
                                                         <div className="flex items-center gap-0.5 sm:gap-1 text-slate-500">
@@ -1145,7 +1145,7 @@ export const ContentDataInsight: React.FC = () => {
                                                             <LinkIcon size={10} /> Link
                                                         </a>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-[7px] sm:text-xs font-bold text-slate-400 bg-slate-500/10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border border-slate-500/20">
+                                                        <span className="inline-flex items-center gap-1 text-[7px] sm:text-xs font-bold text-mutedForeground bg-muted0/10 px-1 sm:px-2 py-0.5 sm:py-1 rounded border border-slate-500/20">
                                                             <LinkIcon size={10} /> Kosong
                                                         </span>
                                                     )}
@@ -1155,16 +1155,16 @@ export const ContentDataInsight: React.FC = () => {
                                                     {item.metrics ? (
                                                         <div className={`grid gap-1 sm:gap-2 text-center w-full text-[7px] sm:text-xs ${item.platform === Platform.INSTAGRAM ? 'grid-cols-3 sm:grid-cols-6 max-w-[250px] sm:max-w-[400px]' : 'grid-cols-2.5 sm:grid-cols-5 max-w-[200px] sm:max-w-[350px]'}`}>
                                                             {item.platform === Platform.INSTAGRAM && (
-                                                                <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Reach</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics as any).reach?.toLocaleString() || 0}</span></div>
+                                                                <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Reach</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics as any).reach?.toLocaleString() || 0}</span></div>
                                                             )}
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Views</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.views || 0).toLocaleString()}</span></div>
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Likes</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.likes || 0).toLocaleString()}</span></div>
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Comm</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.comments || 0).toLocaleString()}</span></div>
-                                                            <div><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Share</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.shares || 0).toLocaleString()}</span></div>
-                                                            <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-slate-400 font-bold uppercase">Save</span><span className="text-[8px] sm:text-xs font-black text-slate-800">{(item.metrics.saves || 0).toLocaleString()}</span></div>
+                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Views</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.views || 0).toLocaleString()}</span></div>
+                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Likes</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.likes || 0).toLocaleString()}</span></div>
+                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Comm</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.comments || 0).toLocaleString()}</span></div>
+                                                            <div><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Share</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.shares || 0).toLocaleString()}</span></div>
+                                                            <div className="hidden sm:block"><span className="block text-[6px] sm:text-[10px] text-mutedForeground font-bold uppercase">Save</span><span className="text-[8px] sm:text-xs font-black text-foreground">{(item.metrics.saves || 0).toLocaleString()}</span></div>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-center"><span className="text-[7px] sm:text-xs text-slate-400 italic">Belum</span></div>
+                                                        <div className="text-center"><span className="text-[7px] sm:text-xs text-mutedForeground italic">Belum</span></div>
                                                     )}
                                                 </td>
                                                 <td className="p-2 sm:p-3 md:p-4 align-middle text-right">
@@ -1195,12 +1195,12 @@ export const ContentDataInsight: React.FC = () => {
                                             {/* EXPANDED ROW DETAIL */}
                                             {expandedRowId === item.id && (
                                                 <tr className="bg-purple-50/30 animate-in slide-in-from-top-2 duration-200">
-                                                    <td colSpan={6} className="p-3 sm:p-4 md:p-6 border-b-2 border-slate-100">
+                                                    <td colSpan={6} className="p-3 sm:p-4 md:p-6 border-b-2 border-border/50">
                                                         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 md:gap-6">
                                                             {/* Left: Detailed Metrics with NEW FORMULA */}
                                                             <div className="flex-1 space-y-2 sm:space-y-4">
                                                                 <div className="flex justify-between items-center">
-                                                                    <h4 className="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-2"><TrendingUp size={14} sm:size={18} className="text-accent" /> Details</h4>
+                                                                    <h4 className="font-bold text-foreground text-xs sm:text-sm flex items-center gap-2"><TrendingUp size={14} sm:size={18} className="text-accent" /> Details</h4>
                                                                     {(item.metrics as any)?.isManual && (
                                                                         <span className="text-[8px] sm:text-[10px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold border border-pink-200">
                                                                             Manual
@@ -1209,31 +1209,31 @@ export const ContentDataInsight: React.FC = () => {
                                                                 </div>
                                                                 {item.metrics ? (
                                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                                                                        <div className="bg-white p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                                        <div className="bg-card p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                                             <div className="absolute top-0 right-0 p-1">
                                                                                 <TrendingUp size={40} className="text-slate-50 opacity-50 -rotate-12" />
                                                                             </div>
                                                                             <div className="flex justify-between items-start mb-1 sm:mb-2 relative z-10">
-                                                                                <span className="text-[7px] sm:text-xs font-bold text-slate-400 uppercase">ER</span>
+                                                                                <span className="text-[7px] sm:text-xs font-bold text-mutedForeground uppercase">ER</span>
                                                                             </div>
-                                                                            <p className="text-xl sm:text-3xl font-black text-slate-800 relative z-10">
+                                                                            <p className="text-xl sm:text-3xl font-black text-foreground relative z-10">
                                                                                 {calculateER(item.metrics).toFixed(2)}%
                                                                             </p>
-                                                                            <p className="text-[7px] sm:text-[10px] text-slate-400 mt-0.5 sm:mt-1 relative z-10 font-medium">
+                                                                            <p className="text-[7px] sm:text-[10px] text-mutedForeground mt-0.5 sm:mt-1 relative z-10 font-medium">
                                                                                 Interaksi/Views
                                                                             </p>
                                                                         </div>
-                                                                        <div className="bg-white p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                                                        <div className="bg-card p-2 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
                                                                             <div className="absolute top-0 right-0 p-1">
                                                                                 <Zap size={40} className="text-slate-50 opacity-50 -rotate-12" />
                                                                             </div>
                                                                             <div className="flex justify-between items-start mb-1 sm:mb-2 relative z-10">
-                                                                                <span className="text-[7px] sm:text-xs font-bold text-slate-400 uppercase">Total</span>
+                                                                                <span className="text-[7px] sm:text-xs font-bold text-mutedForeground uppercase">Total</span>
                                                                             </div>
-                                                                            <p className="text-xl sm:text-3xl font-black text-slate-800 relative z-10">
+                                                                            <p className="text-xl sm:text-3xl font-black text-foreground relative z-10">
                                                                                 {calculateInteractions(item.metrics).toLocaleString()}
                                                                             </p>
-                                                                            <p className="text-[7px] sm:text-[10px] text-slate-400 mt-0.5 sm:mt-1 relative z-10 font-medium">
+                                                                            <p className="text-[7px] sm:text-[10px] text-mutedForeground mt-0.5 sm:mt-1 relative z-10 font-medium">
                                                                                 L+C+S+V
                                                                             </p>
                                                                         </div>
@@ -1246,29 +1246,29 @@ export const ContentDataInsight: React.FC = () => {
                                                                         )}
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="bg-slate-100 p-3 sm:p-6 rounded-lg sm:rounded-xl text-center text-slate-400 italic text-[8px] sm:text-sm">Belum ada data detail.</div>
+                                                                    <div className="bg-slate-100 p-3 sm:p-6 rounded-lg sm:rounded-xl text-center text-mutedForeground italic text-[8px] sm:text-sm">Belum ada data detail.</div>
                                                                 )}
                                                             </div>
 
                                                             {/* Right: Content Details & Insights (REPLACED CAPTION) */}
-                                                            <div className="flex-1 bg-white p-5 rounded-xl border-2 border-slate-200 shadow-sm relative">
-                                                                <div className="absolute top-0 right-0 bg-yellow-400 text-slate-900 text-[10px] font-black px-2 py-1 rounded-bl-lg border-l border-b border-slate-800">CONTENT DETAILS</div>
-                                                                <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-4"><FileText size={18} className="text-slate-400" /> Insight & Details</h4>
+                                                            <div className="flex-1 bg-card p-5 rounded-xl border-2 border-slate-200 shadow-sm relative">
+                                                                <div className="absolute top-0 right-0 bg-yellow-400 text-foreground text-[10px] font-black px-2 py-1 rounded-bl-lg border-l border-b border-slate-800">CONTENT DETAILS</div>
+                                                                <h4 className="font-bold text-foreground flex items-center gap-2 mb-4"><FileText size={18} className="text-mutedForeground" /> Insight & Details</h4>
 
                                                                 <div className="space-y-4">
                                                                     <div className="grid grid-cols-2 gap-3">
-                                                                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pillar Konten</span>
+                                                                        <div className="p-3 bg-muted rounded-lg border border-border/50">
+                                                                            <span className="block text-[10px] font-bold text-mutedForeground uppercase mb-1">Pillar Konten</span>
                                                                             <span className="font-bold text-slate-700 text-sm">{item.pillar || '-'}</span>
                                                                         </div>
-                                                                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">PIC / Creator</span>
+                                                                        <div className="p-3 bg-muted rounded-lg border border-border/50">
+                                                                            <span className="block text-[10px] font-bold text-mutedForeground uppercase mb-1">PIC / Creator</span>
                                                                             <span className="font-bold text-slate-700 text-sm">{item.pic || item.assignee || '-'}</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                                                <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between">
                                                                     <div className="flex items-center gap-1">
                                                                         <span className="text-[10px] text-slate-300 font-mono">Last updated: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : '-'}</span>
                                                                     </div>
@@ -1293,7 +1293,7 @@ export const ContentDataInsight: React.FC = () => {
 
                             {/* Header Pop Art */}
                             <div className="px-6 py-4 border-b-2 border-slate-800 bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-bl-full -z-0"></div>
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-card/10 rounded-bl-full -z-0"></div>
                                 <h3 className="font-bold font-heading text-lg tracking-tight flex items-center gap-2 z-10">
                                     <Edit3 size={20} /> Input Metrics Manual
                                 </h3>
@@ -1373,7 +1373,7 @@ export const ContentDataInsight: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t-2 border-slate-100 flex justify-end gap-3">
+                                <div className="pt-4 border-t-2 border-border/50 flex justify-end gap-3">
                                     <Button type="button" variant="secondary" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
                                     <Button type="submit" className="bg-pink-500 hover:bg-pink-600 border-pink-700" icon={<Save size={18} />}>
                                         Simpan Metrics
@@ -1409,15 +1409,15 @@ export const ContentDataInsight: React.FC = () => {
                 ) : (
                     <div className="space-y-8">
                         {/* ── Filter Bar ── */}
-                        <div className="flex flex-wrap items-center gap-3 bg-slate-50 border-2 border-slate-200 rounded-2xl p-4">
-                            <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">
+                        <div className="flex flex-wrap items-center gap-3 bg-muted border-2 border-slate-200 rounded-2xl p-4">
+                            <div className="flex items-center gap-2 text-[10px] font-black text-mutedForeground uppercase tracking-widest mr-2">
                                 <Filter size={14} /> Filter Report
                             </div>
                             <div className="w-44">
                                 <select
                                     value={reportFilterAccount}
                                     onChange={e => setReportFilterAccount(e.target.value)}
-                                    className="w-full px-3 py-2 border-2 border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 bg-white transition-colors"
+                                    className="w-full px-3 py-2 border-2 border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 bg-card transition-colors"
                                 >
                                     <option value="all">Semua Akun</option>
                                     {accounts.map(a => <option key={a} value={a}>{a}</option>)}
@@ -1427,7 +1427,7 @@ export const ContentDataInsight: React.FC = () => {
                                 <select
                                     value={reportFilterPlatform}
                                     onChange={e => setReportFilterPlatform(e.target.value)}
-                                    className="w-full px-3 py-2 border-2 border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 bg-white transition-colors"
+                                    className="w-full px-3 py-2 border-2 border-slate-300 rounded-xl text-xs font-bold outline-none focus:border-indigo-500 bg-card transition-colors"
                                 >
                                     <option value="all">Semua Platform</option>
                                     <option value={Platform.INSTAGRAM}>Instagram</option>
@@ -1437,7 +1437,7 @@ export const ContentDataInsight: React.FC = () => {
                                     <option value={Platform.FACEBOOK}>Facebook</option>
                                 </select>
                             </div>
-                            <div className="flex items-center gap-2 border-2 border-slate-300 rounded-xl px-3 py-2 bg-white">
+                            <div className="flex items-center gap-2 border-2 border-slate-300 rounded-xl px-3 py-2 bg-card">
                                 <Calendar size={14} className="text-indigo-500" />
                                 <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="text-xs font-bold outline-none bg-transparent w-28" />
                                 <span className="text-slate-300 text-xs font-black">—</span>
@@ -1450,7 +1450,7 @@ export const ContentDataInsight: React.FC = () => {
 
                         {/* ── Section 1: Total Metrics Cards ── */}
                         <div>
-                            <h4 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <h4 className="text-lg font-black text-foreground mb-4 flex items-center gap-2">
                                 <BarChart2 size={20} className="text-indigo-500" />
                                 Ringkasan Metrics Bulanan
                             </h4>
@@ -1477,8 +1477,8 @@ export const ContentDataInsight: React.FC = () => {
                         {/* ── Section 2: Growth Charts ── */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Weekly Growth Line Chart */}
-                            <div className="bg-white border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
+                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
                                     <TrendingUp size={16} className="text-indigo-500" />
                                     Grafik Pertumbuhan Per Minggu
                                 </h4>
@@ -1513,8 +1513,8 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
 
                             {/* Metrics Comparison Bar Chart */}
-                            <div className="bg-white border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
+                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
                                     <Layers size={16} className="text-purple-500" />
                                     Komparasi Metrics Engagement
                                 </h4>
@@ -1546,12 +1546,12 @@ export const ContentDataInsight: React.FC = () => {
                                 </h4>
                                 <div className="space-y-3">
                                     {reportData.top3.length > 0 ? reportData.top3.map((item, i) => (
-                                        <div key={item.id} className="bg-white border-2 border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+                                        <div key={item.id} className="bg-card border-2 border-emerald-200 rounded-xl p-4 flex items-start gap-3">
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0 ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-amber-700'}`}>
                                                 {i + 1}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-slate-800 line-clamp-1">{item.title}</p>
+                                                <p className="text-xs font-bold text-foreground line-clamp-1">{item.title}</p>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[9px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">{item.platform}</span>
                                                     <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
@@ -1578,12 +1578,12 @@ export const ContentDataInsight: React.FC = () => {
                                 </h4>
                                 <div className="space-y-3">
                                     {reportData.bottom3.length > 0 ? reportData.bottom3.map((item, i) => (
-                                        <div key={item.id} className="bg-white border-2 border-red-100 rounded-xl p-4 flex items-start gap-3">
+                                        <div key={item.id} className="bg-card border-2 border-red-100 rounded-xl p-4 flex items-start gap-3">
                                             <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-black text-sm shrink-0">
                                                 {i + 1}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-slate-800 line-clamp-1">{item.title}</p>
+                                                <p className="text-xs font-bold text-foreground line-clamp-1">{item.title}</p>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[9px] font-black text-red-600 bg-red-100 px-2 py-0.5 rounded-full">{item.platform}</span>
                                                     <span className="text-[9px] font-black text-slate-500">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
@@ -1611,15 +1611,15 @@ export const ContentDataInsight: React.FC = () => {
                                 <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Total Konten Posted</p>
                                 <p className="text-5xl font-black">{reportData.totalPosts}</p>
                                 <p className="text-xs font-bold opacity-70 mt-2">konten dipublikasikan pada periode ini</p>
-                                <div className="mt-4 flex items-center gap-2 bg-white/15 px-3 py-2 rounded-xl text-[10px] font-bold">
+                                <div className="mt-4 flex items-center gap-2 bg-card/15 px-3 py-2 rounded-xl text-[10px] font-bold">
                                     <Target size={12} />
                                     Rata-rata {reportData.totalPosts > 0 ? Math.ceil(reportData.totalPosts / 4) : 0} konten / minggu
                                 </div>
                             </div>
 
                             {/* Pillar Pie Chart */}
-                            <div className="bg-white border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-slate-800 mb-2 flex items-center gap-2">
+                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
+                                <h4 className="text-sm font-black text-foreground mb-2 flex items-center gap-2">
                                     <Layers size={16} className="text-indigo-500" />
                                     Content Pillar Overview
                                 </h4>
@@ -1657,8 +1657,8 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
 
                             {/* Posting Frequency Heatmap */}
-                            <div className="bg-white border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
+                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
                                     <Clock size={16} className="text-amber-500" />
                                     Frekuensi Posting Per Hari
                                 </h4>
@@ -1673,7 +1673,7 @@ export const ContentDataInsight: React.FC = () => {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
-                                <p className="text-[10px] text-slate-400 font-bold mt-2 text-center">
+                                <p className="text-[10px] text-mutedForeground font-bold mt-2 text-center">
                                     Hari terbaik: <span className="text-indigo-600">{reportData.postingFreqData.reduce((best, d) => d.posts > best.posts ? d : best, { name: '-', posts: 0 }).name}</span>
                                 </p>
                             </div>
@@ -1681,8 +1681,8 @@ export const ContentDataInsight: React.FC = () => {
 
                         {/* ── Section 5: Platform Distribution (jika multi-platform) ── */}
                         {reportFilterPlatform === 'all' && reportData.platformPieData.length > 1 && (
-                            <div className="bg-white border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
-                                <h4 className="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <div className="bg-card border-2 border-slate-800 rounded-2xl p-5 shadow-hard">
+                                <h4 className="text-sm font-black text-foreground mb-4 flex items-center gap-2">
                                     <Users size={16} className="text-teal-500" />
                                     Distribusi Platform
                                 </h4>
@@ -1701,11 +1701,11 @@ export const ContentDataInsight: React.FC = () => {
                                     </div>
                                     <div className="flex-1 grid grid-cols-2 gap-3">
                                         {reportData.platformPieData.map((p, i) => (
-                                            <div key={p.name} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                                            <div key={p.name} className="flex items-center gap-3 bg-muted border border-slate-200 rounded-xl px-4 py-3">
                                                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
                                                 <div>
-                                                    <p className="text-xs font-black text-slate-800">{p.name}</p>
-                                                    <p className="text-lg font-black text-slate-600">{p.value} <span className="text-[9px] font-bold text-slate-400">konten</span></p>
+                                                    <p className="text-xs font-black text-foreground">{p.name}</p>
+                                                    <p className="text-lg font-black text-slate-600">{p.value} <span className="text-[9px] font-bold text-mutedForeground">konten</span></p>
                                                 </div>
                                             </div>
                                         ))}
@@ -1751,7 +1751,7 @@ export const ContentDataInsight: React.FC = () => {
                         <div className="flex justify-center">
                             <button
                                 onClick={saveReportNotesToStorage}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-2xl border-2 border-slate-800 font-black text-sm shadow-hard transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-white text-slate-800 hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-hard-hover'}`}
+                                className={`flex items-center gap-2 px-8 py-3 rounded-2xl border-2 border-slate-800 font-black text-sm shadow-hard transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-card text-foreground hover:bg-muted hover:-translate-y-0.5 hover:shadow-hard-hover'}`}
                             >
                                 {savingReportNotes ? (
                                     <><Save size={16} /> Tersimpan! ✓</>
@@ -1769,10 +1769,10 @@ export const ContentDataInsight: React.FC = () => {
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Dynamic recommendations based on data */}
-                                <div className="bg-white/80 border border-indigo-200 rounded-xl p-4">
+                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Star size={14} className="text-amber-500" />
-                                        <span className="text-xs font-black text-slate-800">Optimasi Engagement Rate</span>
+                                        <span className="text-xs font-black text-foreground">Optimasi Engagement Rate</span>
                                     </div>
                                     <p className="text-[11px] text-slate-600 leading-relaxed">
                                         {reportData.avgER >= 3
@@ -1783,10 +1783,10 @@ export const ContentDataInsight: React.FC = () => {
                                     </p>
                                 </div>
 
-                                <div className="bg-white/80 border border-indigo-200 rounded-xl p-4">
+                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Clock size={14} className="text-indigo-500" />
-                                        <span className="text-xs font-black text-slate-800">Frekuensi Posting</span>
+                                        <span className="text-xs font-black text-foreground">Frekuensi Posting</span>
                                     </div>
                                     <p className="text-[11px] text-slate-600 leading-relaxed">
                                         {reportData.totalPosts >= 20
@@ -1797,10 +1797,10 @@ export const ContentDataInsight: React.FC = () => {
                                     </p>
                                 </div>
 
-                                <div className="bg-white/80 border border-indigo-200 rounded-xl p-4">
+                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Layers size={14} className="text-purple-500" />
-                                        <span className="text-xs font-black text-slate-800">Diversifikasi Content Pillar</span>
+                                        <span className="text-xs font-black text-foreground">Diversifikasi Content Pillar</span>
                                     </div>
                                     <p className="text-[11px] text-slate-600 leading-relaxed">
                                         {reportData.pillarPieData.length >= 3
@@ -1809,10 +1809,10 @@ export const ContentDataInsight: React.FC = () => {
                                     </p>
                                 </div>
 
-                                <div className="bg-white/80 border border-indigo-200 rounded-xl p-4">
+                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Target size={14} className="text-emerald-500" />
-                                        <span className="text-xs font-black text-slate-800">Kualitas vs Kuantitas</span>
+                                        <span className="text-xs font-black text-foreground">Kualitas vs Kuantitas</span>
                                     </div>
                                     <p className="text-[11px] text-slate-600 leading-relaxed">
                                         {reportData.top3.length > 0 && reportData.top3[0]._interactions > reportData.totalInteractions * 0.3
@@ -1821,10 +1821,10 @@ export const ContentDataInsight: React.FC = () => {
                                     </p>
                                 </div>
 
-                                <div className="bg-white/80 border border-indigo-200 rounded-xl p-4">
+                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Share2 size={14} className="text-teal-500" />
-                                        <span className="text-xs font-black text-slate-800">Saves & Shares Ratio</span>
+                                        <span className="text-xs font-black text-foreground">Saves & Shares Ratio</span>
                                     </div>
                                     <p className="text-[11px] text-slate-600 leading-relaxed">
                                         {(reportData.totalSaves + reportData.totalShares) > reportData.totalLikes * 0.1
@@ -1833,10 +1833,10 @@ export const ContentDataInsight: React.FC = () => {
                                     </p>
                                 </div>
 
-                                <div className="bg-white/80 border border-indigo-200 rounded-xl p-4">
+                                <div className="bg-card/80 border border-indigo-200 rounded-xl p-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Eye size={14} className="text-blue-500" />
-                                        <span className="text-xs font-black text-slate-800">Reach vs Views Efficiency</span>
+                                        <span className="text-xs font-black text-foreground">Reach vs Views Efficiency</span>
                                     </div>
                                     <p className="text-[11px] text-slate-600 leading-relaxed">
                                         {reportData.totalReach > 0 && reportData.totalViews > reportData.totalReach * 0.8

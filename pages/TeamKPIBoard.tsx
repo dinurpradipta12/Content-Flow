@@ -417,7 +417,7 @@ export const TeamKPIBoard: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-slate-900 flex items-center gap-2">
+                    <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-foreground flex items-center gap-2">
                         {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
                     </h1>
                     <p className="text-slate-500 text-xs sm:text-sm mt-0.5 hidden md:block">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
@@ -428,7 +428,7 @@ export const TeamKPIBoard: React.FC = () => {
                         <select
                             value={selectedWorkspaceId}
                             onChange={e => setSelectedWorkspaceId(e.target.value)}
-                            className="bg-transparent border-2 border-slate-200 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-bold focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                            className="bg-card border-[3px] border-slate-900 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-colors cursor-pointer shadow-[2px_2px_0px_#0f172a]"
                         >
                             <option value="all">Semua Workspace</option>
                             {myWorkspaces.map(ws => {
@@ -446,7 +446,7 @@ export const TeamKPIBoard: React.FC = () => {
                     <select
                         value={periodFilter}
                         onChange={e => setPeriodFilter(e.target.value)}
-                        className="bg-transparent border-2 border-slate-200 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-bold focus:outline-none focus:border-violet-400 transition-colors cursor-pointer"
+                        className="bg-card border-[3px] border-slate-900 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-colors cursor-pointer shadow-[2px_2px_0px_#0f172a]"
                     >
                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
@@ -460,39 +460,39 @@ export const TeamKPIBoard: React.FC = () => {
                 {/* LEFT COLUMN: Main Stats & Member Grid */}
                 <div className="flex-1 space-y-4 md:space-y-6 min-w-0">
                     {/* Summary Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-                        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
-                            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-violet-100/10 rounded-lg sm:rounded-xl border-2 border-violet-100 flex items-center justify-center flex-shrink-0">
-                                <Users className="text-violet-500" size={18} />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
+                        <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-violet-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
+                                <Users className="text-violet-600" size={20} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <p className="text-xl sm:text-2xl font-black text-foreground">{totalMembers}</p>
-                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Members</p>
+                                <p className="text-2xl sm:text-3xl font-black text-foreground">{totalMembers}</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Members</p>
                             </div>
                         </div>
-                        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4">
-                            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-blue-100/10 rounded-lg sm:rounded-xl border-2 border-blue-100 flex items-center justify-center flex-shrink-0">
-                                <Target className="text-blue-500" size={18} />
+                        <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-blue-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
+                                <Target className="text-blue-600" size={20} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <p className="text-xl sm:text-2xl font-black text-foreground">{avgCompletion}%</p>
-                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">Completion</p>
+                                <p className="text-2xl sm:text-3xl font-black text-foreground">{avgCompletion}%</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Completion</p>
                             </div>
                         </div>
-                        <div className="bg-card rounded-xl sm:rounded-2xl border-2 border-slate-200 p-3 sm:p-5 flex items-center gap-2 sm:gap-4 col-span-2 sm:col-span-1">
-                            <div className="w-10 sm:w-12 h-10 sm:h-12 bg-emerald-100/10 rounded-lg sm:rounded-xl border-2 border-emerald-100 flex items-center justify-center flex-shrink-0">
-                                <TrendingUp className="text-emerald-500" size={18} />
+                        <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 col-span-2 sm:col-span-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-emerald-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
+                                <TrendingUp className="text-emerald-600" size={20} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <p className="text-xl sm:text-2xl font-black text-foreground">{onTrackCount}/{totalMembers}</p>
-                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-wider">On Track</p>
+                                <p className="text-2xl sm:text-3xl font-black text-foreground">{onTrackCount}/{totalMembers}</p>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">On Track</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Member Grid */}
                     {filteredMembers.length === 0 ? (
-                        <div className="text-center py-12 sm:py-20 bg-card rounded-lg sm:rounded-2xl border-2 border-dashed border-border">
+                        <div className="text-center py-12 sm:py-20 bg-card rounded-lg sm:rounded-[2.5rem] border-[3px] border-dashed border-slate-300 shadow-inner">
                             <Users className="mx-auto text-mutedForeground mb-2 sm:mb-4" size={32} sm:size={48} />
                             {!isAdmin && myWorkspaces.length === 0 ? (
                                 // Member with no workspace access
@@ -511,52 +511,62 @@ export const TeamKPIBoard: React.FC = () => {
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                             {filteredMembers.map(member => {
                                 const rate = getCompletionRate(member.id);
                                 const color = getCompletionColor(rate);
-                                const badge = getStatusBadge(rate);
+
+                                // Customize badge colors slightly for Bento
+                                const badgeColorMap = {
+                                    'On Track': 'bg-emerald-400 text-foreground border-[2px] border-slate-900',
+                                    'In Progress': 'bg-amber-400 text-foreground border-[2px] border-slate-900',
+                                    'Di Bawah Target': 'bg-rose-400 text-white border-[2px] border-slate-900'
+                                };
+                                const badgeLabel = rate >= 80 ? 'On Track' : rate >= 50 ? 'In Progress' : 'Di Bawah Target';
+                                const badgeIcon = rate >= 80 ? <CheckCircle size={10} strokeWidth={3} /> : rate >= 50 ? <Clock size={10} strokeWidth={3} /> : <AlertCircle size={10} strokeWidth={3} />;
+                                const badgeCls = badgeColorMap[badgeLabel];
+
                                 const memberKPIs = getMemberKPIs(member.id);
 
                                 return (
                                     <div
                                         key={member.id}
                                         onClick={() => openDetail(member)}
-                                        className="bg-card rounded-lg sm:rounded-2xl border-2 border-border hover:border-accent hover:shadow-lg p-3 sm:p-5 cursor-pointer transition-all duration-200 group"
+                                        className="bg-card rounded-[2rem] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 p-4 sm:p-5 cursor-pointer transition-all duration-200 flex flex-col h-full"
                                     >
                                         {/* Avatar + Info */}
-                                        <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+                                        <div className="flex items-center gap-3 mb-4">
                                             <img
                                                 src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
                                                 alt={member.full_name}
-                                                className="w-10 sm:w-12 h-10 sm:h-12 rounded-full border-2 border-border object-cover group-hover:border-violet-300 transition-colors flex-shrink-0"
+                                                className="w-12 h-12 rounded-xl border-[3px] border-slate-900 hover:rotate-6 object-cover shadow-[2px_2px_0px_#0f172a] transition-transform flex-shrink-0"
                                             />
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-foreground truncate text-xs sm:text-base">{member.full_name}</h3>
-                                                <p className="text-[8px] sm:text-xs text-mutedForeground truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
+                                                <h3 className="font-black text-foreground truncate text-sm sm:text-base leading-tight uppercase tracking-tight">{member.full_name}</h3>
+                                                <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
                                             </div>
                                         </div>
 
                                         {/* Progress Bar */}
-                                        <div className="mb-2 sm:mb-3">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-[8px] sm:text-xs font-medium text-mutedForeground">Completion</span>
-                                                <span className={`text-xs sm:text-sm font-bold ${color.text}`}>{rate}%</span>
+                                        <div className="mb-4 mt-auto">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Completion</span>
+                                                <span className={`text-sm font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{rate}%</span>
                                             </div>
-                                            <div className="h-2 sm:h-2.5 bg-muted rounded-full overflow-hidden">
+                                            <div className="h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border-[2px] border-slate-900 shadow-inner">
                                                 <div
-                                                    className={`h-full ${color.bg} rounded-full transition-all duration-700 ease-out`}
+                                                    className={`h-full border-r-[2px] border-slate-900 transition-all duration-700 ease-out ${rate >= 80 ? 'bg-emerald-400' : rate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`}
                                                     style={{ width: `${rate}%` }}
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Footer */}
-                                        <div className="flex items-center justify-between">
-                                            <span className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[9px] sm:text-[11px] font-medium border ${badge.cls}`}>
-                                                {badge.icon} <span className="hidden sm:inline">{badge.label}</span>
+                                        <div className="flex items-center justify-between pt-3 border-t-[3px] border-dashed border-slate-200">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] ${badgeCls}`}>
+                                                {badgeIcon} <span className="hidden sm:inline">{badgeLabel}</span>
                                             </span>
-                                            <span className="text-[9px] sm:text-[11px] text-mutedForeground/80">{memberKPIs.length} metrics</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-mutedForeground bg-slate-100 px-3 py-1 rounded-lg border-[3px] border-slate-200"> {memberKPIs.length} metrics</span>
                                         </div>
                                     </div>
                                 );
@@ -569,12 +579,12 @@ export const TeamKPIBoard: React.FC = () => {
                 <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4">
                     <div className="bg-card border-3 border-slate-900 rounded-3xl shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col">
                         <div className="bg-amber-400 p-4 border-b-3 border-slate-900 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                                <TrendingUp className="text-slate-900" size={20} />
+                            <div className="w-10 h-10 bg-card/20 rounded-xl flex items-center justify-center shrink-0">
+                                <TrendingUp className="text-foreground" size={20} />
                             </div>
                             <div>
-                                <h3 className="font-heading font-black text-slate-900 text-lg leading-tight uppercase tracking-wider">Vision Board</h3>
-                                <p className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">{PERIODS.find(p => p.value === periodFilter)?.label || 'Performance'}</p>
+                                <h3 className="font-heading font-black text-foreground text-lg leading-tight uppercase tracking-wider">Vision Board</h3>
+                                <p className="text-[10px] font-bold text-foreground uppercase tracking-widest">{PERIODS.find(p => p.value === periodFilter)?.label || 'Performance'}</p>
                             </div>
                         </div>
 
@@ -585,9 +595,9 @@ export const TeamKPIBoard: React.FC = () => {
                             {topPerformers.length > 0 ? (
                                 <div className="flex flex-col items-center w-full relative z-10 animate-in fade-in slide-in-from-bottom-4 space-y-4">
                                     {/* TOP 1 */}
-                                    <div className="flex flex-col items-center w-full pb-4 border-b-2 border-slate-100 border-dashed">
+                                    <div className="flex flex-col items-center w-full pb-4 border-b-2 border-border/50 border-dashed">
                                         <div className="relative mb-4">
-                                            <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 shadow-lg bg-white relative z-10">
+                                            <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 shadow-lg bg-card relative z-10">
                                                 <img
                                                     src={topPerformers[0].member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(topPerformers[0].member.full_name)}`}
                                                     alt={topPerformers[0].member.full_name}
@@ -595,7 +605,7 @@ export const TeamKPIBoard: React.FC = () => {
                                                 />
                                             </div>
                                             {/* Crown Icon / Badge */}
-                                            <div className="absolute -top-3 -right-2 bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-1 rounded-full border-2 border-amber-400 transform rotate-12 shadow-sm z-20">
+                                            <div className="absolute -top-3 -right-2 bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-1 rounded-full border-[3px] border-amber-400 transform rotate-12 shadow-[4px_4px_0px_#0f172a] z-20">
                                                 #1 TOP
                                             </div>
                                         </div>
@@ -603,7 +613,7 @@ export const TeamKPIBoard: React.FC = () => {
                                         <h4 className="font-black text-xl text-center text-foreground">{topPerformers[0].member.full_name}</h4>
                                         <p className="text-xs text-mutedForeground font-bold mb-4">{topPerformers[0].member.role} {topPerformers[0].member.department ? ` • ${topPerformers[0].member.department}` : ''}</p>
 
-                                        <div className="w-full bg-muted/50 rounded-2xl p-4 border-2 border-slate-900 border-dashed mb-4">
+                                        <div className="w-full bg-muted rounded-2xl p-4 border-[3px] border-slate-900 border-dashed mb-4">
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Completion Score</span>
                                                 <span className="text-lg font-black text-amber-500">{topPerformers[0].rate}%</span>
@@ -642,16 +652,16 @@ export const TeamKPIBoard: React.FC = () => {
                                     {(topPerformers.length > 1) && (
                                         <div className="w-full flex gap-3 mt-2">
                                             {topPerformers.slice(1, 3).map((p, index) => (
-                                                <div key={p.member.id} className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center relative">
+                                                <div key={p.member.id} className="flex-1 bg-muted border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center relative">
                                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-slate-100 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm z-20">
                                                         #{index + 2}
                                                     </div>
                                                     <img
                                                         src={p.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.member.full_name)}`}
                                                         alt={p.member.full_name}
-                                                        className="w-12 h-12 rounded-full border-2 border-slate-300 object-cover mt-2 mb-2 shadow-sm"
+                                                        className="w-12 h-12 rounded-full border-[3px] border-slate-900 object-cover mt-2 mb-2 shadow-[2px_2px_0px_#0f172a]"
                                                     />
-                                                    <h5 className="font-extrabold text-[10px] text-center line-clamp-1 w-full text-slate-800">{p.member.full_name}</h5>
+                                                    <h5 className="font-extrabold text-[10px] text-center line-clamp-1 w-full text-foreground">{p.member.full_name}</h5>
                                                     <p className="text-[8px] text-slate-500 font-bold mb-1 truncate w-full text-center">{p.member.role}</p>
                                                     <div className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-xl border border-amber-200 w-full text-center">
                                                         {p.rate}%
@@ -663,8 +673,8 @@ export const TeamKPIBoard: React.FC = () => {
 
                                     {/* PREVIOUS MONTH MVP */}
                                     {previousMonthBestPerformer && (
-                                        <div className="w-full mt-4 pt-4 border-t-2 border-slate-100 border-dashed">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-3">🏅 MVP Bulan Lalu</p>
+                                        <div className="w-full mt-4 pt-4 border-t-2 border-border/50 border-dashed">
+                                            <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest text-center mb-3">🏅 MVP Bulan Lalu</p>
                                             <div className="bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border-2 border-violet-500/20 rounded-2xl p-3 flex items-center gap-3">
                                                 <img
                                                     src={previousMonthBestPerformer.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(previousMonthBestPerformer.member.full_name)}`}
@@ -684,7 +694,7 @@ export const TeamKPIBoard: React.FC = () => {
 
                                 </div>
                             ) : (
-                                <div className="text-center flex flex-col justify-center items-center h-full text-slate-400 mt-10">
+                                <div className="text-center flex flex-col justify-center items-center h-full text-mutedForeground mt-10">
                                     <TrendingUp size={48} className="opacity-20 mb-3" />
                                     <p className="font-bold text-sm">Belum Ada Data</p>
                                     <p className="text-[10px]">Capaian KPI teratas akan muncul di sini</p>
@@ -701,119 +711,127 @@ export const TeamKPIBoard: React.FC = () => {
                     const memberKPIs = getMemberKPIs(selectedMember.id);
                     const rate = getCompletionRate(selectedMember.id);
                     const color = getCompletionColor(rate);
-                    const badge = getStatusBadge(rate);
+
+                    const badgeColorMap = {
+                        'On Track': 'bg-emerald-400 text-foreground border-[2px] border-slate-900',
+                        'In Progress': 'bg-amber-400 text-foreground border-[2px] border-slate-900',
+                        'Di Bawah Target': 'bg-rose-400 text-white border-[2px] border-slate-900'
+                    };
+                    const badgeLabel = rate >= 80 ? 'On Track' : rate >= 50 ? 'In Progress' : 'Di Bawah Target';
+                    const badgeIcon = rate >= 80 ? <CheckCircle size={10} strokeWidth={3} /> : rate >= 50 ? <Clock size={10} strokeWidth={3} /> : <AlertCircle size={10} strokeWidth={3} />;
+                    const badgeCls = badgeColorMap[badgeLabel];
 
                     return (
-                        <div className="flex gap-0 overflow-hidden transition-all duration-300" style={{ minHeight: 420 }}>
+                        <div className="flex gap-4 overflow-hidden transition-all duration-300" style={{ minHeight: 420 }}>
                             {/* ====== LEFT CARD: Member Profile + KPI List ====== */}
-                            <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto ${showMemberInput ? 'w-1/2 pr-3 sm:pr-4' : 'w-full'}`}>
+                            <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto w-full ${showMemberInput ? 'pr-4 border-r-[3px] border-slate-900 border-dashed' : ''} ${showMemberInput ? 'w-1/2' : ''}`}>
                                 {/* Member Header */}
-                                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-4 bg-muted border-2 border-border mb-2 sm:mb-4 shrink-0 rounded-lg sm:rounded-2xl">
+                                <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-card border-[3px] border-slate-900 mb-4 shrink-0 rounded-[1.5rem] shadow-[4px_4px_0px_#0f172a]">
                                     <img
                                         src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
                                         alt={selectedMember.full_name}
-                                        className="w-12 sm:w-14 h-12 sm:h-14 rounded-lg sm:rounded-2xl border-2 border-border object-cover shadow flex-shrink-0"
+                                        className="w-14 sm:w-16 h-14 sm:h-16 rounded-[1rem] border-[3px] border-slate-900 object-cover shadow-[2px_2px_0px_#0f172a] flex-shrink-0"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <h2 className="text-sm sm:text-base font-black text-foreground truncate">{selectedMember.full_name}</h2>
-                                        <p className="text-[10px] sm:text-xs text-mutedForeground truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
-                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                            <span className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg text-[9px] sm:text-[10px] font-bold border ${badge.cls}`}>
-                                                {badge.icon} <span className="hidden sm:inline">{badge.label}</span>
+                                        <h2 className="text-base sm:text-lg font-black text-foreground uppercase tracking-tight truncate">{selectedMember.full_name}</h2>
+                                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] ${badgeCls}`}>
+                                                {badgeIcon} <span className="hidden sm:inline">{badgeLabel}</span>
                                             </span>
-                                            <span className={`text-xs sm:text-sm font-black ${color.text}`}>{rate}%</span>
+                                            <span className={`text-sm sm:text-base font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{rate}%</span>
                                         </div>
                                     </div>
                                     {isAdmin && (
-                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-1.5 sm:p-2 hover:bg-red-500/10 text-red-500 hover:text-red-400 rounded-lg sm:rounded-xl transition-colors shrink-0" title="Hapus anggota">
-                                            <Trash2 size={14} />
+                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 sm:p-2.5 bg-rose-100 hover:bg-rose-200 text-rose-600 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a] rounded-xl transition-all shrink-0" title="Hapus anggota">
+                                            <Trash2 size={16} strokeWidth={2.5} />
                                         </button>
                                     )}
                                 </div>
 
                                 {/* Period Filter + Action Button */}
-                                <div className="flex items-center justify-between mb-2 sm:mb-3 shrink-0 gap-1 sm:gap-2">
+                                <div className="flex items-center justify-between mb-4 shrink-0 gap-2">
                                     <select
                                         value={periodFilter}
                                         onChange={e => setPeriodFilter(e.target.value)}
-                                        className="bg-card border-2 border-border text-foreground rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium focus:outline-none focus:border-violet-400 transition-colors"
+                                        className="bg-slate-100 border-[3px] border-slate-900 text-foreground rounded-xl px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer shadow-[2px_2px_0px_#0f172a]"
                                     >
                                         {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
                                     {isAdmin ? (
                                         <button
                                             onClick={() => setIsAddKPIOpen(true)}
-                                            className="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs transition-colors whitespace-nowrap"
+                                            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all whitespace-nowrap"
                                         >
-                                            <Plus size={12} /> <span className="hidden sm:inline">Tambah KPI</span>
+                                            <Plus size={14} strokeWidth={3} /> <span className="hidden sm:inline">Tambah KPI</span>
                                         </button>
                                     ) : (
                                         <button
                                             onClick={() => openMemberInputPanel(memberKPIs)}
                                             disabled={memberKPIs.length === 0 || showMemberInput}
-                                            className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs transition-colors whitespace-nowrap"
+                                            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:hover:-translate-y-0 disabled:hover:shadow-[2px_2px_0px_#0f172a] text-foreground px-3 py-1.5 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all whitespace-nowrap"
                                         >
-                                            <Edit3 size={12} /> <span className="hidden sm:inline">Input</span>
+                                            <Edit3 size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Input</span>
                                         </button>
                                     )}
                                 </div>
 
                                 {/* KPI List */}
                                 {memberKPIs.length === 0 ? (
-                                    <div className="text-center py-8 sm:py-10 bg-muted rounded-lg sm:rounded-xl border border-dashed border-border">
-                                        <Target className="mx-auto text-mutedForeground mb-1 sm:mb-2" size={24} />
-                                        <p className="text-xs sm:text-sm text-mutedForeground/80 font-medium">Belum ada KPI untuk periode ini</p>
+                                    <div className="text-center py-8 sm:py-10 bg-muted rounded-2xl border-[3px] border-dashed border-slate-300">
+                                        <Target className="mx-auto text-mutedForeground mb-2" size={32} strokeWidth={2} />
+                                        <p className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-widest">Belum ada KPI untuk periode ini</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-1 sm:space-y-2 overflow-y-auto flex-1 pr-0.5" style={{ maxHeight: 300 }}>
+                                    <div className="space-y-3 overflow-y-auto flex-1 pr-1 pb-4" style={{ maxHeight: '350px' }}>
                                         {memberKPIs.map(kpi => {
                                             const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
                                             const kpiColor = getCompletionColor(kpiRate);
                                             const isEditing = editingKPI === kpi.id;
 
                                             return (
-                                                <div key={kpi.id} className="bg-card border-2 border-border rounded-xl p-3 hover:border-violet-200 transition-colors">
-                                                    <div className="flex items-start justify-between mb-1.5">
+                                                <div key={kpi.id} className="bg-card border-[3px] border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_rgba(148,163,184,0.3)] hover:shadow-[4px_4px_0px_#0f172a] transition-all group">
+                                                    <div className="flex items-start justify-between mb-2">
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-bold text-foreground text-xs truncate">{kpi.metric_name}</h4>
-                                                            <p className="text-[10px] text-mutedForeground">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
+                                                            <h4 className="font-black text-foreground text-sm truncate uppercase">{kpi.metric_name}</h4>
+                                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
                                                         </div>
                                                         {isAdmin && (
-                                                            <div className="flex items-center gap-1 ml-2 shrink-0">
+                                                            <div className="flex items-center gap-1.5 ml-3 shrink-0">
                                                                 {!isEditing ? (
                                                                     <>
-                                                                        <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1 hover:bg-blue-500/10 text-mutedForeground hover:text-blue-500 rounded-lg transition-colors" title="Edit KPI"><Edit3 size={12} /></button>
-                                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1 hover:bg-red-500/10 text-mutedForeground hover:text-red-500 rounded-lg transition-colors" title="Hapus"><Trash2 size={12} /></button>
+                                                                        <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1.5 hover:bg-slate-100 text-mutedForeground hover:text-foreground rounded-lg transition-colors border-[2.5px] border-transparent hover:border-slate-900" title="Edit KPI"><Edit3 size={14} /></button>
+                                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1.5 hover:bg-rose-100 text-mutedForeground hover:text-rose-600 rounded-lg transition-colors border-[2.5px] border-transparent hover:border-rose-600" title="Hapus"><Trash2 size={14} /></button>
                                                                     </>
                                                                 ) : (
                                                                     <>
-                                                                        <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1 hover:bg-emerald-500/10 text-emerald-500 rounded-lg transition-colors"><Save size={12} /></button>
-                                                                        <button onClick={() => setEditingKPI(null)} className="p-1 hover:bg-slate-500/10 text-mutedForeground rounded-lg transition-colors"><X size={12} /></button>
+                                                                        <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1.5 bg-emerald-400 text-foreground border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 rounded-lg transition-all"><Save size={14} strokeWidth={2.5} /></button>
+                                                                        <button onClick={() => setEditingKPI(null)} className="p-1.5 bg-slate-200 text-foreground border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 rounded-lg transition-all"><X size={14} strokeWidth={2.5} /></button>
                                                                     </>
                                                                 )}
                                                             </div>
                                                         )}
                                                     </div>
                                                     {/* Progress bar */}
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                            <div className={`h-full ${kpiColor.bg} rounded-full`} style={{ width: `${kpiRate}%` }} />
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden border-[2px] border-slate-900 shadow-inner">
+                                                            <div className={`h-full border-r-[2px] border-slate-900 ${kpiRate >= 80 ? 'bg-emerald-400' : kpiRate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{ width: `${kpiRate}%` }} />
                                                         </div>
-                                                        <span className={`text-[10px] font-bold ${kpiColor.text}`}>{kpiRate}%</span>
+                                                        <span className={`text-xs font-black ${kpiRate >= 80 ? 'text-emerald-600' : kpiRate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{kpiRate}%</span>
                                                     </div>
                                                     {/* Values */}
-                                                    <div className="flex items-center gap-3 text-[10px] text-mutedForeground">
-                                                        <span>Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></span>
+                                                    <div className="flex items-center gap-4 text-[10px] sm:text-xs">
+                                                        <span className="font-bold text-slate-500 uppercase tracking-widest">Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></span>
                                                         {isEditing ? (
-                                                            <span className="flex items-center gap-1">
-                                                                Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-14 border border-violet-300 rounded px-1 py-0.5 text-xs font-bold text-violet-700 focus:outline-none bg-card" onClick={e => e.stopPropagation()} />{kpi.unit}
+                                                            <span className="flex items-center gap-1 font-bold text-slate-500 uppercase tracking-widest">
+                                                                Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-16 border-[2px] border-slate-900 rounded-md px-1 py-0.5 text-xs font-black text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 bg-card shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" onClick={e => e.stopPropagation()} />{kpi.unit}
                                                             </span>
                                                         ) : (
-                                                            <span>Actual: <strong className="text-foreground">{kpi.actual_value}{kpi.unit}</strong></span>
+                                                            <span className="font-bold text-slate-500 uppercase tracking-widest">Actual: <strong className="text-foreground">{kpi.actual_value}{kpi.unit}</strong></span>
                                                         )}
                                                     </div>
                                                     {isEditing && (
-                                                        <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-2 w-full border border-border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-violet-300 bg-card text-foreground placeholder:text-mutedForeground" onClick={e => e.stopPropagation()} />
+                                                        <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-3 w-full border-[2px] border-slate-900 rounded-xl px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 bg-card placeholder:text-mutedForeground placeholder:font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" onClick={e => e.stopPropagation()} />
                                                     )}
                                                 </div>
                                             );
@@ -823,43 +841,44 @@ export const TeamKPIBoard: React.FC = () => {
                             </div>
 
                             {/* ====== RIGHT CARD: Member Actual Input Slide Panel ====== */}
-                            <div className={`transition-all duration-300 ease-in-out ${showMemberInput ? 'w-1/2 opacity-100 pl-4 border-l-2 border-emerald-200' : 'w-0 opacity-0 overflow-hidden'}`}>
+                            <div className={`transition-all duration-300 ease-in-out ${showMemberInput ? 'w-1/2 opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
                                 {showMemberInput && (
-                                    <div className="flex flex-col h-full">
+                                    <div className="flex flex-col h-full bg-muted rounded-[1.5rem] border-[3px] border-slate-900 shadow-[inset_0_0_10px_rgba(0,0,0,0.05)] p-4">
                                         {/* Panel header */}
-                                        <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center justify-between mb-5">
                                             <div>
-                                                <h3 className="font-black text-foreground text-sm">✏️ Input Pencapaian</h3>
-                                                <p className="text-[10px] text-mutedForeground">Isi nilai aktual yang telah dicapai bulan ini</p>
+                                                <h3 className="font-black text-foreground text-sm uppercase tracking-widest">✏️ Input Pencapaian</h3>
+                                                <p className="text-[10px] text-slate-500 font-bold mt-1">Isi rentang capaian bulan ini</p>
                                             </div>
-                                            <button onClick={() => setShowMemberInput(false)} className="p-1.5 hover:bg-slate-500/10 text-mutedForeground hover:text-foreground rounded-lg transition-colors">
-                                                <X size={14} />
+                                            <button onClick={() => setShowMemberInput(false)} className="p-2 border-[2px] border-slate-300 hover:border-slate-900 hover:bg-rose-100 hover:text-rose-600 text-slate-500 rounded-xl transition-all shadow-sm">
+                                                <X size={16} strokeWidth={2.5} />
                                             </button>
                                         </div>
 
                                         {/* Per-KPI inputs */}
-                                        <div className="flex-1 overflow-y-auto space-y-3 pr-0.5" style={{ maxHeight: 320 }}>
+                                        <div className="flex-1 overflow-y-auto space-y-4 pr-1" style={{ maxHeight: '350px' }}>
                                             {memberKPIs.map(kpi => (
-                                                <div key={kpi.id} className="bg-emerald-500/10 border-2 border-emerald-500/20 rounded-xl p-3">
-                                                    <p className="text-xs font-black text-foreground truncate mb-0.5">{kpi.metric_name}</p>
-                                                    <p className="text-[10px] text-mutedForeground mb-2">{kpi.period} · Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></p>
-                                                    <div className="space-y-2">
+                                                <div key={kpi.id} className="bg-card border-[3px] border-slate-900 rounded-[1.2rem] p-4 shadow-[4px_4px_0px_rgba(148,163,184,0.3)]">
+                                                    <p className="text-xs font-black text-foreground uppercase tracking-tight mb-1">{kpi.metric_name}</p>
+                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{kpi.period} · Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></p>
+
+                                                    <div className="space-y-3">
                                                         <div>
-                                                            <label className="text-[9px] font-black text-emerald-600 uppercase tracking-wide block mb-0.5">Nilai Aktual ({kpi.unit})</label>
+                                                            <label className="text-[9px] font-black text-violet-600 uppercase tracking-widest block mb-1">Nilai Aktual ({kpi.unit})</label>
                                                             <input
                                                                 type="number" min={0}
                                                                 value={memberActuals[kpi.id]?.actual_value ?? kpi.actual_value}
                                                                 onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], actual_value: Number(e.target.value) } }))}
-                                                                className="w-full border-2 border-emerald-500/30 rounded-lg px-3 py-1.5 text-sm font-bold text-foreground focus:outline-none focus:border-emerald-500 bg-card"
+                                                                className="w-full border-[3px] border-slate-900 bg-card shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-3 py-2 text-sm font-black text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[9px] font-black text-mutedForeground uppercase tracking-wide block mb-0.5">Catatan</label>
+                                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Catatan</label>
                                                             <input
-                                                                type="text" placeholder="Keterangan pencapaian..."
+                                                                type="text" placeholder="Keterangan..."
                                                                 value={memberActuals[kpi.id]?.notes ?? kpi.notes ?? ''}
                                                                 onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], notes: e.target.value } }))}
-                                                                className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:border-emerald-400 bg-card placeholder:text-mutedForeground"
+                                                                className="w-full border-[2px] border-slate-300 focus:border-slate-900 rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-mutedForeground"
                                                             />
                                                         </div>
                                                     </div>
@@ -871,10 +890,10 @@ export const TeamKPIBoard: React.FC = () => {
                                         <button
                                             onClick={handleSaveMemberActuals}
                                             disabled={savingActuals}
-                                            className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white py-2.5 rounded-xl font-black text-sm transition-colors shadow-lg"
+                                            className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-foreground py-3 rounded-xl border-[3px] border-slate-900 font-black uppercase tracking-widest text-sm transition-all shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1"
                                         >
-                                            {savingActuals ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                                            {savingActuals ? 'Menyimpan...' : 'Simpan & Tutup'}
+                                            {savingActuals ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} strokeWidth={2.5} />}
+                                            {savingActuals ? 'Menyimpan...' : 'Simpan Pencapaian'}
                                         </button>
                                     </div>
                                 )}
@@ -885,55 +904,55 @@ export const TeamKPIBoard: React.FC = () => {
             </Modal>
 
             {/* ====== ADD MEMBER MODAL ====== */}
-            <Modal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} title="Add Team Member">
+            <Modal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} title={<span className="font-black uppercase tracking-widest text-foreground">Add Team Member</span>}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Full Name *</label>
+                        <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Full Name *</label>
                         <input
                             type="text"
                             value={newMember.full_name}
                             onChange={e => setNewMember(m => ({ ...m, full_name: e.target.value }))}
-                            className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
+                            className="w-full bg-card text-foreground font-bold border-[3px] border-slate-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground placeholder:font-medium"
                             placeholder="Nama lengkap"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-foreground mb-1">Role</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Role</label>
                             <input
                                 type="text"
                                 value={newMember.role}
                                 onChange={e => setNewMember(m => ({ ...m, role: e.target.value }))}
-                                className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
+                                className="w-full bg-card text-foreground font-bold border-[3px] border-slate-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground placeholder:font-medium"
                                 placeholder="Content Creator"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-foreground mb-1">Department</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Department</label>
                             <input
                                 type="text"
                                 value={newMember.department}
                                 onChange={e => setNewMember(m => ({ ...m, department: e.target.value }))}
-                                className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
+                                className="w-full bg-card text-foreground font-bold border-[3px] border-slate-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground placeholder:font-medium"
                                 placeholder="Marketing"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Avatar URL (optional)</label>
+                        <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Avatar URL (opsional)</label>
                         <input
                             type="text"
                             value={newMember.avatar_url}
                             onChange={e => setNewMember(m => ({ ...m, avatar_url: e.target.value }))}
-                            className="w-full bg-card text-foreground border-2 border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors placeholder:text-mutedForeground"
+                            className="w-full bg-card text-foreground font-bold border-[3px] border-slate-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground placeholder:font-medium"
                             placeholder="https://..."
                         />
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button onClick={() => setIsAddMemberOpen(false)} className="px-4 py-2 text-sm font-medium text-mutedForeground hover:bg-slate-500/10 rounded-lg transition-colors">
+                    <div className="flex justify-end gap-3 pt-4 border-t-[3px] border-slate-900 border-dashed mt-6">
+                        <button onClick={() => setIsAddMemberOpen(false)} className="px-5 py-2.5 text-xs font-black uppercase tracking-widest border-[3px] border-slate-900 hover:bg-slate-100 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 rounded-xl transition-all text-foreground">
                             Cancel
                         </button>
-                        <button onClick={handleAddMember} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-md">
+                        <button onClick={handleAddMember} className="px-5 py-2.5 text-xs font-black uppercase tracking-widest bg-violet-600 hover:bg-violet-500 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 rounded-xl transition-all text-white">
                             Add Member
                         </button>
                     </div>
@@ -941,102 +960,108 @@ export const TeamKPIBoard: React.FC = () => {
             </Modal>
 
             {/* ====== ADD KPI MODAL ====== */}
-            <Modal isOpen={isAddKPIOpen} onClose={() => setIsAddKPIOpen(false)} title={`Add KPI for ${selectedMember?.full_name || ''}`}>
+            <Modal isOpen={isAddKPIOpen} onClose={() => setIsAddKPIOpen(false)} title={<span className="font-black uppercase tracking-widest text-foreground">Add KPI for {selectedMember?.full_name || ''}</span>}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Metric Name *</label>
+                        <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Metric Name *</label>
                         <input
                             type="text"
                             value={newKPI.metric_name}
                             onChange={e => setNewKPI(k => ({ ...k, metric_name: e.target.value }))}
-                            className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                            className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground"
                             placeholder="e.g. Engagement Rate Instagram"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Category</label>
                             <input
                                 type="text"
                                 value={newKPI.category}
                                 onChange={e => setNewKPI(k => ({ ...k, category: e.target.value }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                                className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground"
                                 placeholder="Social Media"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Unit</label>
-                            <select
-                                value={newKPI.unit}
-                                onChange={e => setNewKPI(k => ({ ...k, unit: e.target.value }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
-                            >
-                                <option value="%">%</option>
-                                <option value=" posts"> posts</option>
-                                <option value=" views"> views</option>
-                                <option value=" followers"> followers</option>
-                                <option value="">custom</option>
-                            </select>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Unit</label>
+                            <div className="relative">
+                                <select
+                                    value={newKPI.unit}
+                                    onChange={e => setNewKPI(k => ({ ...k, unit: e.target.value }))}
+                                    className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="%">%</option>
+                                    <option value=" posts"> posts</option>
+                                    <option value=" views"> views</option>
+                                    <option value=" followers"> followers</option>
+                                    <option value="">custom</option>
+                                </select>
+                                <ChevronDown size={16} strokeWidth={3} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground pointer-events-none" />
+                            </div>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Target Value</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Target Value</label>
                             <input
                                 type="number"
                                 value={newKPI.target_value}
                                 onChange={e => setNewKPI(k => ({ ...k, target_value: Number(e.target.value) }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                                className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Current Value</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Current Value</label>
                             <input
                                 type="number"
                                 value={newKPI.actual_value}
                                 onChange={e => setNewKPI(k => ({ ...k, actual_value: Number(e.target.value) }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                                className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
                             />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Period</label>
-                            <select
-                                value={newKPI.period}
-                                onChange={e => setNewKPI(k => ({ ...k, period: e.target.value }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
-                            >
-                                <option value="monthly">Monthly</option>
-                                <option value="quarterly">Quarterly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Period</label>
+                            <div className="relative">
+                                <select
+                                    value={newKPI.period}
+                                    onChange={e => setNewKPI(k => ({ ...k, period: e.target.value }))}
+                                    className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                                <ChevronDown size={16} strokeWidth={3} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground pointer-events-none" />
+                            </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Period Date</label>
+                            <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Period Date</label>
                             <input
                                 type="date"
                                 value={newKPI.period_date}
                                 onChange={e => setNewKPI(k => ({ ...k, period_date: e.target.value }))}
-                                className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                                className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                        <label className="block text-xs font-black uppercase tracking-widest text-foreground mb-2">Notes</label>
                         <input
                             type="text"
                             value={newKPI.notes}
                             onChange={e => setNewKPI(k => ({ ...k, notes: e.target.value }))}
-                            className="w-full border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400 transition-colors"
+                            className="w-full font-bold text-foreground border-[3px] border-slate-900 bg-card rounded-xl px-4 py-2.5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all placeholder:text-mutedForeground"
                             placeholder="Optional notes"
                         />
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button onClick={() => setIsAddKPIOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <div className="flex justify-end gap-3 pt-4 border-t-[3px] border-slate-900 border-dashed mt-6">
+                        <button onClick={() => setIsAddKPIOpen(false)} className="px-5 py-2.5 text-xs font-black uppercase tracking-widest border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 rounded-xl transition-all text-foreground hover:bg-slate-100">
                             Cancel
                         </button>
-                        <button onClick={handleAddKPI} className="px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-md">
+                        <button onClick={handleAddKPI} className="px-5 py-2.5 text-xs font-black uppercase tracking-widest bg-violet-600 hover:bg-violet-500 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 rounded-xl transition-all text-white">
                             Add KPI
                         </button>
                     </div>

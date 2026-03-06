@@ -930,7 +930,7 @@ export const Messages: React.FC = () => {
                 <span key={i}>
                     {mentionParts.map((mp, j) => {
                         if (mp.startsWith('@')) {
-                            return <span key={j} className={`font-bold px-1 rounded-md ${isMe ? 'bg-white/20 text-white' : 'bg-accent/10 text-accent'}`}>{mp}</span>;
+                            return <span key={j} className={`font-bold px-1 rounded-md ${isMe ? 'bg-card/20 text-white' : 'bg-accent/10 text-accent'}`}>{mp}</span>;
                         }
                         return <span key={j}>{mp}</span>;
                     })}
@@ -1235,7 +1235,7 @@ export const Messages: React.FC = () => {
                                                     </div>
                                                 )}
                                                 <div className="relative">
-                                                    <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words ${isMe ? 'bg-accent text-white rounded-br-sm shadow-sm' : 'bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-sm shadow-sm'}`}>
+                                                    <div className={`px-3 py-2 rounded-2xl text-sm font-medium max-w-full break-words ${isMe ? 'bg-accent text-white rounded-br-sm shadow-sm' : 'bg-slate-100 text-foreground border border-slate-200/80 rounded-bl-sm shadow-sm'}`}>
                                                         {msg.type === 'image' ? (
                                                             <button onClick={() => setPreviewImage(msg.content)}>
                                                                 <img src={msg.content} alt="img" className="max-w-[160px] max-h-[160px] rounded-xl object-cover" />
@@ -1264,7 +1264,7 @@ export const Messages: React.FC = () => {
                                                     <div className="flex flex-wrap gap-0.5 mt-0.5">
                                                         {Object.entries(reactionGroups).map(([emoji, data]: [string, any]) => (
                                                             <button key={emoji} onClick={() => handleAddReaction(msg.id, emoji)}
-                                                                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all hover:scale-105 ${data.hasMe ? 'bg-accent/10 border-accent text-accent shadow-sm' : 'bg-white border-border text-foreground'}`}>
+                                                                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-all hover:scale-105 ${data.hasMe ? 'bg-accent/10 border-accent text-accent shadow-sm' : 'bg-card border-border text-foreground'}`}>
                                                                 <span>{emoji}</span><span className="font-bold">{data.count}</span>
                                                             </button>
                                                         ))}
@@ -1302,7 +1302,7 @@ export const Messages: React.FC = () => {
 
                         {/* Input */}
                         <div className="px-2 py-2 border-t border-border flex-shrink-0 bg-card">
-                            <div className="flex items-end gap-1.5 bg-white border border-border rounded-2xl px-3 py-2 focus-within:border-accent focus-within:shadow-sm transition-all">
+                            <div className="flex items-end gap-1.5 bg-card border border-border rounded-2xl px-3 py-2 focus-within:border-accent focus-within:shadow-sm transition-all">
                                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
                                 <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent flex-shrink-0 mb-0.5"><ImageIcon size={18} /></button>
                                 <input type="text" value={input} onChange={handleInputChange}
@@ -1406,7 +1406,7 @@ export const Messages: React.FC = () => {
                 <div className="flex flex-1 bg-card border-2 border-border rounded-2xl overflow-hidden min-h-0">
 
                     {/* ── Unified Sidebar ── */}
-                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-72 border-r border-border flex-col flex-shrink-0 bg-white/50`}>
+                    <div className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'} w-full md:w-72 border-r border-border flex-col flex-shrink-0 bg-card/50`}>
                         {/* Sidebar Header — Workspace name + status */}
                         <div className="px-4 py-3 border-b border-border flex-shrink-0">
                             <div className="flex items-center justify-between mb-2">
@@ -1450,7 +1450,7 @@ export const Messages: React.FC = () => {
                             <div className="relative" ref={desktopWsDropdownRef}>
                                 <button
                                     onClick={() => setShowWsDropdown(!showWsDropdown)}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-white text-xs font-bold text-foreground hover:border-accent/50 transition-all w-full"
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-card text-xs font-bold text-foreground hover:border-accent/50 transition-all w-full"
                                 >
                                     {selectedWorkspace?.logo_url ? <img src={selectedWorkspace.logo_url} alt="" className="w-4 h-4 rounded object-contain" /> : null}
                                     <span className="truncate flex-1 text-left">{selectedWorkspace?.name || 'Pilih Workspace'}</span>
@@ -1766,7 +1766,7 @@ export const Messages: React.FC = () => {
                                                         <div className="relative">
                                                             <div className={`px-4 py-2.5 rounded-2xl text-sm font-medium max-w-full break-words ${isMe
                                                                 ? 'bg-accent text-white rounded-br-sm shadow-sm'
-                                                                : 'bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-sm shadow-sm'
+                                                                : 'bg-slate-100 text-foreground border border-slate-200/80 rounded-bl-sm shadow-sm'
                                                                 }`}>
                                                                 {msg.type === 'image' ? (
                                                                     <button onClick={() => setPreviewImage(msg.content)}>
@@ -1825,7 +1825,7 @@ export const Messages: React.FC = () => {
                                                                     <button
                                                                         key={emoji}
                                                                         onClick={() => handleAddReaction(msg.id, emoji)}
-                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all hover:scale-105 ${data.hasMe ? 'bg-accent/10 border-accent text-accent shadow-sm' : 'bg-white border-border text-foreground hover:border-accent/50'}`}
+                                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all hover:scale-105 ${data.hasMe ? 'bg-accent/10 border-accent text-accent shadow-sm' : 'bg-card border-border text-foreground hover:border-accent/50'}`}
                                                                     >
                                                                         <span>{emoji}</span>
                                                                         <span className="font-bold">{data.count}</span>
@@ -1931,7 +1931,7 @@ export const Messages: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-3 bg-white border border-border rounded-2xl px-4 py-2.5 focus-within:border-accent focus-within:shadow-sm transition-all min-h-[52px]">
+                                    <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-2.5 focus-within:border-accent focus-within:shadow-sm transition-all min-h-[52px]">
                                         <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
                                         <button onClick={() => fileInputRef.current?.click()} className="text-mutedForeground hover:text-accent transition-colors flex-shrink-0" title="Upload foto">
                                             <ImageIcon size={22} />

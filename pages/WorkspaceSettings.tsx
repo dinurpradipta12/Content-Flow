@@ -335,7 +335,7 @@ export const WorkspaceSettings: React.FC = () => {
         return (
             <div className="h-[80vh] flex flex-col items-center justify-center gap-4">
                 <Loader icon={<RefreshCw size={40} />} />
-                <p className="font-black text-slate-400 animate-pulse">MEMUAT KONFIGURASI WORKSPACE...</p>
+                <p className="font-black text-mutedForeground animate-pulse">MEMUAT KONFIGURASI WORKSPACE...</p>
             </div>
         );
     }
@@ -418,7 +418,7 @@ export const WorkspaceSettings: React.FC = () => {
                                             placeholder="Untuk background terang"
                                         />
                                         {config?.app_logo && (
-                                            <div className="mt-2 p-4 bg-white rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                            <div className="mt-2 p-4 bg-card rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_logo} className="max-h-12 object-contain" alt="Preview Light" />
                                             </div>
                                         )}
@@ -470,7 +470,7 @@ export const WorkspaceSettings: React.FC = () => {
                                             </label>
                                         </div>
                                         {config?.app_icon_192 && (
-                                            <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                            <div className="mt-2 p-3 bg-muted rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_icon_192} className="w-24 h-24 object-contain" alt="Icon 192" />
                                             </div>
                                         )}
@@ -505,7 +505,7 @@ export const WorkspaceSettings: React.FC = () => {
                                             </label>
                                         </div>
                                         {config?.app_icon_512 && (
-                                            <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                            <div className="mt-2 p-3 bg-muted rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_icon_512} className="w-24 h-24 object-contain" alt="Icon 512" />
                                             </div>
                                         )}
@@ -540,7 +540,7 @@ export const WorkspaceSettings: React.FC = () => {
                                             </label>
                                         </div>
                                         {config?.app_icon_mask && (
-                                            <div className="mt-2 p-3 bg-slate-50 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                                            <div className="mt-2 p-3 bg-muted rounded-xl border-2 border-slate-200 flex items-center justify-center">
                                                 <img src={config.app_icon_mask} className="w-24 h-24 object-contain rounded-full border-2 border-accent" alt="Maskable" />
                                             </div>
                                         )}
@@ -613,12 +613,12 @@ export const WorkspaceSettings: React.FC = () => {
                             <div className="p-6 space-y-6">
                                 <div className="flex items-center justify-between">
                                     <div className="text-left">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Version</p>
+                                        <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">Current Version</p>
                                         <p className="text-2xl font-black text-white font-mono">{config?.app_version || '1.0.0'}</p>
                                     </div>
                                     <div className="h-10 w-[2px] bg-slate-800"></div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Next Version</p>
+                                        <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">Next Version</p>
                                         <p className="text-2xl font-black text-emerald-400 font-mono italic">
                                             {config ? generateNextVersion(config.app_version) : '...'}
                                         </p>
@@ -626,7 +626,7 @@ export const WorkspaceSettings: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">What's New? (Changelog)</label>
+                                    <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">What's New? (Changelog)</label>
                                     <textarea
                                         rows={5}
                                         value={changelogInput}
@@ -661,7 +661,7 @@ export const WorkspaceSettings: React.FC = () => {
                             </div>
                             <div className="p-8 space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Judul Broadcast</label>
+                                    <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest pl-1">Judul Broadcast</label>
                                     <input
                                         value={broadcastTitle}
                                         onChange={e => setBroadcastTitle(e.target.value)}
@@ -671,7 +671,7 @@ export const WorkspaceSettings: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Tipe Pesan</label>
+                                    <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest pl-1">Tipe Pesan</label>
                                     <select
                                         value={broadcastType}
                                         onChange={e => setBroadcastType(e.target.value)}
@@ -684,7 +684,7 @@ export const WorkspaceSettings: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Isi Pesan</label>
+                                    <label className="text-[10px] font-black text-mutedForeground uppercase tracking-widest pl-1">Isi Pesan</label>
                                     <textarea
                                         rows={4}
                                         value={broadcastMessage}
@@ -985,7 +985,7 @@ export const WorkspaceSettings: React.FC = () => {
                             <div className="p-6 space-y-6">
                                 <div className="flex items-center gap-4 bg-muted p-4 rounded-2xl border-2 border-border">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-4 border-slate-900 shadow-[2px_2px_0px_#000] ${dbStatus === 'connected' ? 'bg-emerald-400' : 'bg-red-400'}`}>
-                                        <Wifi size={24} className="text-slate-900" />
+                                        <Wifi size={24} className="text-foreground" />
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">Status Hubungan</p>

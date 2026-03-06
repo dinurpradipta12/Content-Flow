@@ -62,7 +62,7 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-dark .text-slate-900, .theme-dark .text-slate-800, .theme-dark .text-slate-700 { color: #f1f5f9 !important; }
         .theme-dark .text-slate-500, .theme-dark .text-slate-400 { color: #94a3b8 !important; }
         .theme-dark .border-slate-900, .theme-dark .border-slate-800, .theme-dark .border-slate-200 { border-color: #475569 !important; }
-        .theme-dark .shadow-hard { box-shadow: 4px 4px 0px 0px #020617 !important; }
+        .theme-dark .shadow-hard { box-shadow: 4px 4px 0px 0px var(--shadow-color) !important; }
         .theme-dark .bg-slate-900 { background-color: #3b82f6 !important; color: #fff !important; }
         .theme-dark input, .theme-dark select, .theme-dark textarea { background-color: #0f172a !important; color: #fff !important; border-color: #475569 !important; }
         .theme-dark .bg-red-50 { background-color: #1e3a8a !important; border-color: #1e40af !important; color: #bfdbfe !important; }
@@ -87,7 +87,7 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         
         /* Protection for specific branding elements (logos) */
         .theme-dark .bg-white.rounded-lg, .theme-dark .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; color: #1e293b !important; }
-        .theme-dark .bg-white.rounded-lg svg, .theme-dark .ws-logo-box svg, .theme-dark .bg-white.rounded-lg span { color: #1e293b !important; stroke: #1e293b !important; }
+        .theme-dark .bg-white.rounded-lg svg, .theme-dark .ws-logo-box svg, .theme-dark .bg-white.rounded-lg span, .theme-dark .ws-logo-box span { color: #1e293b !important; stroke: #1e293b !important; }
         
         /* Network Status Badge Fixes - Forced Visibility & Clean Backgrounds */
         .theme-dark .bg-green-50, .theme-dark .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #34d399 !important; }
@@ -218,8 +218,8 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-midnight [class*="bg-pink-"] svg, .theme-midnight [class*="bg-red-"] svg, .theme-midnight [class*="bg-blue-"] svg, .theme-midnight .bg-black svg { color: #fff !important; stroke: #fff !important; }
         
         /* Protection for specific branding elements (logos) */
-        .theme-midnight .bg-white.rounded-lg, .theme-midnight .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
-        .theme-midnight .bg-white.rounded-lg svg, .theme-midnight .ws-logo-box svg { color: #1e293b !important; stroke: #1e293b !important; }
+        .theme-midnight .bg-white.rounded-lg, .theme-midnight .ws-logo-box { background-color: #ffffff !important; border-color: #e2e8f0 !important; color: #1e293b !important; }
+        .theme-midnight .bg-white.rounded-lg svg, .theme-midnight .ws-logo-box svg, .theme-midnight .bg-white.rounded-lg span, .theme-midnight .ws-logo-box span { color: #1e293b !important; stroke: #1e293b !important; }
 
         /* Network Status Badge Fixes - Forced Visibility & Clean Backgrounds */
         .theme-midnight .bg-green-50, .theme-midnight .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #34d399 !important; }

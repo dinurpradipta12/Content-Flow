@@ -21,7 +21,7 @@ export const Welcome: React.FC = () => {
     }, [navigate]);
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 auth-bg relative overflow-hidden">
+        <div className="min-h-screen bg-muted flex flex-col items-center justify-center p-6 auth-bg relative overflow-hidden">
             {/* Background decorations */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-violet-200/50 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
@@ -35,7 +35,7 @@ export const Welcome: React.FC = () => {
                     {appLogo ? (
                         <img src={appLogo} alt={appName} className="w-full max-w-[480px] max-h-48 object-contain" />
                     ) : (
-                        <div className="text-6xl font-black text-slate-900">{appName}</div>
+                        <div className="text-6xl font-black text-foreground">{appName}</div>
                     )}
                 </div>
                 <p className="text-lg text-slate-600 font-medium mb-12 leading-relaxed max-w-md mx-auto">
@@ -43,24 +43,24 @@ export const Welcome: React.FC = () => {
                 </p>
 
                 {/* Two Buttons: Login & Daftar */}
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                     <button
                         onClick={() => navigate('/login')}
-                        className="w-full sm:w-auto px-10 py-4 bg-slate-900 text-white font-bold text-lg rounded-2xl shadow-[4px_4px_0px_0px_#334155] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#334155] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 border-2 border-slate-900"
+                        className="w-full sm:w-auto px-12 py-5 bg-slate-900 text-white font-black text-xl uppercase tracking-widest rounded-[2rem] shadow-[8px_8px_0px_0px_#475569] hover:-translate-y-1.5 hover:shadow-[12px_12px_0px_0px_#475569] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-4 border-[4px] border-slate-900"
                     >
-                        <LogIn size={22} /> Login
+                        <LogIn size={24} strokeWidth={3} /> Login
                     </button>
 
                     <button
                         onClick={() => navigate('/terms')}
-                        className="w-full sm:w-auto px-10 py-4 bg-white text-slate-900 font-bold text-lg rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-3 border-4 border-slate-900"
+                        className="w-full sm:w-auto px-12 py-5 bg-card text-foreground font-black text-xl uppercase tracking-widest rounded-[2rem] shadow-[8px_8px_0px_0px_#0f172a] hover:-translate-y-1.5 hover:shadow-[12px_12px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-4 border-[4px] border-slate-900"
                     >
-                        <UserPlus size={22} /> Daftar
+                        <UserPlus size={24} strokeWidth={3} /> Daftar
                     </button>
                 </div>
 
                 {/* Version footer */}
-                <p className="text-xs text-slate-400 font-bold mt-12">
+                <p className="text-xs text-mutedForeground font-bold mt-12">
                     v{config?.app_version || '1.0.0'} — {appName}
                 </p>
             </div>
