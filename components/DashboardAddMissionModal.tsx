@@ -30,7 +30,7 @@ export const DashboardAddMissionModal: React.FC<DashboardAddMissionModalProps> =
         <Modal isOpen={isOpen} onClose={onClose} title="Tambah Mission Baru" maxWidth="max-w-md">
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nama Mission / Task</label>
+                    <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Nama Mission / Task</label>
                     <Input
                         placeholder="Contoh: Upload Reels Hari Ini..."
                         value={text}
@@ -41,7 +41,7 @@ export const DashboardAddMissionModal: React.FC<DashboardAddMissionModalProps> =
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Waktu Task</label>
+                        <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Waktu Task</label>
                         <Input
                             type="time"
                             value={time}
@@ -50,7 +50,7 @@ export const DashboardAddMissionModal: React.FC<DashboardAddMissionModalProps> =
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Notifikasi</label>
+                        <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Notifikasi</label>
                         <Select
                             value={notifPref}
                             onChange={(e) => setNotifPref(e.target.value)}
@@ -68,7 +68,7 @@ export const DashboardAddMissionModal: React.FC<DashboardAddMissionModalProps> =
                     <Button variant="outline" type="button" onClick={onClose} className="flex-1 h-14 font-black">Batal</Button>
                     <Button
                         type="submit"
-                        className="flex-1 h-14 font-black bg-slate-900 text-white shadow-hard-mini hover:-translate-y-1 transition-all"
+                        className="flex-1 h-14 font-black bg-foreground text-background shadow-hard-mini hover:-translate-y-1 transition-all"
                     >
                         <PlusCircle className="mr-2" size={20} />
                         Tambah Task

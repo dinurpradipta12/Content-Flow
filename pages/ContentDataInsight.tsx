@@ -69,7 +69,7 @@ import { PremiumLockScreen } from '../components/PremiumLockScreen';
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-card p-3 border-2 border-slate-900 shadow-[4px_4px_0px_#1e293b] rounded-xl pointer-events-none">
+            <div className="bg-card p-3 border-2 border-border shadow-[4px_4px_0px_#1e293b] rounded-xl pointer-events-none">
                 {label && <p className="text-mutedForeground font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2">
@@ -868,7 +868,7 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Period Badge + Report Button */}
                     <div className="flex items-center gap-3">
                         {/* Period Indicator Badge */}
-                        <div className="bg-card border-2 border-slate-800 px-2 sm:px-4 py-1 sm:py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default text-[10px] sm:text-sm">
+                        <div className="bg-card border-2 border-border px-2 sm:px-4 py-1 sm:py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default text-[10px] sm:text-sm">
                             <span className="font-heading font-black text-foreground uppercase tracking-wide flex items-center gap-2">
                                 <Calendar size={14} className="text-accent" />
                                 <span className="hidden sm:inline">{getPeriodLabel()}</span>
@@ -878,7 +878,7 @@ export const ContentDataInsight: React.FC = () => {
                         {/* Full Monthly Report Button */}
                         <button
                             onClick={() => setIsReportModalOpen(true)}
-                            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-2 border-slate-800 px-4 py-2 rounded-xl shadow-hard hover:shadow-hard-hover hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-black flex items-center gap-2 uppercase tracking-wide"
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-2 border-border px-4 py-2 rounded-xl shadow-hard hover:shadow-hard-hover hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-black flex items-center gap-2 uppercase tracking-wide"
                         >
                             <FileBarChart size={16} />
                             <span className="hidden sm:inline">Monthly Report</span>
@@ -894,7 +894,7 @@ export const ContentDataInsight: React.FC = () => {
                     {filterPlatform !== Platform.TIKTOK && (
                         <div
                             onClick={() => setSelectedMetric('reach')}
-                            className="bg-blue-600 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
+                            className="bg-blue-600 p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                                 <BarChart2 size={70} className="text-white" />
@@ -904,7 +904,7 @@ export const ContentDataInsight: React.FC = () => {
                                 <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.reach.toLocaleString()}</h3>
                             </div>
                             <div className="relative z-10 mt-auto">
-                                <span className="inline-block bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
+                                <span className="inline-block bg-card/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
                                     {getCardFooterText()}
                                 </span>
                             </div>
@@ -914,7 +914,7 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Engagement Rate */}
                     <div
                         onClick={() => setSelectedMetric('er')}
-                        className="bg-pink-600 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
+                        className="bg-pink-600 p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                             <TrendingUp size={90} className="text-white" />
@@ -924,7 +924,7 @@ export const ContentDataInsight: React.FC = () => {
                             <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.er.toFixed(2)}%</h3>
                         </div>
                         <div className="relative z-10 mt-auto">
-                            <span className="inline-block bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
+                            <span className="inline-block bg-card/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -933,7 +933,7 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Interactions */}
                     <div
                         onClick={() => setSelectedMetric('interactions')}
-                        className="bg-violet-600 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
+                        className="bg-violet-600 p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                             <Zap size={70} className="text-white" />
@@ -943,7 +943,7 @@ export const ContentDataInsight: React.FC = () => {
                             <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.interactions.toLocaleString()}</h3>
                         </div>
                         <div className="relative z-10 mt-auto">
-                            <span className="inline-block bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
+                            <span className="inline-block bg-card/20 text-white text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-white/30">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -952,17 +952,17 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Views */}
                     <div
                         onClick={() => setSelectedMetric('views')}
-                        className="bg-yellow-400 p-5 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_#0f172a] transition-all duration-300 cursor-pointer"
+                        className="bg-yellow-400 p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                             <Eye size={70} className="text-black" />
                         </div>
-                        <div className="relative z-10 text-slate-900">
+                        <div className="relative z-10 text-foreground">
                             <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-1 opacity-80">Content Views</p>
                             <h3 className="text-2xl sm:text-4xl font-black tabular-nums">{summaryStats.views.toLocaleString()}</h3>
                         </div>
                         <div className="relative z-10 mt-auto">
-                            <span className="inline-block bg-black/10 text-slate-900 text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-black/20">
+                            <span className="inline-block bg-black/10 text-foreground text-[10px] font-black px-3 py-1 rounded-full backdrop-blur-md border border-black/20">
                                 {getCardFooterText()}
                             </span>
                         </div>
@@ -979,7 +979,7 @@ export const ContentDataInsight: React.FC = () => {
                     >
                         <div className="space-y-6">
                             {/* Header Info */}
-                            <div className="bg-muted border-2 border-slate-200 p-4 rounded-xl flex justify-between items-center">
+                            <div className="bg-muted border-2 border-border p-4 rounded-xl flex justify-between items-center">
                                 <div>
                                     <p className="text-xs font-bold text-slate-500 uppercase">Periode Data</p>
                                     <p className="font-black text-foreground text-lg">{getPeriodLabel()}</p>
@@ -993,7 +993,7 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
 
                             {/* Chart Area */}
-                            <div className="h-[180px] sm:h-[300px] w-full bg-card border-2 border-slate-800 rounded-xl p-3 sm:p-4 shadow-hard relative">
+                            <div className="h-[180px] sm:h-[300px] w-full bg-card border-2 border-border rounded-xl p-3 sm:p-4 shadow-hard relative">
                                 <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                                     <AreaChart data={chartData}>
                                         <defs>
@@ -1031,7 +1031,7 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
 
                             {/* Analysis Box */}
-                            <div className="bg-[#FFFDF5] border-2 border-slate-800 rounded-xl p-6 shadow-hard relative overflow-hidden">
+                            <div className="bg-[#FFFDF5] border-2 border-border rounded-xl p-6 shadow-hard relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-2 h-full bg-slate-800"></div>
                                 <h4 className="font-heading font-black text-xl text-foreground mb-2 flex items-center gap-2">
                                     <TrendingUp size={24} className="text-foreground" />
@@ -1042,7 +1042,7 @@ export const ContentDataInsight: React.FC = () => {
                                 </p>
                                 <div className="mt-4 flex gap-2">
                                     {chartData.slice(-3).map((d, i) => (
-                                        <div key={i} className="bg-card border border-slate-200 p-2 rounded-lg text-xs">
+                                        <div key={i} className="bg-card border border-border p-2 rounded-lg text-xs">
                                             <span className="block font-bold text-mutedForeground">{d.name}</span>
                                             <span className="font-black text-foreground">{d.value.toLocaleString()}</span>
                                         </div>
@@ -1053,12 +1053,12 @@ export const ContentDataInsight: React.FC = () => {
                     </Modal>
                 )}
 
-                <div className="bg-card rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="bg-card rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] overflow-hidden flex flex-col flex-1 min-h-0">
                     {/* Premium Toolbar */}
-                    <div className="border-b-[3px] border-slate-900 p-4 bg-muted/30 flex flex-col 2xl:flex-row gap-4 items-center justify-between">
+                    <div className="border-b-[3px] border-border p-4 bg-muted/30 flex flex-col 2xl:flex-row gap-4 items-center justify-between">
                         <div className="flex flex-wrap items-center gap-4 w-full">
                             {/* Platform Capsules */}
-                            <div className="flex bg-slate-50 p-1.5 rounded-full border-2 border-slate-200 shadow-[4px_4px_0px_#f1f5f9] overflow-x-auto no-scrollbar max-w-full">
+                            <div className="flex bg-muted p-1.5 rounded-full border-2 border-border shadow-[4px_4px_0px_var(--shadow-color)] overflow-x-auto no-scrollbar max-w-full">
                                 {['all', ...Object.values(Platform)].map((p) => (
                                     <button
                                         key={p}
@@ -1067,7 +1067,7 @@ export const ContentDataInsight: React.FC = () => {
                                             px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
                                             ${filterPlatform === p
                                                 ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#4c1d95] scale-105'
-                                                : 'text-slate-500 hover:text-violet-600 hover:bg-white'}
+                                                : 'text-slate-500 hover:text-violet-600 hover:bg-card'}
                                         `}
                                     >
                                         {p === 'all' ? 'Semua' : p}
@@ -1084,10 +1084,10 @@ export const ContentDataInsight: React.FC = () => {
                                         value={filterAccount}
                                         onChange={(e) => setFilterAccount(e.target.value)}
                                         options={[{ label: 'SEMUA AKUN', value: 'all' }, ...accounts.map(acc => ({ label: acc.toUpperCase(), value: acc }))]}
-                                        className="!py-2 !text-[11px] !font-black !rounded-xl !border-2 !border-slate-300"
+                                        className="!py-2 !text-[11px] !font-black !rounded-xl !border-2 !border-border/60"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 bg-white border-2 border-slate-300 rounded-xl px-3 py-1.5 shadow-sm">
+                                <div className="flex items-center gap-2 bg-card border-2 border-border/60 rounded-xl px-3 py-1.5 shadow-sm">
                                     <Calendar size={14} className="text-slate-400" />
                                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 uppercase" />
                                     <span className="text-slate-300 font-black">—</span>
@@ -1101,7 +1101,7 @@ export const ContentDataInsight: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex-shrink-0 w-full 2xl:w-auto flex justify-end">
-                            <Button variant="outline" size="sm" onClick={fetchData} icon={<RefreshCw size={14} />} className="h-10 !rounded-xl !border-[3.5px] !border-slate-900 !bg-white !text-slate-900 !font-black !shadow-[3px_3px_0px_#0f172a] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_#0f172a] transition-all">REFRESH DATA</Button>
+                            <Button variant="outline" size="sm" onClick={fetchData} icon={<RefreshCw size={14} />} className="h-10 !rounded-xl !border-[3.5px] !border-border !bg-background !text-foreground !font-black !shadow-[3px_3px_0px_var(--shadow-color)] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_var(--shadow-color)] transition-all">REFRESH DATA</Button>
                         </div>
                     </div>
 
@@ -1139,7 +1139,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <React.Fragment key={item.id}>
                                             <tr
                                                 className={`transition-all duration-300 cursor-pointer group/row relative
-                                                    ${expandedRowId === item.id ? 'bg-violet-50' : 'hover:bg-slate-50'}
+                                                    ${expandedRowId === item.id ? 'bg-violet-50' : 'hover:bg-muted'}
                                                 `}
                                                 onClick={() => toggleRow(item.id)}
                                             >
@@ -1151,7 +1151,7 @@ export const ContentDataInsight: React.FC = () => {
                                                 <td className="p-4 align-middle">
                                                     <div className="flex items-center gap-3">
                                                         {/* Date Label - SOFTENED */}
-                                                        <div className="bg-slate-50 border-2 border-slate-200 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[2px_2px_0px_#f1f5f9]">
+                                                        <div className="bg-slate-50 border-2 border-border px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[2px_2px_0px_#f1f5f9]">
                                                             <Calendar size={14} className="text-violet-600" />
                                                             <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest whitespace-nowrap">
                                                                 {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -1160,10 +1160,10 @@ export const ContentDataInsight: React.FC = () => {
                                                     </div>
                                                 </td>
                                                 <td className="p-4 align-middle max-w-xs">
-                                                    <p className="font-black text-slate-900 text-[15px] leading-tight mb-1 group-hover/row:text-violet-600 transition-colors">{item.title}</p>
+                                                    <p className="font-black text-foreground text-[15px] leading-tight mb-1 group-hover/row:text-violet-600 transition-colors">{item.title}</p>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border-2 border-slate-200 text-slate-600 font-black uppercase tracking-widest">{item.type}</span>
-                                                        <div className="flex items-center gap-1.5 text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200">
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border-2 border-border text-slate-600 font-black uppercase tracking-widest">{item.type}</span>
+                                                        <div className="flex items-center gap-1.5 text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-border">
                                                             {getPlatformIcon(item.platform, 12)}
                                                             <span className="text-[10px] font-black tracking-tight">@{item.workspaces?.account_name || '-'}</span>
                                                         </div>
@@ -1177,13 +1177,13 @@ export const ContentDataInsight: React.FC = () => {
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             onClick={e => e.stopPropagation()}
-                                                            className="inline-flex items-center gap-2 group/link px-4 py-2 bg-white border-[2.5px] border-slate-900 rounded-xl shadow-[3px_3px_0px_#0f172a] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_#0f172a] transition-all"
+                                                            className="inline-flex items-center gap-2 group/link px-4 py-2 bg-card border-[2.5px] border-border rounded-xl shadow-[3px_3px_0px_var(--shadow-color)] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_var(--shadow-color)] transition-all"
                                                         >
                                                             <LinkIcon size={14} className="text-violet-600" />
-                                                            <span className="text-xs font-black text-slate-900">BUKA</span>
+                                                            <span className="text-xs font-black text-foreground uppercase tracking-widest">BUKA</span>
                                                         </a>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border-[2.5px] border-slate-200 rounded-xl text-slate-400">
+                                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border-[2.5px] border-border rounded-xl text-slate-400">
                                                             <LinkIcon size={14} />
                                                             <span className="text-xs font-black">NA</span>
                                                         </span>
@@ -1229,7 +1229,7 @@ export const ContentDataInsight: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="w-full h-12 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center">
+                                                        <div className="w-full h-12 bg-slate-50 border-2 border-dashed border-border rounded-2xl flex items-center justify-center">
                                                             <span className="text-[11px] font-black text-slate-300 uppercase tracking-widest italic">Belum Ada Data Metrics</span>
                                                         </div>
                                                     )}
@@ -1237,15 +1237,16 @@ export const ContentDataInsight: React.FC = () => {
                                                 <td className="p-4 align-middle text-right">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <Button
+                                                            variant="secondary"
                                                             size="sm"
-                                                            className="h-9 px-4 !rounded-xl !border-[2.5px] !border-slate-900 !bg-white !text-violet-600 !font-black !shadow-[3px_3px_0px_#0f172a] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_#0f172a] transition-all hidden sm:flex"
+                                                            className="h-9 px-4 !rounded-xl !border-[2.5px] !border-border !bg-card !text-violet-600 !font-black !shadow-[3px_3px_0px_var(--shadow-color)] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_var(--shadow-color)] transition-all hidden sm:flex"
                                                             onClick={(e) => openManualInput(e, item)}
                                                         >
                                                             <Edit3 size={14} className="mr-2" /> INPUT
                                                         </Button>
                                                         <button
                                                             onClick={(e) => handleDelete(e, item.id)}
-                                                            className="w-9 h-9 flex items-center justify-center bg-white border-2 border-slate-200 text-slate-300 hover:text-rose-500 hover:border-rose-200 rounded-xl transition-all hover:bg-rose-50 shadow-sm"
+                                                            className="w-9 h-9 flex items-center justify-center bg-card border-2 border-border text-mutedForeground hover:text-rose-500 hover:border-rose-200 rounded-xl transition-all hover:bg-rose-50/10 shadow-sm"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1254,39 +1255,39 @@ export const ContentDataInsight: React.FC = () => {
                                             </tr>
                                             {/* EXPANDED ROW DETAIL */}
                                             {expandedRowId === item.id && (
-                                                <tr className="bg-white animate-in slide-in-from-top-4 duration-300">
-                                                    <td colSpan={6} className="p-6 border-b-[3px] border-slate-900">
+                                                <tr className="bg-card animate-in slide-in-from-top-4 duration-300">
+                                                    <td colSpan={6} className="p-6 border-b-[3px] border-border">
                                                         <div className="flex flex-col lg:flex-row gap-6">
                                                             {/* Left: Detailed Metrics */}
                                                             <div className="flex-[1.5] space-y-4">
                                                                 <div className="flex justify-between items-center">
-                                                                    <h4 className="font-black text-slate-900 text-base flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-violet-600" /> Metrics Breakdown</h4>
+                                                                    <h4 className="font-black text-foreground text-base flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-violet-600" /> Metrics Breakdown</h4>
                                                                     {(item.metrics as any)?.isManual && (
-                                                                        <span className="text-[10px] bg-yellow-400 text-slate-950 px-3 py-1 rounded-full font-black border-2 border-slate-900 shadow-[2px_2px_0px_#000] uppercase">
+                                                                        <span className="text-[10px] bg-yellow-400 text-slate-950 px-3 py-1 rounded-full font-black border-2 border-border shadow-[2px_2px_0px_#000] uppercase">
                                                                             PENGINPUTAN MANUAL
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                                 {item.metrics ? (
                                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
+                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
                                                                             <div className="absolute -top-4 -right-4 p-2 opacity-5 scale-150 rotate-12 group-hover/detail:opacity-10 transition-opacity">
                                                                                 <TrendingUp size={100} className="text-violet-900" />
                                                                             </div>
                                                                             <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Engagement Rate</span>
-                                                                            <p className="text-4xl font-black text-slate-900 tabular-nums">
+                                                                            <p className="text-4xl font-black text-foreground tabular-nums">
                                                                                 {calculateER(item.metrics).toFixed(2)}%
                                                                             </p>
                                                                             <p className="text-[10px] font-bold text-slate-500 mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
                                                                                 Formula: (Interaksi / Views) × 100
                                                                             </p>
                                                                         </div>
-                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
+                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
                                                                             <div className="absolute -top-4 -right-4 p-2 opacity-5 scale-150 rotate-12 group-hover/detail:opacity-10 transition-opacity">
                                                                                 <Zap size={100} className="text-violet-900" />
                                                                             </div>
                                                                             <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Interaksi</span>
-                                                                            <p className="text-4xl font-black text-slate-900 tabular-nums">
+                                                                            <p className="text-4xl font-black text-foreground tabular-nums">
                                                                                 {calculateInteractions(item.metrics).toLocaleString()}
                                                                             </p>
                                                                             <p className="text-[10px] font-bold text-slate-500 mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
@@ -1295,12 +1296,12 @@ export const ContentDataInsight: React.FC = () => {
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="bg-slate-50 p-12 rounded-2xl border-4 border-dashed border-slate-200 text-center text-slate-400 font-black uppercase tracking-widest">Belum ada data detail.</div>
+                                                                    <div className="bg-slate-50 p-12 rounded-2xl border-4 border-dashed border-border text-center text-slate-400 font-black uppercase tracking-widest">Belum ada data detail.</div>
                                                                 )}
                                                             </div>
 
                                                             {/* Right: Content Details */}
-                                                            <div className="flex-1 bg-slate-900 p-6 rounded-2xl border-[3px] border-slate-900 shadow-[6px_6px_0px_#4c1d95] text-white relative">
+                                                            <div className="flex-1 bg-slate-900 p-6 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_#4c1d95] text-white relative">
                                                                 <div className="absolute top-4 right-4 text-violet-400">
                                                                     <FileText size={24} />
                                                                 </div>
@@ -1309,11 +1310,11 @@ export const ContentDataInsight: React.FC = () => {
                                                                 </h4>
 
                                                                 <div className="space-y-4">
-                                                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                                                    <div className="p-4 bg-card/5 rounded-xl border border-white/10">
                                                                         <span className="block text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">Pillar Konten</span>
                                                                         <span className="font-black text-white text-lg">{item.pillar || 'GENERAL'}</span>
                                                                     </div>
-                                                                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                                                                    <div className="p-4 bg-card/5 rounded-xl border border-white/10">
                                                                         <span className="block text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">PIC / Talent</span>
                                                                         <span className="font-black text-white text-lg">{item.pic || item.assignee || 'TEAM-WIDE'}</span>
                                                                     </div>
@@ -1341,10 +1342,10 @@ export const ContentDataInsight: React.FC = () => {
                 {/* MODAL INPUT MANUAL */}
                 {isManualModalOpen && (
                     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-card border-2 border-slate-800 overflow-hidden">
+                        <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-card border-2 border-border overflow-hidden">
 
                             {/* Header Pop Art */}
-                            <div className="px-6 py-4 border-b-2 border-slate-800 bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
+                            <div className="px-6 py-4 border-b-2 border-border bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-card/10 rounded-bl-full -z-0"></div>
                                 <h3 className="font-bold font-heading text-lg tracking-tight flex items-center gap-2 z-10">
                                     <Edit3 size={20} /> Input Metrics Manual
@@ -1370,7 +1371,7 @@ export const ContentDataInsight: React.FC = () => {
                                                 <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><BarChart2 size={12} /> Reach / Jangkauan</label>
                                                 <input
                                                     type="number"
-                                                    className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                    className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                                     value={manualMetrics.reach}
                                                     onChange={(e) => setManualMetrics({ ...manualMetrics, reach: parseInt(e.target.value) || 0 })}
                                                 />
@@ -1382,7 +1383,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Eye size={12} /> Total Views</label>
                                         <input
                                             type="number"
-                                            className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                             value={manualMetrics.views}
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, views: parseInt(e.target.value) || 0 })}
                                         />
@@ -1391,7 +1392,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Heart size={12} /> Likes</label>
                                         <input
                                             type="number"
-                                            className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                             value={manualMetrics.likes}
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, likes: parseInt(e.target.value) || 0 })}
                                         />
@@ -1400,7 +1401,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><MessageSquare size={12} /> Comments</label>
                                         <input
                                             type="number"
-                                            className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                             value={manualMetrics.comments}
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, comments: parseInt(e.target.value) || 0 })}
                                         />
@@ -1409,7 +1410,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Share2 size={12} /> Shares</label>
                                         <input
                                             type="number"
-                                            className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                             value={manualMetrics.shares}
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, shares: parseInt(e.target.value) || 0 })}
                                         />
@@ -1418,7 +1419,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
                                         <input
                                             type="number"
-                                            className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                             value={manualMetrics.saves}
                                             onChange={(e) => setManualMetrics({ ...manualMetrics, saves: parseInt(e.target.value) || 0 })}
                                         />
@@ -1430,7 +1431,7 @@ export const ContentDataInsight: React.FC = () => {
                                             <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><RefreshCw size={12} /> Reposts</label>
                                             <input
                                                 type="number"
-                                                className="bg-transparent border-2 border-slate-300 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
                                                 value={manualMetrics.reposts}
                                                 onChange={(e) => setManualMetrics({ ...manualMetrics, reposts: parseInt(e.target.value) || 0 })}
                                             />
@@ -1475,15 +1476,15 @@ export const ContentDataInsight: React.FC = () => {
                     <div className="p-4 space-y-6 max-h-[96vh] overflow-y-auto no-scrollbar">
                         {/* ── ROW 1: Filters ── */}
                         <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-12 flex flex-wrap items-center gap-3 bg-slate-50 border-2 border-slate-200 rounded-3xl p-3 shadow-sm">
-                                <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest px-3 border-r-2 border-slate-200">
+                            <div className="col-span-12 flex flex-wrap items-center gap-3 bg-slate-50 border-2 border-border rounded-3xl p-3 shadow-sm">
+                                <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest px-3 border-r-2 border-border">
                                     <Filter size={14} />
                                 </div>
                                 <div className="w-44">
                                     <select
                                         value={reportFilterAccount}
                                         onChange={e => setReportFilterAccount(e.target.value)}
-                                        className="w-full px-3 py-1.5 bg-white border-2 border-slate-200 rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
+                                        className="w-full px-3 py-1.5 bg-card border-2 border-border rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
                                     >
                                         <option value="all">Semua Akun</option>
                                         {accounts.map(a => <option key={a} value={a}>{a}</option>)}
@@ -1493,7 +1494,7 @@ export const ContentDataInsight: React.FC = () => {
                                     <select
                                         value={reportFilterPlatform}
                                         onChange={e => setReportFilterPlatform(e.target.value)}
-                                        className="w-full px-3 py-1.5 bg-white border-2 border-slate-200 rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
+                                        className="w-full px-3 py-1.5 bg-card border-2 border-border rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
                                     >
                                         <option value="all">Semua Platform</option>
                                         <option value={Platform.INSTAGRAM}>Instagram</option>
@@ -1503,7 +1504,7 @@ export const ContentDataInsight: React.FC = () => {
                                         <option value={Platform.FACEBOOK}>Facebook</option>
                                     </select>
                                 </div>
-                                <div className="flex items-center gap-2 bg-white border-2 border-slate-200 rounded-xl px-3 py-1.5 font-sans">
+                                <div className="flex items-center gap-2 bg-card border-2 border-border rounded-xl px-3 py-1.5 font-sans">
                                     <Calendar size={14} className="text-violet-600" />
                                     <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28" />
                                     <span className="text-slate-300 text-xs font-black px-1">—</span>
@@ -1541,7 +1542,7 @@ export const ContentDataInsight: React.FC = () => {
                                 >
                                     <div className="flex items-center justify-between mb-2">
                                         <p className={`text-xs font-black uppercase text-${card.color}-700 tracking-wider font-heading`}>{card.label}</p>
-                                        <div className={`p-1.5 rounded-lg bg-white border border-${card.color}-200 text-${card.color}-600 shadow-sm group-hover:scale-110 transition-transform`}>
+                                        <div className={`p-1.5 rounded-lg bg-card border border-${card.color}-200 text-${card.color}-600 shadow-sm group-hover:scale-110 transition-transform`}>
                                             {card.icon}
                                         </div>
                                     </div>
@@ -1554,9 +1555,9 @@ export const ContentDataInsight: React.FC = () => {
 
                         {/* ── ROW 3: Charts Side by Side ── */}
                         <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-12 lg:col-span-8 bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm">
+                            <div className="col-span-12 lg:col-span-8 bg-card border-2 border-border rounded-3xl p-5 shadow-sm">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-xs font-black text-slate-800 flex items-center gap-2 uppercase tracking-widest">
+                                    <h4 className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-widest">
                                         <TrendingUp size={16} className="text-violet-600" />
                                         Weekly Performance Growth
                                     </h4>
@@ -1582,8 +1583,8 @@ export const ContentDataInsight: React.FC = () => {
                                     </ResponsiveContainer>
                                 </div>
                             </div>
-                            <div className="col-span-12 lg:col-span-4 bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm">
-                                <h4 className="text-xs font-black text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-widest">
+                            <div className="col-span-12 lg:col-span-4 bg-card border-2 border-border rounded-3xl p-5 shadow-sm">
+                                <h4 className="text-xs font-black text-foreground mb-6 flex items-center gap-2 uppercase tracking-widest">
                                     <BarChart2 size={16} className="text-violet-600" /> Engagement Comparison
                                 </h4>
                                 <div className="h-[200px]">
@@ -1608,10 +1609,10 @@ export const ContentDataInsight: React.FC = () => {
                                 </h4>
                                 <div className="space-y-2">
                                     {reportData.top3.map((item, i) => (
-                                        <div key={item.id} className="bg-white p-2.5 rounded-xl border border-emerald-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
+                                        <div key={item.id} className="bg-card p-2.5 rounded-xl border border-emerald-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
                                             <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                                                <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
                                                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
                                             </div>
                                         </div>
@@ -1624,22 +1625,22 @@ export const ContentDataInsight: React.FC = () => {
                                 </h4>
                                 <div className="space-y-2">
                                     {reportData.bottom3.map((item, i) => (
-                                        <div key={item.id} className="bg-white p-2.5 rounded-xl border border-rose-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
+                                        <div key={item.id} className="bg-card p-2.5 rounded-xl border border-rose-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
                                             <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
                                             <div className="min-w-0">
-                                                <p className="text-xs font-bold text-slate-800 truncate">{item.title}</p>
+                                                <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
                                                 <p className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <div className="col-span-12 lg:col-span-6 bg-violet-600 border-2 border-slate-900 p-6 rounded-3xl text-white shadow-[8px_8px_0px_#1e293b] flex items-center justify-between relative overflow-hidden group">
+                            <div className="col-span-12 lg:col-span-6 bg-violet-600 border-2 border-border p-6 rounded-3xl text-white shadow-[8px_8px_0px_#1e293b] flex items-center justify-between relative overflow-hidden group">
                                 <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
                                     <BarChart2 size={200} />
                                 </div>
                                 <div className="relative z-10 flex items-center gap-6">
-                                    <div className="bg-white/10 p-5 rounded-2xl border border-white/20 backdrop-blur-md">
+                                    <div className="bg-card/10 p-5 rounded-2xl border border-white/20 backdrop-blur-md">
                                         <Hash size={32} className="text-white" />
                                     </div>
                                     <div>
@@ -1648,7 +1649,7 @@ export const ContentDataInsight: React.FC = () => {
                                             {reportData.totalPosts} <span className="text-xl opacity-60">Konten</span>
                                         </h2>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-widest text-white">Digital Content Portfolio</span>
+                                            <span className="text-[10px] font-black bg-card/20 px-2 py-0.5 rounded-full uppercase tracking-widest text-white">Digital Content Portfolio</span>
                                             <span className="text-[10px] font-black opacity-60 uppercase tracking-widest text-white">{reportStartDate} — {reportEndDate}</span>
                                         </div>
                                     </div>
@@ -1669,8 +1670,8 @@ export const ContentDataInsight: React.FC = () => {
 
                         {/* ── ROW 5: Distribution, Frequency & Notes ── */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white border-2 border-slate-200 rounded-3xl p-4 shadow-sm min-h-[180px]">
-                                <h4 className="text-xs font-black text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                            <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-sm min-h-[180px]">
+                                <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
                                     <Layers size={14} className="text-violet-600" /> Pillar Distribution
                                 </h4>
                                 <div className="flex items-center">
@@ -1689,7 +1690,7 @@ export const ContentDataInsight: React.FC = () => {
                                             <div key={p.name} className="flex items-center gap-2">
                                                 <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}></div>
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tighter">{p.name}</p>
+                                                    <p className="text-xs font-black text-foreground truncate uppercase tracking-tighter">{p.name}</p>
                                                     <p className="text-xs font-bold text-slate-400 leading-none">{p.value} Post</p>
                                                 </div>
                                             </div>
@@ -1697,8 +1698,8 @@ export const ContentDataInsight: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="bg-white border-2 border-slate-200 rounded-3xl p-4 shadow-sm min-h-[180px]">
-                                <h4 className="text-xs font-black text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                            <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-sm min-h-[180px]">
+                                <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
                                     <Clock size={14} className="text-violet-600" /> Post Frequency
                                 </h4>
                                 <div className="h-[120px]">
@@ -1719,7 +1720,7 @@ export const ContentDataInsight: React.FC = () => {
                                     onChange={e => setReportNotes(e.target.value)}
                                     rows={5}
                                     placeholder="Tulis catatan..."
-                                    className="w-full bg-white/50 border border-amber-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-white transition-all no-scrollbar"
+                                    className="w-full bg-card/50 border border-amber-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-card transition-all no-scrollbar"
                                 />
                             </div>
                             <div className="bg-blue-50/50 border-2 border-blue-200 rounded-3xl p-4 min-h-[180px]">
@@ -1731,7 +1732,7 @@ export const ContentDataInsight: React.FC = () => {
                                     onChange={e => setReportNextPlan(e.target.value)}
                                     rows={5}
                                     placeholder="Tulis strategi..."
-                                    className="w-full bg-white/50 border border-blue-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-white transition-all no-scrollbar"
+                                    className="w-full bg-card/50 border border-blue-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-card transition-all no-scrollbar"
                                 />
                             </div>
                         </div>
@@ -1740,7 +1741,7 @@ export const ContentDataInsight: React.FC = () => {
                         <div className="flex justify-center pt-2">
                             <button
                                 onClick={saveReportNotesToStorage}
-                                className={`flex items-center gap-2 px-10 py-3 rounded-2xl border-2 border-slate-900 font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_#1e293b] hover:-translate-y-0.5 transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-white text-slate-800 hover:bg-slate-50'}`}
+                                className={`flex items-center gap-2 px-10 py-3 rounded-2xl border-2 border-border font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_#1e293b] hover:-translate-y-0.5 transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-card text-foreground hover:bg-muted'}`}
                             >
                                 {savingReportNotes ? <><Save size={16} /> Tersimpan!</> : <><Save size={16} /> Simpan Laporan</>}
                             </button>

@@ -66,7 +66,7 @@ export const DashboardAddContentModal: React.FC<DashboardAddContentModalProps> =
         <Modal isOpen={isOpen} onClose={onClose} title="Buat Konten Baru" maxWidth="max-w-md">
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nama / Judul Konten</label>
+                    <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Nama / Judul Konten</label>
                     <Input
                         placeholder="Contoh: Tutorial Masak Ayam..."
                         value={title}
@@ -76,7 +76,7 @@ export const DashboardAddContentModal: React.FC<DashboardAddContentModalProps> =
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Pilih Workspace</label>
+                    <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Pilih Workspace</label>
                     <Select
                         value={workspaceId}
                         onChange={(e) => setWorkspaceId(e.target.value)}
@@ -91,7 +91,7 @@ export const DashboardAddContentModal: React.FC<DashboardAddContentModalProps> =
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Platform</label>
+                        <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Platform</label>
                         <Select
                             value={platform}
                             onChange={(e) => setPlatform(e.target.value as Platform)}
@@ -103,7 +103,7 @@ export const DashboardAddContentModal: React.FC<DashboardAddContentModalProps> =
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Jenis</label>
+                        <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Jenis</label>
                         <Select
                             value={type}
                             onChange={(e) => setType(e.target.value)}
@@ -118,7 +118,7 @@ export const DashboardAddContentModal: React.FC<DashboardAddContentModalProps> =
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Pilar Konten / Detail (Opsional)</label>
+                    <label className="text-[10px] font-black uppercase text-mutedForeground ml-1">Pilar Konten / Detail (Opsional)</label>
                     <Input
                         placeholder="Contoh: Edukasi, Promosi, dll."
                         value={pillar}
@@ -134,7 +134,7 @@ export const DashboardAddContentModal: React.FC<DashboardAddContentModalProps> =
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 h-14 font-black bg-slate-900 text-white shadow-hard-mini hover:-translate-y-1 transition-all"
+                        className="flex-1 h-14 font-black bg-foreground text-background shadow-hard-mini hover:-translate-y-1 transition-all"
                     >
                         {loading ? <Loader2 className="animate-spin mr-2" size={20} /> : <PlusCircle className="mr-2" size={20} />}
                         Buat Konten

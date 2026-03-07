@@ -681,7 +681,7 @@ export const Dashboard: React.FC = () => {
                     <div className="space-y-4">
                         {recentContent.slice(0, 3).map(item => (
                             <div key={item.id} className="flex items-center gap-4">
-                                <div className="w-12 h-10 rounded-xl bg-slate-100 border-[3px] border-border overflow-hidden shrink-0">
+                                <div className="w-12 h-10 rounded-xl bg-muted border-[3px] border-border overflow-hidden shrink-0">
                                     {item.thumbnail_url ? <img src={item.thumbnail_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black">{item.platform?.[0]}</div>}
                                 </div>
                                 <div className="flex-1 min-w-0">

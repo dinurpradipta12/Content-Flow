@@ -696,6 +696,9 @@ export const ContentPlanDetail: React.FC = () => {
     const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
     const commentEndRef = useRef<HTMLDivElement>(null);
     const commentInputRef = useRef<HTMLInputElement>(null);
+    const [mentionSearchText, setMentionSearchText] = useState('');
+    const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+    const [mentionSuggestionIndex, setMentionSuggestionIndex] = useState(0);
 
     // Fetch comments for selected task
     const fetchResultComments = async (contentItemId: string) => {
@@ -757,15 +760,25 @@ export const ContentPlanDetail: React.FC = () => {
 
             // Notify all workspace members
             const replyLabel = replyingTo ? ` (membalas ${replyingTo.user_name})` : '';
+
+            // Extract Mentions
+            const mentionedUserIds = new Set<string>();
+            teamMembers.forEach(m => {
+                if (commentInput.toLowerCase().includes(`@${m.name.toLowerCase()}`)) {
+                    mentionedUserIds.add(m.id);
+                }
+            });
+
             for (const member of teamMembers) {
                 if (member.id !== userId) {
+                    const isMentioned = mentionedUserIds.has(member.id);
                     await sendNotification({
                         recipientId: member.id,
-                        type: 'CONTENT_REVISION' as NotificationType,
-                        title: `Komentar Baru pada "${selectedTask.title}"`,
+                        type: isMentioned ? 'MENTION' as any : 'CONTENT_REVISION' as NotificationType,
+                        title: isMentioned ? `${userName} mention Anda di "${selectedTask.title}"` : `Komentar Baru pada "${selectedTask.title}"`,
                         content: `${userName} berkomentar${replyLabel}: "${commentInput.trim().slice(0, 80)}${commentInput.trim().length > 80 ? '...' : ''}"`,
                         workspaceId: id,
-                        metadata: { contentItemId: selectedTask.id, contentTitle: selectedTask.title }
+                        metadata: { contentItemId: selectedTask.id, contentTitle: selectedTask.title, isMention: isMentioned }
                     });
                 }
             }
@@ -777,6 +790,28 @@ export const ContentPlanDetail: React.FC = () => {
         } finally {
             setSendingComment(false);
         }
+    };
+
+    const handleSelectMention = (name: string) => {
+        const cursorPosition = commentInputRef.current?.selectionStart || 0;
+        const textBeforeCursor = commentInput.slice(0, cursorPosition);
+        const textAfterCursor = commentInput.slice(cursorPosition);
+
+        const words = textBeforeCursor.split(/\s/);
+        words.pop(); // Remove the partial @word
+
+        const newTextBefore = [...words, `@${name} `].join(' ');
+        setCommentInput(newTextBefore + textAfterCursor);
+        setShowMentionSuggestions(false);
+
+        // Refocus and set cursor
+        setTimeout(() => {
+            if (commentInputRef.current) {
+                commentInputRef.current.focus();
+                const newPos = newTextBefore.length;
+                commentInputRef.current.setSelectionRange(newPos, newPos);
+            }
+        }, 10);
     };
 
     // Toggle reaction on a comment
@@ -2929,7 +2964,33 @@ export const ContentPlanDetail: React.FC = () => {
                                                                                 ) : null;
                                                                             })()}
 
-                                                                            <p className="text-[13px] text-slate-600 leading-relaxed break-words">{comment.message}</p>
+                                                                            <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed break-words">
+                                                                                {(() => {
+                                                                                    if (teamMembers.length === 0) return comment.message;
+
+                                                                                    // Create a regex to match any team member name after @
+                                                                                    const escapedNames = teamMembers.map(m => m.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+                                                                                    const regex = new RegExp(`(@(${escapedNames}))(?=\\s|$|[,.!?])`, 'gi');
+
+                                                                                    const parts = comment.message.split(regex);
+                                                                                    return parts.map((part, i) => {
+                                                                                        if (part.startsWith('@')) {
+                                                                                            const nameMatched = part.slice(1);
+                                                                                            const isMember = teamMembers.some(m => m.name.toLowerCase() === nameMatched.toLowerCase());
+                                                                                            if (isMember) {
+                                                                                                return (
+                                                                                                    <span key={i} className="font-black text-violet-600 dark:text-yellow-400 bg-violet-600/5 dark:bg-yellow-400/10 px-1 rounded transition-colors">{part}</span>
+                                                                                                );
+                                                                                            }
+                                                                                        }
+                                                                                        // The split with capturing groups includes the groups in the results.
+                                                                                        // Group 1 is @name, Group 2 is name.
+                                                                                        // If part is just the name (Group 2), we skip it as it's already included in Group 1.
+                                                                                        if (teamMembers.some(m => m.name.toLowerCase() === part.toLowerCase())) return null;
+                                                                                        return <span key={i}>{part}</span>;
+                                                                                    });
+                                                                                })()}
+                                                                            </p>
 
                                                                             {/* Reactions display */}
                                                                             {comment.reactions && Object.keys(comment.reactions).length > 0 && (
@@ -3024,10 +3085,86 @@ export const ContentPlanDetail: React.FC = () => {
                                                         type="text"
                                                         placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
                                                         value={commentInput}
-                                                        onChange={e => setCommentInput(e.target.value)}
-                                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
-                                                        className="w-full px-4 py-3 bg-card border-[3px] border-slate-900 rounded-xl shadow-[2px_2px_0px_#0f172a] text-sm font-black text-slate-800 placeholder:text-mutedForeground focus:border-violet-500 focus:shadow-[4px_4px_0px_#0f172a] outline-none transition-all pr-12"
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            setCommentInput(val);
+
+                                                            // Mention logic
+                                                            const cursorPosition = e.target.selectionStart || 0;
+                                                            const textBeforeCursor = val.slice(0, cursorPosition);
+                                                            const words = textBeforeCursor.split(/\s/);
+                                                            const lastWord = words[words.length - 1];
+
+                                                            if (lastWord.startsWith('@')) {
+                                                                setMentionSearchText(lastWord.slice(1));
+                                                                setShowMentionSuggestions(true);
+                                                                setMentionSuggestionIndex(0);
+                                                            } else {
+                                                                setShowMentionSuggestions(false);
+                                                            }
+                                                        }}
+                                                        onKeyDown={e => {
+                                                            if (showMentionSuggestions) {
+                                                                const filtered = teamMembers.filter(m =>
+                                                                    m.name.toLowerCase().includes(mentionSearchText.toLowerCase())
+                                                                );
+
+                                                                if (e.key === 'ArrowDown') {
+                                                                    e.preventDefault();
+                                                                    setMentionSuggestionIndex(prev => (prev + 1) % Math.max(1, filtered.length));
+                                                                } else if (e.key === 'ArrowUp') {
+                                                                    e.preventDefault();
+                                                                    setMentionSuggestionIndex(prev => (prev - 1 + filtered.length) % Math.max(1, filtered.length));
+                                                                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                                                                    e.preventDefault();
+                                                                    if (filtered[mentionSuggestionIndex]) {
+                                                                        handleSelectMention(filtered[mentionSuggestionIndex].name);
+                                                                    }
+                                                                } else if (e.key === 'Escape') {
+                                                                    setShowMentionSuggestions(false);
+                                                                }
+                                                            } else if (e.key === 'Enter' && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleSendComment();
+                                                            }
+                                                        }}
+                                                        className="w-full px-4 py-3 bg-card border-[3px] border-border rounded-xl shadow-[2px_2px_0px_var(--shadow-color)] text-sm font-black text-foreground placeholder:text-mutedForeground focus:border-violet-500 focus:shadow-[4px_4px_0px_var(--shadow-color)] outline-none transition-all pr-12"
                                                     />
+
+                                                    {/* Mention Suggestions UI */}
+                                                    {showMentionSuggestions && (
+                                                        <div className="absolute bottom-full left-0 mb-2 w-64 bg-card border-[3px] border-border rounded-2xl shadow-hard z-[100] max-h-48 overflow-y-auto no-scrollbar animate-in slide-in-from-bottom-2 duration-200">
+                                                            <div className="p-2 border-b-2 border-border bg-muted/50 rounded-t-xl">
+                                                                <span className="text-[10px] font-black text-mutedForeground uppercase tracking-widest px-1">Mention Team Members</span>
+                                                            </div>
+                                                            {teamMembers.filter(m => m.name.toLowerCase().includes(mentionSearchText.toLowerCase())).length === 0 ? (
+                                                                <div className="p-3 text-center">
+                                                                    <p className="text-[10px] font-bold text-mutedForeground italic">No members found</p>
+                                                                </div>
+                                                            ) : (
+                                                                teamMembers.filter(m => m.name.toLowerCase().includes(mentionSearchText.toLowerCase())).map((m, idx) => (
+                                                                    <button
+                                                                        key={m.id}
+                                                                        onClick={() => handleSelectMention(m.name)}
+                                                                        onMouseEnter={() => setMentionSuggestionIndex(idx)}
+                                                                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${idx === mentionSuggestionIndex ? 'bg-accent text-white' : 'hover:bg-muted'}`}
+                                                                    >
+                                                                        {m.avatar ? (
+                                                                            <img src={m.avatar} alt="" className="w-6 h-6 rounded-lg object-cover border border-slate-200" />
+                                                                        ) : (
+                                                                            <div className="w-6 h-6 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center text-[10px] font-black">
+                                                                                {m.name.charAt(0).toUpperCase()}
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className={`text-xs font-black truncate ${idx === mentionSuggestionIndex ? 'text-white' : 'text-foreground'}`}>{m.name}</p>
+                                                                            <p className={`text-[9px] font-bold truncate ${idx === mentionSuggestionIndex ? 'text-white/70' : 'text-mutedForeground opacity-70'}`}>@{m.name.toLowerCase().replace(/\s/g, '')}</p>
+                                                                        </div>
+                                                                    </button>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    )}
                                                     <button
                                                         onClick={handleSendComment}
                                                         disabled={!commentInput.trim() || sendingComment}
