@@ -41,7 +41,9 @@ import {
     Crown,
     Youtube,
     Facebook,
-    Linkedin
+    Linkedin,
+    Sparkles,
+    TrendingDown
 } from 'lucide-react';
 import {
     LineChart,
@@ -70,7 +72,7 @@ const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-card p-3 border-2 border-border shadow-[4px_4px_0px_#1e293b] rounded-xl pointer-events-none">
-                {label && <p className="text-mutedForeground font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
+                {label && <p className="text-muted-foreground font-bold text-[10px] uppercase mb-1 leading-none">{label}</p>}
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></div>
@@ -632,12 +634,22 @@ export const ContentDataInsight: React.FC = () => {
                     : 0
             }));
         }
-
         return Object.keys(groupedByDate).map(date => ({
             name: date,
             value: groupedByDate[date]
         }));
     }, [filteredData, selectedMetric]);
+
+    // Peak Performance Tracker
+    const peakData = React.useMemo(() => {
+        if (!chartData.length) return { highest: { name: '-', value: 0 }, lowest: { name: '-', value: 0 } };
+
+        const sorted = [...chartData].sort((a, b) => b.value - a.value);
+        return {
+            highest: sorted[0],
+            lowest: sorted[sorted.length - 1]
+        };
+    }, [chartData]);
 
     // Analysis Helper
     const getAnalysis = () => {
@@ -661,9 +673,9 @@ export const ContentDataInsight: React.FC = () => {
                 <div className="flex items-center justify-between mb-3">
                     <div>
                         <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['insight']?.title || 'Content Insight'}</h2>
-                        <p className="text-[10px] text-mutedForeground">{filteredData.length} konten</p>
+                        <p className="text-[10px] text-muted-foreground">{filteredData.length} konten</p>
                     </div>
-                    <button onClick={fetchData} disabled={loading} className="p-2 rounded-xl bg-muted text-mutedForeground hover:text-foreground transition-colors">
+                    <button onClick={fetchData} disabled={loading} className="p-2 rounded-xl bg-muted text-muted-foreground hover:text-foreground transition-colors">
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
@@ -678,7 +690,7 @@ export const ContentDataInsight: React.FC = () => {
                         <p className="text-[9px] font-black uppercase tracking-wider opacity-80 mb-0.5">Engagement Rate</p>
                         <p className="text-xl font-black">{summaryStats.er.toFixed(2)}%</p>
                     </div>
-                    <div className="bg-purple-600 rounded-xl p-3 text-white">
+                    <div className="bg-foreground rounded-xl p-3 text-background">
                         <p className="text-[9px] font-black uppercase tracking-wider opacity-80 mb-0.5">Interactions</p>
                         <p className="text-xl font-black">{summaryStats.interactions.toLocaleString()}</p>
                     </div>
@@ -702,13 +714,13 @@ export const ContentDataInsight: React.FC = () => {
                 <div className="flex-1 overflow-y-auto space-y-2">
                     {loading ? (
                         <div className="flex items-center justify-center h-32">
-                            <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                            <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
                         </div>
                     ) : filteredData.length === 0 ? (
                         <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl">
-                            <BarChart2 size={28} className="text-accent/40 mx-auto mb-2" />
+                            <BarChart2 size={28} className="text-muted-foreground mx-auto mb-2" />
                             <p className="text-sm font-bold text-foreground">Belum ada data insight</p>
-                            <p className="text-xs text-mutedForeground mt-1">Konten Published akan muncul di sini</p>
+                            <p className="text-xs text-muted-foreground mt-1">Konten Published akan muncul di sini</p>
                         </div>
                     ) : (
                         filteredData.map(item => {
@@ -724,20 +736,20 @@ export const ContentDataInsight: React.FC = () => {
                                         <div className={`w-2 self-stretch rounded-full flex-shrink-0 ${item.platform === Platform.INSTAGRAM ? 'bg-pink-500' : item.platform === Platform.TIKTOK ? 'bg-slate-800' : item.platform === Platform.YOUTUBE ? 'bg-red-500' : 'bg-blue-500'}`} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-1.5 mb-0.5">
-                                                <span className="text-[9px] font-black text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{item.platform}</span>
+                                                <span className="text-[9px] font-black text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{item.platform}</span>
                                                 {(m as any)?.isManual && <span className="text-[8px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Manual</span>}
                                             </div>
                                             <p className="text-xs font-bold text-foreground line-clamp-2">{item.title}</p>
-                                            <p className="text-[9px] text-mutedForeground mt-0.5">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
+                                            <p className="text-[9px] text-muted-foreground mt-0.5">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</p>
                                         </div>
                                         <div className="flex-shrink-0 text-right">
                                             {hasMetrics ? (
                                                 <>
                                                     <p className="text-sm font-black text-foreground">{er.toFixed(1)}%</p>
-                                                    <p className="text-[9px] text-mutedForeground">ER</p>
+                                                    <p className="text-[9px] text-muted-foreground">ER</p>
                                                 </>
                                             ) : (
-                                                <span className="text-[9px] text-mutedForeground">No data</span>
+                                                <span className="text-[9px] text-muted-foreground">No data</span>
                                             )}
                                         </div>
                                     </button>
@@ -749,41 +761,41 @@ export const ContentDataInsight: React.FC = () => {
                                                 <div className="grid grid-cols-3 gap-2 mt-2 mb-3">
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{(m.views || 0).toLocaleString()}</p>
-                                                        <p className="text-[8px] text-mutedForeground">Views</p>
+                                                        <p className="text-[8px] text-muted-foreground">Views</p>
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{(m.likes || 0).toLocaleString()}</p>
-                                                        <p className="text-[8px] text-mutedForeground">Likes</p>
+                                                        <p className="text-[8px] text-muted-foreground">Likes</p>
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{(m.comments || 0).toLocaleString()}</p>
-                                                        <p className="text-[8px] text-mutedForeground">Comments</p>
+                                                        <p className="text-[8px] text-muted-foreground">Comments</p>
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{(m.shares || 0).toLocaleString()}</p>
-                                                        <p className="text-[8px] text-mutedForeground">Shares</p>
+                                                        <p className="text-[8px] text-muted-foreground">Shares</p>
                                                     </div>
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{(m.saves || 0).toLocaleString()}</p>
-                                                        <p className="text-[8px] text-mutedForeground">Saves</p>
+                                                        <p className="text-[8px] text-muted-foreground">Saves</p>
                                                     </div>
                                                     {item.platform === Platform.INSTAGRAM && (
                                                         <div className="text-center">
                                                             <p className="text-sm font-black text-foreground">{(m.reposts || 0).toLocaleString()}</p>
-                                                            <p className="text-[8px] text-mutedForeground">Reposts</p>
+                                                            <p className="text-[8px] text-muted-foreground">Reposts</p>
                                                         </div>
                                                     )}
                                                     <div className="text-center">
                                                         <p className="text-sm font-black text-foreground">{interactions.toLocaleString()}</p>
-                                                        <p className="text-[8px] text-mutedForeground">Total Eng</p>
+                                                        <p className="text-[8px] text-muted-foreground">Total Eng</p>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-mutedForeground text-center py-2">Belum ada data metrics</p>
+                                                <p className="text-xs text-muted-foreground text-center py-2">Belum ada data metrics</p>
                                             )}
                                             <div className="flex gap-2">
                                                 <button onClick={(e) => openManualInput(e, item)}
-                                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-accent text-white rounded-xl text-xs font-bold">
+                                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-foreground text-background rounded-xl text-xs font-bold">
                                                     <Edit3 size={12} /> Input Manual
                                                 </button>
                                                 {item.contentLink && (
@@ -809,7 +821,7 @@ export const ContentDataInsight: React.FC = () => {
                         <div className="bg-card w-full rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                             <div className="w-10 h-1 bg-border rounded-full mx-auto mb-4" />
                             <h3 className="text-base font-black text-foreground mb-1">Input Metrics Manual</h3>
-                            <p className="text-xs text-mutedForeground mb-4 line-clamp-1">{selectedItemForInput.title}</p>
+                            <p className="text-xs text-muted-foreground mb-4 line-clamp-1">{selectedItemForInput.title}</p>
                             <form onSubmit={saveManualMetrics} className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
                                     {[
@@ -822,7 +834,7 @@ export const ContentDataInsight: React.FC = () => {
                                         { key: 'reach', label: 'Reach', icon: <Globe size={14} /> },
                                     ].filter(f => f.condition !== false).map(({ key, label, icon }) => (
                                         <div key={key} className="bg-muted rounded-xl p-3">
-                                            <div className="flex items-center gap-1.5 mb-1.5 text-mutedForeground">
+                                            <div className="flex items-center gap-1.5 mb-1.5 text-muted-foreground">
                                                 {icon}
                                                 <span className="text-[10px] font-black uppercase tracking-wider">{label}</span>
                                             </div>
@@ -831,7 +843,7 @@ export const ContentDataInsight: React.FC = () => {
                                                 min="0"
                                                 value={manualMetrics[key as keyof typeof manualMetrics]}
                                                 onChange={e => setManualMetrics(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
-                                                className="w-full bg-transparent text-lg font-black text-foreground outline-none border-b-2 border-border focus:border-accent transition-colors"
+                                                className="w-full bg-transparent text-lg font-black text-foreground outline-none border-b-2 border-border focus:border-foreground transition-colors"
                                             />
                                         </div>
                                     ))}
@@ -840,7 +852,7 @@ export const ContentDataInsight: React.FC = () => {
                                     <button type="button" onClick={() => setIsManualModalOpen(false)}
                                         className="flex-1 py-3 bg-muted text-foreground rounded-xl text-sm font-bold">Batal</button>
                                     <button type="submit"
-                                        className="flex-1 py-3 bg-accent text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                                        className="flex-1 py-3 bg-foreground text-background rounded-xl text-sm font-bold flex items-center justify-center gap-2">
                                         <Save size={14} /> Simpan
                                     </button>
                                 </div>
@@ -860,7 +872,7 @@ export const ContentDataInsight: React.FC = () => {
                         <h2 className="text-base md:text-2xl lg:text-4xl font-extrabold text-foreground font-heading tracking-tight flex items-center gap-2 sm:gap-3">
                             {config?.page_titles?.['insight']?.title || 'Content Data Insight'}
                         </h2>
-                        <p className="text-slate-500 font-medium mt-0.5 md:mt-2 text-xs sm:text-sm hidden md:block">
+                        <p className="text-muted-foreground font-medium mt-0.5 md:mt-2 text-xs sm:text-sm hidden md:block">
                             {config?.page_titles?.['insight']?.subtitle || 'Analisa real-time atau input manual metrics untuk perhitungan ER yang presisi.'}
                         </p>
                     </div>
@@ -870,7 +882,7 @@ export const ContentDataInsight: React.FC = () => {
                         {/* Period Indicator Badge */}
                         <div className="bg-card border-2 border-border px-2 sm:px-4 py-1 sm:py-2 rounded-xl shadow-hard transform rotate-1 hover:rotate-0 transition-transform cursor-default text-[10px] sm:text-sm">
                             <span className="font-heading font-black text-foreground uppercase tracking-wide flex items-center gap-2">
-                                <Calendar size={14} className="text-accent" />
+                                <Calendar size={14} className="text-muted-foreground" />
                                 <span className="hidden sm:inline">{getPeriodLabel()}</span>
                             </span>
                         </div>
@@ -878,7 +890,7 @@ export const ContentDataInsight: React.FC = () => {
                         {/* Full Monthly Report Button */}
                         <button
                             onClick={() => setIsReportModalOpen(true)}
-                            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-2 border-border px-4 py-2 rounded-xl shadow-hard hover:shadow-hard-hover hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-black flex items-center gap-2 uppercase tracking-wide"
+                            className="bg-foreground text-background border-2 border-border px-4 py-2 rounded-xl shadow-[4px_4px_0px_var(--shadow-color)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all text-xs sm:text-sm font-black flex items-center gap-2 uppercase tracking-wide"
                         >
                             <FileBarChart size={16} />
                             <span className="hidden sm:inline">Monthly Report</span>
@@ -933,7 +945,7 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Interactions */}
                     <div
                         onClick={() => setSelectedMetric('interactions')}
-                        className="bg-violet-600 p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
+                        className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                             <Zap size={70} className="text-white" />
@@ -974,79 +986,137 @@ export const ContentDataInsight: React.FC = () => {
                     <Modal
                         isOpen={!!selectedMetric}
                         onClose={() => setSelectedMetric(null)}
-                        title={`Grafik Analisa: ${selectedMetric.toUpperCase()}`}
+                        title={
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-background/10 rounded-lg">
+                                    <BarChart2 size={20} className="text-background" />
+                                </div>
+                                <span>Grafik Analisa: {selectedMetric.toUpperCase()}</span>
+                            </div>
+                        }
+                        headerClassName="!bg-card !text-foreground border-b-4 border-border"
                         maxWidth="max-w-4xl"
                     >
-                        <div className="space-y-6">
-                            {/* Header Info */}
-                            <div className="bg-muted border-2 border-border p-4 rounded-xl flex justify-between items-center">
-                                <div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase">Periode Data</p>
-                                    <p className="font-black text-foreground text-lg">{getPeriodLabel()}</p>
+                        <div className="space-y-8">
+                            {/* Header Info Bento */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="md:col-span-2 bg-muted/30 border-[3px] border-border p-6 rounded-3xl flex justify-between items-center shadow-[4px_4px_0px_var(--shadow-color)]">
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Periode Analisa</p>
+                                        <p className="font-black text-foreground text-2xl">{getPeriodLabel()}</p>
+                                    </div>
+                                    <div className={`px-5 py-2 rounded-2xl font-black text-white uppercase text-xs tracking-widest shadow-hard-mini ${selectedMetric === 'reach' ? 'bg-blue-500' :
+                                        selectedMetric === 'er' ? 'bg-pink-500' :
+                                            selectedMetric === 'interactions' ? 'bg-indigo-600' : 'bg-yellow-400 text-black'
+                                        }`}>
+                                        {selectedMetric}
+                                    </div>
                                 </div>
-                                <div className={`px-4 py-2 rounded-lg font-bold text-white uppercase text-sm ${selectedMetric === 'reach' ? 'bg-blue-500' :
-                                    selectedMetric === 'er' ? 'bg-pink-500' :
-                                        selectedMetric === 'interactions' ? 'bg-purple-600' : 'bg-yellow-400 text-black'
-                                    }`}>
-                                    {selectedMetric}
+                                <div className="bg-card text-foreground border-[3px] border-border p-6 rounded-3xl flex flex-col justify-center shadow-[4px_4px_0px_var(--shadow-color)]">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total {selectedMetric}</p>
+                                    <h4 className="text-3xl font-black leading-none tabular-nums">
+                                        {selectedMetric === 'er' ? summaryStats.er.toFixed(2) + '%' : (summaryStats as any)[selectedMetric]?.toLocaleString() || 0}
+                                    </h4>
                                 </div>
                             </div>
 
-                            {/* Chart Area */}
-                            <div className="h-[180px] sm:h-[300px] w-full bg-card border-2 border-border rounded-xl p-3 sm:p-4 shadow-hard relative">
-                                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                                    <AreaChart data={chartData}>
-                                        <defs>
-                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor={
+                            {/* Chart Area Bento */}
+                            <div className="bg-card border-[3px] border-border rounded-[2.5rem] p-6 shadow-[8px_8px_0px_var(--shadow-color)] relative overflow-hidden">
+                                <div className="h-[250px] sm:h-[350px] w-full relative z-10">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                                        <AreaChart data={chartData}>
+                                            <defs>
+                                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor={
+                                                        selectedMetric === 'reach' ? '#3B82F6' :
+                                                            selectedMetric === 'er' ? '#EC4899' :
+                                                                selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
+                                                    } stopOpacity={0.4} />
+                                                    <stop offset="95%" stopColor={
+                                                        selectedMetric === 'reach' ? '#3B82F6' :
+                                                            selectedMetric === 'er' ? '#EC4899' :
+                                                                selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
+                                                    } stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="6 6" stroke="var(--border)" opacity={0.2} vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 800 }}
+                                                tickMargin={15}
+                                            />
+                                            <YAxis
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 800 }}
+                                                tickFormatter={(val) => selectedMetric === 'er' ? val + '%' : val.toLocaleString()}
+                                            />
+                                            <Tooltip content={<ChartTooltip />} />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="value"
+                                                stroke={
                                                     selectedMetric === 'reach' ? '#3B82F6' :
                                                         selectedMetric === 'er' ? '#EC4899' :
-                                                            selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
-                                                } stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor={
-                                                    selectedMetric === 'reach' ? '#3B82F6' :
-                                                        selectedMetric === 'er' ? '#EC4899' :
-                                                            selectedMetric === 'interactions' ? '#9333EA' : '#FACC15'
-                                                } stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                        <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickMargin={10} />
-                                        <YAxis stroke="#64748b" fontSize={12} />
-                                        <Tooltip content={<ChartTooltip />} />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="value"
-                                            stroke={
-                                                selectedMetric === 'reach' ? '#3B82F6' :
-                                                    selectedMetric === 'er' ? '#EC4899' :
-                                                        selectedMetric === 'interactions' ? '#9333EA' : '#CA8A04'
-                                            }
-                                            strokeWidth={3}
-                                            fillOpacity={1}
-                                            fill="url(#colorValue)"
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                                                            selectedMetric === 'interactions' ? '#9333EA' : '#CA8A04'
+                                                }
+                                                strokeWidth={5}
+                                                fillOpacity={1}
+                                                fill="url(#colorValue)"
+                                                animationDuration={1500}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
 
-                            {/* Analysis Box */}
-                            <div className="bg-[#FFFDF5] border-2 border-border rounded-xl p-6 shadow-hard relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-2 h-full bg-slate-800"></div>
-                                <h4 className="font-heading font-black text-xl text-foreground mb-2 flex items-center gap-2">
-                                    <TrendingUp size={24} className="text-foreground" />
-                                    Hipotesa & Analisa Singkat
-                                </h4>
-                                <p className="text-slate-700 font-medium leading-relaxed">
-                                    {getAnalysis()}
-                                </p>
-                                <div className="mt-4 flex gap-2">
-                                    {chartData.slice(-3).map((d, i) => (
-                                        <div key={i} className="bg-card border border-border p-2 rounded-lg text-xs">
-                                            <span className="block font-bold text-mutedForeground">{d.name}</span>
-                                            <span className="font-black text-foreground">{d.value.toLocaleString()}</span>
+                            {/* Analysis & Peak Info Bento */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                {/* Insights */}
+                                <div className="lg:col-span-8 bg-card border-[3px] border-border rounded-[2rem] p-8 shadow-[6px_6px_0px_var(--shadow-color)] relative overflow-hidden group">
+                                    <div className="absolute top-4 right-6 flex items-center gap-2 px-3 py-1 bg-yellow-400/10 border-2 border-yellow-400/50 text-yellow-600 dark:text-yellow-400 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                        <Sparkles size={12} /> AI Powered
+                                    </div>
+                                    <h4 className="font-heading font-black text-2xl text-foreground mb-4 flex items-center gap-3">
+                                        <TrendingUp size={28} className="text-foreground" />
+                                        Hipotesa & Analisa
+                                    </h4>
+                                    <div className="text-slate-600 dark:text-muted-foreground font-bold leading-relaxed text-lg border-l-4 border-border pl-4 bg-muted/20 py-4 rounded-r-xl">
+                                        {getAnalysis()}
+                                    </div>
+
+                                    <div className="mt-8 pt-6 border-t border-border/50 flex flex-wrap gap-4">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest w-full mb-1">Recent Performance Snapshots</p>
+                                        {chartData.slice(-4).map((d, i) => (
+                                            <div key={i} className="bg-muted px-4 py-2 rounded-2xl border-2 border-border shadow-hard-mini hover:-translate-y-1 transition-transform">
+                                                <span className="block text-[8px] font-black text-muted-foreground uppercase tracking-tighter">{d.name}</span>
+                                                <span className="font-black text-foreground text-sm">{selectedMetric === 'er' ? d.value.toFixed(2) + '%' : d.value.toLocaleString()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Peak Highlights */}
+                                <div className="lg:col-span-4 flex flex-col gap-4">
+                                    <div className="flex-1 bg-card border-[3px] border-emerald-500/50 rounded-3xl p-6 shadow-[4px_4px_0px_var(--shadow-color)] relative overflow-hidden">
+                                        <div className="absolute -right-4 -top-4 opacity-10 rotate-12">
+                                            <TrendingUp size={100} className="text-emerald-500" />
                                         </div>
-                                    ))}
+                                        <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">Highest Point</p>
+                                        <h5 className="text-2xl font-black text-foreground">{selectedMetric === 'er' ? peakData.highest.value.toFixed(2) + '%' : peakData.highest.value.toLocaleString()}</h5>
+                                        <p className="text-xs font-bold text-muted-foreground mt-1">{peakData.highest.name}</p>
+                                    </div>
+
+                                    <div className="flex-1 bg-card border-[3px] border-rose-500/50 rounded-3xl p-6 shadow-[4px_4px_0px_var(--shadow-color)] relative overflow-hidden">
+                                        <div className="absolute -right-4 -top-4 opacity-10 rotate-12">
+                                            <TrendingDown size={100} className="text-rose-500" />
+                                        </div>
+                                        <p className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest mb-1">Lowest Point</p>
+                                        <h5 className="text-2xl font-black text-foreground">{selectedMetric === 'er' ? peakData.lowest.value.toFixed(2) + '%' : peakData.lowest.value.toLocaleString()}</h5>
+                                        <p className="text-xs font-bold text-muted-foreground mt-1">{peakData.lowest.name}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1066,8 +1136,8 @@ export const ContentDataInsight: React.FC = () => {
                                         className={`
                                             px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
                                             ${filterPlatform === p
-                                                ? 'bg-violet-600 text-white shadow-[2px_2px_0px_#4c1d95] scale-105'
-                                                : 'text-slate-500 hover:text-violet-600 hover:bg-card'}
+                                                ? 'bg-foreground text-background shadow-[2px_2px_0px_var(--shadow-color)] scale-105'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-card'}
                                         `}
                                     >
                                         {p === 'all' ? 'Semua' : p}
@@ -1088,7 +1158,7 @@ export const ContentDataInsight: React.FC = () => {
                                     />
                                 </div>
                                 <div className="flex items-center gap-2 bg-card border-2 border-border/60 rounded-xl px-3 py-1.5 shadow-sm">
-                                    <Calendar size={14} className="text-slate-400" />
+                                    <Calendar size={14} className="text-muted-foreground" />
                                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 uppercase" />
                                     <span className="text-slate-300 font-black">—</span>
                                     <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 uppercase" />
@@ -1111,26 +1181,26 @@ export const ContentDataInsight: React.FC = () => {
                             <thead className="border-b-2 border-border/50 sticky top-0 z-10 shadow-sm bg-card">
                                 <tr>
                                     <th className="p-2 sm:p-3 md:p-4 w-8 sm:w-10"></th>
-                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tanggal</th>
-                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[120px] sm:min-w-[200px]">Judul</th>
-                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Link</th>
-                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-center min-w-[180px] sm:min-w-[280px]">Metrics</th>
-                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap text-right">Action</th>
+                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">Tanggal</th>
+                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider min-w-[120px] sm:min-w-[200px]">Judul</th>
+                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Link</th>
+                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap text-center min-w-[180px] sm:min-w-[280px]">Metrics</th>
+                                    <th className="p-2 sm:p-3 md:p-4 text-[7px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-mutedForeground">
+                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-muted-foreground">
                                             <div className="flex flex-col items-center gap-2">
-                                                <Loader2 className="animate-spin text-accent" size={24} sm:size={32} />
+                                                <Loader2 className="animate-spin text-muted-foreground" size={24} sm:size={32} />
                                                 <span className="text-xs sm:text-sm">Mengambil data...</span>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : filteredData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-mutedForeground italic bg-muted/50 text-xs sm:text-sm">
+                                        <td colSpan={6} className="p-8 sm:p-12 text-center text-muted-foreground italic bg-muted/50 text-xs sm:text-sm">
                                             Tidak ada konten published yang ditemukan.
                                         </td>
                                     </tr>
@@ -1139,20 +1209,20 @@ export const ContentDataInsight: React.FC = () => {
                                         <React.Fragment key={item.id}>
                                             <tr
                                                 className={`transition-all duration-300 cursor-pointer group/row relative
-                                                    ${expandedRowId === item.id ? 'bg-violet-50' : 'hover:bg-muted'}
+                                                    ${expandedRowId === item.id ? 'bg-muted/50' : 'hover:bg-muted'}
                                                 `}
                                                 onClick={() => toggleRow(item.id)}
                                             >
                                                 <td className="p-4 text-center">
-                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${expandedRowId === item.id ? 'bg-violet-600 text-white rotate-180' : 'bg-slate-100 text-slate-400 group-hover/row:bg-slate-200 group-hover/row:text-slate-600'}`}>
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${expandedRowId === item.id ? 'bg-foreground text-background rotate-180' : 'bg-muted/50 text-muted-foreground group-hover/row:bg-muted group-hover/row:text-foreground'}`}>
                                                         <ChevronDown size={18} strokeWidth={3} />
                                                     </div>
                                                 </td>
                                                 <td className="p-4 align-middle">
                                                     <div className="flex items-center gap-3">
                                                         {/* Date Label - SOFTENED */}
-                                                        <div className="bg-slate-50 border-2 border-border px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[2px_2px_0px_#f1f5f9]">
-                                                            <Calendar size={14} className="text-violet-600" />
+                                                        <div className="bg-card border-2 border-border px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-[2px_2px_0px_var(--shadow-color)]">
+                                                            <Calendar size={14} className="text-muted-foreground" />
                                                             <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest whitespace-nowrap">
                                                                 {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                             </span>
@@ -1160,10 +1230,10 @@ export const ContentDataInsight: React.FC = () => {
                                                     </div>
                                                 </td>
                                                 <td className="p-4 align-middle max-w-xs">
-                                                    <p className="font-black text-foreground text-[15px] leading-tight mb-1 group-hover/row:text-violet-600 transition-colors">{item.title}</p>
+                                                    <p className="font-black text-foreground text-[15px] leading-tight mb-1 group-hover/row:translate-x-1 transition-all">{item.title}</p>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border-2 border-border text-slate-600 font-black uppercase tracking-widest">{item.type}</span>
-                                                        <div className="flex items-center gap-1.5 text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-border">
+                                                        <div className="flex items-center gap-1.5 text-muted-foreground bg-slate-50 px-2 py-0.5 rounded-md border border-border">
                                                             {getPlatformIcon(item.platform, 12)}
                                                             <span className="text-[10px] font-black tracking-tight">@{item.workspaces?.account_name || '-'}</span>
                                                         </div>
@@ -1179,11 +1249,11 @@ export const ContentDataInsight: React.FC = () => {
                                                             onClick={e => e.stopPropagation()}
                                                             className="inline-flex items-center gap-2 group/link px-4 py-2 bg-card border-[2.5px] border-border rounded-xl shadow-[3px_3px_0px_var(--shadow-color)] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_var(--shadow-color)] transition-all"
                                                         >
-                                                            <LinkIcon size={14} className="text-violet-600" />
+                                                            <LinkIcon size={14} className="text-muted-foreground group-hover/link:text-foreground transition-colors" />
                                                             <span className="text-xs font-black text-foreground uppercase tracking-widest">BUKA</span>
                                                         </a>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border-[2.5px] border-border rounded-xl text-slate-400">
+                                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border-[2.5px] border-border rounded-xl text-muted-foreground">
                                                             <LinkIcon size={14} />
                                                             <span className="text-xs font-black">NA</span>
                                                         </span>
@@ -1198,32 +1268,32 @@ export const ContentDataInsight: React.FC = () => {
                                                                 <span className="block text-[14px] font-black text-pink-700 leading-none">{calculateER(item.metrics).toFixed(1)}%</span>
                                                                 <span className="text-[9px] font-black text-pink-500 uppercase tracking-widest mt-0.5 block">ER RT</span>
                                                             </div>
-                                                            {/* Grid of micro-stats - VIOLET THEMED & CENTERED */}
-                                                            <div className={`grid grid-cols-${item.platform === Platform.INSTAGRAM ? '6' : '5'} bg-violet-700 border-[3px] border-violet-700 p-1.5 rounded-2xl shadow-xl`}>
-                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
-                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.views || 0).toLocaleString()}</span>
-                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">VIEW</span>
+                                                            {/* Grid of micro-stats - THEMED & CENTERED */}
+                                                            <div className={`grid grid-cols-${item.platform === Platform.INSTAGRAM ? '6' : '5'} bg-card border-[3px] border-border p-1.5 rounded-2xl shadow-[4px_4px_0px_var(--shadow-color)]`}>
+                                                                <div className="px-4 py-1.5 text-center border-r border-border/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-foreground leading-none">{(item.metrics.views || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 block">VIEW</span>
                                                                 </div>
-                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
-                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.likes || 0).toLocaleString()}</span>
-                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">LIKE</span>
+                                                                <div className="px-4 py-1.5 text-center border-r border-border/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-foreground leading-none">{(item.metrics.likes || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 block">LIKE</span>
                                                                 </div>
-                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
-                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.comments || 0).toLocaleString()}</span>
-                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">COMM</span>
+                                                                <div className="px-4 py-1.5 text-center border-r border-border/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-foreground leading-none">{(item.metrics.comments || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 block">COMM</span>
                                                                 </div>
-                                                                <div className="px-4 py-1.5 text-center border-r border-violet-600/50 min-w-[60px]">
-                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.shares || 0).toLocaleString()}</span>
-                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">SHAR</span>
+                                                                <div className="px-4 py-1.5 text-center border-r border-border/50 min-w-[60px]">
+                                                                    <span className="block text-[12px] font-black text-foreground leading-none">{(item.metrics.shares || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 block">SHAR</span>
                                                                 </div>
-                                                                <div className={`px-4 py-1.5 text-center ${item.platform === Platform.INSTAGRAM ? 'border-r border-violet-600/50' : ''} min-w-[60px]`}>
-                                                                    <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.saves || 0).toLocaleString()}</span>
-                                                                    <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">SAVE</span>
+                                                                <div className={`px-4 py-1.5 text-center ${item.platform === Platform.INSTAGRAM ? 'border-r border-border/50' : ''} min-w-[60px]`}>
+                                                                    <span className="block text-[12px] font-black text-foreground leading-none">{(item.metrics.saves || 0).toLocaleString()}</span>
+                                                                    <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 block">SAVE</span>
                                                                 </div>
                                                                 {item.platform === Platform.INSTAGRAM && (
                                                                     <div className="px-4 py-1.5 text-center min-w-[60px]">
-                                                                        <span className="block text-[12px] font-black text-white leading-none">{(item.metrics.reposts || 0).toLocaleString()}</span>
-                                                                        <span className="text-[8px] font-black text-violet-200 uppercase tracking-widest mt-0.5 block">REPOST</span>
+                                                                        <span className="block text-[12px] font-black text-foreground leading-none">{(item.metrics.reposts || 0).toLocaleString()}</span>
+                                                                        <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-0.5 block">REPOST</span>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1239,14 +1309,14 @@ export const ContentDataInsight: React.FC = () => {
                                                         <Button
                                                             variant="secondary"
                                                             size="sm"
-                                                            className="h-9 px-4 !rounded-xl !border-[2.5px] !border-border !bg-card !text-violet-600 !font-black !shadow-[3px_3px_0px_var(--shadow-color)] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_var(--shadow-color)] transition-all hidden sm:flex"
+                                                            className="h-9 px-4 !rounded-xl !border-[2.5px] !border-border !bg-card !text-foreground !font-black !shadow-[3px_3px_0px_var(--shadow-color)] hover:!translate-y-[-2px] hover:!shadow-[5px_5px_0px_var(--shadow-color)] transition-all hidden sm:flex"
                                                             onClick={(e) => openManualInput(e, item)}
                                                         >
                                                             <Edit3 size={14} className="mr-2" /> INPUT
                                                         </Button>
                                                         <button
                                                             onClick={(e) => handleDelete(e, item.id)}
-                                                            className="w-9 h-9 flex items-center justify-center bg-card border-2 border-border text-mutedForeground hover:text-rose-500 hover:border-rose-200 rounded-xl transition-all hover:bg-rose-50/10 shadow-sm"
+                                                            className="w-9 h-9 flex items-center justify-center bg-card border-2 border-border text-muted-foreground hover:text-rose-500 hover:border-rose-200 rounded-xl transition-all hover:bg-rose-50/10 shadow-sm"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1261,7 +1331,7 @@ export const ContentDataInsight: React.FC = () => {
                                                             {/* Left: Detailed Metrics */}
                                                             <div className="flex-[1.5] space-y-4">
                                                                 <div className="flex justify-between items-center">
-                                                                    <h4 className="font-black text-foreground text-base flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-violet-600" /> Metrics Breakdown</h4>
+                                                                    <h4 className="font-black text-foreground text-base flex items-center gap-2 uppercase tracking-widest"><TrendingUp size={20} className="text-muted-foreground" /> Metrics Breakdown</h4>
                                                                     {(item.metrics as any)?.isManual && (
                                                                         <span className="text-[10px] bg-yellow-400 text-slate-950 px-3 py-1 rounded-full font-black border-2 border-border shadow-[2px_2px_0px_#000] uppercase">
                                                                             PENGINPUTAN MANUAL
@@ -1270,58 +1340,58 @@ export const ContentDataInsight: React.FC = () => {
                                                                 </div>
                                                                 {item.metrics ? (
                                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
+                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] relative overflow-hidden group/detail">
                                                                             <div className="absolute -top-4 -right-4 p-2 opacity-5 scale-150 rotate-12 group-hover/detail:opacity-10 transition-opacity">
-                                                                                <TrendingUp size={100} className="text-violet-900" />
+                                                                                <TrendingUp size={100} className="text-muted-foreground opacity-20" />
                                                                             </div>
-                                                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Engagement Rate</span>
+                                                                            <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Engagement Rate</span>
                                                                             <p className="text-4xl font-black text-foreground tabular-nums">
                                                                                 {calculateER(item.metrics).toFixed(2)}%
                                                                             </p>
-                                                                            <p className="text-[10px] font-bold text-slate-500 mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
+                                                                            <p className="text-[10px] font-bold text-muted-foreground mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
                                                                                 Formula: (Interaksi / Views) × 100
                                                                             </p>
                                                                         </div>
-                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_#4c1d95] relative overflow-hidden group/detail">
+                                                                        <div className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] relative overflow-hidden group/detail">
                                                                             <div className="absolute -top-4 -right-4 p-2 opacity-5 scale-150 rotate-12 group-hover/detail:opacity-10 transition-opacity">
-                                                                                <Zap size={100} className="text-violet-900" />
+                                                                                <Zap size={100} className="text-muted-foreground opacity-20" />
                                                                             </div>
-                                                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Interaksi</span>
+                                                                            <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block mb-1">Total Interaksi</span>
                                                                             <p className="text-4xl font-black text-foreground tabular-nums">
                                                                                 {calculateInteractions(item.metrics).toLocaleString()}
                                                                             </p>
-                                                                            <p className="text-[10px] font-bold text-slate-500 mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
+                                                                            <p className="text-[10px] font-bold text-muted-foreground mt-2 bg-slate-100 px-2 py-1 rounded-lg inline-block">
                                                                                 Gabungan: L + C + S + Sv
                                                                             </p>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="bg-slate-50 p-12 rounded-2xl border-4 border-dashed border-border text-center text-slate-400 font-black uppercase tracking-widest">Belum ada data detail.</div>
+                                                                    <div className="bg-slate-50 p-12 rounded-2xl border-4 border-dashed border-border text-center text-muted-foreground font-black uppercase tracking-widest">Belum ada data detail.</div>
                                                                 )}
                                                             </div>
 
                                                             {/* Right: Content Details */}
-                                                            <div className="flex-1 bg-slate-900 p-6 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_#4c1d95] text-white relative">
-                                                                <div className="absolute top-4 right-4 text-violet-400">
+                                                            <div className="flex-1 bg-muted/30 p-6 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] text-foreground relative">
+                                                                <div className="absolute top-4 right-4 text-muted-foreground">
                                                                     <FileText size={24} />
                                                                 </div>
-                                                                <h4 className="font-black text-white text-base mb-6 uppercase tracking-widest flex items-center gap-2">
+                                                                <h4 className="font-black text-foreground text-base mb-6 uppercase tracking-widest flex items-center gap-2">
                                                                     Informasi Konten
                                                                 </h4>
 
                                                                 <div className="space-y-4">
                                                                     <div className="p-4 bg-card/5 rounded-xl border border-white/10">
-                                                                        <span className="block text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">Pillar Konten</span>
-                                                                        <span className="font-black text-white text-lg">{item.pillar || 'GENERAL'}</span>
+                                                                        <span className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Pillar Konten</span>
+                                                                        <p className="text-lg font-black text-foreground">{item.pillar || '-'}</p>
                                                                     </div>
-                                                                    <div className="p-4 bg-card/5 rounded-xl border border-white/10">
-                                                                        <span className="block text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">PIC / Talent</span>
-                                                                        <span className="font-black text-white text-lg">{item.pic || item.assignee || 'TEAM-WIDE'}</span>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">PIC / Talent</span>
+                                                                        <span className="font-black text-foreground text-lg">{item.pic || item.assignee || 'TEAM-WIDE'}</span>
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between opacity-60">
-                                                                    <div className="flex items-center gap-2">
+                                                                <div className="mt-8 pt-4 border-t border-border/10 flex items-center justify-between opacity-60">
+                                                                    <div className="flex items-center gap-2 text-muted-foreground">
                                                                         <RefreshCw size={12} />
                                                                         <span className="text-[10px] font-black uppercase tracking-widest">Update: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : 'N/A'}</span>
                                                                     </div>
@@ -1336,418 +1406,440 @@ export const ContentDataInsight: React.FC = () => {
                                 )}
                             </tbody>
                         </table>
-                    </div>
-                </div>
+                    </div >
+                </div >
 
                 {/* MODAL INPUT MANUAL */}
-                {isManualModalOpen && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-card border-2 border-border overflow-hidden">
+                {
+                    isManualModalOpen && (
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                            <div className="relative w-full max-w-lg flex flex-col animate-bounce-in shadow-hard rounded-xl bg-card border-2 border-border overflow-hidden">
 
-                            {/* Header Pop Art */}
-                            <div className="px-6 py-4 border-b-2 border-border bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-card/10 rounded-bl-full -z-0"></div>
-                                <h3 className="font-bold font-heading text-lg tracking-tight flex items-center gap-2 z-10">
-                                    <Edit3 size={20} /> Input Metrics Manual
-                                </h3>
-                                <button
-                                    onClick={() => setIsManualModalOpen(false)}
-                                    className="bg-black/20 hover:bg-black/30 text-white p-1.5 rounded-lg transition-all z-10"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <form onSubmit={saveManualMetrics} className="p-6 space-y-5 bg-card">
-                                <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 rounded-lg text-xs text-yellow-600 font-bold mb-2 flex gap-2 items-center">
-                                    <Zap size={14} /> Update data secara manual untuk hasil yang presisi.
+                                {/* Header Pop Art */}
+                                <div className="px-6 py-4 border-b-2 border-border bg-pink-500 text-white flex items-center justify-between shrink-0 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-card/10 rounded-bl-full -z-0"></div>
+                                    <h3 className="font-bold font-heading text-lg tracking-tight flex items-center gap-2 z-10">
+                                        <Edit3 size={20} /> Input Metrics Manual
+                                    </h3>
+                                    <button
+                                        onClick={() => setIsManualModalOpen(false)}
+                                        className="bg-black/20 hover:bg-black/30 text-white p-1.5 rounded-lg transition-all z-10"
+                                    >
+                                        <X size={20} />
+                                    </button>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Conditional Field: Reach (Only IG) */}
-                                    {selectedItemForInput?.platform === Platform.INSTAGRAM && (
-                                        <div className="col-span-2">
-                                            <div className="flex flex-col gap-1 w-full">
-                                                <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><BarChart2 size={12} /> Reach / Jangkauan</label>
-                                                <input
-                                                    type="number"
-                                                    className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                                    value={manualMetrics.reach}
-                                                    onChange={(e) => setManualMetrics({ ...manualMetrics, reach: parseInt(e.target.value) || 0 })}
-                                                />
+                                <form onSubmit={saveManualMetrics} className="p-6 space-y-5 bg-card">
+                                    <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 rounded-lg text-xs text-yellow-600 font-bold mb-2 flex gap-2 items-center">
+                                        <Zap size={14} /> Update data secara manual untuk hasil yang presisi.
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {/* Conditional Field: Reach (Only IG) */}
+                                        {selectedItemForInput?.platform === Platform.INSTAGRAM && (
+                                            <div className="col-span-2">
+                                                <div className="flex flex-col gap-1 w-full">
+                                                    <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><BarChart2 size={12} /> Reach / Jangkauan</label>
+                                                    <input
+                                                        type="number"
+                                                        className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                        value={manualMetrics.reach}
+                                                        onChange={(e) => setManualMetrics({ ...manualMetrics, reach: parseInt(e.target.value) || 0 })}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Eye size={12} /> Total Views</label>
-                                        <input
-                                            type="number"
-                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                            value={manualMetrics.views}
-                                            onChange={(e) => setManualMetrics({ ...manualMetrics, views: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Heart size={12} /> Likes</label>
-                                        <input
-                                            type="number"
-                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                            value={manualMetrics.likes}
-                                            onChange={(e) => setManualMetrics({ ...manualMetrics, likes: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><MessageSquare size={12} /> Comments</label>
-                                        <input
-                                            type="number"
-                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                            value={manualMetrics.comments}
-                                            onChange={(e) => setManualMetrics({ ...manualMetrics, comments: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 w-full">
-                                        <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Share2 size={12} /> Shares</label>
-                                        <input
-                                            type="number"
-                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                            value={manualMetrics.shares}
-                                            onChange={(e) => setManualMetrics({ ...manualMetrics, shares: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 w-full text-left">
-                                        <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
-                                        <input
-                                            type="number"
-                                            className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                            value={manualMetrics.saves}
-                                            onChange={(e) => setManualMetrics({ ...manualMetrics, saves: parseInt(e.target.value) || 0 })}
-                                        />
-                                    </div>
-
-                                    {/* Conditional Field: Repost (Only IG) */}
-                                    {selectedItemForInput?.platform === Platform.INSTAGRAM && (
-                                        <div className="flex flex-col gap-1 w-full text-left">
-                                            <label className="font-bold text-xs text-slate-500 ml-1 flex items-center gap-1"><RefreshCw size={12} /> Reposts</label>
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><Eye size={12} /> Total Views</label>
                                             <input
                                                 type="number"
                                                 className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
-                                                value={manualMetrics.reposts}
-                                                onChange={(e) => setManualMetrics({ ...manualMetrics, reposts: parseInt(e.target.value) || 0 })}
+                                                value={manualMetrics.views}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, views: parseInt(e.target.value) || 0 })}
                                             />
                                         </div>
-                                    )}
-                                </div>
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><Heart size={12} /> Likes</label>
+                                            <input
+                                                type="number"
+                                                className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                value={manualMetrics.likes}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, likes: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><MessageSquare size={12} /> Comments</label>
+                                            <input
+                                                type="number"
+                                                className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                value={manualMetrics.comments}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, comments: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><Share2 size={12} /> Shares</label>
+                                            <input
+                                                type="number"
+                                                className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                value={manualMetrics.shares}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, shares: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1 w-full text-left">
+                                            <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><Bookmark size={12} /> Saves</label>
+                                            <input
+                                                type="number"
+                                                className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                value={manualMetrics.saves}
+                                                onChange={(e) => setManualMetrics({ ...manualMetrics, saves: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
 
-                                <div className="pt-4 border-t-2 border-border/50 flex justify-end gap-3">
-                                    <Button type="button" variant="secondary" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
-                                    <Button type="submit" className="bg-pink-500 hover:bg-pink-600 border-pink-700" icon={<Save size={18} />}>
-                                        Simpan Metrics
-                                    </Button>
-                                </div>
-                            </form>
+                                        {/* Conditional Field: Repost (Only IG) */}
+                                        {selectedItemForInput?.platform === Platform.INSTAGRAM && (
+                                            <div className="flex flex-col gap-1 w-full text-left">
+                                                <label className="font-bold text-xs text-muted-foreground ml-1 flex items-center gap-1"><RefreshCw size={12} /> Reposts</label>
+                                                <input
+                                                    type="number"
+                                                    className="bg-transparent border-2 border-border/60 text-foreground rounded-lg px-4 py-3 outline-none focus:border-pink-500 focus:shadow-[4px_4px_0px_0px_#EC4899] w-full transition-all"
+                                                    value={manualMetrics.reposts}
+                                                    onChange={(e) => setManualMetrics({ ...manualMetrics, reposts: parseInt(e.target.value) || 0 })}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-4 border-t-2 border-border/50 flex justify-end gap-3">
+                                        <Button type="button" variant="secondary" onClick={() => setIsManualModalOpen(false)}>Batal</Button>
+                                        <Button type="submit" className="bg-pink-500 hover:bg-pink-600 border-pink-700" icon={<Save size={18} />}>
+                                            Simpan Metrics
+                                        </Button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )
+                }
+            </div >
 
             {/* ═══════════════════════════════════════════════════════════════════
                 FULL MONTHLY REPORT MODAL
                 ═══════════════════════════════════════════════════════════════════ */}
-            <Modal
+            < Modal
                 isOpen={isReportModalOpen}
                 onClose={() => setIsReportModalOpen(false)}
                 title={
                     <div className="flex items-center gap-2">
-                        <FileBarChart size={20} />
-                        Full Monthly Report Dashboard
+                        <FileBarChart size={20} className="text-foreground" />
+                        <span className="text-foreground">Full Monthly Report Dashboard</span>
                     </div>
                 }
+                headerClassName="!bg-card border-b-4 border-border"
                 maxWidth="max-w-[98vw]"
             >
-                {isFree ? (
-                    <div className="py-4">
-                        <PremiumLockScreen
-                            title="Monthly Report Terkunci"
-                            description="Dapatkan laporan performa konten bulanan secara komprehensif, insight AI otomatis, dan fitur ekspor ke PDF. Upgrade untuk membuka fitur pro ini."
-                        />
-                    </div>
-                ) : (
-                    <div className="p-4 space-y-6 max-h-[96vh] overflow-y-auto no-scrollbar">
-                        {/* ── ROW 1: Filters ── */}
-                        <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-12 flex flex-wrap items-center gap-3 bg-slate-50 border-2 border-border rounded-3xl p-3 shadow-sm">
-                                <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest px-3 border-r-2 border-border">
-                                    <Filter size={14} />
+                {
+                    isFree ? (
+                        <div className="py-4" >
+                            <PremiumLockScreen
+                                title="Monthly Report Terkunci"
+                                description="Dapatkan laporan performa konten bulanan secara komprehensif, insight AI otomatis, dan fitur ekspor ke PDF. Upgrade untuk membuka fitur pro ini."
+                            />
+                        </div>
+                    ) : (
+                        <div className="p-4 space-y-6 max-h-[96vh] overflow-y-auto no-scrollbar">
+                            <div className="grid grid-cols-12 gap-4">
+                                <div className="col-span-12 flex flex-wrap items-center gap-3 bg-muted/30 border-2 border-border rounded-3xl p-3 shadow-hard-mini">
+                                    <div className="flex items-center gap-2 text-xs font-black text-muted-foreground uppercase tracking-widest px-3 border-r-2 border-border">
+                                        <Filter size={14} />
+                                    </div>
+                                    <div className="w-44">
+                                        <select
+                                            value={reportFilterAccount}
+                                            onChange={e => setReportFilterAccount(e.target.value)}
+                                            className="w-full px-3 py-1.5 bg-card border-2 border-border rounded-xl text-xs font-black outline-none focus:border-foreground transition-all cursor-pointer text-foreground"
+                                        >
+                                            <option value="all">Semua Akun</option>
+                                            {accounts.map(a => <option key={a} value={a}>{a}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="w-44">
+                                        <select
+                                            value={reportFilterPlatform}
+                                            onChange={e => setReportFilterPlatform(e.target.value)}
+                                            className="w-full px-3 py-1.5 bg-card border-2 border-border rounded-xl text-xs font-black outline-none focus:border-foreground transition-all cursor-pointer text-foreground"
+                                        >
+                                            <option value="all">Semua Platform</option>
+                                            <option value={Platform.INSTAGRAM}>Instagram</option>
+                                            <option value={Platform.TIKTOK}>TikTok</option>
+                                            <option value={Platform.YOUTUBE}>YouTube</option>
+                                            <option value={Platform.LINKEDIN}>LinkedIn</option>
+                                            <option value={Platform.FACEBOOK}>Facebook</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-card border-2 border-border rounded-xl px-3 py-1.5 font-sans">
+                                        <Calendar size={14} className="text-muted-foreground font-black" />
+                                        <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 text-foreground" />
+                                        <span className="text-muted/50 text-xs font-black px-1">—</span>
+                                        <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28 text-foreground" />
+                                    </div>
+                                    <div className="ml-auto flex items-center gap-4 pr-2">
+                                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                            FILTERS APPLIED
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="w-44">
-                                    <select
-                                        value={reportFilterAccount}
-                                        onChange={e => setReportFilterAccount(e.target.value)}
-                                        className="w-full px-3 py-1.5 bg-card border-2 border-border rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
+                            </div>
+
+                            {/* ── ROW 2: Metrics Grid ── */}
+                            <div className={`grid grid-cols-3 md:grid-cols-5 lg:grid-cols-${reportFilterPlatform === Platform.TIKTOK ? '7' : '9'} gap-3`}>
+                                {[
+                                    { label: 'Reach', value: reportData.totalReach, color: 'blue', icon: <Globe size={14} /> },
+                                    { label: 'Views', value: reportData.totalViews, color: 'amber', icon: <Eye size={14} /> },
+                                    { label: 'ER RT', value: `${reportData.avgER.toFixed(2)}%`, color: 'pink', icon: <TrendingUp size={14} /> },
+                                    { label: 'Interaksi', value: reportData.totalInteractions, color: 'indigo', icon: <Zap size={14} /> },
+                                    { label: 'Likes', value: reportData.totalLikes, color: 'red', icon: <Heart size={14} /> },
+                                    { label: 'Comment', value: reportData.totalComments, color: 'blue', icon: <MessageSquare size={14} /> },
+                                    { label: 'Share', value: reportData.totalShares, color: 'emerald', icon: <Share2 size={14} /> },
+                                    { label: 'Save', value: reportData.totalSaves, color: 'orange', icon: <Bookmark size={14} /> },
+                                    { label: 'Repost', value: reportData.totalReposts, color: 'slate', icon: <RefreshCw size={14} /> }
+                                ].filter(card => {
+                                    if (reportFilterPlatform === Platform.TIKTOK) {
+                                        return card.label !== 'Reach' && card.label !== 'Repost';
+                                    }
+                                    return true;
+                                }).map((card, i) => (
+                                    <div
+                                        key={i}
+                                        className="bg-card border-[3px] border-border p-3 rounded-2xl shadow-[4px_4px_0px_var(--shadow-color)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all relative overflow-hidden group"
                                     >
-                                        <option value="all">Semua Akun</option>
-                                        {accounts.map(a => <option key={a} value={a}>{a}</option>)}
-                                    </select>
-                                </div>
-                                <div className="w-44">
-                                    <select
-                                        value={reportFilterPlatform}
-                                        onChange={e => setReportFilterPlatform(e.target.value)}
-                                        className="w-full px-3 py-1.5 bg-card border-2 border-border rounded-xl text-xs font-black outline-none focus:border-violet-500 transition-all cursor-pointer"
-                                    >
-                                        <option value="all">Semua Platform</option>
-                                        <option value={Platform.INSTAGRAM}>Instagram</option>
-                                        <option value={Platform.TIKTOK}>TikTok</option>
-                                        <option value={Platform.YOUTUBE}>YouTube</option>
-                                        <option value={Platform.LINKEDIN}>LinkedIn</option>
-                                        <option value={Platform.FACEBOOK}>Facebook</option>
-                                    </select>
-                                </div>
-                                <div className="flex items-center gap-2 bg-card border-2 border-border rounded-xl px-3 py-1.5 font-sans">
-                                    <Calendar size={14} className="text-violet-600" />
-                                    <input type="date" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28" />
-                                    <span className="text-slate-300 text-xs font-black px-1">—</span>
-                                    <input type="date" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} className="text-xs font-black outline-none bg-transparent w-28" />
-                                </div>
-                                <div className="ml-auto flex items-center gap-4 pr-2">
-                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                                        FILTERS APPLIED
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ── ROW 2: Metrics Grid ── */}
-                        <div className={`grid grid-cols-3 md:grid-cols-5 lg:grid-cols-${reportFilterPlatform === Platform.TIKTOK ? '7' : '9'} gap-3`}>
-                            {[
-                                { label: 'Reach', value: reportData.totalReach, color: 'blue', icon: <Globe size={14} /> },
-                                { label: 'Views', value: reportData.totalViews, color: 'amber', icon: <Eye size={14} /> },
-                                { label: 'ER RT', value: `${reportData.avgER.toFixed(2)}%`, color: 'pink', icon: <TrendingUp size={14} /> },
-                                { label: 'Interaksi', value: reportData.totalInteractions, color: 'indigo', icon: <Zap size={14} /> },
-                                { label: 'Likes', value: reportData.totalLikes, color: 'red', icon: <Heart size={14} /> },
-                                { label: 'Comment', value: reportData.totalComments, color: 'blue', icon: <MessageSquare size={14} /> },
-                                { label: 'Share', value: reportData.totalShares, color: 'emerald', icon: <Share2 size={14} /> },
-                                { label: 'Save', value: reportData.totalSaves, color: 'orange', icon: <Bookmark size={14} /> },
-                                { label: 'Repost', value: reportData.totalReposts, color: 'violet', icon: <RefreshCw size={14} /> }
-                            ].filter(card => {
-                                if (reportFilterPlatform === Platform.TIKTOK) {
-                                    return card.label !== 'Reach' && card.label !== 'Repost';
-                                }
-                                return true;
-                            }).map((card, i) => (
-                                <div
-                                    key={i}
-                                    className={`bg-${card.color}-50 border-2 border-${card.color}-200 p-3 rounded-2xl shadow-sm hover:shadow-[5px_5px_0px_#00000020] hover:shadow-${card.color}-200/50 hover:-translate-y-1 transition-all relative overflow-hidden group`}
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <p className={`text-xs font-black uppercase text-${card.color}-700 tracking-wider font-heading`}>{card.label}</p>
-                                        <div className={`p-1.5 rounded-lg bg-card border border-${card.color}-200 text-${card.color}-600 shadow-sm group-hover:scale-110 transition-transform`}>
-                                            {card.icon}
-                                        </div>
-                                    </div>
-                                    <p className={`text-xl font-black text-${card.color}-900 leading-none`}>
-                                        {card.value.toLocaleString()}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* ── ROW 3: Charts Side by Side ── */}
-                        <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-12 lg:col-span-8 bg-card border-2 border-border rounded-3xl p-5 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-widest">
-                                        <TrendingUp size={16} className="text-violet-600" />
-                                        Weekly Performance Growth
-                                    </h4>
-                                    <div className="flex gap-4 text-xs font-black uppercase opacity-60">
-                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Reach</span>
-                                        <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> Views</span>
-                                    </div>
-                                </div>
-                                <div className="h-[200px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={reportData.growthChartData}>
-                                            <defs>
-                                                <linearGradient id="rReachM" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} /></linearGradient>
-                                                <linearGradient id="rViewsM" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} /></linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} fontWeight={800} axisLine={false} tickLine={false} />
-                                            <YAxis stroke="#94a3b8" fontSize={11} fontWeight={800} axisLine={false} tickLine={false} />
-                                            <Tooltip content={<ChartTooltip />} />
-                                            <Area type="monotone" dataKey="reach" stroke="#3b82f6" strokeWidth={3} fill="url(#rReachM)" />
-                                            <Area type="monotone" dataKey="views" stroke="#f59e0b" strokeWidth={3} fill="url(#rViewsM)" />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                            <div className="col-span-12 lg:col-span-4 bg-card border-2 border-border rounded-3xl p-5 shadow-sm">
-                                <h4 className="text-xs font-black text-foreground mb-6 flex items-center gap-2 uppercase tracking-widest">
-                                    <BarChart2 size={16} className="text-violet-600" /> Engagement Comparison
-                                </h4>
-                                <div className="h-[200px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={reportData.metricsBarData}>
-                                            <XAxis dataKey="name" fontSize={11} fontWeight={900} axisLine={false} tickLine={false} />
-                                            <Tooltip content={<ChartTooltip />} />
-                                            <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                                                {reportData.metricsBarData.map((e, i) => <Cell key={i} fill={e.fill} />)}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ── ROW 4: Performance Lists & Total Post ── */}
-                        <div className="grid grid-cols-12 gap-4">
-                            <div className="col-span-12 lg:col-span-3 bg-emerald-50/50 border-2 border-emerald-200 rounded-3xl p-4">
-                                <h4 className="text-xs font-black text-emerald-800 mb-3 flex items-center gap-2 uppercase tracking-widest">
-                                    <Award size={16} className="text-emerald-600" /> Top Perform
-                                </h4>
-                                <div className="space-y-2">
-                                    {reportData.top3.map((item, i) => (
-                                        <div key={item.id} className="bg-card p-2.5 rounded-xl border border-emerald-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
-                                            <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
-                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{card.label}</p>
+                                            <div className={`p-1.5 rounded-lg bg-muted text-${card.color}-500 group-hover:scale-110 transition-transform`}>
+                                                {card.icon}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="col-span-12 lg:col-span-3 bg-rose-50/50 border-2 border-rose-200 rounded-3xl p-4 text-rose-800">
-                                <h4 className="text-xs font-black text-rose-800 mb-3 flex items-center gap-2 uppercase tracking-widest">
-                                    <AlertTriangle size={16} className="text-rose-600" /> Low Perform
-                                </h4>
-                                <div className="space-y-2">
-                                    {reportData.bottom3.map((item, i) => (
-                                        <div key={item.id} className="bg-card p-2.5 rounded-xl border border-rose-100 flex items-center gap-3 shadow-sm hover:translate-x-1 transition-transform cursor-default">
-                                            <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
-                                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="col-span-12 lg:col-span-6 bg-violet-600 border-2 border-border p-6 rounded-3xl text-white shadow-[8px_8px_0px_#1e293b] flex items-center justify-between relative overflow-hidden group">
-                                <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                                    <BarChart2 size={200} />
-                                </div>
-                                <div className="relative z-10 flex items-center gap-6">
-                                    <div className="bg-card/10 p-5 rounded-2xl border border-white/20 backdrop-blur-md">
-                                        <Hash size={32} className="text-white" />
+                                        <p className="text-xl font-black text-foreground leading-none tabular-nums">
+                                            {card.value.toLocaleString()}
+                                        </p>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Production Summary</p>
-                                        <h2 className="text-5xl font-black leading-none mb-1">
-                                            {reportData.totalPosts} <span className="text-xl opacity-60">Konten</span>
-                                        </h2>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-black bg-card/20 px-2 py-0.5 rounded-full uppercase tracking-widest text-white">Digital Content Portfolio</span>
-                                            <span className="text-[10px] font-black opacity-60 uppercase tracking-widest text-white">{reportStartDate} — {reportEndDate}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="hidden lg:flex flex-col items-end gap-1 relative z-10">
-                                    <div className="text-xs font-black uppercase tracking-widest border-b border-white/20 pb-1 mb-1">Platform Split</div>
-                                    <div className="flex gap-3">
-                                        {reportData.platformPieData.map((p, i) => (
-                                            <div key={i} className="flex flex-col items-center">
-                                                <div className="text-sm font-black">{p.value}</div>
-                                                <div className="text-[10px] font-bold opacity-70 uppercase">{p.name}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                ))}
                             </div>
-                        </div>
 
-                        {/* ── ROW 5: Distribution, Frequency & Notes ── */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-sm min-h-[180px]">
-                                <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
-                                    <Layers size={14} className="text-violet-600" /> Pillar Distribution
-                                </h4>
-                                <div className="flex items-center">
-                                    <div className="w-2/3 h-[120px]">
+                            {/* ── ROW 3: Charts Side by Side ── */}
+                            <div className="grid grid-cols-12 gap-4">
+                                <div className="col-span-12 lg:col-span-8 bg-card border-2 border-border rounded-3xl p-5 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-widest">
+                                            <TrendingUp size={16} className="text-muted-foreground" />
+                                            Weekly Performance Growth
+                                        </h4>
+                                        <div className="flex gap-4 text-xs font-black uppercase text-muted-foreground/80">
+                                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Reach</span>
+                                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500" /> Views</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-[200px]">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie data={reportData.pillarPieData} innerRadius={30} outerRadius={45} paddingAngle={5} dataKey="value">
-                                                    {reportData.pillarPieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                                                </Pie>
+                                            <AreaChart data={reportData.growthChartData}>
+                                                <defs>
+                                                    <linearGradient id="rReachM" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} /></linearGradient>
+                                                    <linearGradient id="rViewsM" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} /></linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.2} />
+                                                <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} fontWeight={800} axisLine={false} tickLine={false} />
+                                                <YAxis stroke="var(--muted-foreground)" fontSize={11} fontWeight={800} axisLine={false} tickLine={false} />
                                                 <Tooltip content={<ChartTooltip />} />
-                                            </PieChart>
+                                                <Area type="monotone" dataKey="reach" stroke="#3b82f6" strokeWidth={3} fill="url(#rReachM)" />
+                                                <Area type="monotone" dataKey="views" stroke="#f59e0b" strokeWidth={3} fill="url(#rViewsM)" />
+                                            </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="w-1/3 space-y-1.5 pr-2">
-                                        {reportData.pillarPieData.map((p, i) => (
-                                            <div key={p.name} className="flex items-center gap-2">
-                                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}></div>
+                                </div>
+                                <div className="col-span-12 lg:col-span-4 bg-card border-2 border-border rounded-3xl p-5 shadow-sm">
+                                    <h4 className="text-xs font-black text-foreground mb-6 flex items-center gap-2 uppercase tracking-widest">
+                                        <BarChart2 size={16} className="text-muted-foreground" /> Engagement Comparison
+                                    </h4>
+                                    <div className="h-[200px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={reportData.metricsBarData}>
+                                                <XAxis dataKey="name" fontSize={11} fontWeight={900} axisLine={false} tickLine={false} />
+                                                <Tooltip content={<ChartTooltip />} />
+                                                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                                                    {reportData.metricsBarData.map((e, i) => <Cell key={i} fill={e.fill} />)}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ── ROW 4: Performance Lists & Total Post ── */}
+                            <div className="grid grid-cols-12 gap-4">
+                                <div className="col-span-12 lg:col-span-3 bg-emerald-500/5 border-2 border-emerald-500/20 rounded-3xl p-4">
+                                    <h4 className="text-xs font-black text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                                        <Award size={16} className="text-emerald-500" /> Top Perform
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {reportData.top3.map((item, i) => (
+                                            <div key={item.id} className="bg-card p-2.5 rounded-xl border border-emerald-500/20 flex items-center gap-3 shadow-hard-mini hover:translate-x-1 transition-transform cursor-default">
+                                                <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
                                                 <div className="min-w-0">
-                                                    <p className="text-xs font-black text-foreground truncate uppercase tracking-tighter">{p.name}</p>
-                                                    <p className="text-xs font-bold text-slate-400 leading-none">{p.value} Post</p>
+                                                    <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
+                                                    <p className="text-[10px] font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                            </div>
-                            <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-sm min-h-[180px]">
-                                <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
-                                    <Clock size={14} className="text-violet-600" /> Post Frequency
-                                </h4>
-                                <div className="h-[120px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={reportData.postingFreqData}>
-                                            <XAxis dataKey="name" fontSize={11} fontWeight={900} axisLine={false} tickLine={false} />
-                                            <Bar dataKey="posts" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                <div className="col-span-12 lg:col-span-3 bg-rose-500/5 border-2 border-rose-500/20 rounded-3xl p-4">
+                                    <h4 className="text-xs font-black text-rose-500 dark:text-rose-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                                        <AlertTriangle size={16} className="text-rose-500" /> Low Perform
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {reportData.bottom3.map((item, i) => (
+                                            <div key={item.id} className="bg-card p-2.5 rounded-xl border border-rose-500/20 flex items-center gap-3 shadow-hard-mini hover:translate-x-1 transition-transform cursor-default">
+                                                <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center font-black text-xs shrink-0">{i + 1}</div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-bold text-foreground truncate">{item.title}</p>
+                                                    <p className="text-[10px] font-black text-rose-500 dark:text-rose-400 uppercase tracking-tighter">{item._er.toFixed(1)}% ER • {(item.metrics?.views || 0).toLocaleString()} Views</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="col-span-12 lg:col-span-6 bg-muted/30 border-2 border-border p-6 rounded-3xl text-foreground shadow-[8px_8px_0px_var(--shadow-color)] flex items-center justify-between relative overflow-hidden group">
+                                    <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                                        <BarChart2 size={200} />
+                                    </div>
+                                    <div className="relative z-10 flex items-center gap-6">
+                                        <div className="bg-card p-5 rounded-2xl border border-border shadow-sm">
+                                            <Hash size={32} className="text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-widest opacity-80 mb-1">Production Summary</p>
+                                            <h2 className="text-5xl font-black leading-none mb-1">
+                                                {reportData.totalPosts} <span className="text-xl opacity-60">Konten</span>
+                                            </h2>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-black bg-muted px-2 py-0.5 rounded-full uppercase tracking-widest text-foreground">Digital Content Portfolio</span>
+                                                <span className="text-[10px] font-black opacity-60 uppercase tracking-widest text-muted-foreground">{reportStartDate} — {reportEndDate}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="hidden lg:flex flex-col items-end gap-1 relative z-10">
+                                        <div className="text-[10px] font-black uppercase tracking-widest border-b border-border/50 pb-1 mb-1 text-muted-foreground">Platform Split</div>
+                                        <div className="flex gap-3">
+                                            {reportData.platformPieData.map((p, i) => (
+                                                <div key={i} className="flex flex-col items-center">
+                                                    <div className="text-sm font-black text-foreground">{p.value}</div>
+                                                    <div className="text-[10px] font-bold text-muted-foreground uppercase">{p.name}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-amber-50/50 border-2 border-amber-200 rounded-3xl p-4 min-h-[180px]">
-                                <h4 className="text-xs font-black text-amber-800 mb-2 flex items-center gap-2 uppercase tracking-widest">
-                                    <PenTool size={14} className="text-amber-600" /> Catatan Performa
-                                </h4>
-                                <textarea
-                                    value={reportNotes}
-                                    onChange={e => setReportNotes(e.target.value)}
-                                    rows={5}
-                                    placeholder="Tulis catatan..."
-                                    className="w-full bg-card/50 border border-amber-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-card transition-all no-scrollbar"
-                                />
-                            </div>
-                            <div className="bg-blue-50/50 border-2 border-blue-200 rounded-3xl p-4 min-h-[180px]">
-                                <h4 className="text-xs font-black text-blue-800 mb-2 flex items-center gap-2 uppercase tracking-widest">
-                                    <Target size={14} className="text-blue-600" /> Strategi & Target
-                                </h4>
-                                <textarea
-                                    value={reportNextPlan}
-                                    onChange={e => setReportNextPlan(e.target.value)}
-                                    rows={5}
-                                    placeholder="Tulis strategi..."
-                                    className="w-full bg-card/50 border border-blue-200 rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-card transition-all no-scrollbar"
-                                />
-                            </div>
-                        </div>
 
-                        {/* Save Button */}
-                        <div className="flex justify-center pt-2">
-                            <button
-                                onClick={saveReportNotesToStorage}
-                                className={`flex items-center gap-2 px-10 py-3 rounded-2xl border-2 border-border font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_#1e293b] hover:-translate-y-0.5 transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-card text-foreground hover:bg-muted'}`}
-                            >
-                                {savingReportNotes ? <><Save size={16} /> Tersimpan!</> : <><Save size={16} /> Simpan Laporan</>}
-                            </button>
+                            {/* ── ROW 5: Distribution, Frequency & Insights ── */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-sm min-h-[180px]">
+                                    <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
+                                        <Layers size={14} className="text-muted-foreground" /> Pillar Distribution
+                                    </h4>
+                                    <div className="flex items-center">
+                                        <div className="w-2/3 h-[120px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie data={reportData.pillarPieData} innerRadius={30} outerRadius={45} paddingAngle={5} dataKey="value">
+                                                        {reportData.pillarPieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                                                    </Pie>
+                                                    <Tooltip content={<ChartTooltip />} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                        <div className="w-1/3 space-y-1.5 pr-2">
+                                            {reportData.pillarPieData.map((p, i) => (
+                                                <div key={p.name} className="flex items-center gap-2">
+                                                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}></div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs font-black text-foreground truncate uppercase tracking-tighter">{p.name}</p>
+                                                        <p className="text-xs font-bold text-muted-foreground leading-none">{p.value} Post</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-sm min-h-[180px]">
+                                    <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
+                                        <Clock size={14} className="text-muted-foreground" /> Post Frequency
+                                    </h4>
+                                    <div className="h-[120px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={reportData.postingFreqData}>
+                                                <XAxis dataKey="name" fontSize={11} fontWeight={900} axisLine={false} tickLine={false} />
+                                                <Bar dataKey="posts" fill="var(--muted-foreground)" opacity={0.5} radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                                <div className="bg-card border-2 border-border rounded-3xl p-4 shadow-hard-mini min-h-[180px]">
+                                    <h4 className="text-xs font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-widest">
+                                        <TrendingUp size={14} className="text-muted-foreground" /> Peak Insights
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="p-2 border border-emerald-500/30 bg-emerald-500/10 rounded-xl">
+                                            <p className="text-[8px] font-black text-emerald-500 dark:text-emerald-400 uppercase">Highest Interaction</p>
+                                            <p className="text-sm font-black text-foreground">{peakData.highest.value.toLocaleString()}</p>
+                                        </div>
+                                        <div className="p-2 border border-rose-500/30 bg-rose-500/10 rounded-xl">
+                                            <p className="text-[8px] font-black text-rose-500 dark:text-rose-400 uppercase">Lowest Interaction</p>
+                                            <p className="text-sm font-black text-foreground">{peakData.lowest.value.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ── ROW 6: Notes & Strategy ── */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="bg-muted/30 border-2 border-border rounded-3xl p-4 min-h-[180px]">
+                                    <h4 className="text-xs font-black text-foreground mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                        <PenTool size={14} className="text-muted-foreground" /> Catatan Performa
+                                    </h4>
+                                    <textarea
+                                        value={reportNotes}
+                                        onChange={e => setReportNotes(e.target.value)}
+                                        rows={5}
+                                        placeholder="Tulis catatan..."
+                                        className="w-full bg-card/50 border border-border rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-card transition-all no-scrollbar text-foreground"
+                                    />
+                                </div>
+                                <div className="bg-muted/30 border-2 border-border rounded-3xl p-4 min-h-[180px]">
+                                    <h4 className="text-xs font-black text-foreground mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                        <Target size={14} className="text-muted-foreground" /> Strategi & Target
+                                    </h4>
+                                    <textarea
+                                        value={reportNextPlan}
+                                        onChange={e => setReportNextPlan(e.target.value)}
+                                        rows={5}
+                                        placeholder="Tulis strategi..."
+                                        className="w-full bg-card/50 border border-border rounded-xl p-2 text-xs font-medium outline-none resize-none focus:bg-card transition-all no-scrollbar text-foreground"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Save Button */}
+                            <div className="flex justify-center pt-2">
+                                <button
+                                    onClick={saveReportNotesToStorage}
+                                    className={`flex items-center gap-2 px-10 py-3 rounded-2xl border-2 border-border font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_var(--shadow-color)] hover:-translate-y-0.5 transition-all ${savingReportNotes ? 'bg-emerald-500 text-white' : 'bg-card text-foreground hover:bg-muted'}`}
+                                >
+                                    {savingReportNotes ? <><Save size={16} /> Tersimpan!</> : <><Save size={16} /> Simpan Laporan</>}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
             </Modal >
         </>
     );

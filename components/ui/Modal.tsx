@@ -12,6 +12,7 @@ interface ModalProps {
   overlayClassName?: string;
   duration?: number;
   zIndex?: number;
+  headerClassName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,7 +24,8 @@ export const Modal: React.FC<ModalProps> = ({
   className = '',
   overlayClassName = '',
   duration = 700,
-  zIndex = 9999
+  zIndex = 9999,
+  headerClassName = ''
 }) => {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const [mounted, setMounted] = useState(false);
@@ -74,13 +76,13 @@ export const Modal: React.FC<ModalProps> = ({
         style={{ transitionDuration: `${duration}ms` }}
       >
         {/* Header */}
-        <div className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 border-b-2 border-border bg-accent text-white flex items-center justify-between shrink-0 gap-2">
+        <div className={`px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 border-b-4 border-border bg-muted text-foreground flex items-center justify-between shrink-0 gap-2 ${headerClassName}`}>
           <h3 className="font-bold font-heading text-sm sm:text-base md:text-lg tracking-tight truncate">{title}</h3>
           <button
             onClick={onClose}
-            className="bg-white/20 hover:bg-white/30 text-white p-1 sm:p-1.5 rounded-lg transition-all border border-transparent hover:border-white/50 flex-shrink-0"
+            className="bg-background/20 hover:bg-background/30 text-background p-1 sm:p-1.5 rounded-xl transition-all border-2 border-transparent hover:border-background/50 flex-shrink-0"
           >
-            <X size={16} className="sm:w-5 sm:h-5" />
+            <X size={16} className="sm:w-5 sm:h-5 font-black" />
           </button>
         </div>
 

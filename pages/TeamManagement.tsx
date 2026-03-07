@@ -694,27 +694,27 @@ export const TeamManagement: React.FC = () => {
                     <h2 className="text-base md:text-2xl lg:text-4xl font-heading font-black text-foreground tracking-tight flex items-center gap-1 sm:gap-2">
                         {config?.page_titles?.['team']?.title || 'Team Management'}
                     </h2>
-                    <p className="text-slate-500 font-bold mt-0.5 md:mt-2 text-[10px] sm:text-xs md:text-sm lg:text-base hidden md:block">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
+                    <p className="text-muted-foreground font-bold mt-0.5 md:mt-2 text-[10px] sm:text-xs md:text-sm lg:text-base hidden md:block">{config?.page_titles?.['team']?.subtitle || 'Kelola akses anggota dalam workspace spesifik Anda.'}</p>
                 </div>
                 <div className="flex z-10 items-center gap-1.5 sm:gap-2 md:gap-3 w-full md:w-auto">
                     {currentAdmin && (
                         <div className="hidden md:flex flex-col items-end mr-1 sm:mr-2 flex-shrink-0">
-                            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-mutedForeground uppercase tracking-widest">Kapasitas Tim</span>
+                            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest">Kapasitas Tim</span>
                             <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
-                                <div className="w-12 sm:w-16 md:w-20 lg:w-24 bg-slate-200 h-1.5 sm:h-2 rounded-full overflow-hidden">
+                                <div className="w-12 sm:w-16 md:w-20 lg:w-24 bg-muted h-1.5 sm:h-2 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full transition-all duration-500 ${isLimitReached ? 'bg-red-500' : 'bg-emerald-500'}`}
                                         style={{ width: `${Math.min((subUsersCount / (currentAdmin.member_limit || 2)) * 100, 100)}%` }}
                                     />
                                 </div>
-                                <span className={`text-[7px] sm:text-[8px] md:text-xs font-black whitespace-nowrap ${isLimitReached ? 'text-red-500' : 'text-slate-700'}`}>
+                                <span className={`text-[7px] sm:text-[8px] md:text-xs font-black whitespace-nowrap ${isLimitReached ? 'text-red-500' : 'text-foreground'}`}>
                                     {isDeveloper ? 'Unlimited' : `${subUsersCount}/${currentAdmin.member_limit || 2}`}
                                 </span>
                             </div>
                         </div>
                     )}
                     <Button
-                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_#0f172a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-[10px] sm:text-xs md:text-sm flex-shrink-0`}
+                        className={`${isLimitReached ? 'bg-slate-400 hover:bg-slate-400 border-slate-500 grayscale' : 'whitespace-nowrap'} shadow-[4px_4px_0px_0px_var(--shadow-color)] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-[10px] sm:text-xs md:text-sm flex-shrink-0`}
                         onClick={() => {
                             if (isLimitReached) {
                                 setIsUpgradeModalOpen(true);
@@ -735,24 +735,24 @@ export const TeamManagement: React.FC = () => {
             <div className="flex flex-col lg:flex-row gap-2 sm:gap-3 md:gap-4 lg:gap-6 flex-1 min-h-0">
                 {/* LEFT: WORKSPACES LIST - Hidden on mobile, shown as dropdown */}
                 <div className="hidden lg:flex w-full lg:w-1/3 flex-col gap-2 sm:gap-3 md:gap-4 min-h-0">
-                    <div className="bg-card rounded-xl sm:rounded-2xl border-3 sm:border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-hidden flex flex-col h-full">
+                    <div className="bg-card rounded-xl sm:rounded-2xl border-3 sm:border-4 border-border shadow-[4px_4px_0px_var(--shadow-color)] overflow-hidden flex flex-col h-full">
                         <div className="p-2 sm:p-3 md:p-4 bg-primary flex items-center gap-2 sm:gap-3">
                             <Layers className="text-white sm:w-6 sm:h-6" size={20} />
                             <h3 className="font-heading font-black text-white text-sm sm:text-base md:text-lg">Workspace</h3>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-4 space-y-1.5 sm:space-y-2 md:space-y-3 bg-muted0/5">
                             {loading && !workspaces.length ? (
-                                <div className="p-6 sm:p-8 text-center"><Loader2 className="animate-spin mx-auto text-mutedForeground w-6 h-6 sm:w-8 sm:h-8" /></div>
+                                <div className="p-6 sm:p-8 text-center"><Loader2 className="animate-spin mx-auto text-muted-foreground w-6 h-6 sm:w-8 sm:h-8" /></div>
                             ) : workspaces.length === 0 ? (
-                                <div className="p-6 sm:p-8 text-center text-slate-500 font-bold text-xs sm:text-sm">Tidak ada workspace ditemukan.</div>
+                                <div className="p-6 sm:p-8 text-center text-muted-foreground font-bold text-xs sm:text-sm">Tidak ada workspace ditemukan.</div>
                             ) : (
                                 workspaces.map(ws => (
                                     <button
                                         key={ws.id}
                                         onClick={() => setSelectedWorkspace(ws)}
                                         className={`w-full text-left p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl border-[3px] transition-all flex items-center justify-between ${selectedWorkspace?.id === ws.id
-                                            ? 'bg-card border-slate-900 shadow-[6px_6px_0px_#0f172a] transform -translate-y-1'
-                                            : 'bg-card border-transparent hover:border-slate-900 hover:shadow-[4px_4px_0px_#0f172a]'
+                                            ? 'bg-card border-border shadow-[6px_6px_0px_var(--shadow-color)] transform -translate-y-1'
+                                            : 'bg-card border-transparent hover:border-border hover:shadow-[4px_4px_0px_var(--shadow-color)]'
                                             }`}
                                     >
                                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -760,7 +760,7 @@ export const TeamManagement: React.FC = () => {
                                                 <img
                                                     src={(ws as any).logo_url}
                                                     alt={ws.name}
-                                                    className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg border-2 border-slate-300 flex-shrink-0 object-contain bg-card p-1"
+                                                    className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg border-2 border-border flex-shrink-0 object-contain bg-card p-1"
                                                 />
                                             ) : (
                                                 <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-lg bg-pink-500/10 border-[3px] border-pink-500/20 flex items-center justify-center flex-shrink-0">
@@ -769,7 +769,7 @@ export const TeamManagement: React.FC = () => {
                                             )}
                                             <div className="min-w-0">
                                                 <h4 className="font-heading font-black text-foreground truncate text-xs sm:text-sm md:text-base">{ws.name}</h4>
-                                                <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-mutedForeground">
+                                                <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-muted-foreground">
                                                     {users.filter(u => ws.members?.some((m: string) => m === u.id || m === u.username || u.avatar_url === m)).length} Members
                                                 </p>
                                             </div>
@@ -784,13 +784,13 @@ export const TeamManagement: React.FC = () => {
 
                 {/* RIGHT: USERS LIST IN WORKSPACE */}
                 <div className="w-full lg:w-2/3 flex flex-col min-h-0">
-                    <div className="bg-card rounded-[2.5rem] border-[4px] border-slate-900 shadow-[8px_8px_0px_#0f172a] overflow-hidden flex flex-col h-full">
-                        <div className="px-6 py-5 border-b-[4px] border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-4">
+                    <div className="bg-card rounded-[2.5rem] border-[4px] border-border shadow-[8px_8px_0px_var(--shadow-color)] overflow-hidden flex flex-col h-full">
+                        <div className="px-6 py-5 border-b-[4px] border-border flex flex-col sm:flex-row sm:items-center justify-between bg-accent relative gap-4">
                             {/* Geometric detail */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-card/20 blur-3xl rounded-full pointer-events-none"></div>
 
                             <div className="flex items-center gap-3 relative z-10 min-w-0">
-                                <div className="bg-card p-2 border-[3px] border-slate-900 rounded-xl shadow-[3px_3px_0px_#0f172a] flex-shrink-0">
+                                <div className="bg-card p-2 border-[3px] border-border rounded-xl shadow-[3px_3px_0px_var(--shadow-color)] flex-shrink-0">
                                     <Users className="text-foreground w-5" />
                                 </div>
                                 <h3 className="font-heading font-black text-white text-lg lg:text-2xl uppercase tracking-tighter truncate">
@@ -801,13 +801,13 @@ export const TeamManagement: React.FC = () => {
                             {/* SEARCH BAR */}
                             <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 md:gap-3 w-full sm:w-auto z-10 flex-1 sm:flex-none">
                                 <div className="relative w-full sm:w-40 md:w-48 lg:w-64">
-                                    <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 text-mutedForeground sm:w-4 sm:h-4" size={12} />
+                                    <Search className="absolute left-2 sm:left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground sm:w-4 sm:h-4" size={12} />
                                     <input
                                         type="text"
                                         placeholder="Cari..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-card border-[3.5px] border-slate-900 rounded-lg sm:rounded-xl pl-6 sm:pl-8 md:pl-10 pr-2 sm:pr-3 md:pr-4 py-1 sm:py-1.5 md:py-2 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[4px_4px_0px_#0f172a]"
+                                        className="w-full bg-card border-[3.5px] border-border rounded-lg sm:rounded-xl pl-6 sm:pl-8 md:pl-10 pr-2 sm:pr-3 md:pr-4 py-1 sm:py-1.5 md:py-2 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[4px_4px_0px_var(--shadow-color)]"
                                     />
                                 </div>
                             </div>
@@ -824,8 +824,8 @@ export const TeamManagement: React.FC = () => {
                                             <div className="bg-muted border border-border rounded-xl p-4 space-y-2">
                                                 <p className="text-xs font-bold text-foreground">Link Login: <span className="text-blue-500 break-all">{getLoginLink()}</span></p>
                                                 <div className="grid grid-cols-2 gap-2 text-sm">
-                                                    <div><p className="text-[9px] text-mutedForeground uppercase">Username</p><p className="font-black text-foreground">{inviteSuccess.username}</p></div>
-                                                    <div><p className="text-[9px] text-mutedForeground uppercase">Password</p><p className="font-black text-foreground">{inviteSuccess.password}</p></div>
+                                                    <div><p className="text-[9px] text-muted-foreground uppercase">Username</p><p className="font-black text-foreground">{inviteSuccess.username}</p></div>
+                                                    <div><p className="text-[9px] text-muted-foreground uppercase">Password</p><p className="font-black text-foreground">{inviteSuccess.password}</p></div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
@@ -854,32 +854,32 @@ export const TeamManagement: React.FC = () => {
 
                         {/* Desktop: Invite Form inline dropdown */}
                         {isInviteOpen && selectedWorkspace && (
-                            <div className="hidden lg:block bg-emerald-500/10 border-b-4 border-slate-900 border-dashed p-3 sm:p-4 md:p-6 animate-in fade-in slide-in-from-top-4">
+                            <div className="hidden lg:block bg-emerald-500/10 border-b-4 border-border border-dashed p-3 sm:p-4 md:p-6 animate-in fade-in slide-in-from-top-4">
                                 {inviteSuccess ? (
                                     /* Success Panel with Login Link */
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-emerald-400 rounded-full flex items-center justify-center border-2 border-slate-900">
+                                            <div className="w-10 h-10 bg-emerald-400 rounded-full flex items-center justify-center border-2 border-border">
                                                 <Plus size={20} className="text-foreground" />
                                             </div>
                                             <div>
                                                 <h4 className="font-black text-foreground text-sm">✅ Berhasil Mendaftarkan {inviteSuccess.fullName}!</h4>
-                                                <p className="text-xs text-mutedForeground font-medium">Kirimkan informasi login berikut ke anggota baru:</p>
+                                                <p className="text-xs text-muted-foreground font-medium">Kirimkan informasi login berikut ke anggota baru:</p>
                                             </div>
                                         </div>
 
-                                        <div className="bg-card border-[3px] border-slate-900 rounded-2xl p-5 space-y-3 shadow-[6px_6px_0px_#0f172a]">
+                                        <div className="bg-card border-[3px] border-border rounded-2xl p-5 space-y-3 shadow-[6px_6px_0px_var(--shadow-color)]">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Link Login</span>
+                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Link Login</span>
                                             </div>
                                             <p className="text-sm font-mono font-bold text-blue-500 break-all">{getLoginLink()}</p>
                                             <div className="border-t border-slate-800 pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Username</span>
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Username</span>
                                                     <p className="font-black text-foreground">{inviteSuccess.username}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Password</span>
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Password</span>
                                                     <p className="font-black text-foreground">{inviteSuccess.password}</p>
                                                 </div>
                                             </div>
@@ -888,19 +888,19 @@ export const TeamManagement: React.FC = () => {
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={handleCopyLoginInfo}
-                                                className="flex-1 px-4 py-2.5 bg-card text-foreground font-bold text-xs rounded-xl border-[3.5px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-muted0/10 transition-colors flex items-center justify-center gap-2"
+                                                className="flex-1 px-4 py-2.5 bg-card text-foreground font-bold text-xs rounded-xl border-[3.5px] border-border shadow-[2px_2px_0px_var(--shadow-color)] hover:bg-muted0/10 transition-colors flex items-center justify-center gap-2"
                                             >
                                                 📋 Salin Info Login
                                             </button>
                                             <button
                                                 onClick={handleShareViaWhatsApp}
-                                                className="flex-1 px-4 py-3 bg-emerald-400 text-foreground font-black text-xs uppercase tracking-widest rounded-xl border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:bg-emerald-300 transition-all flex items-center justify-center gap-2"
+                                                className="flex-1 px-4 py-3 bg-emerald-400 text-foreground font-black text-xs uppercase tracking-widest rounded-xl border-[3.5px] border-border shadow-[4px_4px_0px_var(--shadow-color)] hover:bg-emerald-300 transition-all flex items-center justify-center gap-2"
                                             >
                                                 <Globe size={16} strokeWidth={3} /> WhatsApp
                                             </button>
                                             <button
                                                 onClick={() => { setInviteSuccess(null); setIsInviteOpen(false); }}
-                                                className="px-4 py-2.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-300 transition-colors"
+                                                className="px-4 py-2.5 bg-muted text-foreground font-bold text-xs rounded-xl hover:bg-slate-300 transition-colors"
                                             >
                                                 Tutup
                                             </button>
@@ -914,9 +914,9 @@ export const TeamManagement: React.FC = () => {
                                             Daftarkan & Undang Member Baru
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-card border-[3px] border-slate-900 rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
-                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-card border-[3px] border-slate-900 rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
-                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-card border-[3px] border-slate-900 rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
+                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
+                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
+                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
                                         </div>
                                         <div className="mt-4 flex gap-3">
                                             <Button type="submit" disabled={inviting}>
@@ -924,7 +924,7 @@ export const TeamManagement: React.FC = () => {
                                             </Button>
                                             <Button type="button" variant="secondary" onClick={() => setIsInviteOpen(false)}>Batal</Button>
                                         </div>
-                                        <p className="text-xs text-mutedForeground font-bold mt-3">User yang didaftarkan oleh Admin otomatis terverifikasi dan bisa langsung login. Link login akan ditampilkan setelah berhasil.</p>
+                                        <p className="text-xs text-muted-foreground font-bold mt-3">User yang didaftarkan oleh Admin otomatis terverifikasi dan bisa langsung login. Link login akan ditampilkan setelah berhasil.</p>
                                     </form>
                                 )}
                             </div>
@@ -934,16 +934,16 @@ export const TeamManagement: React.FC = () => {
                         <div className="flex-1 overflow-y-auto p-4 bg-muted space-y-3 relative">
                             {loading ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <Loader2 className="animate-spin text-mutedForeground z-10" size={32} />
+                                    <Loader2 className="animate-spin text-muted-foreground z-10" size={32} />
                                 </div>
                             ) : !selectedWorkspace ? (
-                                <div className="absolute inset-0 flex items-center justify-center flex-col text-mutedForeground">
+                                <div className="absolute inset-0 flex items-center justify-center flex-col text-muted-foreground">
                                     <Briefcase size={48} className="mb-2 opacity-50" />
                                     <p className="font-bold hidden lg:block">Pilih workspace di panel kiri</p>
                                     <p className="font-bold lg:hidden">Pilih workspace di atas</p>
                                 </div>
                             ) : filteredUsers.length === 0 && !refreshing ? (
-                                <div className="absolute inset-0 flex items-center justify-center flex-col text-mutedForeground">
+                                <div className="absolute inset-0 flex items-center justify-center flex-col text-muted-foreground">
                                     <Users size={48} className="mb-2 opacity-50" />
                                     <p className="font-bold">Belum ada anggota di workspace ini</p>
                                 </div>
@@ -955,28 +955,28 @@ export const TeamManagement: React.FC = () => {
                                             <div
                                                 key={user.id}
                                                 onClick={() => handleOpenDetail(user)}
-                                                className="bg-card border-[3.5px] border-slate-900 rounded-[1.8rem] p-4 flex flex-col gap-3 cursor-pointer hover:-translate-y-1.5 hover:shadow-[8px_8px_0px_#0f172a] shadow-[4px_4px_0px_#0f172a] transition-all group relative overflow-hidden"
+                                                className="bg-card border-[3.5px] border-border rounded-[1.8rem] p-4 flex flex-col gap-3 cursor-pointer hover:-translate-y-1.5 hover:shadow-[8px_8px_0px_var(--shadow-color)] shadow-[4px_4px_0px_var(--shadow-color)] transition-all group relative overflow-hidden"
                                             >
                                                 <div className="flex items-center gap-2">
                                                     <div className="relative shrink-0 transition-transform group-hover:-rotate-3">
                                                         <img
                                                             src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.full_name || 'U')}`}
-                                                            className="w-9 h-9 rounded-xl border-2 border-slate-900 object-cover"
+                                                            className="w-9 h-9 rounded-xl border-2 border-border object-cover"
                                                             alt="Avatar"
                                                         />
                                                         <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm ${user.online_status === 'online' ? 'bg-emerald-500' : user.online_status === 'idle' ? 'bg-amber-400' : 'bg-slate-300'}`} />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="font-black text-xs text-foreground truncate leading-tight">{user.full_name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-500 truncate">@{user.username}</p>
+                                                        <p className="text-[10px] font-bold text-muted-foreground truncate">@{user.username}</p>
                                                     </div>
                                                 </div>
-                                                <span className={`self-start inline-block px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border border-slate-900 ${user.role === 'Developer' ? 'bg-slate-900 text-white' :
+                                                <span className={`self-start inline-block px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase border border-border ${user.role === 'Developer' ? 'bg-border text-white' :
                                                     user.role === 'Admin' || user.role === 'Owner' ? 'bg-accent text-white' :
-                                                        'bg-muted text-slate-700'
+                                                        'bg-muted text-foreground'
                                                     }`}>{user.role}</span>
                                                 <div>
-                                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                    <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                                                         <div className={`h-full rounded-full ${rate >= minCompletionRate ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-400' : 'bg-red-500'
                                                             }`} style={{ width: `${rate}%` }} />
                                                     </div>
@@ -1000,27 +1000,27 @@ export const TeamManagement: React.FC = () => {
                         {/* LEFT COL */}
                         <div className="space-y-6">
                             {/* Header User */}
-                            <div className="flex items-start gap-4 p-4 border-[3px] border-slate-900 rounded-2xl bg-muted relative overflow-hidden shadow-[4px_4px_0px_#0f172a] transition-all">
+                            <div className="flex items-start gap-4 p-4 border-[3px] border-border rounded-2xl bg-muted relative overflow-hidden shadow-[4px_4px_0px_var(--shadow-color)] transition-all">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
                                 <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                    className="w-16 h-16 rounded-xl border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] object-cover relative z-10 bg-card" alt="Avatar" />
+                                    className="w-16 h-16 rounded-xl border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] object-cover relative z-10 bg-card" alt="Avatar" />
                                 <div className="relative z-10 w-full">
                                     <div className="flex items-center justify-between gap-2">
                                         <h3 className="text-xl font-heading font-black text-foreground truncate">{selectedUser.full_name}</h3>
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border-[2px] ${selectedUser.online_status === 'online' ? 'text-emerald-600 border-emerald-500 bg-emerald-50' : selectedUser.online_status === 'idle' ? 'text-amber-600 border-amber-500 bg-amber-50' : 'text-slate-500 border-slate-400 bg-muted'}`}>
-                                            <div className={`w-2 h-2 rounded-full border border-slate-900/10 ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'}`} />
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border-[2px] ${selectedUser.online_status === 'online' ? 'text-emerald-500 border-emerald-500/50 bg-emerald-500/10' : selectedUser.online_status === 'idle' ? 'text-amber-500 border-amber-500/50 bg-amber-500/10' : 'text-muted-foreground border-border bg-muted'}`}>
+                                            <div className={`w-2 h-2 rounded-full border border-border/20 ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-muted-foreground'}`} />
                                             {selectedUser.online_status === 'online' ? 'Online' : selectedUser.online_status === 'idle' ? 'Idle' : 'Offline'}
                                         </span>
                                     </div>
-                                    <p className="text-sm font-bold text-slate-500 mb-1 flex items-center gap-2">
+                                    <p className="text-sm font-bold text-muted-foreground mb-1 flex items-center gap-2">
                                         @{selectedUser.username}
                                         {selectedUser.last_activity_at && selectedUser.online_status !== 'online' && (
-                                            <span className="text-[10px] font-bold text-mutedForeground">
+                                            <span className="text-[10px] font-bold text-muted-foreground">
                                                 (Aktif: {new Date(selectedUser.last_activity_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })})
                                             </span>
                                         )}
                                     </p>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] uppercase tracking-widest mt-1">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] uppercase tracking-widest mt-1">
                                         {selectedUser.role}
                                     </span>
                                 </div>
@@ -1031,28 +1031,28 @@ export const TeamManagement: React.FC = () => {
                                 <h4 className="flex items-center gap-2 text-sm font-black text-foreground mb-2 uppercase tracking-wide">
                                     <Key size={16} strokeWidth={2.5} /> Password User
                                 </h4>
-                                <div className="bg-card rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 transition-all hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-0.5">
+                                <div className="bg-card rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] p-4 transition-all hover:shadow-[6px_6px_0px_var(--shadow-color)] hover:-translate-y-0.5">
                                     <div className="mb-4">
-                                        <p className="text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Password Saat Ini:</p>
-                                        <div className="flex justify-between items-center bg-slate-100 border-2 border-slate-300 p-3 rounded-xl">
-                                            <span className="font-mono font-black text-slate-700 tracking-widest text-lg">
+                                        <p className="text-[10px] font-black text-muted-foreground mb-2 uppercase tracking-widest">Password Saat Ini:</p>
+                                        <div className="flex justify-between items-center bg-muted border-2 border-border p-3 rounded-xl">
+                                            <span className="font-mono font-black text-foreground tracking-widest text-lg">
                                                 {showPassword ? selectedUser.password : '••••••••'}
                                             </span>
-                                            <button onClick={() => setShowPassword(!showPassword)} className="text-mutedForeground hover:text-foreground transition-colors bg-card border-2 border-slate-300 p-2 rounded-lg hover:border-slate-900 shadow-sm">
+                                            <button onClick={() => setShowPassword(!showPassword)} className="text-muted-foreground hover:text-foreground transition-colors bg-card border-2 border-border p-2 rounded-lg hover:border-foreground shadow-sm">
                                                 {showPassword ? <EyeOff size={16} strokeWidth={2.5} /> : <Eye size={16} strokeWidth={2.5} />}
                                             </button>
                                         </div>
                                     </div>
-                                    <form onSubmit={handleUpdatePassword} className="border-t-[3px] border-slate-900/10 pt-4 flex gap-3">
+                                    <form onSubmit={handleUpdatePassword} className="border-t-[3px] border-border/10 pt-4 flex gap-3">
                                         <input
                                             type="text"
                                             value={newPassword}
                                             onChange={e => setNewPassword(e.target.value)}
                                             placeholder="Ketik password baru..."
                                             required
-                                            className="flex-1 bg-card border-[3px] border-slate-900 rounded-xl px-4 py-2 text-sm font-bold text-foreground focus:outline-none focus:ring-4 focus:ring-accent/20 shadow-[2px_2px_0px_#0f172a] placeholder:text-mutedForeground"
+                                            className="flex-1 bg-card border-[3px] border-border rounded-xl px-4 py-2 text-sm font-bold text-foreground focus:outline-none focus:ring-4 focus:ring-accent/20 shadow-[2px_2px_0px_var(--shadow-color)] placeholder:text-muted-foreground"
                                         />
-                                        <Button type="submit" disabled={saving || !newPassword} className="border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] uppercase font-black text-[10px] tracking-widest px-4 sm:px-6 h-11 bg-accent hover:bg-violet-600 transition-all">
+                                        <Button type="submit" disabled={saving || !newPassword} className="border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] uppercase font-black text-[10px] tracking-widest px-4 sm:px-6 h-11 bg-accent hover:bg-violet-600 transition-all">
                                             {saving ? <Loader2 className="animate-spin" size={16} /> : 'Ubah Password'}
                                         </Button>
                                     </form>
@@ -1060,18 +1060,18 @@ export const TeamManagement: React.FC = () => {
                             </div>
 
                             {/* WORKSPACES INFO & INVITE */}
-                            <div className="space-y-4 pt-5 border-t-[3px] border-slate-900 border-dashed">
+                            <div className="space-y-4 pt-5 border-t-[3px] border-border border-dashed">
                                 <h4 className="flex items-center gap-2 text-sm font-black text-foreground mb-2 uppercase tracking-wide">
                                     <Globe size={18} strokeWidth={2.5} /> Workspaces
                                 </h4>
                                 {/* Workspace tags with individual remove button */}
                                 <div className="flex flex-wrap gap-2">
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).map(ws => (
-                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card border-[2px] border-slate-900 rounded-lg text-xs font-black text-foreground shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#0f172a] transition-all">
+                                        <span key={ws.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card border-[2px] border-border rounded-lg text-xs font-black text-foreground shadow-[2px_2px_0px_var(--shadow-color)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--shadow-color)] transition-all">
                                             {ws.name}
                                             <button
                                                 onClick={() => handleRemoveFromSpecificWorkspace(ws.id, ws.name)}
-                                                className="text-mutedForeground hover:text-rose-500 transition-colors ml-1 p-0.5 hover:bg-rose-50 rounded"
+                                                className="text-muted-foreground hover:text-rose-500 transition-colors ml-1 p-0.5 hover:bg-rose-50 rounded"
                                                 title={`Hapus dari ${ws.name}`}
                                             >
                                                 <X size={14} strokeWidth={3} />
@@ -1079,17 +1079,17 @@ export const TeamManagement: React.FC = () => {
                                         </span>
                                     ))}
                                     {allWorkspaces.filter(ws => ws.members?.includes(selectedUser.avatar_url)).length === 0 && (
-                                        <p className="text-xs font-bold text-mutedForeground italic">Tidak ada workspace</p>
+                                        <p className="text-xs font-bold text-muted-foreground italic">Tidak ada workspace</p>
                                     )}
                                 </div>
 
                                 {/* Add to Workspace feature */}
-                                <div className="bg-emerald-100 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4">
-                                    <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-2">Undang ke workspace lain:</p>
+                                <div className="bg-emerald-500/10 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] p-4">
+                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Undang ke workspace lain:</p>
                                     <div className="flex gap-2 items-center">
                                         <select
                                             id="ws-select"
-                                            className="flex-1 bg-card border-[3px] border-slate-900 rounded-xl px-3 py-2 text-sm font-black text-foreground shadow-[2px_2px_0px_#0f172a] appearance-none focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
+                                            className="flex-1 bg-card border-[3px] border-border rounded-xl px-3 py-2 text-sm font-black text-foreground shadow-[2px_2px_0px_var(--shadow-color)] appearance-none focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
                                         >
                                             <option value="">-- Pilih Workspace --</option>
                                             {allWorkspaces.filter(ws => !ws.members?.includes(selectedUser.avatar_url)).map(ws => (
@@ -1099,20 +1099,20 @@ export const TeamManagement: React.FC = () => {
                                         <Button onClick={() => {
                                             const selectEl = document.getElementById('ws-select') as HTMLSelectElement;
                                             if (selectEl && selectEl.value) handleAddToOtherWorkspace(selectEl.value);
-                                        }} className="border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] bg-emerald-500 hover:bg-emerald-600 font-black uppercase text-[10px] tracking-widest px-4 h-11">Undang</Button>
+                                        }} className="border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] bg-emerald-500 hover:bg-emerald-600 font-black uppercase text-[10px] tracking-widest px-4 h-11">Undang</Button>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Hapus dari workspace aktif */}
-                            <div className="pt-4 border-t-2 border-slate-200">
-                                <div className="bg-rose-100 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 flex flex-col sm:flex-row gap-4 items-center justify-between transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a]">
-                                    <p className="text-xs font-black text-rose-700 leading-snug">
-                                        Keluarkan dari workspace <span className="italic block text-sm mt-0.5 text-rose-800">{selectedWorkspace?.name}</span>
+                            <div className="pt-4 border-t-2 border-border">
+                                <div className="bg-rose-500/10 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] p-4 flex flex-col sm:flex-row gap-4 items-center justify-between transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0px_var(--shadow-color)]">
+                                    <p className="text-xs font-black text-rose-500 dark:text-rose-400 leading-snug">
+                                        Keluarkan dari workspace <span className="italic block text-sm mt-0.5 text-rose-500/80 dark:text-rose-300/80">{selectedWorkspace?.name}</span>
                                     </p>
                                     <button
                                         onClick={handleRemoveFromWorkspace}
-                                        className="whitespace-nowrap bg-rose-500 text-white hover:bg-rose-600 font-black text-[10px] sm:text-xs px-4 py-3 rounded-xl border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] transition-all hover:translate-y-[2px] hover:shadow-none uppercase tracking-widest flex items-center"
+                                        className="whitespace-nowrap bg-rose-500 text-white hover:bg-rose-600 font-black text-[10px] sm:text-xs px-4 py-3 rounded-xl border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] transition-all hover:translate-y-[2px] hover:shadow-none uppercase tracking-widest flex items-center"
                                     >
                                         <UserMinus size={14} className="inline mr-1" strokeWidth={3} /> Keluarkan
                                     </button>
@@ -1121,18 +1121,18 @@ export const TeamManagement: React.FC = () => {
                         </div>
 
                         {/* RIGHT COL - KPI */}
-                        <div className="space-y-4 bg-muted/30 p-5 sm:p-6 rounded-2xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] h-full flex flex-col relative overflow-hidden">
+                        <div className="space-y-4 bg-muted/30 p-5 sm:p-6 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] h-full flex flex-col relative overflow-hidden">
                             {/* KPI Header */}
-                            <div className="pb-4 border-b-[3px] border-slate-900 border-dashed relative z-10">
+                            <div className="pb-4 border-b-[3px] border-border border-dashed relative z-10">
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-heading font-black text-2xl tracking-tight text-foreground">Daftar KPI</h4>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 bg-accent text-white rounded-lg border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                                        <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 bg-accent text-white rounded-lg border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)]">
                                             {getKPICompletion(selectedUser)}% Selesai
                                         </span>
                                         <button
                                             onClick={() => setShowAddKPI(!showAddKPI)}
-                                            className="p-2 bg-emerald-500 text-white rounded-lg border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-emerald-600 transition-all hover:translate-y-[2px] hover:shadow-none"
+                                            className="p-2 bg-emerald-500 text-white rounded-lg border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] hover:bg-emerald-600 transition-all hover:translate-y-[2px] hover:shadow-none"
                                             title="Tambah KPI"
                                         >
                                             <Plus size={16} strokeWidth={3} />
@@ -1140,7 +1140,7 @@ export const TeamManagement: React.FC = () => {
                                     </div>
                                 </div>
                                 {/* Min Completion Rate setter */}
-                                <div className="flex items-center gap-2 bg-amber-100 border-[3px] border-slate-900 rounded-xl px-3 py-2 shadow-[2px_2px_0px_#0f172a] w-fit">
+                                <div className="flex items-center gap-2 bg-amber-100 border-[3px] border-border rounded-xl px-3 py-2 shadow-[2px_2px_0px_var(--shadow-color)] w-fit">
                                     <Target size={14} className="text-amber-700 shrink-0" strokeWidth={3} />
                                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 mt-0.5">Completion min:</span>
                                     <input
@@ -1148,29 +1148,29 @@ export const TeamManagement: React.FC = () => {
                                         min={0} max={100}
                                         value={minCompletionRate}
                                         onChange={e => setMinCompletionRate(Number(e.target.value))}
-                                        className="w-16 bg-card border-[2px] mx-1 border-slate-900 rounded-lg px-2 py-0.5 text-xs font-black text-foreground text-center shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        className="w-16 bg-card border-[2px] mx-1 border-border rounded-lg px-2 py-0.5 text-xs font-black text-foreground text-center shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500"
                                     />
                                     <span className="text-xs font-black text-amber-800 mt-0.5">%</span>
                                 </div>
                                 {/* Add KPI Form */}
                                 {showAddKPI && (
-                                    <form onSubmit={handleAddKPI} className="mt-4 bg-card border-[3.5px] border-slate-900 rounded-[2rem] p-6 space-y-4 shadow-[6px_6px_0px_#0f172a] animate-in fade-in slide-in-from-top-4">
-                                        <p className="text-xs font-black text-slate-700 uppercase tracking-wide">Tambah KPI Baru</p>
+                                    <form onSubmit={handleAddKPI} className="mt-4 bg-card border-[3.5px] border-border rounded-[2rem] p-6 space-y-4 shadow-[6px_6px_0px_var(--shadow-color)] animate-in fade-in slide-in-from-top-4">
+                                        <p className="text-xs font-black text-foreground uppercase tracking-wide">Tambah KPI Baru</p>
                                         <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                                             {/* Nama Metrik */}
                                             <div className="col-span-2">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Nama Metrik *</label>
-                                                <input required placeholder="Contoh: Jumlah Post, Revenue, dll." value={kpiForm.metric_name} onChange={e => setKpiForm(p => ({ ...p, metric_name: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Nama Metrik *</label>
+                                                <input required placeholder="Contoh: Jumlah Post, Revenue, dll." value={kpiForm.metric_name} onChange={e => setKpiForm(p => ({ ...p, metric_name: e.target.value }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
                                             {/* Kategori */}
                                             <div>
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Kategori</label>
-                                                <input placeholder="General, Sales, dll." value={kpiForm.category} onChange={e => setKpiForm(p => ({ ...p, category: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Kategori</label>
+                                                <input placeholder="General, Sales, dll." value={kpiForm.category} onChange={e => setKpiForm(p => ({ ...p, category: e.target.value }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
                                             {/* Periode */}
                                             <div>
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Periode</label>
-                                                <select value={kpiForm.period} onChange={e => setKpiForm(p => ({ ...p, period: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold bg-card focus:outline-none focus:bg-yellow-50">
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Periode</label>
+                                                <select value={kpiForm.period} onChange={e => setKpiForm(p => ({ ...p, period: e.target.value }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold bg-card focus:outline-none focus:bg-yellow-50">
                                                     <option>Monthly</option>
                                                     <option>Quarterly</option>
                                                     <option>Yearly</option>
@@ -1179,23 +1179,23 @@ export const TeamManagement: React.FC = () => {
                                             </div>
                                             {/* Target */}
                                             <div>
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Target</label>
-                                                <input type="number" min={0} placeholder="100" value={kpiForm.target_value} onChange={e => setKpiForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Target</label>
+                                                <input type="number" min={0} placeholder="100" value={kpiForm.target_value} onChange={e => setKpiForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
                                             {/* Aktual */}
                                             <div>
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Nilai Aktual</label>
-                                                <input type="number" min={0} placeholder="0" value={kpiForm.actual_value} onChange={e => setKpiForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Nilai Aktual</label>
+                                                <input type="number" min={0} placeholder="0" value={kpiForm.actual_value} onChange={e => setKpiForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
                                             {/* Unit */}
                                             <div className="col-span-2">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Satuan (Unit)</label>
-                                                <input placeholder="%, pcs, rupiah, post, dll." value={kpiForm.unit} onChange={e => setKpiForm(p => ({ ...p, unit: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Satuan (Unit)</label>
+                                                <input placeholder="%, pcs, rupiah, post, dll." value={kpiForm.unit} onChange={e => setKpiForm(p => ({ ...p, unit: e.target.value }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
                                             {/* Tanggal Periode */}
                                             <div className="col-span-2">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wide block mb-0.5">Tanggal Periode</label>
-                                                <input type="date" value={kpiForm.period_date} onChange={e => setKpiForm(p => ({ ...p, period_date: e.target.value }))} className="w-full border-2 border-slate-900 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wide block mb-0.5">Tanggal Periode</label>
+                                                <input type="date" value={kpiForm.period_date} onChange={e => setKpiForm(p => ({ ...p, period_date: e.target.value }))} className="w-full border-2 border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:bg-yellow-50" />
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
@@ -1209,7 +1209,7 @@ export const TeamManagement: React.FC = () => {
                             {/* KPI List */}
                             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 min-h-[300px]">
                                 {getUserKPIs(selectedUser).length === 0 ? (
-                                    <div className="text-mutedForeground font-bold text-center py-10">
+                                    <div className="text-muted-foreground font-bold text-center py-10">
                                         <Target className="mx-auto mb-2 opacity-40" size={32} />
                                         Belum ada KPI terdaftar
                                     </div>
@@ -1220,18 +1220,18 @@ export const TeamManagement: React.FC = () => {
                                         const isSuccess = pVal >= minCompletionRate;
                                         const isEditingThis = editingKPIId === kpi.id;
                                         return (
-                                            <div key={kpi.id} className={`bg-card p-4 rounded-xl border-[3px] transition-all hover:-translate-y-1 ${isEditingThis ? 'border-violet-600 shadow-[6px_6px_0px_#7c3aed]' : 'border-slate-900 shadow-[4px_4px_0px_#0f172a]'}`}>
+                                            <div key={kpi.id} className={`bg-card p-4 rounded-xl border-[3px] transition-all hover:-translate-y-1 ${isEditingThis ? 'border-violet-600 shadow-[6px_6px_0px_#7c3aed]' : 'border-border shadow-[4px_4px_0px_var(--shadow-color)]'}`}>
                                                 <div className="flex justify-between items-start mb-2">
                                                     <h5 className="font-black text-foreground text-base truncate pr-2 tracking-tight uppercase">{kpi.metric_name}</h5>
                                                     <div className="flex items-center gap-1.5 shrink-0">
-                                                        <span className={`text-[10px] font-black tracking-widest px-2 py-1 rounded-md border-[2px] border-slate-900 uppercase shadow-[2px_2px_0px_#0f172a] ${isSuccess ? 'bg-emerald-400 text-foreground' : 'bg-rose-400 text-white'
+                                                        <span className={`text-[10px] font-black tracking-widest px-2 py-1 rounded-md border-[2px] border-border uppercase shadow-[2px_2px_0px_var(--shadow-color)] ${isSuccess ? 'bg-emerald-400 text-foreground' : 'bg-rose-400 text-white'
                                                             }`}>{isSuccess ? '✓ Berhasil' : '✗ Perlu Ditingkatkan'}</span>
-                                                        <span className="text-[10px] font-black tracking-widest px-2 py-1 rounded-md bg-slate-100 text-slate-700 border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] uppercase">{kpi.period}</span>
+                                                        <span className="text-[10px] font-black tracking-widest px-2 py-1 rounded-md bg-muted text-foreground border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] uppercase">{kpi.period}</span>
                                                         {/* Edit button */}
                                                         {!isEditingThis ? (
                                                             <button
                                                                 onClick={() => handleOpenEditKPI(kpi)}
-                                                                className="p-1.5 bg-card border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-violet-100 hover:text-violet-700 rounded-md transition-all text-foreground"
+                                                                className="p-1.5 bg-card border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] hover:bg-violet-100 hover:text-violet-700 rounded-md transition-all text-foreground"
                                                                 title="Edit KPI"
                                                             >
                                                                 <Edit3 size={12} strokeWidth={3} />
@@ -1239,7 +1239,7 @@ export const TeamManagement: React.FC = () => {
                                                         ) : (
                                                             <button
                                                                 onClick={() => setEditingKPIId(null)}
-                                                                className="p-1.5 bg-slate-900 text-white border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-slate-700 rounded-md transition-all"
+                                                                className="p-1.5 bg-border text-white border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] hover:bg-slate-700 rounded-md transition-all"
                                                                 title="Tutup"
                                                             >
                                                                 <X size={12} strokeWidth={3} />
@@ -1248,11 +1248,11 @@ export const TeamManagement: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-between items-end mb-1.5">
-                                                    <span className="text-[10px] font-black tracking-widest uppercase text-slate-500">{kpi.category}</span>
-                                                    <span className="text-xs font-black text-foreground bg-slate-100 px-3 py-1 rounded-lg border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a]">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
+                                                    <span className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">{kpi.category}</span>
+                                                    <span className="text-xs font-black text-foreground bg-muted px-3 py-1 rounded-lg border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)]">{kpi.actual_value} / {kpi.target_value} {kpi.unit}</span>
                                                 </div>
-                                                <div className="w-full bg-slate-200 rounded-full h-3 border-[2px] border-slate-900 shadow-inner overflow-hidden">
-                                                    <div className={`h-full border-r-[2px] border-slate-900 transition-all duration-500 ease-out ${pVal >= minCompletionRate ? 'bg-emerald-400' : pVal >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{ width: `${pVal}%` }} />
+                                                <div className="w-full bg-muted rounded-full h-3 border-[2px] border-border shadow-inner overflow-hidden">
+                                                    <div className={`h-full border-r-[2px] border-border transition-all duration-500 ease-out ${pVal >= minCompletionRate ? 'bg-emerald-400' : pVal >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{ width: `${pVal}%` }} />
                                                 </div>
 
                                                 {/* Inline Edit Form */}
@@ -1261,15 +1261,15 @@ export const TeamManagement: React.FC = () => {
                                                         <p className="text-[10px] font-black text-violet-600 uppercase tracking-wide">Edit KPI</p>
                                                         <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
                                                             <div className="col-span-2">
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Nama Metrik</label>
-                                                                <input value={editKPIForm.metric_name} onChange={e => setEditKPIForm(p => ({ ...p, metric_name: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Nama Metrik</label>
+                                                                <input value={editKPIForm.metric_name} onChange={e => setEditKPIForm(p => ({ ...p, metric_name: e.target.value }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Kategori</label>
-                                                                <input value={editKPIForm.category} onChange={e => setEditKPIForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Kategori</label>
+                                                                <input value={editKPIForm.category} onChange={e => setEditKPIForm(p => ({ ...p, category: e.target.value }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black text-slate-500 uppercase block mb-0.5">Periode</label>
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Periode</label>
                                                                 <select value={editKPIForm.period} onChange={e => setEditKPIForm(p => ({ ...p, period: e.target.value }))} className="w-full border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold bg-transparent text-foreground focus:outline-none focus:border-violet-400">
                                                                     <option className="bg-card">Monthly</option>
                                                                     <option className="bg-card">Quarterly</option>
@@ -1278,24 +1278,24 @@ export const TeamManagement: React.FC = () => {
                                                                 </select>
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Tanggal Periode</label>
-                                                                <input type="date" value={editKPIForm.period_date} onChange={e => setEditKPIForm(p => ({ ...p, period_date: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Tanggal Periode</label>
+                                                                <input type="date" value={editKPIForm.period_date} onChange={e => setEditKPIForm(p => ({ ...p, period_date: e.target.value }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Target</label>
-                                                                <input type="number" min={0} value={editKPIForm.target_value} onChange={e => setEditKPIForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Target</label>
+                                                                <input type="number" min={0} value={editKPIForm.target_value} onChange={e => setEditKPIForm(p => ({ ...p, target_value: Number(e.target.value) }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Aktual</label>
-                                                                <input type="number" min={0} value={editKPIForm.actual_value} onChange={e => setEditKPIForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Aktual</label>
+                                                                <input type="number" min={0} value={editKPIForm.actual_value} onChange={e => setEditKPIForm(p => ({ ...p, actual_value: Number(e.target.value) }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div className="col-span-2">
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Satuan (Unit)</label>
-                                                                <input value={editKPIForm.unit} onChange={e => setEditKPIForm(p => ({ ...p, unit: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Satuan (Unit)</label>
+                                                                <input value={editKPIForm.unit} onChange={e => setEditKPIForm(p => ({ ...p, unit: e.target.value }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                             <div className="col-span-2">
-                                                                <label className="text-[9px] font-black text-mutedForeground uppercase block mb-0.5">Catatan</label>
-                                                                <input placeholder="Catatan..." value={editKPIForm.notes} onChange={e => setEditKPIForm(p => ({ ...p, notes: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
+                                                                <label className="text-[9px] font-black text-muted-foreground uppercase block mb-0.5">Catatan</label>
+                                                                <input placeholder="Catatan..." value={editKPIForm.notes} onChange={e => setEditKPIForm(p => ({ ...p, notes: e.target.value }))} className="w-full border border-border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-violet-400" />
                                                             </div>
                                                         </div>
                                                         <button
@@ -1329,23 +1329,23 @@ export const TeamManagement: React.FC = () => {
             >
                 {upgradeStep === 'info' && (
                     <div className="flex flex-col items-center justify-center text-center space-y-5 p-4 animate-in fade-in zoom-in duration-300">
-                        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a]">
+                        <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center border-4 border-border shadow-[4px_4px_0px_var(--shadow-color)]">
                             <Users size={40} className="text-amber-500" />
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-2xl font-black text-foreground font-heading tracking-tight">Kuota Tim Tercapai</h3>
-                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                            <p className="text-sm font-bold text-muted-foreground leading-relaxed">
                                 Batas maksimal anggota tim Anda ({currentAdmin?.member_limit || 2} orang) telah terpenuhi.
                                 Silakan upgrade paket Anda untuk menambah kapasitas anggota.
                             </p>
                         </div>
 
-                        <div className="w-full bg-muted border-4 border-slate-900 rounded-2xl p-4 text-left my-2 shadow-[4px_4px_0px_#0f172a]">
+                        <div className="w-full bg-muted border-4 border-border rounded-2xl p-4 text-left my-2 shadow-[4px_4px_0px_var(--shadow-color)]">
                             <div className="flex justify-between items-center mb-1">
-                                <span className="text-[10px] font-black uppercase text-mutedForeground">Status Saat Ini</span>
-                                <span className="text-[10px] font-black uppercase bg-slate-900 text-white px-2 py-0.5 rounded">{currentAdmin?.subscription_package}</span>
+                                <span className="text-[10px] font-black uppercase text-muted-foreground">Status Saat Ini</span>
+                                <span className="text-[10px] font-black uppercase bg-border text-white px-2 py-0.5 rounded">{currentAdmin?.subscription_package}</span>
                             </div>
-                            <p className="text-sm font-black text-slate-700">Penggunaan: {subUsersCount}/{currentAdmin?.member_limit || 2} Orang</p>
+                            <p className="text-sm font-black text-foreground">Penggunaan: {subUsersCount}/{currentAdmin?.member_limit || 2} Orang</p>
                         </div>
 
                         <div className="grid grid-cols-1 w-full gap-3">
@@ -1357,7 +1357,7 @@ export const TeamManagement: React.FC = () => {
                             </Button>
                             <button
                                 onClick={() => setIsUpgradeModalOpen(false)}
-                                className="w-full h-12 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-foreground transition-colors"
+                                className="w-full h-12 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Nanti Saja
                             </button>
@@ -1369,11 +1369,11 @@ export const TeamManagement: React.FC = () => {
                     <div className="p-4 space-y-5 animate-in slide-in-from-right duration-300">
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Pilih Paket Baru</label>
+                                <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Pilih Paket Baru</label>
                                 <select
                                     value={selectedPkgId}
                                     onChange={e => setSelectedPkgId(e.target.value)}
-                                    className="w-full bg-muted border-4 border-slate-900 rounded-xl p-3 text-sm font-black focus:outline-none focus:ring-4 focus:ring-accent/10"
+                                    className="w-full bg-muted border-4 border-border rounded-xl p-3 text-sm font-black focus:outline-none focus:ring-4 focus:ring-accent/10"
                                 >
                                     <option value="">-- Pilih Paket --</option>
                                     {config?.payment_config?.teamPackages?.map((pkg: any) => (
@@ -1386,8 +1386,8 @@ export const TeamManagement: React.FC = () => {
 
                             {selectedPkgId && (
                                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <div className="bg-slate-900 text-white rounded-2xl p-4 border-4 border-slate-800 shadow-[4px_4px_0px_#334155]">
-                                        <p className="text-[10px] font-black uppercase text-mutedForeground mb-2">Informasi Pembayaran</p>
+                                    <div className="bg-border text-white rounded-2xl p-4 border-4 border-slate-800 shadow-[4px_4px_0px_#334155]">
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-2">Informasi Pembayaran</p>
                                         <div className="space-y-1">
                                             <p className="text-sm font-black">{config?.payment_config?.bankName || 'BANK MANDIRI'}</p>
                                             <p className="text-xl font-mono font-black tracking-wider text-accent">{config?.payment_config?.accountNumber || '1234567890'}</p>
@@ -1396,7 +1396,7 @@ export const TeamManagement: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                        <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1">
                                             <Key size={12} /> Masukkan Order ID Invoice / Bukti Bayar
                                         </label>
                                         <input
@@ -1406,7 +1406,7 @@ export const TeamManagement: React.FC = () => {
                                             onChange={e => setUpgradeOrderId(e.target.value.toUpperCase())}
                                             className="w-full bg-amber-50 border-4 border-amber-400 rounded-xl p-3 text-lg font-black text-center tracking-widest focus:outline-none focus:bg-card uppercase"
                                         />
-                                        <p className="text-[9px] font-bold text-mutedForeground mt-2 leading-tight italics">
+                                        <p className="text-[9px] font-bold text-muted-foreground mt-2 leading-tight italics">
                                             * Masukkan kode yang Anda terima setelah pembayaran sukses. Permintaan akan diverifikasi dalam 1x24 jam.
                                         </p>
                                     </div>
@@ -1414,14 +1414,14 @@ export const TeamManagement: React.FC = () => {
                                     <div className="flex gap-3 pt-2">
                                         <button
                                             onClick={() => setUpgradeStep('info')}
-                                            className="px-6 py-3 border-4 border-slate-900 rounded-xl font-black text-xs uppercase"
+                                            className="px-6 py-3 border-4 border-border rounded-xl font-black text-xs uppercase"
                                         >
                                             Kembali
                                         </button>
                                         <Button
                                             onClick={handleSendUpgradeRequest}
                                             disabled={requestingUpgrade || !selectedPkgId || !upgradeOrderId}
-                                            className="flex-1 shadow-[4px_4px_0px_#0f172a]"
+                                            className="flex-1 shadow-[4px_4px_0px_var(--shadow-color)]"
                                         >
                                             {requestingUpgrade ? <Loader2 size={16} className="animate-spin" /> : 'Kirim Permintaan'}
                                         </Button>
@@ -1434,12 +1434,12 @@ export const TeamManagement: React.FC = () => {
 
                 {upgradeStep === 'success' && (
                     <div className="flex flex-col items-center justify-center text-center space-y-6 p-6 animate-in zoom-in duration-300">
-                        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center border-4 border-slate-900 shadow-[4px_4px_0px_#064e3b]">
+                        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center border-4 border-border shadow-[4px_4px_0px_#064e3b]">
                             <Save size={40} className="text-emerald-500" />
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-2xl font-black text-foreground font-heading">Permintaan Terkirim!</h3>
-                            <p className="text-sm font-bold text-slate-500 leading-relaxed">
+                            <p className="text-sm font-bold text-muted-foreground leading-relaxed">
                                 Bukti pembayaran Anda telah masuk ke antrean verifikasi Developer. Akun Anda akan di-upgrade secara otomatis setelah divalidasi.
                             </p>
                         </div>
@@ -1453,7 +1453,7 @@ export const TeamManagement: React.FC = () => {
                             </Button>
                             <button
                                 onClick={() => setIsUpgradeModalOpen(false)}
-                                className="w-full py-3 text-xs font-black uppercase text-mutedForeground hover:text-foreground"
+                                className="w-full py-3 text-xs font-black uppercase text-muted-foreground hover:text-foreground"
                             >
                                 Tutup Halaman
                             </button>
