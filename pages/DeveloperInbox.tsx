@@ -5,7 +5,8 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import {
     Inbox, CheckCircle, XCircle, ShieldCheck, Clock, Trash2,
-    RefreshCw, Loader2, User, Key, Mail, Filter, Search, CreditCard, ExternalLink
+    RefreshCw, Loader2, User, Key, Mail, Filter, Search, CreditCard, ExternalLink,
+    Copy, Check, UserCircle, Tag, Hash, ChevronRight
 } from 'lucide-react';
 
 interface InboxMessage {
@@ -205,6 +206,12 @@ export const DeveloperInbox: React.FC = () => {
         });
     };
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        // Simple visual feedback could be added here if needed, 
+        // but for now we'll just let it copy
+    };
+
     const filteredMessages = messages.filter(msg => {
         // Tab Filter (Registration vs Renewal)
         const msgType = msg.type || 'registration';
@@ -235,7 +242,7 @@ export const DeveloperInbox: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3 md:gap-4">
                 <div>
-                    <h1 className="text-base sm:text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-2 sm:gap-3">
+                    <h1 className="text-base sm:text-2xl md:text-3xl font-black text-foreground flex items-center gap-2 sm:gap-3">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 text-white rounded-lg sm:rounded-xl flex items-center justify-center relative shadow-hard-mini flex-shrink-0">
                             <Inbox size={20} className="sm:w-6 sm:h-6" />
                             {unreadCount > 0 && (
@@ -246,12 +253,12 @@ export const DeveloperInbox: React.FC = () => {
                         </div>
                         Developer Inbox
                     </h1>
-                    <p className="text-slate-500 font-bold text-xs sm:text-sm mt-0.5 sm:mt-1">Kelola verifikasi registrasi dan perpanjangan langganan user.</p>
+                    <p className="text-muted-foreground font-bold text-xs sm:text-sm mt-0.5 sm:mt-1">Kelola verifikasi registrasi dan perpanjangan langganan user.</p>
                 </div>
 
                 <button
                     onClick={fetchMessages}
-                    className="self-start px-3 sm:px-4 py-1.5 sm:py-2 bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm text-slate-900 shadow-hard-mini hover:-translate-y-0.5 transition-all flex items-center gap-1.5 sm:gap-2"
+                    className="self-start px-3 sm:px-4 py-1.5 sm:py-2 bg-card border-2 border-slate-900 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm text-foreground shadow-hard-mini hover:-translate-y-0.5 transition-all flex items-center gap-1.5 sm:gap-2"
                 >
                     <RefreshCw size={14} className={`${loading ? 'animate-spin' : ''} sm:w-4 sm:h-4`} /> Refresh
                 </button>
@@ -259,28 +266,28 @@ export const DeveloperInbox: React.FC = () => {
 
             {/* Tabs & Filters */}
             <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
-                <div className="flex bg-slate-100 p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 border-slate-200 self-start gap-1 sm:gap-0">
+                <div className="flex bg-muted p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 border-border self-start gap-1 sm:gap-0">
                     <button
                         onClick={() => setTypeFilter('registration')}
-                        className={`px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[7px] sm:text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'registration' ? 'bg-white text-slate-900 shadow-md border-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[7px] sm:text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'registration' ? 'bg-accent text-white shadow-md border-2 border-slate-900' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Registrasi ({regCount})
                     </button>
                     <button
                         onClick={() => setTypeFilter('renewal')}
-                        className={`px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[7px] sm:text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'renewal' ? 'bg-white text-slate-900 shadow-md border-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl text-[7px] sm:text-xs font-black uppercase tracking-widest transition-all ${typeFilter === 'renewal' ? 'bg-accent text-white shadow-md border-2 border-slate-900' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         Perpanjangan ({renewalCount})
                     </button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    <div className="flex bg-white border-2 border-slate-900 rounded-lg sm:rounded-xl overflow-hidden shadow-hard-mini">
+                    <div className="flex bg-card border-2 border-slate-900 rounded-lg sm:rounded-xl overflow-hidden shadow-hard-mini">
                         {(['all', 'unread', 'resolved'] as const).map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
-                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider transition-colors ${filter === f ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'} ${f !== 'all' ? 'border-l-2 border-slate-900' : ''}`}
+                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider transition-colors ${filter === f ? 'bg-accent text-white' : 'text-muted-foreground hover:bg-muted'} ${f !== 'all' ? 'border-l-2 border-slate-900' : ''}`}
                             >
                                 {f === 'all' ? 'Semua' : f === 'unread' ? 'Belum Baca' : 'Resolved'}
                             </button>
@@ -293,125 +300,134 @@ export const DeveloperInbox: React.FC = () => {
                             type="text"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-colors"
+                            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border-2 border-border rounded-xl text-sm font-bold text-foreground focus:outline-none focus:border-slate-900 transition-colors"
                             placeholder="Cari user..."
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Messages List */}
+            {/* Messages Grid */}
             {loading && messages.length === 0 ? (
                 <div className="flex justify-center items-center py-20">
                     <Loader2 size={32} className="animate-spin text-slate-400" />
                 </div>
             ) : filteredMessages.length === 0 ? (
-                <Card className="text-center py-16 border-dashed border-4">
-                    <Inbox size={48} className="mx-auto text-slate-200 mb-4" />
-                    <p className="text-xl font-black text-slate-300">Tidak ada pesan</p>
-                    <p className="text-sm text-slate-300 mt-1">Belum ada aktivitas di kategori ini.</p>
-                </Card>
+                <div className="bg-card/50 border-4 border-dashed border-slate-200 rounded-[2rem] p-12 text-center flex flex-col items-center justify-center">
+                    <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 border-2 border-slate-200">
+                        <Inbox size={40} className="text-slate-300" />
+                    </div>
+                    <p className="text-xl font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Inbox Bersih!</p>
+                    <p className="text-xs font-bold text-slate-400 max-w-[200px]">Semua permintaan telah diproses atau belum ada aktivitas baru.</p>
+                </div>
             ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
                     {filteredMessages.map(msg => (
                         <div
                             key={msg.id}
-                            className={`bg-white border-2 rounded-2xl overflow-hidden transition-all hover:shadow-hard ${msg.is_resolved
-                                ? 'border-emerald-400 bg-emerald-50/20 opacity-80'
+                            className={`group bg-card border-4 rounded-[2rem] overflow-hidden transition-all duration-300 flex flex-col relative ${msg.is_resolved
+                                ? 'border-emerald-500/20 bg-emerald-500/5 grayscale-[0.5]'
                                 : msg.is_read
-                                    ? 'border-slate-200 shadow-sm'
-                                    : 'border-slate-900 shadow-hard'
+                                    ? 'border-slate-200'
+                                    : 'border-slate-900 shadow-[8px_8px_0px_var(--shadow-color)] -translate-y-1'
                                 }`}
                             onClick={() => handleMarkRead(msg)}
                         >
-                            <div className="p-6">
-                                <div className="flex flex-col lg:flex-row gap-6">
-                                    {/* User Block */}
-                                    <div className="flex items-start gap-4 lg:w-1/3">
-                                        <div className={`w-14 h-14 rounded-2xl border-4 flex items-center justify-center shrink-0 shadow-sm ${msg.is_resolved ? 'bg-emerald-100 border-white' : 'bg-slate-100 border-white'}`}>
-                                            <User size={28} className={msg.is_resolved ? 'text-emerald-500' : 'text-slate-400'} />
+                            {/* Unread Indicator */}
+                            {!msg.is_read && !msg.is_resolved && (
+                                <div className="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse z-20"></div>
+                            )}
+
+                            {/* Header: User Info */}
+                            <div className="p-6 pb-2">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center shrink-0 shadow-sm ${msg.is_resolved ? 'bg-emerald-100 border-emerald-200' : 'bg-slate-100 border-slate-200'}`}>
+                                        <UserCircle size={24} className={msg.is_resolved ? 'text-emerald-500' : 'text-slate-500'} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-black text-foreground truncate uppercase text-sm">{msg.sender_name}</h3>
+                                            {msg.is_resolved && <CheckCircle size={14} className="text-emerald-500 shrink-0" />}
                                         </div>
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className="font-black text-slate-900 truncate">{msg.sender_name}</h3>
-                                                {msg.is_resolved && (
-                                                    <CheckCircle size={14} className="text-emerald-500" />
-                                                )}
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400"><Mail size={12} /> {msg.sender_email}</div>
-                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400"><User size={12} /> @{msg.sender_username}</div>
-                                            </div>
+                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground truncate">
+                                            <Mail size={10} /> {msg.sender_email}
                                         </div>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                    <Clock size={12} /> {new Date(msg.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            </div>
 
-                                    {/* Interaction Block */}
-                                    <div className="flex-1 space-y-4 pt-4 lg:pt-0 lg:border-l-2 lg:border-slate-100 lg:pl-6">
-                                        {msg.type === 'renewal' ? (
-                                            <div className="space-y-4">
-                                                <div className="flex flex-wrap gap-4">
-                                                    <div className="bg-emerald-50 border-2 border-emerald-100 rounded-2xl p-4 flex-1 min-w-[200px] relative overflow-hidden group">
-                                                        <div className="absolute -right-2 -bottom-2 opacity-5 group-hover:scale-110 transition-transform"><CreditCard size={80} /></div>
-                                                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Paket & Nominal</p>
-                                                        <p className="text-xl font-black text-emerald-900">{msg.package_name}</p>
-                                                        <p className="text-sm font-bold text-emerald-600">Rp {msg.amount?.toLocaleString('id-ID')}</p>
-                                                    </div>
-
-                                                    {msg.proof_url && (
-                                                        <div
-                                                            className="w-32 h-24 bg-slate-100 border-2 border-slate-200 rounded-2xl overflow-hidden cursor-pointer relative group"
-                                                            onClick={(e) => { e.stopPropagation(); setPreviewImage(msg.proof_url!); }}
-                                                        >
-                                                            <img src={msg.proof_url} alt="Proof" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                                                <ExternalLink size={20} />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                                    <Clock size={14} /> Diterima: {new Date(msg.created_at).toLocaleString('id-ID')}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                <div className="bg-amber-50 border-2 border-amber-100 rounded-2xl p-4 relative overflow-hidden group">
-                                                    <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-110 transition-transform"><Key size={80} /></div>
-                                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Kode Konfirmasi</p>
-                                                    <p className="text-2xl font-black text-amber-900 tracking-[0.2em] font-mono">{msg.subscription_code}</p>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                                    <Clock size={14} /> Diterima: {new Date(msg.created_at).toLocaleString('id-ID')}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Action Block */}
-                                    <div className="flex flex-row lg:flex-col gap-2 shrink-0 pt-4 lg:pt-0">
-                                        {!msg.is_resolved && (
+                            {/* Main Content: The Code / Renewal Info */}
+                            <div className="px-6 py-4 flex-1">
+                                {msg.type === 'renewal' ? (
+                                    <div className="space-y-3">
+                                        <div className="bg-emerald-50 dark:bg-emerald-500/10 border-2 border-emerald-100 dark:border-emerald-500/20 rounded-2xl p-4 relative overflow-hidden">
+                                            <div className="absolute right-0 bottom-0 opacity-10 rotate-12"><CreditCard size={60} /></div>
+                                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Perpanjangan</p>
+                                            <p className="text-lg font-black text-emerald-900 dark:text-emerald-400 truncate">{msg.package_name}</p>
+                                            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-500/70">Rp {msg.amount?.toLocaleString('id-ID')}</p>
+                                        </div>
+                                        {msg.proof_url && (
                                             <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    msg.type === 'renewal' ? handleVerifyRenewal(msg) : handleVerifyUser(msg);
-                                                }}
-                                                disabled={verifyingId === msg.id}
-                                                className="flex-1 lg:flex-none px-6 py-3 bg-slate-900 text-white font-black text-xs rounded-xl shadow-hard-mini hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                                onClick={(e) => { e.stopPropagation(); setPreviewImage(msg.proof_url!); }}
+                                                className="w-full h-14 bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors group/btn"
                                             >
-                                                {verifyingId === msg.id
-                                                    ? <Loader2 size={16} className="animate-spin" />
-                                                    : <ShieldCheck size={16} className="text-emerald-400" />
-                                                }
-                                                VERIFIKASI
+                                                <CreditCard size={16} className="text-slate-400 group-hover/btn:text-slate-600" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover/btn:text-slate-700">Lihat Bukti TF</span>
                                             </button>
                                         )}
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
-                                            className="px-4 py-3 bg-white text-red-500 font-bold text-xs rounded-xl border-2 border-red-200 hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Trash2 size={16} /> Hapus
-                                        </button>
                                     </div>
+                                ) : (
+                                    <div className="relative group/ticket">
+                                        <div className="bg-amber-50 dark:bg-amber-500/10 border-4 border-slate-900 dark:border-amber-500/30 rounded-2xl p-5 relative overflow-hidden shadow-[4px_4px_0px_var(--shadow-color)]">
+                                            <div className="absolute right-2 top-2 opacity-10"><Tag size={40} /></div>
+                                            <p className="text-[8px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-[0.3em] mb-2 border-b border-amber-500/20 pb-1">Confirmation Ticket</p>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-xl font-black text-slate-900 dark:text-amber-400 tracking-wider font-mono truncate">{msg.subscription_code}</p>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(msg.subscription_code); }}
+                                                    className="w-8 h-8 bg-slate-900 dark:bg-amber-500 text-white rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-hard-mini shrink-0"
+                                                    title="Salin Kode"
+                                                >
+                                                    <Copy size={12} />
+                                                </button>
+                                            </div>
+                                            {/* Ticket Holes effect */}
+                                            <div className="absolute top-1/2 -left-2 w-4 h-4 bg-card border-4 border-slate-900 rounded-full -translate-y-1/2"></div>
+                                            <div className="absolute top-1/2 -right-2 w-4 h-4 bg-card border-4 border-slate-900 rounded-full -translate-y-1/2"></div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Actions Segment */}
+                            <div className="p-6 pt-2 bg-muted/30 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex gap-2">
+                                    {!msg.is_resolved && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                msg.type === 'renewal' ? handleVerifyRenewal(msg) : handleVerifyUser(msg);
+                                            }}
+                                            disabled={verifyingId === msg.id}
+                                            className="flex-1 px-4 py-3 bg-accent text-white font-black text-[10px] uppercase tracking-widest rounded-xl border-2 border-slate-900 shadow-hard-mini hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            {verifyingId === msg.id
+                                                ? <Loader2 size={14} className="animate-spin" />
+                                                : <ShieldCheck size={14} />
+                                            }
+                                            Verifikasi
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }}
+                                        className="w-12 h-12 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                        title="Hapus Pesan"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -433,7 +449,7 @@ export const DeveloperInbox: React.FC = () => {
             <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} title={statusModal.title}>
                 <div className="p-8 text-center space-y-4">
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-900 shadow-hard-mini ${statusModal.type === 'success' ? 'bg-emerald-100 text-emerald-600' :
-                            statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+                        statusModal.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
                         }`}>
                         {statusModal.type === 'success' ? <CheckCircle size={32} /> :
                             statusModal.type === 'error' ? <XCircle size={32} /> : <Clock size={32} />}

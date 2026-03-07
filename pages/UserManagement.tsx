@@ -7,14 +7,14 @@ import {
     Users, Trash2, RefreshCw, Loader2, Shield, UserPlus, Hash, Mail, Key, Globe,
     Eye, EyeOff, Copy, Power, Calendar, Clock, CheckCircle, XCircle, Layers, Search,
     ShieldCheck, ShieldX, AlertTriangle, TrendingUp, UserCheck, Bell, UserMinus,
-    ArrowRight, Activity, X
+    ArrowRight, Activity, X, ChevronRight, PieChart as PieIcon, Layout
 } from 'lucide-react';
 import { useAppConfig } from '../components/AppConfigProvider';
 import bcrypt from 'bcryptjs';
 import { logActivity } from '../services/activityService';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-    ResponsiveContainer, AreaChart, Area
+    ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
 interface AppUser {
@@ -61,6 +61,7 @@ export const UserManagement: React.FC = () => {
     const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
 
     const [viewingAdminTeam, setViewingAdminTeam] = useState<AppUser | null>(null);
+    const [filterHaveTeam, setFilterHaveTeam] = useState(false);
 
     const { config } = useAppConfig();
     const availablePackages = [
@@ -207,7 +208,10 @@ export const UserManagement: React.FC = () => {
             const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(form.full_name)}`;
             const now = new Date().toISOString();
 
+            const currentUserUsername = localStorage.getItem('user_username') || '';
+            const currentUserId = localStorage.getItem('user_id') || '';
             const hashedPassword = bcrypt.hashSync(form.password, 10);
+
             const insertData: any = {
                 full_name: form.full_name,
                 email: form.email,
@@ -219,6 +223,8 @@ export const UserManagement: React.FC = () => {
                 subscription_start: now,
                 subscription_package: form.subscription_package || 'Free',
                 last_activity_at: null, // Explicit null to trigger FirstLoginModal on first login
+                invited_by: currentUserUsername,
+                parent_user_id: currentUserId,
             };
             if (form.subscription_end) {
                 insertData.subscription_end = new Date(form.subscription_end).toISOString();
@@ -509,7 +515,10 @@ export const UserManagement: React.FC = () => {
 
     const admins = users.filter(u => u.role === 'Admin' || u.role === 'Owner');
     const adminTeamStats = admins.map(admin => {
-        const teamCount = users.filter(u => u.invited_by === admin.username).length;
+        const teamCount = users.filter(u =>
+            (u.invited_by?.toLowerCase() === admin.username?.toLowerCase() && !!u.invited_by) ||
+            u.parent_user_id === admin.id
+        ).length;
         return { ...admin, teamCount };
     });
 
@@ -528,12 +537,47 @@ export const UserManagement: React.FC = () => {
 
         let runningTotal = 0;
         sortedUsers.forEach(u => {
-            const date = new Date(u.created_at).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const date = new Date(u.created_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
             runningTotal++;
             countsByDate[date] = runningTotal;
         });
 
         return Object.entries(countsByDate).map(([name, value]) => ({ name, value }));
+    }, [users]);
+
+    const monthlyStats = React.useMemo(() => {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+        const newThisMonth = users.filter(u => new Date(u.created_at) >= thirtyDaysAgo).length;
+        const newLastMonth = users.filter(u => new Date(u.created_at) >= sixtyDaysAgo && new Date(u.created_at) < thirtyDaysAgo).length;
+
+        const diff = newThisMonth - newLastMonth;
+        const growthPercent = newLastMonth === 0 ? (newThisMonth > 0 ? 100 : 0) : Math.round((diff / newLastMonth) * 100);
+        const avgDaily = Math.round((newThisMonth / 30) * 10) / 10;
+
+        return { newThisMonth, growthPercent, avgDaily, isPositive: diff >= 0 };
+    }, [users]);
+
+    const distributionStats = React.useMemo(() => {
+        const pkgMap: Record<string, number> = {};
+        const srcMap: Record<string, number> = { 'Undangan': 0, 'Mandiri': 0 };
+
+        users.forEach(u => {
+            const pkg = u.subscription_package || 'Free';
+            pkgMap[pkg] = (pkgMap[pkg] || 0) + 1;
+
+            if (u.invited_by) srcMap['Undangan']++;
+            else srcMap['Mandiri']++;
+        });
+
+        const COLORS = ['#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
+        const packageData = Object.entries(pkgMap).map(([name, value], i) => ({ name, value, color: COLORS[i % COLORS.length] }));
+        const sourceData = Object.entries(srcMap).map(([name, value], i) => ({ name, value, color: i === 0 ? '#8B5CF6' : '#10B981' }));
+
+        return { packageData, sourceData };
     }, [users]);
 
     return (
@@ -1281,46 +1325,160 @@ export const UserManagement: React.FC = () => {
                         })()}
                     </Modal>
 
-                    {/* Modal Dash 1: Growth & Top New */}
-                    <Modal isOpen={isGrowthModalOpen} onClose={() => setIsGrowthModalOpen(false)} title="Analisa Pertumbuhan User" maxWidth="max-w-4xl">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-card p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[350px]">
-                                    <h4 className="font-heading font-black text-foreground uppercase italic mb-6">Kumulatif User Baru</h4>
-                                    <ResponsiveContainer width="100%" height="80%" minWidth={1} minHeight={1}>
+                    {/* Modal Dash 1: Growth & Detailed Stats (Bento Redesign) */}
+                    <Modal isOpen={isGrowthModalOpen} onClose={() => setIsGrowthModalOpen(false)} title="Analisa Pertumbuhan User (Bento Insight)" maxWidth="max-w-6xl">
+                        <div className="space-y-6">
+                            {/* KPI Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-muted p-5 rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_var(--shadow-color)]">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">User Baru (30 Hari)</p>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-3xl font-black text-foreground">{monthlyStats.newThisMonth}</h3>
+                                        <div className={`px-2 py-1 rounded-lg text-[10px] font-black ${monthlyStats.isPositive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'} border border-current`}>
+                                            {monthlyStats.isPositive ? '↑' : '↓'} {Math.abs(monthlyStats.growthPercent)}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-muted p-5 rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_var(--shadow-color)]">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Rata-rata / Hari</p>
+                                    <h3 className="text-3xl font-black text-foreground">{monthlyStats.avgDaily}</h3>
+                                    <p className="text-[10px] font-bold text-muted-foreground mt-1">Pendaftaran harian stabil</p>
+                                </div>
+                                <div className="bg-accent text-white p-5 rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_var(--shadow-color)]">
+                                    <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1">Total Audience</p>
+                                    <h3 className="text-3xl font-black">{users.length}</h3>
+                                    <p className="text-[10px] font-bold text-white/50 mt-1">Live Database</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Main Chart Area */}
+                                <div className="lg:col-span-2 bg-card p-6 rounded-2xl border-4 border-slate-900 shadow-hard relative overflow-hidden h-[400px]">
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
+                                        <div>
+                                            <h4 className="font-heading font-black text-foreground uppercase italic leading-none">Tren Pertumbuhan Kumulatif</h4>
+                                            <p className="text-[10px] font-bold text-muted-foreground mt-1">Berdasarkan tanggal pendaftaran real-time</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <span className="px-2 py-1 bg-accent/10 border border-accent/20 rounded text-[8px] font-black text-accent uppercase">Live Data</span>
+                                        </div>
+                                    </div>
+
+                                    <ResponsiveContainer width="100%" height="75%" minWidth={1} minHeight={1}>
                                         <AreaChart data={growthData}>
                                             <defs>
-                                                <linearGradient id="growthGrad" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                                                <linearGradient id="growthGradDetailed" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
-                                            <YAxis stroke="#94a3b8" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                                            <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
+                                            <YAxis stroke="var(--muted-foreground)" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
                                             <ReTooltip
-                                                contentStyle={{ borderRadius: '12px', border: '3px solid #0f172a', fontWeight: 'bold', boxShadow: '4px 4px 0px #0f172a' }}
+                                                contentStyle={{ backgroundColor: 'var(--card)', borderRadius: '12px', border: '3px solid var(--border)', fontWeight: 'bold', boxShadow: '4px 4px 0px var(--shadow-color)', fontSize: '12px' }}
+                                                itemStyle={{ color: 'var(--accent)' }}
                                             />
-                                            <Area type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={4} fillOpacity={1} fill="url(#growthGrad)" />
+                                            <Area type="monotone" dataKey="value" stroke="var(--accent)" strokeWidth={4} fillOpacity={1} fill="url(#growthGradDetailed)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
-                            </div>
-                            <div>
-                                <h4 className="font-heading font-black text-foreground uppercase italic mb-4 flex items-center gap-2">
-                                    <TrendingUp size={18} className="text-accent" /> 5 User Terbaru
-                                </h4>
-                                <div className="space-y-3">
-                                    {newestUsers.map(u => (
-                                        <div key={u.id} className="bg-card p-3 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center gap-3">
-                                            <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
-                                                className="w-10 h-10 rounded-lg border-2 border-slate-900" alt="" />
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-black text-foreground line-clamp-1 uppercase tracking-tight">{u.full_name}</p>
-                                                <p className="text-[10px] font-bold text-mutedForeground">Join: {new Date(u.created_at).toLocaleDateString('id-ID')}</p>
-                                            </div>
+
+                                {/* Recent Users List */}
+                                <div className="bg-card p-6 rounded-2xl border-4 border-slate-900 shadow-hard flex flex-col h-[400px]">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center border-2 border-slate-900 shadow-[2px_2px_0px_var(--shadow-color)]">
+                                            <Users size={16} className="text-white" />
                                         </div>
-                                    ))}
+                                        <h4 className="font-heading font-black text-foreground uppercase italic">User Terbaru</h4>
+                                    </div>
+
+                                    <div className="space-y-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                                        {newestUsers.map(u => (
+                                            <div key={u.id} className="bg-muted/50 p-3 rounded-xl border-2 border-border hover:border-accent transition-colors flex items-center justify-between group">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(u.full_name || 'U')}`}
+                                                        className="w-10 h-10 rounded-lg border-2 border-slate-900" alt="" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs font-black text-foreground line-clamp-1 uppercase tracking-tight">{u.full_name}</p>
+                                                        <p className="text-[10px] font-bold text-muted-foreground">Joined {new Date(u.created_at).toLocaleDateString('id-ID')}</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => { setSelectedUser(u); setIsDetailOpen(true); setIsGrowthModalOpen(false); }}
+                                                    className="w-8 h-8 bg-card border-2 border-border rounded-lg flex items-center justify-center hover:bg-accent hover:text-white hover:border-slate-900 transition-all shadow-hard-mini"
+                                                >
+                                                    <ChevronRight size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button variant="secondary" className="w-full mt-4 h-10 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900">
+                                        Lihat Semua
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Distribution Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Package Distribution */}
+                                <div className="bg-card p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[300px] flex flex-col items-center">
+                                    <div className="w-full flex justify-between items-center mb-4">
+                                        <h4 className="font-heading font-black text-foreground uppercase italic flex items-center gap-2">
+                                            <PieIcon size={18} className="text-purple-500" /> Distribusi Paket
+                                        </h4>
+                                    </div>
+                                    <ResponsiveContainer width="100%" height="80%">
+                                        <PieChart>
+                                            <Pie
+                                                data={distributionStats.packageData}
+                                                cx="50%"
+                                                cy="45%"
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {distributionStats.packageData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" strokeWidth={2} />
+                                                ))}
+                                            </Pie>
+                                            <ReTooltip
+                                                contentStyle={{ backgroundColor: 'var(--card)', borderRadius: '12px', border: '3px solid var(--border)', fontWeight: 'bold' }}
+                                            />
+                                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                {/* Source Distribution */}
+                                <div className="bg-card p-6 rounded-2xl border-4 border-slate-900 shadow-hard h-[300px] flex flex-col items-center">
+                                    <div className="w-full flex justify-between items-center mb-4">
+                                        <h4 className="font-heading font-black text-foreground uppercase italic flex items-center gap-2">
+                                            <Layout size={18} className="text-emerald-500" /> Sumber Pendaftaran
+                                        </h4>
+                                    </div>
+                                    <ResponsiveContainer width="100%" height="80%">
+                                        <PieChart>
+                                            <Pie
+                                                data={distributionStats.sourceData}
+                                                cx="50%"
+                                                cy="45%"
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {distributionStats.sourceData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} stroke="var(--card)" strokeWidth={2} />
+                                                ))}
+                                            </Pie>
+                                            <ReTooltip
+                                                contentStyle={{ backgroundColor: 'var(--card)', borderRadius: '12px', border: '3px solid var(--border)', fontWeight: 'bold' }}
+                                            />
+                                            <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </div>
@@ -1368,9 +1526,9 @@ export const UserManagement: React.FC = () => {
                     </Modal>
 
                     {/* Modal Dash 3: Admin Overview */}
-                    <Modal isOpen={isAdminStatsModalOpen} onClose={() => setIsAdminStatsModalOpen(false)} title="Struktur Admin & Team" maxWidth="max-w-3xl">
+                    <Modal isOpen={isAdminStatsModalOpen} onClose={() => setIsAdminStatsModalOpen(false)} title="Struktur Admin & Team" maxWidth="max-w-7xl">
                         <div className="space-y-4">
-                            <div className="bg-purple-600 p-4 rounded-xl border-4 border-slate-900 shadow-hard text-white flex justify-between items-center mb-6">
+                            <div className="bg-accent p-4 rounded-xl border-4 border-slate-900 shadow-[4px_4px_0px_var(--shadow-color)] text-white flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <ShieldCheck size={32} />
                                     <div>
@@ -1384,49 +1542,73 @@ export const UserManagement: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {adminTeamStats.map(admin => (
-                                    <div key={admin.id} className="bg-card p-4 rounded-2xl border-4 border-slate-900 shadow-hard relative group overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-20 h-20 bg-muted rounded-full -mr-10 -mt-10 group-hover:bg-purple-50 transition-colors"></div>
-                                        <div className="relative z-10">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <img src={admin.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(admin.full_name || 'U')}`}
-                                                    className="w-12 h-12 rounded-xl border-2 border-slate-900" alt="" />
-                                                <div>
-                                                    <h5 className="font-black text-foreground uppercase italic tracking-tight">{admin.full_name}</h5>
-                                                    <span className="text-[10px] px-2 py-0.5 bg-slate-100 rounded-full font-bold text-slate-500 uppercase">{admin.subscription_package || 'Free'}</span>
+                            {/* Filter Controls */}
+                            <div className="flex flex-wrap gap-3 mb-6 bg-muted p-4 rounded-2xl border-2 border-border">
+                                <button
+                                    onClick={() => setFilterHaveTeam(false)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border-2 transition-all ${!filterHaveTeam ? 'bg-accent text-white border-slate-900 shadow-[2px_2px_0px_var(--shadow-color)]' : 'bg-card text-muted-foreground border-border hover:border-slate-400'}`}
+                                >
+                                    Semua Admin
+                                </button>
+                                <button
+                                    onClick={() => setFilterHaveTeam(true)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border-2 transition-all ${filterHaveTeam ? 'bg-accent text-white border-slate-900 shadow-[2px_2px_0px_var(--shadow-color)]' : 'bg-card text-muted-foreground border-border hover:border-slate-400'}`}
+                                >
+                                    Punya Team ({adminTeamStats.filter(s => s.teamCount > 0).length})
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {adminTeamStats
+                                    .filter(admin => !filterHaveTeam || admin.teamCount > 0)
+                                    .map(admin => (
+                                        <div key={admin.id} className="bg-card p-4 rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_var(--shadow-color)] relative group overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-20 h-20 bg-accent/5 rounded-full -mr-10 -mt-10 group-hover:bg-accent/10 transition-colors"></div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <img src={admin.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(admin.full_name || 'U')}`}
+                                                        className="w-12 h-12 rounded-xl border-2 border-slate-900" alt="" />
+                                                    <div className="min-w-0">
+                                                        <h5 className="font-black text-foreground uppercase italic tracking-tight truncate">{admin.full_name}</h5>
+                                                        <span className="text-[10px] px-2 py-0.5 bg-muted rounded-full font-bold text-muted-foreground uppercase">{admin.subscription_package || 'Free'}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div
-                                                onClick={() => { setViewingAdminTeam(admin); setIsAdminTeamModalOpen(true); }}
-                                                className="flex items-center justify-between p-3 bg-muted rounded-xl border-2 border-slate-900 cursor-pointer hover:bg-purple-50 transition-colors group/team"
-                                            >
-                                                <div>
-                                                    <p className="text-[10px] font-black text-mutedForeground uppercase leading-none mb-1">Team Members</p>
-                                                    <p className="text-2xl font-black text-foreground">{admin.teamCount}</p>
-                                                </div>
-                                                <div className="w-10 h-10 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center group-hover/team:scale-110 transition-transform">
-                                                    <UserCheck className="text-emerald-500" size={20} />
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 mt-3">
-                                                <Button
+                                                <div
                                                     onClick={() => { setViewingAdminTeam(admin); setIsAdminTeamModalOpen(true); }}
-                                                    variant="secondary" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 shadow-hard-mini"
+                                                    className="flex items-center justify-between p-3 bg-muted rounded-xl border-2 border-slate-900 cursor-pointer hover:bg-accent/10 transition-colors group/team"
                                                 >
-                                                    List Team
-                                                </Button>
-                                                <Button
-                                                    onClick={() => { setSelectedUser(admin); setIsDetailOpen(true); setIsAdminStatsModalOpen(false); }}
-                                                    variant="secondary" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 shadow-hard-mini"
-                                                >
-                                                    Full Info
-                                                </Button>
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-muted-foreground uppercase leading-none mb-1">Team Members</p>
+                                                        <p className="text-2xl font-black text-foreground">{admin.teamCount}</p>
+                                                    </div>
+                                                    <div className="w-10 h-10 bg-card rounded-lg border-2 border-slate-900 flex items-center justify-center group-hover/team:scale-110 transition-transform">
+                                                        <UserCheck className="text-emerald-500" size={20} />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 mt-3">
+                                                    <Button
+                                                        onClick={() => { setViewingAdminTeam(admin); setIsAdminTeamModalOpen(true); }}
+                                                        variant="secondary" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 shadow-[2px_2px_0px_var(--shadow-color)]"
+                                                    >
+                                                        List Team
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => { setSelectedUser(admin); setIsDetailOpen(true); setIsAdminStatsModalOpen(false); }}
+                                                        variant="secondary" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest border-2 border-slate-900 shadow-[2px_2px_0px_var(--shadow-color)]"
+                                                    >
+                                                        Full Info
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
                             </div>
+                            {adminTeamStats.filter(admin => !filterHaveTeam || admin.teamCount > 0).length === 0 && (
+                                <div className="text-center py-12 bg-muted rounded-2xl border-2 border-dashed border-border mt-4">
+                                    <Users size={48} className="mx-auto text-muted-foreground/20 mb-3" />
+                                    <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">Tidak ada admin yang sesuai kriteria.</p>
+                                </div>
+                            )}
                         </div>
                     </Modal>
 
@@ -1451,51 +1633,62 @@ export const UserManagement: React.FC = () => {
                             </div>
 
                             <div className="space-y-3">
-                                <h5 className="text-[10px] font-black text-mutedForeground uppercase tracking-[0.2em] mb-2">Member Terdaftar ({users.filter(u => u.invited_by === viewingAdminTeam?.username).length})</h5>
-                                {users.filter(u => u.invited_by === viewingAdminTeam?.username).length === 0 ? (
-                                    <div className="text-center py-12 bg-muted rounded-2xl border-2 border-dashed border-slate-200">
-                                        <Users size={32} className="mx-auto text-slate-300 mb-2" />
-                                        <p className="font-bold text-mutedForeground">Belum ada user yang diundang.</p>
-                                    </div>
-                                ) : (
-                                    users.filter(u => u.invited_by === viewingAdminTeam?.username).map(member => {
-                                        const status = getSubscriptionStatus(member);
-                                        return (
-                                            <div
-                                                key={member.id}
-                                                className="bg-card p-4 rounded-xl border-2 border-slate-900 shadow-hard-mini flex items-center justify-between group"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name || 'M')}`}
-                                                        className="w-10 h-10 rounded-lg border-2 border-slate-900"
-                                                        alt=""
-                                                    />
-                                                    <div>
-                                                        <p className="font-black text-foreground text-sm leading-none mb-1">{member.full_name}</p>
-                                                        <p className="text-[10px] font-bold text-mutedForeground">@{member.username} &bull; Joined {new Date(member.created_at).toLocaleDateString('id-ID')}</p>
-                                                    </div>
+                                {(() => {
+                                    const adminTeamMembers = users.filter(u =>
+                                        (u.invited_by?.toLowerCase() === viewingAdminTeam?.username?.toLowerCase() && !!u.invited_by) ||
+                                        u.parent_user_id === viewingAdminTeam?.id
+                                    );
+
+                                    return (
+                                        <>
+                                            <h5 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2">Member Terdaftar ({adminTeamMembers.length})</h5>
+                                            {adminTeamMembers.length === 0 ? (
+                                                <div className="text-center py-12 bg-muted rounded-2xl border-2 border-dashed border-border">
+                                                    <Users size={32} className="mx-auto text-muted-foreground/30 mb-2" />
+                                                    <p className="font-bold text-muted-foreground">Belum ada user yang diundang.</p>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${status.color}`}>
-                                                        {status.label}
-                                                    </span>
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedUser(member);
-                                                            setIsDetailOpen(true);
-                                                            setIsAdminTeamModalOpen(false);
-                                                            setIsAdminStatsModalOpen(false);
-                                                        }}
-                                                        className="text-[9px] font-bold text-accent hover:underline"
-                                                    >
-                                                        Lihat Detail
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
+                                            ) : (
+                                                adminTeamMembers.map(member => {
+                                                    const status = getSubscriptionStatus(member);
+                                                    return (
+                                                        <div
+                                                            key={member.id}
+                                                            className="bg-card p-4 rounded-xl border-2 border-border shadow-hard-mini flex items-center justify-between group"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <img
+                                                                    src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name || 'M')}`}
+                                                                    className="w-10 h-10 rounded-lg border-2 border-border"
+                                                                    alt=""
+                                                                />
+                                                                <div>
+                                                                    <p className="font-black text-foreground text-sm leading-none mb-1">{member.full_name}</p>
+                                                                    <p className="text-[10px] font-bold text-muted-foreground">@{member.username} &bull; Joined {new Date(member.created_at).toLocaleDateString('id-ID')}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col items-end gap-1">
+                                                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${status.color}`}>
+                                                                    {status.label}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedUser(member);
+                                                                        setIsDetailOpen(true);
+                                                                        setIsAdminTeamModalOpen(false);
+                                                                        setIsAdminStatsModalOpen(false);
+                                                                    }}
+                                                                    className="text-[9px] font-bold text-accent hover:underline"
+                                                                >
+                                                                    Lihat Detail
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
 
                             <Button
@@ -1504,7 +1697,7 @@ export const UserManagement: React.FC = () => {
                             >
                                 Tutup
                             </Button>
-                        </div>
+                        </div >
                     </Modal>
 
                     {/* Modal Dash 4: Inactive Accounts */}
