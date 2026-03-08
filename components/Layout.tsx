@@ -1332,7 +1332,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
-            { id: 'flow', path: '/flow', label: 'Aruneeka Content Planner Pro', icon: GitBranch },
+            { id: 'flow', path: '/flow', label: 'Flow Management', icon: GitBranch },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },

@@ -2585,12 +2585,12 @@ export const ContentPlanDetail: React.FC = () => {
                                 {/* SIDEBAR (RIGHT) */}
                                 <div className="w-full lg:w-80 space-y-6 order-1 lg:order-2 shrink-0">
                                     {/* 1. Status Indicator */}
-                                    <div className="bg-foreground text-background p-6 rounded-[2.5rem] border-[3.5px] border-foreground shadow-hard space-y-4">
+                                    <div className="bg-foreground text-background dark:bg-slate-950/40 dark:text-foreground p-6 rounded-[2.5rem] border-[3.5px] border-foreground dark:border-border shadow-hard space-y-4">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[10px] font-black opacity-60">Status Konten</span>
-                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse border-[2px] border-background" />
+                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse border-[2px] border-background dark:border-slate-800" />
                                         </div>
-                                        <div className="px-5 py-3 rounded-2xl border-[3px] border-background shadow-hard-mini bg-background text-foreground text-xs font-black flex items-center justify-center gap-3">
+                                        <div className="px-5 py-3 rounded-2xl border-[3px] border-background dark:border-border shadow-hard-mini bg-background dark:bg-slate-900 text-foreground text-xs font-black flex items-center justify-center gap-3">
                                             {formatStatus(selectedTask.status)}
                                         </div>
                                         {selectedTask.approval && (
@@ -2773,7 +2773,7 @@ export const ContentPlanDetail: React.FC = () => {
                     <Modal
                         isOpen={isResultModalOpen}
                         onClose={() => setIsResultModalOpen(false)}
-                        title={<div className="flex items-center gap-2"><div className="p-1 bg-emerald-500 rounded"><CheckCircle size={18} className="text-white" /></div><span className="text-emerald-950">Upload Hasil Konten</span></div>}
+                        title={<div className="flex items-center gap-2"><div className="p-1.5 bg-emerald-500 rounded-lg shadow-hard-mini"><CheckCircle size={18} className="text-white" /></div><span className="text-foreground">Upload Hasil Konten</span></div>}
                         maxWidth="max-w-[95vw] md:max-w-[48vw]"
                         duration={800}
                         zIndex={10000}

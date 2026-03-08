@@ -473,7 +473,7 @@ export const ContentPlan: React.FC = () => {
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => setIsJoinModalOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-amber-400 text-foreground rounded-xl text-[10px] uppercase font-black tracking-widest border-[3px] border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
+                            className="flex items-center gap-1.5 px-3 py-2 bg-amber-400 dark:bg-blue-600 text-foreground dark:text-white rounded-xl text-[10px] uppercase font-black tracking-widest border-[3px] border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
                             <Users size={14} strokeWidth={3} /> Gabung
                         </button>
                         {isAdminOrOwner && (
@@ -508,8 +508,8 @@ export const ContentPlan: React.FC = () => {
                             <button key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)}
                                 className="w-full bg-card border-[3px] border-slate-900 rounded-2xl p-4 flex flex-col gap-3 text-left shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 transition-all active:translate-y-0 active:shadow-[2px_2px_0px_#0f172a] group">
                                 <div className="flex gap-3 items-center w-full">
-                                    {/* Logo */}
-                                    <div className={`w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] bg-card ws-logo-box`}>
+                                    {/* Logo with Shape Animation */}
+                                    <div className={`w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] bg-card dark:bg-slate-800/50 backdrop-blur-sm transition-all duration-500 group-hover:rounded-full group-hover:scale-105 group-hover:border-accent ws-logo-box relative z-10`}>
                                         {ws.logoUrl ? (
                                             <img src={ws.logoUrl} alt="" className="w-full h-full object-contain p-1" />
                                         ) : (
@@ -598,7 +598,7 @@ export const ContentPlan: React.FC = () => {
 
                         <button
                             onClick={() => setIsJoinModalOpen(true)}
-                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] font-black text-base transition-all hover:-translate-y-2 hover:shadow-hard active:translate-y-0 active:shadow-none bg-amber-400 text-foreground border-[3.5px] border-slate-900 shadow-hard-mini"
+                            className="flex items-center gap-3 px-8 py-4 rounded-[1.5rem] font-black text-base transition-all hover:-translate-y-2 hover:shadow-hard active:translate-y-0 active:shadow-none bg-amber-400 dark:bg-blue-600 text-foreground dark:text-white border-[3.5px] border-slate-900 shadow-hard-mini"
                         >
                             <Users size={22} strokeWidth={3} /> <span>Gabung</span>
                         </button>
@@ -626,12 +626,18 @@ export const ContentPlan: React.FC = () => {
                         {workspaces.map((ws) => (
                             <div
                                 key={ws.id}
-                                className={`group relative bg-card rounded-[2.5rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[10px_10px_0px_#0f172a] transition-all p-6 flex flex-col cursor-pointer overflow-hidden animate-in fade-in zoom-in-95 duration-500 h-full`}
+                                className={`group relative bg-card rounded-[2.5rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[14px_14px_0px_rgba(139,92,246,0.25)] hover:border-accent hover:-translate-y-3 transition-all duration-300 p-6 flex flex-col cursor-pointer overflow-hidden animate-in fade-in zoom-in-95 duration-500 h-full`}
                                 onClick={() => navigate(`/plan/${ws.id}`)}
                             >
+                                {/* Moving Ornaments */}
+                                <div className="absolute inset-0 bg-[radial-gradient(var(--dot-color)_1.5px,transparent_1.5px)] [background-size:16px_16px] opacity-10 group-hover:opacity-30 group-hover:[background-position:10px_10px] transition-all duration-700 pointer-events-none" />
+                                <div className="absolute -bottom-8 -right-8 p-4 opacity-[0.03] dark:opacity-[0.06] group-hover:opacity-10 group-hover:scale-150 group-hover:-rotate-12 transition-all duration-1000 pointer-events-none select-none">
+                                    <Layers size={180} strokeWidth={0.5} className="text-accent" />
+                                </div>
+
                                 {/* Header: Logo, Name & Menu */}
                                 <div className="flex items-center gap-4 mb-5 relative z-10 w-full">
-                                    <div className={`w-14 h-14 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center shadow-hard-mini transition-transform group-hover:rotate-6 duration-300 overflow-hidden bg-card shrink-0 ws-logo-box`}>
+                                    <div className={`w-14 h-14 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center shadow-hard-mini transition-all duration-500 group-hover:rounded-full group-hover:scale-110 group-hover:rotate-12 group-hover:border-accent overflow-hidden bg-card/60 dark:bg-slate-800/40 backdrop-blur-md shrink-0 ws-logo-box relative z-20`}>
                                         {ws.logoUrl ? (
                                             <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-contain p-1.5" />
                                         ) : (
@@ -965,7 +971,7 @@ export const ContentPlan: React.FC = () => {
                     title="Gabung Workspace"
                 >
                     <form onSubmit={handleJoinWorkspace} className="space-y-5">
-                        <div className="p-4 bg-amber-50 rounded-xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] text-sm text-foreground font-bold mb-4">
+                        <div className="p-4 bg-amber-50 dark:bg-blue-900/20 rounded-xl border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] text-sm text-foreground font-bold mb-4">
                             Masukkan kode undangan yang diberikan oleh pemilik workspace untuk bergabung. Anda akan otomatis ditambahkan sebagai member.
                         </div>
                         <Input
@@ -981,7 +987,7 @@ export const ContentPlan: React.FC = () => {
                             <Button type="button" variant="secondary" onClick={() => setIsJoinModalOpen(false)} className="border-[3px] border-slate-900 font-black uppercase tracking-widest hover:-translate-y-1 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] transition-all">
                                 Batal
                             </Button>
-                            <Button type="submit" icon={<Users size={18} strokeWidth={3} />} className="bg-amber-400 text-foreground hover:bg-amber-500 border-[3px] border-slate-900 font-black uppercase tracking-widest shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                            <Button type="submit" icon={<Users size={18} strokeWidth={3} />} className="bg-amber-400 dark:bg-blue-600 text-foreground dark:text-white hover:bg-amber-500 dark:hover:bg-blue-700 border-[3px] border-slate-900 font-black uppercase tracking-widest shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
                                 Gabung Sekarang
                             </Button>
                         </div>

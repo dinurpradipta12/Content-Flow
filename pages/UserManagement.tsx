@@ -1326,7 +1326,7 @@ export const UserManagement: React.FC = () => {
                     </Modal>
 
                     {/* Modal Dash 1: Growth & Detailed Stats (Bento Redesign) */}
-                    <Modal isOpen={isGrowthModalOpen} onClose={() => setIsGrowthModalOpen(false)} title="Analisa Pertumbuhan User (Bento Insight)" maxWidth="max-w-6xl">
+                    <Modal isOpen={isGrowthModalOpen} onClose={() => setIsGrowthModalOpen(false)} title="Analisa Pertumbuhan User" maxWidth="max-w-6xl">
                         <div className="space-y-6">
                             {/* KPI Row */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
