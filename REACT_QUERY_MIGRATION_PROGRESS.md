@@ -50,7 +50,7 @@ Sudah berhasil migrasi 3 pages utama dari manual data fetching ke React Query au
 
 ---
 
-### 3. ContentFlow.tsx
+### 3. Aruneeka (formerly ContentFlow)
 **Status**: ✅ COMPLETED & TESTED
 
 **Changes**:
@@ -101,7 +101,7 @@ Sudah berhasil migrasi 3 pages utama dari manual data fetching ke React Query au
 1. **useWorkspaces(userId)** 
    - Cache: 5 minutes
    - Returns: Workspace[] dengan all columns
-   - Used by: Dashboard, ContentPlan, ContentFlow
+   - Used by: Dashboard, ContentPlan, Aruneeka
 
 2. **useUserPreferences(userId)**
    - Cache: 5 minutes
@@ -121,7 +121,7 @@ Sudah berhasil migrasi 3 pages utama dari manual data fetching ke React Query au
 5. **useContentItems(workspaceIds)** ⭐ NEW
    - Cache: 2 minutes
    - Returns: Content items untuk flow view
-   - Used by: ContentFlow
+   - Used by: Aruneeka
 
 ---
 

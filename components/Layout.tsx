@@ -409,7 +409,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const navigate = useNavigate();
-    const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>({ id: '1', name: 'Arunika Personal', role: 'Owner' });
+    const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>({ id: '1', name: 'Aruneeka Personal', role: 'Owner' });
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const location = useLocation();
@@ -498,7 +498,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // Branding State
     const [branding, setBranding] = useState({
-        appName: localStorage.getItem('app_name') || 'Aruneeka Content Planner Pro',
+        appName: 'Aruneeka Content Planner Pro',
         appLogo: localStorage.getItem('app_logo') || '',
         appLogoLight: localStorage.getItem('app_logo_light') || '',
         appFavicon: localStorage.getItem('app_favicon') || '',
@@ -805,8 +805,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             // Create new manifest with icons
             const manifest = {
-                name: config?.app_name || 'Aruneeka',
-                short_name: config?.app_name || 'Aruneeka',
+                name: 'Aruneeka Content Planner Pro',
+                short_name: 'Aruneeka',
                 icons: [
                     ...(icon192 ? [{
                         src: icon192,
@@ -869,13 +869,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     useEffect(() => {
         if (config) {
             setBranding({
-                appName: config.app_name || 'Aruneeka Content Planner Pro',
+                appName: (config.app_name && config.app_name.includes('ContentFlow')) ? 'Aruneeka Content Planner Pro' : (config.app_name || 'Aruneeka Content Planner Pro'),
                 appLogo: config.app_logo || '',
                 appLogoLight: config.app_logo_light || '',
                 appFavicon: config.app_favicon || ''
             });
             // Update cache for next refresh - only store small text values, not long URLs
-            localStorage.setItem('app_name', config.app_name);
+            const cleanName = (config.app_name && config.app_name.includes('ContentFlow')) ? 'Aruneeka Content Planner Pro' : (config.app_name || 'Aruneeka Content Planner Pro');
+            localStorage.setItem('app_name', cleanName);
             // Don't store long image URLs in localStorage to avoid quota exceeded
             // These are fetched fresh from config which is already cached in memory
 
@@ -1331,7 +1332,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         'Work Station': [
             { id: 'dashboard', path: '/', label: 'Dashboard', icon: LayoutDashboard },
             { id: 'plan', path: '/plan', label: 'Content Plan', icon: Layers },
-            { id: 'flow', path: '/flow', label: 'Content Flow', icon: GitBranch },
+            { id: 'flow', path: '/flow', label: 'Aruneeka Content Planner Pro', icon: GitBranch },
             { id: 'calendar', path: '/calendar', label: 'Content Calendar', icon: CalendarDays },
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },
@@ -1936,13 +1937,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <div className="bg-slate-50 border-2 border-slate-200 rounded-xl p-5 space-y-3">
                             <div>
                                 <h4 className="font-black text-sm text-slate-800">Instruksi Pembayaran</h4>
-                                <p className="text-xs font-bold text-slate-500">Kirim pembayaran sesuai paket The Content Flow Anda.</p>
+                                <p className="text-xs font-bold text-slate-500">Kirim pembayaran sesuai paket Aruneeka Content Planner Pro Anda.</p>
                             </div>
                             <div className="bg-white border-2 border-slate-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{config?.payment_config?.bankName || 'Bank BCA'}</p>
                                 <p className="text-2xl font-black text-slate-800 font-mono tracking-wider mt-1 mb-1">{config?.payment_config?.accountNumber || '291 102 3456'}</p>
-                                <p className="text-xs font-bold text-slate-500">A.N. {config?.payment_config?.accountName || 'PT Arunika Media Integra'}</p>
+                                <p className="text-xs font-bold text-slate-500">A.N. {config?.payment_config?.accountName || 'PT Aruneeka Media Integra'}</p>
                             </div>
                         </div>
 

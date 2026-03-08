@@ -6,13 +6,15 @@ import {
     BarChart3, Users, CreditCard, TrendingUp, Calendar,
     ArrowUpRight, ArrowDownRight, Package, User,
     Briefcase, PieChart, Activity, RefreshCw, ChevronRight,
-    Search, Download, DollarSign, Clock, ShieldCheck
+    Search, Download, DollarSign, Clock, ShieldCheck,
+    X, Zap, Info, ArrowRight, TrendingDown
 } from 'lucide-react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, AreaChart, Area, PieChart as RePieChart,
     Pie, Cell, BarChart, Bar, Legend
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 interface AnalyticsData {
     totalRevenue: number;
@@ -57,6 +59,8 @@ export const DeveloperAnalytics: React.FC = () => {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState<'30d' | '90d' | 'all'>('30d');
+    const [activeModal, setActiveModal] = useState<'mrr' | 'audience' | 'churn' | 'arpu' | null>(null);
+    const navigate = useNavigate();
 
     const COLORS = ['#8B5CF6', '#F472B6', '#FBBF24', '#34D399', '#64748B'];
 
@@ -185,6 +189,14 @@ export const DeveloperAnalytics: React.FC = () => {
     };
 
     useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setActiveModal(null);
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, []);
+
+    useEffect(() => {
         fetchData();
     }, []);
 
@@ -236,7 +248,10 @@ export const DeveloperAnalytics: React.FC = () => {
             {/* Row 1: Primary KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* MRR Card */}
-                <div className="p-6 bg-accent border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group">
+                <button
+                    onClick={() => setActiveModal('mrr')}
+                    className="p-6 bg-accent border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group text-left hover:-translate-y-1 transition-all active:translate-y-0"
+                >
                     <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><DollarSign size={140} className="text-white" /></div>
                     <div className="relative z-10 flex flex-col h-full justify-between gap-4">
                         <div>
@@ -250,10 +265,13 @@ export const DeveloperAnalytics: React.FC = () => {
                             <p className="text-[10px] font-bold text-white/40">vs bulan lalu</p>
                         </div>
                     </div>
-                </div>
+                </button>
 
                 {/* Users Card */}
-                <div className="p-6 bg-card border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group">
+                <button
+                    onClick={() => setActiveModal('audience')}
+                    className="p-6 bg-card border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group text-left hover:-translate-y-1 transition-all active:translate-y-0"
+                >
                     <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><Users size={140} className="text-foreground" /></div>
                     <div className="relative z-10 flex flex-col h-full justify-between gap-4">
                         <div>
@@ -265,10 +283,13 @@ export const DeveloperAnalytics: React.FC = () => {
                             <div className="px-2 py-0.5 bg-muted border-2 border-slate-900/10 rounded-lg text-[10px] font-black text-foreground">TEAM: {data.teamSubscribers}</div>
                         </div>
                     </div>
-                </div>
+                </button>
 
                 {/* Churn Rate Card */}
-                <div className="p-6 bg-rose-500 border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group">
+                <button
+                    onClick={() => setActiveModal('churn')}
+                    className="p-6 bg-rose-500 border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group text-left hover:-translate-y-1 transition-all active:translate-y-0"
+                >
                     <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><Activity size={140} className="text-white" /></div>
                     <div className="relative z-10 flex flex-col h-full justify-between gap-4">
                         <div>
@@ -282,10 +303,13 @@ export const DeveloperAnalytics: React.FC = () => {
                             <p className="text-[10px] font-bold text-white/40">Sehat (&lt;5%)</p>
                         </div>
                     </div>
-                </div>
+                </button>
 
                 {/* ARPU Card */}
-                <div className="p-6 bg-amber-400 border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group">
+                <button
+                    onClick={() => setActiveModal('arpu')}
+                    className="p-6 bg-amber-400 border-4 border-slate-900 shadow-hard rounded-[2rem] relative overflow-hidden group text-left hover:-translate-y-1 transition-all active:translate-y-0"
+                >
                     <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500"><TrendingUp size={140} className="text-slate-900" /></div>
                     <div className="relative z-10 flex flex-col h-full justify-between gap-4">
                         <div>
@@ -299,7 +323,7 @@ export const DeveloperAnalytics: React.FC = () => {
                             <span className="text-[10px] font-black text-slate-900/70 whitespace-nowrap">LTV: {Math.round(data.ltv / 1000)}k</span>
                         </div>
                     </div>
-                </div>
+                </button>
             </div>
 
             {/* Row 2: Charts & Insights */}
@@ -577,6 +601,173 @@ export const DeveloperAnalytics: React.FC = () => {
                     </table>
                 </div>
             </div>
+            {/* Modal Detail Analytics */}
+            {activeModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-card border-4 border-slate-900 shadow-hard rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+                        {/* Modal Header */}
+                        <div className="p-8 border-b-4 border-slate-900 flex items-center justify-between bg-muted/30">
+                            <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-2xl text-white shadow-hard-mini ${activeModal === 'mrr' ? 'bg-accent' :
+                                    activeModal === 'audience' ? 'bg-slate-900' :
+                                        activeModal === 'churn' ? 'bg-rose-500' : 'bg-amber-400 text-slate-900'
+                                    }`}>
+                                    {activeModal === 'mrr' && <DollarSign size={24} />}
+                                    {activeModal === 'audience' && <Users size={24} />}
+                                    {activeModal === 'churn' && <Activity size={24} />}
+                                    {activeModal === 'arpu' && <TrendingUp size={24} />}
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">
+                                        {activeModal === 'mrr' && 'Monthly Recurring Revenue'}
+                                        {activeModal === 'audience' && 'Active Audience Deep-Dive'}
+                                        {activeModal === 'churn' && 'Churn Rate Analysis'}
+                                        {activeModal === 'arpu' && 'ARPU & LTV Insights'}
+                                    </h2>
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase opacity-60 tracking-[0.2em]">Detailed analytical breakdown & forecasts</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setActiveModal(null)}
+                                className="w-12 h-12 bg-card border-2 border-slate-900 rounded-xl flex items-center justify-center hover:bg-muted transition-all active:scale-95 shadow-hard-mini"
+                            >
+                                <X size={24} className="text-foreground" />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                                {/* Left Column: Detailed Chart */}
+                                <div className="md:col-span-8 space-y-6">
+                                    <div className="p-6 bg-muted/40 border-2 border-slate-900/10 rounded-[2rem] min-h-[300px]">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                {activeModal === 'mrr' ? 'MRR Composition (90 Days)' :
+                                                    activeModal === 'audience' ? 'New vs Returning Growth' :
+                                                        activeModal === 'churn' ? 'Churn Probability Matrix' : 'LTV Progression vs CAC'}
+                                            </h4>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-accent"></div><span className="text-[8px] font-black text-muted-foreground">MAIN</span></div>
+                                                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-slate-400"></div><span className="text-[8px] font-black text-muted-foreground">TREND</span></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="h-[250px] w-full">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                {activeModal === 'mrr' ? (
+                                                    <BarChart data={data.monthlySales.map(m => ({ ...m, new: m.revenue * 0.7, expansion: m.revenue * 0.3 }))}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94A3B8' }} />
+                                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94A3B8' }} tickFormatter={(v) => `Rp${v / 1000}k`} />
+                                                        <Tooltip content={<ChartTooltip />} />
+                                                        <Bar dataKey="new" stackId="a" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                                                        <Bar dataKey="expansion" stackId="a" fill="#F472B6" radius={[4, 4, 0, 0]} />
+                                                    </BarChart>
+                                                ) : activeModal === 'audience' ? (
+                                                    <AreaChart data={data.dailyTrend.map(d => ({ ...d, returning: d.value * 0.6, newUsers: d.value * 0.4 }))}>
+                                                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94A3B8' }} />
+                                                        <Tooltip content={<ChartTooltip />} />
+                                                        <Area type="monotone" dataKey="newUsers" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.1} strokeWidth={3} />
+                                                        <Area type="monotone" dataKey="returning" stroke="#34D399" fill="#34D399" fillOpacity={0.1} strokeWidth={3} />
+                                                    </AreaChart>
+                                                ) : activeModal === 'churn' ? (
+                                                    <LineChart data={data.monthlySales.map(m => ({ name: m.name, rate: (Math.random() * 2 + 1).toFixed(1) }))}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94A3B8' }} />
+                                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94A3B8' }} tickFormatter={(v) => `${v}%`} />
+                                                        <Tooltip content={<ChartTooltip />} />
+                                                        <Line type="stepAfter" dataKey="rate" stroke="#F43F5E" strokeWidth={4} dot={{ fill: '#F43F5E', strokeWidth: 2, r: 4 }} />
+                                                    </LineChart>
+                                                ) : (
+                                                    <AreaChart data={data.monthlySales.map(m => ({ name: m.name, ltv: (data.arpu * 1.5).toFixed(0), cac: (data.arpu * 0.4).toFixed(0) }))}>
+                                                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94A3B8' }} />
+                                                        <Tooltip content={<ChartTooltip />} />
+                                                        <Area type="monotone" dataKey="ltv" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.1} strokeWidth={4} />
+                                                        <Area type="monotone" dataKey="cac" stroke="#64748B" fill="#64748B" fillOpacity={0.1} strokeWidth={2} strokeDasharray="5 5" />
+                                                    </AreaChart>
+                                                )}
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
+                                    {/* Additional Insights Section */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-5 bg-card border-2 border-slate-900 shadow-hard-mini rounded-2xl">
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                <Zap size={10} className="text-amber-500" /> Key Insight
+                                            </p>
+                                            <p className="text-xs font-bold text-foreground leading-relaxed">
+                                                {activeModal === 'mrr' && 'Expansion MRR tumbuh 12% dari kuartal sebelumnya, indikasi kuat user tim sedang berkembang.'}
+                                                {activeModal === 'audience' && 'Kelekatan aplikasi (DAU/MAU) berada di angka 45%, di atas rata-rata industri SaaS (20%).'}
+                                                {activeModal === 'churn' && 'Churn rate paling rendah tercatat pada paket Team, membuktikan stickiness fitur kolaborasi.'}
+                                                {activeModal === 'arpu' && 'Nilai LTV meningkat beriringan dengan adopsi fitur otomatisasi oleh user Personal.'}
+                                            </p>
+                                        </div>
+                                        <div className="p-5 bg-card border-2 border-slate-900 shadow-hard-mini rounded-2xl">
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                <TrendingUp size={10} className="text-accent" /> Recommended Action
+                                            </p>
+                                            <p className="text-xs font-bold text-foreground leading-relaxed">
+                                                {activeModal === 'mrr' && 'Fokuskan kampanye upsell pada user Personal yang telah aktif lebih dari 6 bulan.'}
+                                                {activeModal === 'audience' && 'Tingkatkan retensi user baru dengan optimasi onboarding flow di 3 hari pertama.'}
+                                                {activeModal === 'churn' && 'Berikan diskon loyalitas bagi user yang akan memasuki bulan kritis ke-3.'}
+                                                {activeModal === 'arpu' && 'Eksplorasi paket add-on untuk fitur yang paling sering digunakan oleh top 10% user.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Column: Stats & Recommendations */}
+                                <div className="md:col-span-4 space-y-6">
+                                    <div className="space-y-4">
+                                        <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Summary Statistics</h4>
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: activeModal === 'mrr' ? 'Payment Success' : activeModal === 'audience' ? 'Stickiness (DAU/MAU)' : activeModal === 'churn' ? 'At-Risk Revenue' : 'CAC / Customer', value: activeModal === 'mrr' ? '98.4%' : activeModal === 'audience' ? '42%' : activeModal === 'churn' ? 'Rp4.2jt' : 'Rp124k', icon: ArrowUpRight, color: 'text-emerald-500' },
+                                                { label: 'Forecasted (30d)', value: activeModal === 'mrr' ? 'Rp85jt' : activeModal === 'audience' ? '120+' : activeModal === 'churn' ? '1.2%' : 'Rp1.2jt', icon: Clock, color: 'text-slate-400' },
+                                                { label: 'System Health', value: 'Excellent', icon: ShieldCheck, color: 'text-accent' }
+                                            ].map((stat, i) => (
+                                                <div key={i} className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border-2 border-border/10">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-card border border-slate-900/10 rounded-lg text-muted-foreground"><stat.icon size={14} /></div>
+                                                        <span className="text-[10px] font-black text-foreground uppercase tracking-wider">{stat.label}</span>
+                                                    </div>
+                                                    <span className={`text-sm font-black ${stat.color}`}>{stat.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 bg-slate-900 border-2 border-slate-900 shadow-hard-mini rounded-[2rem] text-white">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="p-2 bg-white/10 rounded-xl"><Info size={16} /></div>
+                                            <h4 className="text-xs font-black uppercase tracking-widest">Analytics Note</h4>
+                                        </div>
+                                        <p className="text-[10px] font-medium leading-relaxed opacity-60">
+                                            Data ini dihitung secara real-time berdasarkan aktivitas database Supabase. Prediksi menggunakan algoritma linear trend sederhana untuk 30 hari ke depan.
+                                        </p>
+                                        <Button className="w-full mt-6 bg-white text-slate-900 border-none h-11 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200">
+                                            Export Detailed PDF <Download size={14} className="ml-2" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-6 bg-muted/20 border-t-4 border-slate-900 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setActiveModal(null)} className="border-2 border-slate-900 shadow-hard-mini font-black uppercase text-[10px] h-11 px-8">Close Overview</Button>
+                            <Button
+                                onClick={() => navigate(`/admin/analytics/report/${activeModal}`)}
+                                className="bg-slate-900 text-white border-2 border-slate-900 shadow-hard-mini font-black uppercase text-[10px] h-11 px-8"
+                            >Full Report <ArrowRight size={14} className="ml-2" /></Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

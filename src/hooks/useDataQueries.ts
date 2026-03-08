@@ -186,7 +186,7 @@ export const useTeamKpis = (memberId: string | null) => {
 
 /**
  * Hook untuk fetch content items dengan workspace enrichment
- * Digunakan di ContentFlow untuk menampilkan content pipeline
+ * Digunakan di Aruneeka untuk menampilkan content pipeline
  */
 export const useContentItems = (workspaceIds: string[] | undefined) => {
   return useQuery({

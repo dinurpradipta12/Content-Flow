@@ -429,7 +429,7 @@ export const ContentFlow: React.FC = () => {
 
     if (isFree) {
         return <PremiumLockScreen
-            title="Content Flow Terkunci"
+            title="Aruneeka Content Planner Pro Terkunci"
             description="Pantau dan kelola jadwal konten dari seluruh workspace Anda dalam satu tampilan kanban interaktif. Upgrade untuk membuka fitur pro ini."
         />;
     }
@@ -443,7 +443,7 @@ export const ContentFlow: React.FC = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                     <div>
-                        <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['flow']?.title || 'Content Flow'}</h2>
+                        <h2 className="text-base font-black text-foreground font-heading">{config?.page_titles?.['flow']?.title || 'Aruneeka Content Planner Pro'}</h2>
                         <p className="text-[10px] text-mutedForeground">{totalItems} konten</p>
                     </div>
                     <button onClick={fetchData} disabled={loading} className="p-2 rounded-xl bg-muted text-mutedForeground">
@@ -584,7 +584,7 @@ export const ContentFlow: React.FC = () => {
                     <div className="flex items-start justify-between gap-2 md:gap-4">
                         <div>
                             <h2 className="text-base md:text-2xl lg:text-4xl font-extrabold text-foreground font-heading tracking-tight">
-                                {config?.page_titles?.['flow']?.title || 'Content Flow'}
+                                {config?.page_titles?.['flow']?.title || 'Aruneeka Content Planner Pro'}
                             </h2>
                             <p className="text-xs md:text-sm text-mutedForeground font-medium mt-0.5 md:mt-1 hidden md:block">
                                 {config?.page_titles?.['flow']?.subtitle || 'Pantau alur konten dari semua workspace dalam satu tampilan.'}

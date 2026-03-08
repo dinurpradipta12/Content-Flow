@@ -451,7 +451,7 @@ export const ContentPlanDetail: React.FC = () => {
 
     // Diagnostics Log
     useEffect(() => {
-        console.log(`[ContentFlow-Detail] v1.6 initialized. User Role: ${currentUserRole}`);
+        console.log(`[Aruneeka-Detail] v1.6 initialized. User Role: ${currentUserRole}`);
     }, [currentUserRole]);
 
     const [errorState, setErrorState] = useState<string | null>(null);

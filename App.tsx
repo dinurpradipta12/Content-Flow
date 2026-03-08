@@ -21,6 +21,7 @@ import { Profile } from './pages/Profile';
 import { CalendarPage } from './pages/CalendarPage';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
 import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
+import { DeveloperReport } from './pages/DeveloperReport';
 import { CollectIdea } from './pages/CollectIdea';
 import { NotificationProvider } from './components/NotificationProvider';
 import { AppConfigProvider } from './components/AppConfigProvider';
@@ -225,6 +226,7 @@ const App: React.FC = () => {
                   <Route path="admin/users" element={<RequireDeveloper><UserManagement /></RequireDeveloper>} />
                   <Route path="admin/inbox" element={<RequireDeveloper><DeveloperInbox /></RequireDeveloper>} />
                   <Route path="admin/analytics" element={<RequireDeveloper><DeveloperAnalytics /></RequireDeveloper>} />
+                  <Route path="admin/analytics/report/:type?" element={<RequireDeveloper><DeveloperReport /></RequireDeveloper>} />
                 </Route>
               </Routes>
             </NotificationProvider>
