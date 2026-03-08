@@ -11,6 +11,7 @@ import {
     ChevronDown,
     ChevronRight,
     UserPlus,
+    Library,
     Layers,
     Menu,
     Bell,
@@ -2161,337 +2162,338 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 />
             </div >
 
-            {/* Mobile Nav & Menu (Only visible on small screens) */}
+            {/* Mobile Floating Navigation Island */}
             {
                 !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
-                    <>
-                        <nav className="md:hidden fixed inset-x-0 z-[60] bg-card border-t-2 border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)]"
-                            style={{ bottom: '0px', paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}>
-                            <div className="flex items-center justify-around px-1 pt-2 pb-1 h-[64px]">
-                                {/* Left: Content Plan */}
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/plan'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/plan' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    <Layers size={22} className={location.pathname === '/plan' ? 'fill-accent/20' : ''} />
-                                    <span className="text-[9px] font-bold">Plan</span>
-                                </button>
-                                {/* Left: Calendar */}
-                                <button onClick={() => { setShowMobileMenu(false); navigate('/calendar'); }} className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${location.pathname === '/calendar' ? 'text-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    <CalendarDays size={22} className={location.pathname === '/calendar' ? 'fill-accent/20' : ''} />
-                                    <span className="text-[9px] font-bold">Kalender</span>
-                                </button>
-                                {/* Center: Dashboard (elevated) */}
-                                <div className="relative flex-shrink-0 z-10 -mt-6">
-                                    <button onClick={() => { setShowMobileMenu(false); navigate('/'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-full border-4 border-background shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform active:scale-95 ${location.pathname === '/' ? 'bg-accent text-white' : 'bg-slate-800 text-white'}`}>
-                                        <LayoutDashboard size={24} />
+                    <div className="md:hidden fixed bottom-6 inset-x-0 z-[100] flex justify-center px-6 animate-in slide-in-from-bottom-10 h-16">
+                        <nav className="w-full max-w-sm bg-card/85 backdrop-blur-xl border-[3px] border-slate-900 rounded-[2rem] shadow-hard-mini p-2 flex items-center justify-between pointer-events-auto">
+                            {[
+                                { id: 'plan', path: '/plan', icon: Library, label: 'Plan' },
+                                { id: 'flow', path: '/flow', icon: GitBranch, label: 'Flow' },
+                                { id: 'dashboard', path: '/', icon: LayoutDashboard, label: 'Home' },
+                                { id: 'calendar', path: '/calendar', icon: CalendarDays, label: 'Event' },
+                                { id: 'insight', path: '/insight', icon: Presentation, label: 'Data' }
+                            ].map((item) => {
+                                const isActive = (item.path === '/' && location.pathname === '/') || (item.path !== '/' && location.pathname.startsWith(item.path));
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
+                                        className={`flex flex-col items-center justify-center rounded-2xl transition-all duration-300 relative ${isActive ? 'flex-[1.5] bg-accent text-white shadow-hard-mini-accent -translate-y-1' : 'flex-1 text-slate-400 hover:text-slate-600'} h-full gap-0.5`}
+                                    >
+                                        <item.icon size={isActive ? 22 : 20} strokeWidth={isActive ? 3 : 2} className={isActive ? 'animate-pulse' : ''} />
+                                        {isActive && <span className="text-[8px] font-black uppercase tracking-tighter">{item.label}</span>}
+                                        {isActive && <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full" />}
                                     </button>
-                                    <span className={`text-[9px] font-bold text-center block mt-1 ${location.pathname === '/' ? 'text-accent' : 'text-slate-400'}`}>Dasbor</span>
+                                );
+                            })}
+                        </nav>
+                    </div>
+                )
+            }
+
+            {/* Mobile Full Screen Notification Inbox */}
+            {showMobileNotifications && (
+                <div className="md:hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center">
+                                <Bell size={18} className="text-accent" />
+                            </div>
+                            <div>
+                                <h2 className="font-black font-heading text-lg text-foreground leading-tight">Notifikasi</h2>
+                                {unreadCount > 0 && <p className="text-[10px] font-bold text-accent">{unreadCount} belum dibaca</p>}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={() => markAllAsRead()}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                >
+                                    <CheckCheck size={12} /> Tandai Semua
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowMobileNotifications(false)}
+                                className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Notification List */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
+                        {notifications.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 py-20">
+                                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center">
+                                    <Bell size={36} className="opacity-30" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-black text-base text-slate-500">Kotak Masuk Kosong</p>
+                                    <p className="text-sm font-bold text-slate-400 mt-1">Belum ada notifikasi untuk Anda</p>
                                 </div>
                             </div>
-                        </nav>
+                        ) : (
+                            <div className="divide-y divide-border">
+                                {/* Date grouping header - Today */}
+                                {notifications.some(n => {
+                                    const d = new Date(n.created_at);
+                                    const today = new Date();
+                                    return d.toDateString() === today.toDateString();
+                                }) && (
+                                        <div className="px-4 py-2 bg-muted/30 sticky top-0 z-10">
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</span>
+                                        </div>
+                                    )}
+                                {notifications.map((notif) => {
+                                    const notifDate = new Date(notif.created_at);
+                                    const today = new Date();
+                                    const isToday = notifDate.toDateString() === today.toDateString();
+                                    const timeStr = isToday
+                                        ? notifDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                                        : notifDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 
-                        {/* Mobile Full Screen Notification Inbox */}
-                        {showMobileNotifications && (
-                            <div className="md:hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
-                                {/* Header */}
-                                <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 bg-accent/10 rounded-xl flex items-center justify-center">
-                                            <Bell size={18} className="text-accent" />
-                                        </div>
-                                        <div>
-                                            <h2 className="font-black font-heading text-lg text-foreground leading-tight">Notifikasi</h2>
-                                            {unreadCount > 0 && <p className="text-[10px] font-bold text-accent">{unreadCount} belum dibaca</p>}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {unreadCount > 0 && (
-                                            <button
-                                                onClick={() => markAllAsRead()}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-xl text-[10px] font-black uppercase tracking-widest"
-                                            >
-                                                <CheckCheck size={12} /> Tandai Semua
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => setShowMobileNotifications(false)}
-                                            className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500"
+                                    const getNotifIcon = () => {
+                                        switch (notif.type) {
+                                            case 'MENTION': return <MessageSquare size={14} className="text-blue-500" />;
+                                            case 'STATUS_CHANGE': return <CheckCircle size={14} className="text-emerald-500" />;
+                                            case 'CONTENT_H1': return <AlertTriangle size={14} className="text-amber-500" />;
+                                            case 'APPROVAL': return <CheckCircle size={14} className="text-purple-500" />;
+                                            default: return <Bell size={14} className="text-accent" />;
+                                        }
+                                    };
+
+                                    return (
+                                        <div
+                                            key={notif.id}
+                                            className={`flex gap-3 p-4 transition-colors active:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : 'bg-card'}`}
+                                            onClick={() => { handleNotificationClick(notif); setShowMobileNotifications(false); }}
                                         >
-                                            <X size={18} />
-                                        </button>
+                                            {/* Unread indicator */}
+                                            {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-r-full"></div>}
+
+                                            {/* Avatar */}
+                                            <div className="shrink-0 relative">
+                                                {notif.actor?.avatar_url
+                                                    ? <img src={notif.actor.avatar_url} alt="" className="w-11 h-11 rounded-full border-2 border-border object-cover" />
+                                                    : <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-mutedForeground border-2 border-border"><User size={18} /></div>
+                                                }
+                                                {/* Type badge */}
+                                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white border border-border rounded-full flex items-center justify-center shadow-sm">
+                                                    {getNotifIcon()}
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h5 className={`font-black text-[10px] uppercase tracking-widest truncate pr-2 ${!notif.is_read ? 'text-accent' : 'text-slate-500'}`}>
+                                                        {notif.title}
+                                                    </h5>
+                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                        <Clock size={9} className="text-slate-300" />
+                                                        <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">{timeStr}</span>
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm font-bold text-slate-600 leading-snug">
+                                                    {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
+                                                        <span className="text-slate-900 font-extrabold">{notif.actor.full_name} </span>
+                                                    )}
+                                                    {notif.content}
+                                                </p>
+                                                {!notif.is_read && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
+                                                        className="mt-1.5 text-[9px] font-black text-accent/70 hover:text-accent uppercase tracking-widest"
+                                                    >
+                                                        Tandai dibaca
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bottom Action Bar */}
+                    {notifications.length > 0 && (
+                        <div className="flex-shrink-0 px-4 py-3 bg-card border-t-2 border-border pb-safe">
+                            <button
+                                onClick={async () => {
+                                    if (confirm('Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) {
+                                        await clearAllNotifications();
+                                    }
+                                }}
+                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors"
+                            >
+                                <Trash2 size={14} /> Hapus Semua Notifikasi
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Mobile Full Screen Menu Drawer */}
+            {showMobileMenu && (
+                <div className="md:hidden fixed inset-0 z-[45] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
+                    {/* ── Drawer Header ── */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
+                        <div className="flex items-center gap-2">
+                            {(() => {
+                                const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
+                                const favicon = config?.app_favicon || branding.appFavicon;
+                                const activeLogo = isDarkTheme
+                                    ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
+                                    : (config?.app_logo || branding.appLogo);
+                                if (favicon) return <img src={favicon} className="w-7 h-7 object-contain rounded-lg" alt="Logo" />;
+                                if (activeLogo) return <img src={activeLogo} className="max-h-6 max-w-[80px] object-contain" alt="Logo" />;
+                                return <div className="font-heading font-black text-sm text-accent tracking-tighter">CF</div>;
+                            })()}
+                            <span className="font-heading font-black text-base text-foreground tracking-tight">{config?.app_name || branding.appName}</span>
+                        </div>
+                        <button
+                            onClick={() => setShowMobileMenu(false)}
+                            className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500 active:bg-slate-200 transition-colors"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* ── Scrollable Content ── */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
+
+                        {/* ── Profile Card (Clickable → /profile) ── */}
+                        <div className="px-4 pt-4 pb-3">
+                            <button
+                                onClick={() => { setShowMobileMenu(false); navigate('/profile'); }}
+                                className="w-full flex items-center gap-3 p-3.5 bg-card border-2 border-border rounded-2xl shadow-sm active:scale-[0.98] transition-all hover:border-accent/40 hover:shadow-md group"
+                            >
+                                {/* Avatar with online dot */}
+                                <div className="relative flex-shrink-0">
+                                    <img src={userProfile.avatar} alt="User" className="w-14 h-14 rounded-full border-2 border-slate-200 object-cover group-hover:border-accent transition-colors" />
+                                    <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                                </div>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0 text-left">
+                                    <h3 className="font-heading font-black text-base text-foreground leading-tight truncate">{userProfile.name}</h3>
+                                    <p className="text-xs text-mutedForeground font-bold truncate">{userProfile.jobTitle || userProfile.role}</p>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                            userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                                                userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                                    'bg-slate-100 text-slate-600 border-slate-200'
+                                            }`}>{userProfile.role}</span>
                                     </div>
                                 </div>
+                                {/* Arrow */}
+                                <ChevronRight size={18} className="text-slate-400 flex-shrink-0 group-hover:text-accent transition-colors" />
+                            </button>
+                        </div>
 
-                                {/* Notification List */}
-                                <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
-                                    {notifications.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-400 py-20">
-                                            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center">
-                                                <Bell size={36} className="opacity-30" />
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="font-black text-base text-slate-500">Kotak Masuk Kosong</p>
-                                                <p className="text-sm font-bold text-slate-400 mt-1">Belum ada notifikasi untuk Anda</p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {/* Date grouping header - Today */}
-                                            {notifications.some(n => {
-                                                const d = new Date(n.created_at);
-                                                const today = new Date();
-                                                return d.toDateString() === today.toDateString();
-                                            }) && (
-                                                    <div className="px-4 py-2 bg-muted/30 sticky top-0 z-10">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</span>
-                                                    </div>
-                                                )}
-                                            {notifications.map((notif) => {
-                                                const notifDate = new Date(notif.created_at);
-                                                const today = new Date();
-                                                const isToday = notifDate.toDateString() === today.toDateString();
-                                                const timeStr = isToday
-                                                    ? notifDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-                                                    : notifDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                        {/* ── Quick Actions Row ── */}
+                        <div className="px-4 pb-4 grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => { setShowMobileMenu(false); setIsSettingsOpen(true); }}
+                                className="flex flex-col items-center gap-1.5 p-3 bg-card border-2 border-border rounded-xl active:scale-95 transition-all hover:border-accent/30"
+                            >
+                                <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                                    <Settings size={16} className="text-slate-600" />
+                                </div>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Pengaturan</span>
+                            </button>
+                            <button
+                                onClick={() => { setShowMobileMenu(false); setShowThemeModal(true); }}
+                                className="flex flex-col items-center gap-1.5 p-3 bg-card border-2 border-border rounded-xl active:scale-95 transition-all hover:border-accent/30"
+                            >
+                                <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                                    <Palette size={16} className="text-slate-600" />
+                                </div>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Tema</span>
+                            </button>
+                            <button
+                                onClick={() => { setShowMobileMenu(false); handleLogout(); }}
+                                className="flex flex-col items-center gap-1.5 p-3 bg-red-50 border-2 border-red-100 rounded-xl active:scale-95 transition-all hover:border-red-300"
+                            >
+                                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <LogOut size={16} className="text-red-500" />
+                                </div>
+                                <span className="text-[10px] font-black text-red-400 uppercase tracking-wide">Keluar</span>
+                            </button>
+                        </div>
 
-                                                const getNotifIcon = () => {
-                                                    switch (notif.type) {
-                                                        case 'MENTION': return <MessageSquare size={14} className="text-blue-500" />;
-                                                        case 'STATUS_CHANGE': return <CheckCircle size={14} className="text-emerald-500" />;
-                                                        case 'CONTENT_H1': return <AlertTriangle size={14} className="text-amber-500" />;
-                                                        case 'APPROVAL': return <CheckCircle size={14} className="text-purple-500" />;
-                                                        default: return <Bell size={14} className="text-accent" />;
-                                                    }
-                                                };
+                        {/* ── Divider ── */}
+                        <div className="mx-4 border-t-2 border-border mb-3"></div>
 
+                        {/* ── Navigation Items ── */}
+                        <div className="px-4 pb-4">
+                            {Object.entries(NAV_ITEMS).map(([section, items]) => {
+                                const filteredItems = items.filter(item => {
+                                    if (item.adminOnly && !isAdmin) return false;
+                                    if (item.developerOnly && !isDeveloper) return false;
+                                    if (isDeveloper) return true;
+                                    if (item.id === 'team') {
+                                        const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
+                                        if (!isSelfRegisteredAdmin) return false;
+                                        return true;
+                                    }
+                                    const CORE_PAGES = ['dashboard', 'plan', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+
+                                    const isHidden = config?.hidden_pages?.includes(item.id);
+                                    if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
+                                    else { if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false; }
+                                    return true;
+                                });
+
+                                if (filteredItems.length === 0) return null;
+                                return (
+                                    <div key={section} className="mb-5">
+                                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{section}</h3>
+                                        <div className="space-y-1">
+                                            {filteredItems.map((item) => {
+                                                const isActive = location.pathname === item.path || location.pathname === `/${item.path}`;
                                                 return (
-                                                    <div
-                                                        key={notif.id}
-                                                        className={`flex gap-3 p-4 transition-colors active:bg-muted/50 cursor-pointer relative ${!notif.is_read ? 'bg-accent/5' : 'bg-card'}`}
-                                                        onClick={() => { handleNotificationClick(notif); setShowMobileNotifications(false); }}
+                                                    <button
+                                                        key={item.path}
+                                                        onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
+                                                        className={`flex items-center w-full px-4 py-3 rounded-xl transition-all font-bold active:scale-[0.98] ${isActive
+                                                            ? 'bg-accent text-white shadow-sm'
+                                                            : 'text-slate-600 hover:bg-slate-500/10 bg-card border border-transparent hover:border-slate-200'
+                                                            }`}
                                                     >
-                                                        {/* Unread indicator */}
-                                                        {!notif.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-r-full"></div>}
-
-                                                        {/* Avatar */}
-                                                        <div className="shrink-0 relative">
-                                                            {notif.actor?.avatar_url
-                                                                ? <img src={notif.actor.avatar_url} alt="" className="w-11 h-11 rounded-full border-2 border-border object-cover" />
-                                                                : <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center text-mutedForeground border-2 border-border"><User size={18} /></div>
-                                                            }
-                                                            {/* Type badge */}
-                                                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white border border-border rounded-full flex items-center justify-center shadow-sm">
-                                                                {getNotifIcon()}
-                                                            </div>
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
+                                                            <item.icon size={17} className={isActive ? 'text-white' : 'text-slate-500'} />
                                                         </div>
-
-                                                        {/* Content */}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex justify-between items-start mb-1">
-                                                                <h5 className={`font-black text-[10px] uppercase tracking-widest truncate pr-2 ${!notif.is_read ? 'text-accent' : 'text-slate-500'}`}>
-                                                                    {notif.title}
-                                                                </h5>
-                                                                <div className="flex items-center gap-1 flex-shrink-0">
-                                                                    <Clock size={9} className="text-slate-300" />
-                                                                    <span className="text-[9px] text-slate-400 font-medium whitespace-nowrap">{timeStr}</span>
-                                                                </div>
-                                                            </div>
-                                                            <p className="text-sm font-bold text-slate-600 leading-snug">
-                                                                {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
-                                                                    <span className="text-slate-900 font-extrabold">{notif.actor.full_name} </span>
-                                                                )}
-                                                                {notif.content}
-                                                            </p>
-                                                            {!notif.is_read && (
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
-                                                                    className="mt-1.5 text-[9px] font-black text-accent/70 hover:text-accent uppercase tracking-widest"
-                                                                >
-                                                                    Tandai dibaca
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                                        <span className="text-sm tracking-tight flex-1 text-left">{item.label}</span>
+                                                        {userProfile.subscriptionPackage === 'Free' && ['flow', 'carousel', 'kpi'].includes(item.id) && (
+                                                            <Crown size={14} className={isActive ? "text-amber-300 mr-2" : "text-amber-500 mr-2"} title="Pro Feature" />
+                                                        )}
+                                                        {item.badge && (
+                                                            <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500 text-white">{item.badge}</span>
+                                                        )}
+                                                        {isActive && <ChevronRight size={14} className="ml-auto text-white/70" />}
+                                                    </button>
                                                 );
                                             })}
                                         </div>
-                                    )}
-                                </div>
-
-                                {/* Bottom Action Bar */}
-                                {notifications.length > 0 && (
-                                    <div className="flex-shrink-0 px-4 py-3 bg-card border-t-2 border-border pb-safe">
-                                        <button
-                                            onClick={async () => {
-                                                if (confirm('Hapus semua notifikasi? Tindakan ini tidak dapat dibatalkan.')) {
-                                                    await clearAllNotifications();
-                                                }
-                                            }}
-                                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-colors"
-                                        >
-                                            <Trash2 size={14} /> Hapus Semua Notifikasi
-                                        </button>
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                );
+                            })}
+                        </div>
 
-                        {/* Mobile Full Screen Menu Drawer */}
-                        {showMobileMenu && (
-                            <div className="md:hidden fixed inset-0 z-[45] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
-                                {/* ── Drawer Header ── */}
-                                <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
-                                    <div className="flex items-center gap-2">
-                                        {(() => {
-                                            const isDarkTheme = currentTheme === 'dark' || currentTheme === 'midnight';
-                                            const favicon = config?.app_favicon || branding.appFavicon;
-                                            const activeLogo = isDarkTheme
-                                                ? (config?.app_logo_light || branding.appLogoLight || config?.app_logo || branding.appLogo)
-                                                : (config?.app_logo || branding.appLogo);
-                                            if (favicon) return <img src={favicon} className="w-7 h-7 object-contain rounded-lg" alt="Logo" />;
-                                            if (activeLogo) return <img src={activeLogo} className="max-h-6 max-w-[80px] object-contain" alt="Logo" />;
-                                            return <div className="font-heading font-black text-sm text-accent tracking-tighter">CF</div>;
-                                        })()}
-                                        <span className="font-heading font-black text-base text-foreground tracking-tight">{config?.app_name || branding.appName}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowMobileMenu(false)}
-                                        className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500 active:bg-slate-200 transition-colors"
-                                    >
-                                        <X size={18} />
-                                    </button>
-                                </div>
-
-                                {/* ── Scrollable Content ── */}
-                                <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
-
-                                    {/* ── Profile Card (Clickable → /profile) ── */}
-                                    <div className="px-4 pt-4 pb-3">
-                                        <button
-                                            onClick={() => { setShowMobileMenu(false); navigate('/profile'); }}
-                                            className="w-full flex items-center gap-3 p-3.5 bg-card border-2 border-border rounded-2xl shadow-sm active:scale-[0.98] transition-all hover:border-accent/40 hover:shadow-md group"
-                                        >
-                                            {/* Avatar with online dot */}
-                                            <div className="relative flex-shrink-0">
-                                                <img src={userProfile.avatar} alt="User" className="w-14 h-14 rounded-full border-2 border-slate-200 object-cover group-hover:border-accent transition-colors" />
-                                                <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
-                                            </div>
-                                            {/* Info */}
-                                            <div className="flex-1 min-w-0 text-left">
-                                                <h3 className="font-heading font-black text-base text-foreground leading-tight truncate">{userProfile.name}</h3>
-                                                <p className="text-xs text-mutedForeground font-bold truncate">{userProfile.jobTitle || userProfile.role}</p>
-                                                <div className="flex items-center gap-1.5 mt-1">
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                                                        userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                                                            userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                                                'bg-slate-100 text-slate-600 border-slate-200'
-                                                        }`}>{userProfile.role}</span>
-                                                </div>
-                                            </div>
-                                            {/* Arrow */}
-                                            <ChevronRight size={18} className="text-slate-400 flex-shrink-0 group-hover:text-accent transition-colors" />
-                                        </button>
-                                    </div>
-
-                                    {/* ── Quick Actions Row ── */}
-                                    <div className="px-4 pb-4 grid grid-cols-3 gap-2">
-                                        <button
-                                            onClick={() => { setShowMobileMenu(false); setIsSettingsOpen(true); }}
-                                            className="flex flex-col items-center gap-1.5 p-3 bg-card border-2 border-border rounded-xl active:scale-95 transition-all hover:border-accent/30"
-                                        >
-                                            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                                                <Settings size={16} className="text-slate-600" />
-                                            </div>
-                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Pengaturan</span>
-                                        </button>
-                                        <button
-                                            onClick={() => { setShowMobileMenu(false); setShowThemeModal(true); }}
-                                            className="flex flex-col items-center gap-1.5 p-3 bg-card border-2 border-border rounded-xl active:scale-95 transition-all hover:border-accent/30"
-                                        >
-                                            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
-                                                <Palette size={16} className="text-slate-600" />
-                                            </div>
-                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Tema</span>
-                                        </button>
-                                        <button
-                                            onClick={() => { setShowMobileMenu(false); handleLogout(); }}
-                                            className="flex flex-col items-center gap-1.5 p-3 bg-red-50 border-2 border-red-100 rounded-xl active:scale-95 transition-all hover:border-red-300"
-                                        >
-                                            <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                                <LogOut size={16} className="text-red-500" />
-                                            </div>
-                                            <span className="text-[10px] font-black text-red-400 uppercase tracking-wide">Keluar</span>
-                                        </button>
-                                    </div>
-
-                                    {/* ── Divider ── */}
-                                    <div className="mx-4 border-t-2 border-border mb-3"></div>
-
-                                    {/* ── Navigation Items ── */}
-                                    <div className="px-4 pb-4">
-                                        {Object.entries(NAV_ITEMS).map(([section, items]) => {
-                                            const filteredItems = items.filter(item => {
-                                                if (item.adminOnly && !isAdmin) return false;
-                                                if (item.developerOnly && !isDeveloper) return false;
-                                                if (isDeveloper) return true;
-                                                if (item.id === 'team') {
-                                                    const isSelfRegisteredAdmin = (userProfile.role === 'Admin' || userProfile.role === 'Owner') && !userProfile.parentUserId;
-                                                    if (!isSelfRegisteredAdmin) return false;
-                                                    return true;
-                                                }
-                                                const CORE_PAGES = ['dashboard', 'plan', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
-
-                                                const isHidden = config?.hidden_pages?.includes(item.id);
-                                                if (CORE_PAGES.includes(item.id)) { if (isHidden) return false; }
-                                                else { if (!config?.page_titles?.[item.id]?.isGlobalVisible) return false; }
-                                                return true;
-                                            });
-
-                                            if (filteredItems.length === 0) return null;
-                                            return (
-                                                <div key={section} className="mb-5">
-                                                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{section}</h3>
-                                                    <div className="space-y-1">
-                                                        {filteredItems.map((item) => {
-                                                            const isActive = location.pathname === item.path || location.pathname === `/${item.path}`;
-                                                            return (
-                                                                <button
-                                                                    key={item.path}
-                                                                    onClick={() => { setShowMobileMenu(false); navigate(item.path); }}
-                                                                    className={`flex items-center w-full px-4 py-3 rounded-xl transition-all font-bold active:scale-[0.98] ${isActive
-                                                                        ? 'bg-accent text-white shadow-sm'
-                                                                        : 'text-slate-600 hover:bg-slate-500/10 bg-card border border-transparent hover:border-slate-200'
-                                                                        }`}
-                                                                >
-                                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 ${isActive ? 'bg-white/20' : 'bg-slate-100'}`}>
-                                                                        <item.icon size={17} className={isActive ? 'text-white' : 'text-slate-500'} />
-                                                                    </div>
-                                                                    <span className="text-sm tracking-tight flex-1 text-left">{item.label}</span>
-                                                                    {userProfile.subscriptionPackage === 'Free' && ['flow', 'carousel', 'kpi'].includes(item.id) && (
-                                                                        <Crown size={14} className={isActive ? "text-amber-300 mr-2" : "text-amber-500 mr-2"} title="Pro Feature" />
-                                                                    )}
-                                                                    {item.badge && (
-                                                                        <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500 text-white">{item.badge}</span>
-                                                                    )}
-                                                                    {isActive && <ChevronRight size={14} className="ml-auto text-white/70" />}
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* ── App Version Footer ── */}
-                                    <div className="px-4 pb-6 text-center">
-                                        <p className="text-[10px] text-slate-400 font-bold opacity-60 italic">
-                                            v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </>
-                )}
+                        {/* ── App Version Footer ── */}
+                        <div className="px-4 pb-6 text-center">
+                            <p className="text-[10px] text-slate-400 font-bold opacity-60 italic">
+                                v{config?.app_version || '1.0.5'} • {config?.app_name || branding.appName}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

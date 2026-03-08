@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { RELIGION_CONTENT } from './religionData';
 import { Button } from '../components/ui/Button';
-import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, CheckCircle, Book, Settings, Clock, Layers, Circle, Check, TrendingUp, ArrowUpRight, Eye, MousePointerClick, CalendarCheck, TrendingDown, X, CheckCheck, Sparkles, Zap, PlusCircle, UserPlus, Heart, MessageSquare, Share2, BarChart3, Layout, Command, Send, Users } from 'lucide-react';
+import { Sun, Moon, Sunset, Sunrise, Bell, Calendar, Plus, Trash2, ArrowRight, CheckCircle, Book, Settings, Clock, Layers, Circle, Check, TrendingUp, ArrowUpRight, Eye, MousePointerClick, CalendarCheck, TrendingDown, X, CheckCheck, Sparkles, Zap, PlusCircle, UserPlus, Heart, MessageSquare, Share2, BarChart3, Layout, Command, Send, Users, User, Quote, Library } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../components/NotificationProvider';
@@ -64,6 +64,7 @@ export const Dashboard: React.FC = () => {
     const [isAddContentModalOpen, setIsAddContentModalOpen] = useState(false);
     const [isAddMissionModalOpen, setIsAddMissionModalOpen] = useState(false);
     const userName = localStorage.getItem('user_name') || 'Aditya';
+    const userAvatar = localStorage.getItem('user_avatar') || '';
     const userId = localStorage.getItem('user_id');
     const userRole = localStorage.getItem('user_role');
     const subPkg = localStorage.getItem('subscription_package') || 'Free';
@@ -342,7 +343,6 @@ export const Dashboard: React.FC = () => {
 
     // 5. KPI Data - Using React Query for caching
     const userFullName = localStorage.getItem('user_name');
-    const userAvatar = localStorage.getItem('user_avatar');
     const [memberId, setMemberId] = useState<string | null>(null);
 
     // First, fetch all team members to get current user's member_id
@@ -628,74 +628,261 @@ export const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-transparent pb-20 selection:bg-accent/30 selection:text-white">
             {/* ═══════════════════════════════════════════════════════════════════
-            MOBILE VIEW (Native Style)
+            MOBILE VIEW (Premium Overhaul)
             ═══════════════════════════════════════════════════════════════════ */}
-            <div className="block md:hidden w-full p-4 space-y-4 animate-in fade-in duration-500">
-                <div className={`p-6 rounded-[2.5rem] bg-card border-[3.5px] border-border ${timeInfo.theme} text-foreground shadow-[6px_6px_0px_#0f172a] relative overflow-hidden`}>
-                    <div className="absolute -right-6 -top-6 opacity-10 rotate-12 scale-150">{timeInfo.icon}</div>
-                    <div className="relative z-10">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{timeInfo.text}</span>
-                        <h1 className="text-3xl font-black font-heading mt-1">{userName}! <Sparkles size={18} className="inline ml-1 animate-pulse text-amber-400" /></h1>
-                        <p className="text-xs mt-3 opacity-60 italic leading-relaxed font-medium">"{timeInfo.quote}"</p>
-                    </div>
-                </div>
+            <div className="block md:hidden w-full pb-32 animate-in fade-in duration-700 font-sans selection:bg-accent/40 selection:text-white">
 
-                {/* Quick Action Ribbon - Mobile */}
-                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                    {[
-                        { label: 'Content', icon: <Plus size={16} />, action: () => setIsAddContentModalOpen(true), color: 'bg-foreground text-background shadow-hard-mini' },
-                        { label: 'Mission', icon: <PlusCircle size={16} />, action: () => setIsAddMissionModalOpen(true), color: 'bg-card border-[3px] border-border' },
-                        { label: 'Idea', icon: <Zap size={16} />, action: () => navigate('/collect-idea'), color: 'bg-card border-[3px] border-border' },
-                    ].map((btn, i) => (
-                        <button key={i} onClick={btn.action} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs whitespace-nowrap shadow-hard-mini ${btn.color}`}>
-                            {btn.icon} {btn.label}
-                        </button>
-                    ))}
-                </div>
+                {/* 1. Compact Dynamic Header (Refined Polish) */}
+                <header className="px-5 pt-10 pb-28 relative overflow-hidden bg-slate-900 rounded-b-[2.5rem] shadow-hard z-20">
+                    <div className="absolute inset-0 bg-[radial-gradient(var(--dot-color)_1.2px,transparent_1.2px)] [background-size:20px:20px] opacity-10" />
+                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent/40 rounded-full blur-[90px] animate-pulse" />
 
-                {/* Vertical Sections */}
-                {religion && !isSelectingReligion && (
-                    <div className={`p-5 rounded-[2rem] bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-900 border-none' : getReligionStyles(religion) + ' border-none'} text-white shadow-lg relative overflow-hidden`}>
-                        <div className="absolute -right-4 -bottom-4 opacity-10">{religion === 'Islam' ? <Sunrise size={80} /> : <Book size={80} />}</div>
-                        <div className="flex justify-between items-start mb-3 relative z-10">
-                            <span className="text-[9px] font-black uppercase tracking-widest opacity-70">Daily {religion}</span>
-                            <Settings size={14} className="opacity-50" onClick={() => setIsSelectingReligion(true)} />
-                        </div>
-                        {religion === 'Islam' && prayerData ? (
-                            <div className="relative z-10">
-                                <h3 className="text-xl font-black">{nextPrayerState.name} • {nextPrayerState.time}</h3>
-                                <p className="text-[10px] font-bold opacity-80 mt-1">{nextPrayerState.countdown} menit lagi ({cityInfo})</p>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">{timeInfo.text}</span>
+                            <h1 className="text-4xl font-black font-heading text-white tracking-tight">
+                                Halo, <span className="text-white italic">{userName}!</span>
+                            </h1>
+                            <div className="flex items-center gap-2 mt-3">
+                                <span className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-full text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md">
+                                    {getPlanDisplay()}
+                                </span>
                             </div>
-                        ) : (
-                            <p className="text-xs font-bold leading-relaxed relative z-10">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
-                        )}
+                        </div>
+                        <div className="relative group p-1 bg-white/5 rounded-3xl border-2 border-white/10 backdrop-blur-xl shadow-hard-mini">
+                            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-900 group-active:scale-95 transition-transform">
+                                {userAvatar ? <img src={userAvatar} className="w-full h-full object-cover" /> : <User className="text-white/40 m-auto h-full" size={32} />}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-400 rounded-full border-4 border-slate-900 flex items-center justify-center shadow-hard-mini">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                            </div>
+                        </div>
                     </div>
-                )}
+                </header>
 
-                {/* Pipeline - Mobile */}
-                <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] p-6 shadow-[6px_6px_0px_#0f172a]">
-                    <div className="flex justify-between items-center mb-5">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-mutedForeground">Content Pipeline</h3>
-                        <ArrowRight size={14} className="text-slate-300" />
-                    </div>
-                    <div className="space-y-4">
-                        {recentContent.slice(0, 3).map(item => (
-                            <div key={item.id} className="flex items-center gap-4">
-                                <div className="w-12 h-10 rounded-xl bg-muted border-[3px] border-border overflow-hidden shrink-0">
-                                    {item.thumbnail_url ? <img src={item.thumbnail_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black">{item.platform?.[0]}</div>}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-black truncate">{item.title}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border border-border ${item.status === 'Published' ? 'bg-emerald-400' : 'bg-amber-400'}`}>
-                                            {item.status}
-                                        </span>
-                                        <span className="text-[8px] font-bold text-mutedForeground uppercase">{item.platform}</span>
+                <div className="px-5 -mt-14 space-y-12 relative z-30">
+
+                    {/* 2. Daily Guide Card (Featured Full-width) - (Premium Modal-Sheet Style) */}
+                    {religion && !isSelectingReligion && (
+                        <section className={`p-7 rounded-[2rem] bg-gradient-to-br ${religion === 'Islam' ? 'from-emerald-600 to-emerald-900 text-white shadow-emerald-500/20' : getReligionStyles(religion) + ' text-slate-900'} border-[4.5px] border-slate-900 shadow-[0_12px_0_0_rgba(15,23,42,1)] relative overflow-hidden group`}>
+                            {/* Decorative Notched Handle for Integrated Look */}
+                            <div className="flex flex-col items-center mb-6">
+                                <div className={`w-12 h-1 ${religion === 'Islam' ? 'bg-white/30' : 'bg-slate-900/10'} rounded-full mb-1`} />
+                            </div>
+
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.05)_1.5px,transparent_1.5px)] background-size-[18px_18px] opacity-20" />
+                            <div className="absolute -right-10 -bottom-10 opacity-10 group-active:scale-110 transition-transform duration-700">
+                                {religion === 'Islam' ? <Sunrise size={180} /> : <Book size={180} className="text-slate-900/20" />}
+                            </div>
+
+                            <div className="flex justify-between items-center mb-10 relative z-10">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-11 h-11 ${religion === 'Islam' ? 'bg-white/20' : 'bg-slate-900/10'} rounded-2xl flex items-center justify-center backdrop-blur-md border ${religion === 'Islam' ? 'border-white/20' : 'border-slate-900/20'} shadow-hard-mini-accent`}>
+                                        {religion === 'Islam' ? <Clock size={20} /> : <Sparkles size={20} className="text-slate-900" />}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${religion === 'Islam' ? 'text-white/90' : 'text-slate-900/60'}`}>Daily {religion} Assistant</span>
+                                        {religion === 'Islam' && (
+                                            <span className="text-[9px] font-black opacity-60 uppercase tracking-widest">{cityInfo} • {tzLabel}</span>
+                                        )}
                                     </div>
                                 </div>
+                                <button onClick={() => setIsSelectingReligion(true)} className={`w-10 h-10 flex items-center justify-center ${religion === 'Islam' ? 'bg-white/10 border-white/20' : 'bg-slate-900/10 border-slate-900/20'} rounded-2xl border backdrop-blur-sm active:rotate-45 transition-transform`}>
+                                    <Settings size={16} className="opacity-80" />
+                                </button>
                             </div>
-                        ))}
+
+                            {religion === 'Islam' && prayerData ? (
+                                <div className="space-y-4 relative z-10">
+                                    <div>
+                                        <h3 className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">Mendekati Waktu</h3>
+                                        <h2 className="text-5xl font-black font-heading leading-none tracking-tight">{nextPrayerState.name}</h2>
+                                    </div>
+                                    <div className="flex items-end justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="px-5 py-3 bg-white text-emerald-950 font-black rounded-[1.5rem] text-3xl shadow-lg border-2 border-emerald-400/20">
+                                                {nextPrayerState.time}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-white/60 uppercase">Menghitung</span>
+                                                <span className="text-lg font-black">{nextPrayerState.countdown} <span className="text-xs opacity-60">MENIT</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="relative z-10 py-2">
+                                    <Quote className="text-white/30 mb-5" size={32} />
+                                    <p className="text-2xl font-black leading-tight italic">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
+                                    <div className="mt-8 flex items-center gap-3">
+                                        <div className="h-[2px] w-8 bg-white/30 rounded-full" />
+                                        <p className="text-[11px] font-black uppercase tracking-widest opacity-80">{dailyQuote?.source || 'Wisdom of the Day'}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                    )}
+
+                    {/* 3. Primary Portal: Workspaces Carousel (Refined Layout) - (Moved Down) */}
+                    <section className="space-y-6">
+                        <div className="flex flex-col gap-4 px-1">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-black font-heading flex items-center gap-2 text-slate-900">
+                                    <Library size={24} className="text-accent" /> Workspace
+                                    <span className="text-xs font-bold text-slate-400 ml-1">({workspaces.length})</span>
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => navigate('/plan')}
+                                className="w-full text-[11px] font-black text-white bg-slate-900 py-3.5 px-6 rounded-2xl border-2 border-slate-900 shadow-hard-mini uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.97] transition-all"
+                            >
+                                Lihat Semua Workspace <ArrowUpRight size={14} className="text-accent" />
+                            </button>
+                        </div>
+
+                        <div className="flex gap-5 overflow-x-auto pb-6 px-1 no-scrollbar -mx-5 pl-5 snap-x snap-mandatory">
+                            {workspaces.slice(0, 5).map(ws => (
+                                <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="min-w-[280px] bg-card border-[3.5px] border-border rounded-[1.8rem] p-8 pt-8 pr-8 shadow-hard active:scale-[0.98] transition-all snap-center relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Layers size={80} className="text-slate-300" />
+                                    </div>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="w-16 h-16 rounded-2xl border-[3.5px] border-border bg-card p-2 flex items-center justify-center shadow-hard-mini overflow-hidden group-hover:rotate-6 transition-transform">
+                                            {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[8px] font-black text-mutedForeground uppercase tracking-widest bg-muted px-3 py-1 rounded-full border border-border/50">{ws.period || 'Personal'}</span>
+                                            <ArrowUpRight size={20} className="text-slate-300 mt-2" />
+                                        </div>
+                                    </div>
+                                    <h4 className="text-2xl font-black font-heading truncate leading-none">{ws.name}</h4>
+                                    <div className="flex items-center justify-between mt-8">
+                                        <div className="flex -space-x-3">
+                                            {ws.members?.slice(0, 3).map((m: any, idx: number) => (
+                                                <img key={idx} src={m.includes('/') ? m : `https://ui-avatars.com/api/?name=${m}&background=random&color=fff`} className="w-10 h-10 rounded-full border-[3px] border-card bg-muted object-cover shadow-soft" />
+                                            ))}
+                                            {ws.members?.length > 3 && (
+                                                <div className="w-10 h-10 rounded-full border-[3px] border-card bg-muted flex items-center justify-center text-[10px] font-black text-slate-400">+{ws.members.length - 3}</div>
+                                            )}
+                                        </div>
+                                        <div className="text-[10px] font-bold text-slate-400">Tap to Enter</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+
+                    {/* 4. Glanceable KPI (2x2 Grid Stats) */}
+                    <section className="space-y-4">
+                        <h3 className="text-xl font-black font-heading px-1 flex items-center gap-2">
+                            <BarChart3 size={20} className="text-accent" /> Power Insight
+                        </h3>
+                        <div className="grid grid-cols-2 gap-5 p-1">
+                            {[
+                                { title: 'Viral Reach', value: formatShortNumber(metricsCurrent.views), icon: <Eye size={20} />, color: 'bg-sky-500', shadow: 'shadow-sky-500/10' },
+                                { title: 'Eng. Power', value: metricsCurrent.er.toFixed(1) + '%', icon: <MousePointerClick size={20} />, color: 'bg-indigo-600', shadow: 'shadow-indigo-500/10' },
+                                { title: 'Consistent', value: metricsCurrent.published, icon: <CalendarCheck size={20} />, color: 'bg-emerald-600', shadow: 'shadow-emerald-500/10' },
+                                { title: 'Active Day', value: '24/30', icon: <Sparkles size={20} />, color: 'bg-amber-500', shadow: 'shadow-amber-500/10' }
+                            ].map((stat, i) => (
+                                <div key={i} className={`bg-card border-[3.5px] border-border rounded-[1.8rem] p-6 shadow-hard-mini ${stat.shadow} flex flex-col gap-4 active:scale-95 transition-all`}>
+                                    <div className={`w-12 h-12 ${stat.color} text-white rounded-2xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini`}>
+                                        {stat.icon}
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-mutedForeground uppercase tracking-wider mb-1 opacity-70">{stat.title}</p>
+                                        <h4 className="text-2xl font-black text-foreground">{stat.value}</h4>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* 5. Today's Journey (Vertical Timeline Pipeline) */}
+                    <section className="bg-card border-[3.5px] border-border rounded-[1.8rem] p-8 shadow-hard relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[radial-gradient(var(--dot-color)_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
+                        <div className="flex justify-between items-center mb-10 relative z-10">
+                            <div className="space-y-1">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent font-heading">The Journey</h3>
+                                <h2 className="text-2xl font-black font-heading tracking-tight">Today's Pipeline</h2>
+                            </div>
+                            <Command size={24} className="text-slate-400" />
+                        </div>
+
+                        <div className="space-y-0 relative z-10">
+                            {recentContent.length === 0 ? (
+                                <div className="py-12 text-center text-slate-500 font-bold italic">Belum ada rute konten hari ini...</div>
+                            ) : (
+                                <div className="space-y-8 relative before:absolute before:left-[23px] before:top-2 before:bottom-2 before:w-[2.5px] before:bg-slate-100 before:dashed">
+                                    {recentContent.slice(0, 4).map((item, idx) => (
+                                        <div key={item.id} className="flex gap-6 items-start group relative">
+                                            <div className={`w-12 h-12 rounded-2xl border-[3px] border-slate-900 z-10 shrink-0 flex items-center justify-center shadow-hard-mini ${item.status === 'Published' ? 'bg-emerald-400' : 'bg-amber-400'}`}>
+                                                <span className="text-[10px] font-black text-slate-900">{idx + 1}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0 bg-muted/30 p-4 rounded-2xl border-2 border-transparent hover:border-slate-200 transition-colors">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <p className="text-sm font-black truncate text-foreground leading-tight mb-1">{item.title}</p>
+                                                    <span className="text-[8px] font-black text-mutedForeground uppercase tracking-tighter shrink-0">{item.platform}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <div className={`w-2 h-2 rounded-full ${item.status === 'Published' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                                                    <span className="text-[9px] font-bold text-mutedForeground uppercase opacity-70 tracking-widest">{item.status}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* 6. Mini Analytics Peek (Visual Trend Chart) */}
+                    <section className="bg-slate-900 rounded-[1.8rem] p-8 shadow-hard text-white relative overflow-hidden h-[300px]">
+                        <div className="relative z-10 flex justify-between items-start">
+                            <div>
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent/80 mb-1">Growth Trend</h3>
+                                <h2 className="text-2xl font-black font-heading tracking-tight">Active Analytics</h2>
+                            </div>
+                            <TrendingUp className="text-emerald-400" size={24} />
+                        </div>
+
+                        <div className="absolute inset-x-0 bottom-0 h-[180px] pointer-events-none opacity-50">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={chartData.slice(-7)}>
+                                    <defs>
+                                        <linearGradient id="mobileTrend" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.6} />
+                                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <Area type="monotone" dataKey={selectedMetric} stroke="#8B5CF6" strokeWidth={5} fillOpacity={1} fill="url(#mobileTrend)" animationDuration={3000} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="mt-8 flex items-center gap-4 relative z-10">
+                            <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10">
+                                <p className="text-[9px] font-black opacity-50 uppercase mb-1">{selectedMetric}</p>
+                                <p className="text-xl font-black text-accent">{formatShortNumber(metricsCurrent[selectedMetric as keyof typeof metricsCurrent] || 0)}</p>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-bold opacity-40 leading-relaxed italic">"Performa Anda meningkat 12% dibanding minggu lalu."</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                {/* FAB: Floating Action Button (Centered Alignment Fix) */}
+                <div className="fixed bottom-24 right-6 z-[110] flex flex-col items-center gap-3">
+                    <div className="bg-slate-900 text-white text-[9px] font-black uppercase py-2 px-4 rounded-full border-2 border-border shadow-hard-mini animate-bounce whitespace-nowrap text-center">
+                        New Post
                     </div>
+                    <button
+                        onClick={() => setIsAddContentModalOpen(true)}
+                        className="w-16 h-16 bg-accent text-white rounded-2xl border-[4px] border-slate-900 shadow-[6px_6px_0px_#0f172a] flex items-center justify-center active:translate-x-1 active:translate-y-1 active:shadow-none transition-all group overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                        <Plus size={32} strokeWidth={4} className="relative z-10" />
+                    </button>
                 </div>
             </div>
 
