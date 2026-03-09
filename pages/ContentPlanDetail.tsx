@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input, Select, CreatableSelect } from '../components/ui/Input';
 import {
-    Plus, Calendar, Instagram, Linkedin, Video, Zap, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle, Crown
+    Plus, Calendar, Instagram, Linkedin, Video, Zap, AtSign, FileText, Film, FileImage, Link as LinkIcon, Upload, CheckCircle, Table, LayoutGrid, ArrowLeft, Youtube, Facebook, Loader2, UserPlus, Copy, Check, RefreshCw, MoreHorizontal, Edit, Trash2, User, Users, Layers, Hash, ExternalLink, Download, File, Filter, ChevronDown, X, Clock, Wifi, WifiOff, FolderOpen, Image as ImageIcon, HardDrive, Bookmark, StickyNote, Palette, Globe, Paperclip, Eye, MessageCircle, Reply, SmilePlus, Send, Heart, ThumbsUp, ThumbsDown, AlertCircle, Crown, Info, Layout, Settings
 } from 'lucide-react';
 import { ContentStatus, ContentPriority, Platform, ContentItem, NotificationType } from '../types.ts';
 import { Modal } from '../components/ui/Modal';
@@ -104,7 +104,7 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                     const isImage = fileUrl.startsWith('data:image');
                     return (
                         <div
-                            className={`my-3 group relative bg-card border-[3px] border-slate-900 rounded-2xl p-4 flex items-center gap-4 hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 transition-all shadow-[4px_4px_0px_#0f172a] ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer' : ''
+                            className={`my-3 group relative bg-card border-[3px] border-slate-900 rounded-2xl p-3 md:p-4 flex items-center gap-4 hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 transition-all shadow-[4px_4px_0px_#0f172a] ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) ? 'cursor-pointer' : ''
                                 }`}
                             onClick={() => {
                                 if ((fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf')) && onPdfClick) {
@@ -117,7 +117,7 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                                     <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
                                 </div>
                             ) : (
-                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center flex-shrink-0 ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf'))
+                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center flex-shrink-0${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf'))
                                     ? 'bg-red-50 text-red-500 border-red-100'
                                     : 'bg-slate-100 text-slate-500 border-slate-200'
                                     }`}>
@@ -149,14 +149,14 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                 if (parts.length === 3 && parts[0] === '' && parts[2] === '') {
                     const url = parts[1];
                     return (
-                        <a key={lineIdx} href={url} target="_blank" rel="noopener noreferrer" className="my-2 block bg-card border-[3px] border-border hover:shadow-hard hover:-translate-y-1 rounded-2xl p-4 shadow-hard-mini transition-all group">
+                        <a key={lineIdx} href={url} target="_blank" rel="noopener noreferrer" className="my-2 block bg-card border-[3px] border-border hover:shadow-hard hover:-translate-y-1 rounded-2xl p-3 md:p-4 shadow-hard-mini transition-all group overflow-hidden">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
                                     <ExternalLink size={18} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-blue-500 mb-0.5">External link</p>
-                                    <p className="text-sm font-bold text-foreground truncate">{url}</p>
+                                    <p className="text-[10px] font-bold text-blue-500 mb-0.5 uppercase tracking-tight">External link</p>
+                                    <p className="text-[11px] md:text-sm font-bold text-foreground break-all line-clamp-2">{url}</p>
                                 </div>
                             </div>
                         </a>
@@ -196,7 +196,7 @@ const KanbanCard: React.FC<{
     // Find PIC member
     const picMember = members.find(m => m.name === item.pic);
 
-    // Helpers for Approval UI - More prominent and colorful
+    // Helpers for Approval UI-More prominent and colorful
     const getApprovalBadge = (status?: string) => {
         switch (status) {
             case 'approved':
@@ -208,6 +208,9 @@ const KanbanCard: React.FC<{
         }
     };
 
+    // Unified Preview Logic
+    const previewImage = (item as any).asset_url || (item.result_assets && (item.result_assets as string[]).length > 0 ? (item.result_assets as string[])[0] : null);
+
     return (
         <div
             draggable
@@ -215,106 +218,118 @@ const KanbanCard: React.FC<{
             onClick={() => onClick(item)}
             className={`group rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1.5 cursor-grab active:cursor-grabbing relative mb-4 flex-shrink-0 z-10 hover:z-20 overflow-visible p-4 ${getCardStatusStyle(item.status)}`}
         >
-            {/* Header: PIC \u0026 Menu */}
-            <div className={`flex justify-between items-center mb-2.5`}>
-                <div className="flex items-center gap-2">
-                    {item.pic ? (
-                        <div className="group/pic relative">
-                            {picMember ? (
-                                <img
-                                    src={picMember.avatar}
-                                    alt={picMember.name}
-                                    className="w-8 h-8 rounded-xl border-[2px] border-border shadow-hard-mini object-cover bg-card p-0.5 group-hover/pic:border-accent transition-colors"
-                                />
+            <div className="flex gap-4">
+                {/* Left Side: Content */}
+                <div className="flex-1 min-w-0">
+                    {/* Header: PIC & Menu */}
+                    <div className={`flex justify-between items-center mb-2.5`}>
+                        <div className="flex items-center gap-2">
+                            {item.pic ? (
+                                <div className="group/pic relative">
+                                    {picMember ? (
+                                        <img
+                                            src={picMember.avatar}
+                                            alt={picMember.name}
+                                            className="w-8 h-8 rounded-xl border-[2px] border-border shadow-hard-mini object-cover bg-card p-0.5 group-hover/pic:border-accent transition-colors"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-xl bg-violet-400 text-white flex items-center justify-center text-xs font-black border-[2px] border-border shadow-hard-mini">
+                                            {item.pic.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
-                                <div className="w-8 h-8 rounded-xl bg-violet-400 text-white flex items-center justify-center text-xs font-black border-[2px] border-border shadow-hard-mini">
-                                    {item.pic.charAt(0).toUpperCase()}
+                                <div className="w-8 h-8 rounded-xl bg-muted border-[2px] border-border shadow-hard-mini flex items-center justify-center">
+                                    <User size={14} strokeWidth={3} className="text-mutedForeground" />
                                 </div>
                             )}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-mutedForeground">Assignee</span>
+                                <span className="text-xs font-black text-foreground">{item.pic ? item.pic.split(' ')[0] : 'Unassigned'}</span>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="w-8 h-8 rounded-xl bg-muted border-[2px] border-border shadow-hard-mini flex items-center justify-center">
-                            <User size={14} strokeWidth={3} className="text-mutedForeground" />
+
+                        <div className="relative">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                                className="w-7 h-7 flex items-center justify-center bg-card rounded-xl border-[2px] border-border shadow-hard-mini hover:translate-y-[2px] hover:shadow-none transition-all text-foreground"
+                            >
+                                <MoreHorizontal size={14} strokeWidth={3} />
+                            </button>
+                            {showMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}></div>
+                                    <div className="absolute right-0 top-full mt-3 w-52 bg-card border-[3.5px] border-border rounded-2xl shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(item); }}
+                                            className="w-full text-left px-5 py-3.5 hover:bg-muted flex items-center gap-3 font-black text-foreground text-[10px]"
+                                        >
+                                            <Edit size={16} className="text-violet-600" strokeWidth={3} /> Edit Konten
+                                        </button>
+                                        {isAdmin && (
+                                            <>
+                                                <div className="h-[2px] bg-border" />
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'approved'); }}
+                                                    className="w-full text-left px-5 py-3.5 hover:bg-emerald-50 flex items-center gap-3 font-black text-emerald-700 text-[10px] transition-colors"
+                                                >
+                                                    <CheckCircle size={16} strokeWidth={3} /> Setujui
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'revision'); }}
+                                                    className="w-full text-left px-5 py-3.5 text-[10px] text-rose-700 hover:bg-rose-50 flex items-center justify-between font-black"
+                                                >
+                                                    <span className="flex items-center gap-3"><RefreshCw size={16} strokeWidth={3} /> Revisi</span>
+                                                    {isFree && <Crown size={12} className="text-amber-500" strokeWidth={3} />}
+                                                </button>
+                                            </>
+                                        )}
+                                        <div className="h-[2px] bg-border" />
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(item.id); }}
+                                            className="w-full text-left px-5 py-3.5 hover:bg-rose-50 flex items-center gap-3 font-black text-rose-600 text-[10px]"
+                                        >
+                                            <Trash2 size={16} strokeWidth={3} /> Hapus
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    )}
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-mutedForeground">Assignee</span>
-                        <span className="text-xs font-black text-foreground">{item.pic ? item.pic.split(' ')[0] : 'Unassigned'}</span>
+                    </div>
+
+                    {/* Title Section */}
+                    <div className="mb-2">
+                        <h4 className="font-heading font-black text-foreground text-xs sm:text-sm leading-snug tracking-tight line-clamp-2 group-hover:text-accent transition-colors">
+                            {item.title}
+                        </h4>
+                    </div>
+
+                    {/* Tags & Badges Area */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                        {getApprovalBadge(item.approval_status)}
+
+                        <span className="px-2 py-1 rounded-md text-[10px] font-black bg-card text-foreground border-[1.5px] border-border shadow-hard-mini flex items-center gap-1">
+                            {getTypeIcon(item.type)}{item.type}
+                        </span>
+
+                        {item.pillar && (
+                            <span className={`px-2 py-1 rounded-md text-[10px] font-black${getPillarStyle(item.pillar).replace('border-[2px]', 'border-[1.5px]')}`}>
+                                {item.pillar}
+                            </span>
+                        )}
                     </div>
                 </div>
 
-                <div className="relative">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                        className="w-7 h-7 flex items-center justify-center bg-card rounded-xl border-[2px] border-border shadow-hard-mini hover:translate-y-[2px] hover:shadow-none transition-all text-foreground"
-                    >
-                        <MoreHorizontal size={14} strokeWidth={3} />
-                    </button>
-                    {showMenu && (
-                        <>
-                            <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}></div>
-                            <div className="absolute right-0 top-full mt-3 w-52 bg-card border-[3.5px] border-border rounded-2xl shadow-hard z-50 overflow-hidden text-sm animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(item); }}
-                                    className="w-full text-left px-5 py-3.5 hover:bg-muted flex items-center gap-3 font-black text-foreground text-[10px]"
-                                >
-                                    <Edit size={16} className="text-violet-600" strokeWidth={3} /> Edit Konten
-                                </button>
-                                {isAdmin && (
-                                    <>
-                                        <div className="h-[2px] bg-border" />
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'approved'); }}
-                                            className="w-full text-left px-5 py-3.5 hover:bg-emerald-50 flex items-center gap-3 font-black text-emerald-700 text-[10px] transition-colors"
-                                        >
-                                            <CheckCircle size={16} strokeWidth={3} /> Setujui
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowMenu(false); onApprove(item.id, 'revision'); }}
-                                            className="w-full text-left px-5 py-3.5 text-[10px] text-rose-700 hover:bg-rose-50 flex items-center justify-between font-black"
-                                        >
-                                            <span className="flex items-center gap-3"><RefreshCw size={16} strokeWidth={3} /> Revisi</span>
-                                            {isFree && <Crown size={12} className="text-amber-500" strokeWidth={3} />}
-                                        </button>
-                                    </>
-                                )}
-                                <div className="h-[2px] bg-border" />
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(item.id); }}
-                                    className="w-full text-left px-5 py-3.5 hover:bg-rose-50 flex items-center gap-3 font-black text-rose-600 text-[10px]"
-                                >
-                                    <Trash2 size={16} strokeWidth={3} /> Hapus
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-
-            {/* Title Section */}
-            <div className="mb-2">
-                <h4 className="font-heading font-black text-foreground text-xs sm:text-sm leading-snug tracking-tight line-clamp-2 group-hover:text-accent transition-colors">
-                    {item.title}
-                </h4>
-            </div>
-
-            {/* Tags & Badges Area */}
-            <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-                {getApprovalBadge(item.approval_status)}
-
-                <span className="px-2 py-1 rounded-md text-[10px] font-black bg-card text-foreground border-[1.5px] border-border shadow-hard-mini flex items-center gap-1">
-                    {getTypeIcon(item.type)} {item.type}
-                </span>
-
-                {item.pillar && (
-                    <span className={`px-2 py-1 rounded-md text-[10px] font-black ${getPillarStyle(item.pillar).replace('border-[2px]', 'border-[1.5px]')}`}>
-                        {item.pillar}
-                    </span>
+                {/* Right Side: Small Image Preview */}
+                {previewImage && (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-[2.5px] border-border shadow-hard-mini overflow-hidden flex-shrink-0 group-hover:rotate-2 transition-transform self-center">
+                        <img src={previewImage} alt="" className="w-full h-full object-cover" />
+                    </div>
                 )}
             </div>
 
             {/* Footer: Integrated Platform Box */}
-            <div className="mt-auto pt-2">
+            <div className="mt-2">
                 <div className="bg-muted/30 dark:bg-muted/10 rounded-xl border-[1.5px] border-border p-2 flex items-center justify-between shadow-hard-mini group-hover:bg-card transition-colors">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-card border-[1.5px] border-border flex items-center justify-center text-foreground shadow-hard-mini scale-90">
@@ -377,12 +392,12 @@ const KanbanColumn: React.FC<{
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            {/* Column Header - Bento Style */}
+            {/* Column Header-Bento Style */}
             <div className="flex-shrink-0 mb-8 pt-1">
                 <div className="flex items-center justify-between pb-5 border-b-[4px] border-border group">
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-black text-mutedForeground">Status</span>
-                        <h3 className={`font-heading font-black text-lg sm:text-xl tracking-wide ${textColor} drop-shadow-sm group-hover:translate-x-1 transition-transform`}>
+                        <h3 className={`font-heading font-black text-lg sm: text-xl tracking-wide${textColor}drop-shadow-sm group-hover: translate-x-1 transition-transform`}>
                             {formatStatus(status)}
                         </h3>
                     </div>
@@ -451,7 +466,7 @@ export const ContentPlanDetail: React.FC = () => {
 
     // Diagnostics Log
     useEffect(() => {
-        console.log(`[Aruneeka-Detail] v1.6 initialized. User Role: ${currentUserRole}`);
+        console.log(`[Aruneeka-Detail] v1.6 initialized.User Role:${currentUserRole}`);
     }, [currentUserRole]);
 
     const [errorState, setErrorState] = useState<string | null>(null);
@@ -637,6 +652,8 @@ export const ContentPlanDetail: React.FC = () => {
     const [selectedTask, setSelectedTask] = useState<ContentItem | null>(null);
     const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [mobileDetailTab, setMobileDetailTab] = useState<'info' | 'brief' | 'assets'>('info');
+    const [activeEditTab, setActiveEditTab] = useState('content');
 
     // PDF Preview States
     const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
@@ -721,7 +738,7 @@ export const ContentPlanDetail: React.FC = () => {
                 event: '*',
                 schema: 'public',
                 table: 'result_comments',
-                filter: `content_item_id=eq.${selectedTask.id}`
+                filter: `content_item_id = eq.${selectedTask.id}`
             }, () => {
                 fetchResultComments(selectedTask.id);
             })
@@ -759,7 +776,7 @@ export const ContentPlanDetail: React.FC = () => {
             if (error) throw error;
 
             // Notify all workspace members
-            const replyLabel = replyingTo ? ` (membalas ${replyingTo.user_name})` : '';
+            const replyLabel = replyingTo ? ` (membalas${replyingTo.user_name})` : '';
 
             // Extract Mentions
             const mentionedUserIds = new Set<string>();
@@ -775,8 +792,8 @@ export const ContentPlanDetail: React.FC = () => {
                     await sendNotification({
                         recipientId: member.id,
                         type: isMentioned ? 'MENTION' as any : 'CONTENT_REVISION' as NotificationType,
-                        title: isMentioned ? `${userName} mention Anda di "${selectedTask.title}"` : `Komentar Baru pada "${selectedTask.title}"`,
-                        content: `${userName} berkomentar${replyLabel}: "${commentInput.trim().slice(0, 80)}${commentInput.trim().length > 80 ? '...' : ''}"`,
+                        title: isMentioned ? `${userName}mention Anda di "${selectedTask.title}"` : `Komentar Baru pada "${selectedTask.title}"`,
+                        content: `${userName}berkomentar${replyLabel}: "${commentInput.trim().slice(0, 80)}${commentInput.trim().length > 80 ? '...' : ''}"`,
                         workspaceId: id,
                         metadata: { contentItemId: selectedTask.id, contentTitle: selectedTask.title, isMention: isMentioned }
                     });
@@ -800,7 +817,7 @@ export const ContentPlanDetail: React.FC = () => {
         const words = textBeforeCursor.split(/\s/);
         words.pop(); // Remove the partial @word
 
-        const newTextBefore = [...words, `@${name} `].join(' ');
+        const newTextBefore = [...words, `@${name}`].join(' ');
         setCommentInput(newTextBefore + textAfterCursor);
         setShowMentionSuggestions(false);
 
@@ -910,16 +927,16 @@ export const ContentPlanDetail: React.FC = () => {
                 return m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i);
             });
 
-            let userOrCond = `admin_id.eq.${tenantId},id.eq.${tenantId}`;
+            let userOrCond = `admin_id.eq.${tenantId}, id.eq.${tenantId}`;
             if (wsMemberIds.length > 0) {
-                userOrCond += `,id.in.(${wsMemberIds.join(',')})`;
+                userOrCond += `, id.in.(${wsMemberIds.join(',')})`;
             }
             // Also match by username in members
             const wsMemberUsernames = (ws?.members || []).filter((m: string) => {
                 return !m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i) && !m.includes('/') && !m.startsWith('data:');
             });
             if (wsMemberUsernames.length > 0) {
-                userOrCond += `,username.in.(${wsMemberUsernames.join(',')})`;
+                userOrCond += `, username.in.(${wsMemberUsernames.join(',')})`;
             }
 
             const [allUsersRes, itemsRes] = await Promise.all([
@@ -1145,7 +1162,7 @@ export const ContentPlanDetail: React.FC = () => {
                 approved_at: status === 'approved' ? new Date().toISOString() : undefined
             } : t));
 
-            console.log(`[Approval] Content ${contentId} status updated to ${status}`);
+            console.log(`[Approval] Content${contentId}status updated to${status}`);
 
             // Send notification to PIC
             const task = tasks.find(t => t.id === contentId);
@@ -1157,7 +1174,7 @@ export const ContentPlanDetail: React.FC = () => {
                         workspaceId: workspaceId || null,
                         type: status === 'approved' ? 'CONTENT_APPROVED' : 'CONTENT_REVISION',
                         title: status === 'approved' ? 'Konten Disetujui! 🎉' : 'Ada Revisi Konten 🔄',
-                        content: `Konten "${task.title}" telah ${status === 'approved' ? 'disetujui' : 'diminta revisi'} oleh ${currentUserName}`,
+                        content: `Konten "${task.title}" telah${status === 'approved' ? 'disetujui' : 'diminta revisi'}oleh${currentUserName}`,
                         metadata: { content_id: contentId }
                     });
                 }
@@ -1275,7 +1292,7 @@ export const ContentPlanDetail: React.FC = () => {
         const maxAllowed = 15 - currentAssets.length;
 
         if (files.length > maxAllowed) {
-            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: `Maksimum ${maxAllowed} foto lagi (sudah ada ${currentAssets.length})` } }));
+            window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: `Maksimum${maxAllowed}foto lagi(sudah ada${currentAssets.length})` } }));
             return;
         }
 
@@ -1432,7 +1449,7 @@ export const ContentPlanDetail: React.FC = () => {
                 await notifyWorkspaceMembers({
                     workspaceId: id!,
                     title: 'Konten Baru Dibuat',
-                    content: `telah membuat konten baru "${payload.title}" di workspace ${wsName}`,
+                    content: `telah membuat konten baru "${payload.title}" di workspace${wsName}`,
                     type: 'INFO',
                     metadata: { content_id: currentContentId }
                 });
@@ -1446,7 +1463,7 @@ export const ContentPlanDetail: React.FC = () => {
                     await notifyWorkspaceMembers({
                         workspaceId: id!,
                         title: 'Update Status Konten',
-                        content: `telah mengganti status konten "${payload.title}" pada ${wsName} menjadi ${payload.status}.`,
+                        content: `telah mengganti status konten "${payload.title}" pada${wsName}menjadi${payload.status}.`,
                         type: 'STATUS_CHANGE',
                         metadata: {
                             content_id: editingId,
@@ -1469,7 +1486,7 @@ export const ContentPlanDetail: React.FC = () => {
                     }
                 }
 
-                // 2. Scan for full names (even without @) - Global mentioning
+                // 2. Scan for full names (even without @)-Global mentioning
                 teamMembers.forEach(m => {
                     if (m.name && payload.script.toLowerCase().includes(m.name.toLowerCase())) {
                         mentionedNames.add(m.name);
@@ -1478,7 +1495,7 @@ export const ContentPlanDetail: React.FC = () => {
 
                 // Send notifications
                 for (const name of Array.from(mentionedNames)) {
-                    await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten: ${payload.title}`, { content_id: currentContentId });
+                    await notifyMemberByName(name, 'MENTION', 'Anda disebut', `menyebut Anda dalam script konten:${payload.title}`, { content_id: currentContentId });
                 }
             }
 
@@ -1538,7 +1555,7 @@ export const ContentPlanDetail: React.FC = () => {
                 await notifyWorkspaceMembers({
                     workspaceId: id!,
                     title: 'Update Status Konten (Drag & Drop)',
-                    content: `telah mengganti status konten "${item.title}" pada ${wsName} menjadi ${newStatus}.`,
+                    content: `telah mengganti status konten "${item.title}" pada${wsName}menjadi${newStatus}.`,
                     type: 'STATUS_CHANGE',
                     metadata: {
                         content_id: taskId,
@@ -1598,9 +1615,9 @@ export const ContentPlanDetail: React.FC = () => {
     return (
         <>
             {/* ═══════════════════════════════════════════════════════════════════
-                MOBILE VIEW (< md) - Trello-inspired card list
+                MOBILE VIEW (< md)-Trello-inspired card list
                 ═══════════════════════════════════════════════════════════════════ */}
-            <div className="block md:hidden flex flex-col h-full pb-24 animate-in fade-in duration-300">
+            <div className="block md:hidden flex flex-col h-full pb-6 animate-in fade-in duration-300">
                 {/* Mobile Header */}
                 <div className="flex items-center gap-2 mb-3 sticky top-0 z-40 bg-background py-2">
                     <button onClick={() => navigate('/plan')}
@@ -1609,7 +1626,7 @@ export const ContentPlanDetail: React.FC = () => {
                     </button>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-sm font-black text-foreground truncate">{workspaceData.name || 'Content Plan'}</h2>
-                        <p className="text-[9px] text-mutedForeground">{tasks.length} konten · {workspaceData.account_name}</p>
+                        <p className="text-[9px] text-mutedForeground">{tasks.length}konten · {workspaceData.account_name}</p>
                     </div>
                     <button onClick={handleOpenCreateModal}
                         className="flex items-center gap-1 px-3 py-2 bg-accent text-white rounded-xl text-xs font-bold flex-shrink-0">
@@ -1617,22 +1634,25 @@ export const ContentPlanDetail: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Platform filter - horizontal scroll */}
-                <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-2 flex-shrink-0">
+                {/* Platform filter-horizontal scroll */}
+                <div className="flex gap-1.5 overflow-x-auto no-scrollbar pt-4 pb-2 mb-2 flex-shrink-0">
                     <button onClick={() => setFilterPlatform('all')}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${filterPlatform === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                        className={`flex-shrink-0 h-10 px-4 flex items-center justify-center rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-hard-mini -translate-y-1' : 'bg-card border-slate-900 text-foreground shadow-hard-mini'}`}>
                         Semua
                     </button>
-                    {workspaceData.platforms.map(p => (
-                        <button key={formatStatus(p)} onClick={() => setFilterPlatform(p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)}
-                            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${filterPlatform !== 'all' && (filterPlatform === (p === 'IG' ? 'Instagram' : p === 'TK' ? 'TikTok' : p === 'YT' ? 'YouTube' : p === 'LI' ? 'LinkedIn' : p === 'FB' ? 'Facebook' : p)) ? 'bg-accent text-white border-accent' : 'bg-card border-border text-foreground'}`}>
-                            {formatStatus(p)}
-                        </button>
-                    ))}
+                    {workspaceData.platforms.map(p => {
+                        const platformValue = p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : p === 'YT' ? Platform.YOUTUBE : p === 'LI' ? Platform.LINKEDIN : p === 'FB' ? Platform.FACEBOOK : p === 'TH' ? Platform.THREADS : p;
+                        return (
+                            <button key={p} onClick={() => setFilterPlatform(platformValue as any)}
+                                className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all${filterPlatform !== 'all' && filterPlatform === platformValue ? 'bg-accent text-white border-slate-900 shadow-hard-mini-accent -translate-y-1' : 'bg-card border-slate-900 text-foreground shadow-hard-mini'}`}>
+                                {getPlatformIcon(platformValue as any)}
+                            </button>
+                        );
+                    })}
                 </div>
 
-                {/* Status tabs - Trello style */}
-                <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2 mb-3 flex-shrink-0">
+                {/* Status tabs-Trello style */}
+                <div className="flex gap-1 overflow-x-auto no-scrollbar pt-4 pb-2 mb-3 flex-shrink-0">
                     {[
                         { value: 'all', label: 'Semua', color: 'bg-slate-500' },
                         { value: ContentStatus.TODO, label: 'Planning', color: 'bg-slate-400' },
@@ -1645,16 +1665,16 @@ export const ContentPlanDetail: React.FC = () => {
                         const count = s.value === 'all' ? tasks.length : tasks.filter(t => t.status === s.value).length;
                         return (
                             <button key={s.value} onClick={() => setMobileStatusTab(s.value)}
-                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${mobileStatusTab === s.value ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
-                                <div className={`w-2 h-2 rounded-full ${s.color}`} />
+                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all${mobileStatusTab === s.value ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                                <div className={`w-2 h-2 rounded-full${s.color}`} />
                                 {s.label}
-                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full ${mobileStatusTab === s.value ? 'bg-card/20' : 'bg-muted'}`}>{count}</span>
+                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full${mobileStatusTab === s.value ? 'bg-card/20' : 'bg-muted'}`}>{count}</span>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* Content Cards - Trello style */}
+                {/* Content Cards-Trello style */}
                 <div className="flex-1 overflow-y-auto space-y-2">
                     {loading ? (
                         <div className="flex items-center justify-center h-32">
@@ -1687,27 +1707,43 @@ export const ContentPlanDetail: React.FC = () => {
                                 };
                                 return (
                                     <button key={task.id} onClick={() => handleCardClick(task)}
-                                        className={`w-full bg-card border border-border border-l-4 ${statusColors[task.status] || 'border-l-slate-300'} rounded-xl p-3 text-left active:scale-[0.99] transition-transform`}>
-                                        <div className="flex items-start justify-between gap-2 mb-2">
-                                            <p className="text-sm font-bold text-foreground line-clamp-2 flex-1">{task.title}</p>
-                                            <span className={`flex-shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full ${statusBadgeColors[task.status] || 'bg-muted text-mutedForeground'}`}>
-                                                {task.status}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            {task.platform && (
-                                                <span className="text-[9px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{task.platform}</span>
-                                            )}
-                                            {task.date && (
-                                                <span className="text-[9px] font-bold text-mutedForeground flex items-center gap-0.5">
-                                                    <Calendar size={9} /> {new Date(task.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                                </span>
-                                            )}
-                                            {task.pillar && (
-                                                <span className="text-[9px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{task.pillar}</span>
-                                            )}
-                                            {task.pic && (
-                                                <span className="text-[9px] font-bold text-accent">{task.pic}</span>
+                                        className={`w-full bg-card border border-border border-l-4${statusColors[task.status] || 'border-l-slate-300'}rounded-xl p-3 text-left active:scale-[0.99] transition-transform`}>
+                                        <div className="flex gap-3">
+                                            {/* Left side: Text Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                    <p className="text-sm font-bold text-foreground line-clamp-2 flex-1">{task.title}</p>
+                                                    <span className={`flex-shrink-0 text-[9px] font-black px-2 py-0.5 rounded-full${statusBadgeColors[task.status] || 'bg-muted text-mutedForeground'}`}>
+                                                        {task.status}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {task.platform && (
+                                                        <span className="text-[9px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{task.platform}</span>
+                                                    )}
+                                                    {task.date && (
+                                                        <span className="text-[9px] font-bold text-mutedForeground flex items-center gap-0.5">
+                                                            <Calendar size={9} /> {new Date(task.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                                        </span>
+                                                    )}
+                                                    {task.pillar && (
+                                                        <span className="text-[9px] font-bold text-mutedForeground bg-muted px-1.5 py-0.5 rounded">{task.pillar}</span>
+                                                    )}
+                                                    {task.pic && (
+                                                        <span className="text-[9px] font-bold text-accent">{task.pic}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Right side: Small Image Preview */}
+                                            {((task as any).asset_url || (task.result_assets && (task.result_assets as string[]).length > 0)) && (
+                                                <div className="w-16 h-16 rounded-xl border-[2px] border-border shadow-hard-mini overflow-hidden shrink-0 self-center">
+                                                    <img
+                                                        src={(task as any).asset_url || (task.result_assets as string[])[0]}
+                                                        className="w-full h-full object-cover"
+                                                        alt=""
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     </button>
@@ -1731,11 +1767,11 @@ export const ContentPlanDetail: React.FC = () => {
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════════
-                DESKTOP VIEW (≥ md) - Original Kanban/Table Layout
+                DESKTOP VIEW (≥ md)-Original Kanban/Table Layout
                 ═══════════════════════════════════════════════════════════════════ */}
             <div className="hidden md:flex flex-col h-full min-h-screen pb-10 relative overflow-x-hidden">
-                {/* Header Section - Premium Bento Style (2 rows) */}
-                <div className={`flex flex-col gap-2 flex-shrink-0 w-full mb-0 transition-all duration-300 ${isScrolled ? 'sticky top-0 z-40 bg-card/95 backdrop-blur-md py-4 border-b-[3.5px] border-slate-900 shadow-sm' : ''}`}>
+                {/* Header Section-Premium Bento Style (2 rows) */}
+                <div className={`flex flex-col gap-2 flex-shrink-0 w-full mb-0 transition-all duration-300${isScrolled ? 'sticky top-0 z-40 bg-card/95 backdrop-blur-md py-4 border-b-[3.5px] border-slate-900 shadow-sm' : ''}`}>
 
                     {/* ROW 1: Identity & Team Info */}
                     <div className="flex flex-col lg:flex-row justify-between items-center lg:items-start gap-6 px-6">
@@ -1813,12 +1849,12 @@ export const ContentPlanDetail: React.FC = () => {
                                         onClick={() => setIsMemberModalOpen(true)}
                                         className="text-[10px] font-black text-foreground hover:text-violet-600 flex items-center gap-1"
                                     >
-                                        {teamMembers.length || 1} People <ChevronDown size={14} strokeWidth={4} />
+                                        {teamMembers.length || 1}People <ChevronDown size={14} strokeWidth={4} />
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Linked Accounts - Integrated */}
+                            {/* Linked Accounts-Integrated */}
                             <div className="flex items-center gap-3">
                                 <span className="text-[9px] font-black text-mutedForeground rotate-90 sm:rotate-0">Socials</span>
                                 <div className="flex gap-2">
@@ -1831,7 +1867,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="w-10 h-10 flex items-center justify-center bg-muted/30 border-[2.5px] border-border rounded-xl shadow-hard-mini hover:-translate-y-1 hover:bg-card transition-all text-foreground"
-                                                title={`${formatStatus(p)}: ${workspaceData.account_name}`}
+                                                title={`${formatStatus(p)}:${workspaceData.account_name}`}
                                             >
                                                 {getPlatformIcon(p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : Platform.YOUTUBE)}
                                             </a>
@@ -1852,9 +1888,9 @@ export const ContentPlanDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* ROW 2: Navigation & Filters Toolbar - Borderless with Divider */}
+                {/* ROW 2: Navigation & Filters Toolbar-Borderless with Divider */}
                 {viewMode !== 'brand_asset' && (
-                    <div className={`pb-4 mb-4 mx-6 flex flex-col xl:flex-row gap-4 items-center justify-between transition-all duration-300 border-b-[3px] border-dashed border-border/50 ${isScrolled ? 'sticky top-24 z-30 bg-card/90 backdrop-blur-md px-6 py-4 rounded-3xl border-transparent shadow-hard-mini scale-[0.98]' : ''}`}>
+                    <div className={`pb-4 mb-4 mx-6 flex flex-col xl:flex-row gap-4 items-center justify-between transition-all duration-300 border-b-[3px] border-dashed border-border/50${isScrolled ? 'sticky top-24 z-30 bg-card/90 backdrop-blur-md px-6 py-4 rounded-3xl border-transparent shadow-hard-mini scale-[0.98]' : ''}`}>
                         <div className="flex flex-wrap items-center gap-6 justify-center lg:justify-start">
                             {/* View Switcher Integrated */}
                             <div className="flex items-center gap-1.5 p-1.5 rounded-2xl">
@@ -1866,7 +1902,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setViewMode(tab.id as any)}
-                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[12px] font-black ${viewMode === tab.id ? `bg-card ${tab.color} shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[12px] font-black${viewMode === tab.id ? `bg-card${tab.color}shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
                                     >
                                         <tab.icon size={14} strokeWidth={4} />
                                         <span>{tab.label}</span>
@@ -1880,7 +1916,7 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-3 justify-center">
                                 <button
                                     onClick={() => setFilterPlatform('all')}
-                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[12px] transition-all flex items-center gap-2 ${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
+                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[12px] transition-all flex items-center gap-2${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
                                 >
                                     Semua
                                 </button>
@@ -1897,7 +1933,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         key={formatStatus(p)}
                                         onClick={() => setFilterPlatform(p)}
-                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[12px] transition-all flex items-center gap-2 ${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
+                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[12px] transition-all flex items-center gap-2${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
                                     >
                                         {getPlatformIcon(p)}
                                         {formatStatus(p)}
@@ -2099,7 +2135,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-bold text-foreground text-sm truncate">{asset.title}</h4>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${asset.type === 'note' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border${asset.type === 'note' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
                                                             asset.type === 'link' ? 'bg-blue-100 text-blue-700 border-blue-200' :
                                                                 asset.type === 'image' ? 'bg-pink-100 text-pink-700 border-pink-200' :
                                                                     asset.type === 'pdf' ? 'bg-red-100 text-red-700 border-red-200' :
@@ -2157,7 +2193,7 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="h-[3px] flex-1 bg-slate-100 mx-6 rounded-full" />
                         </div>
 
-                        {/* Table Container - Custom Scrollbar */}
+                        {/* Table Container-Custom Scrollbar */}
                         <div className="flex-1 pb-4 overflow-x-auto no-scrollbar">
                             <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-3 px-2">
                                 {/* Header */}
@@ -2191,7 +2227,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                             value={task.status}
                                                             onChange={(e) => handleQuickUpdateStatus(task.id, e.target.value as ContentStatus)}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className={`appearance-none outline-none font-black text-[12px] uppercase tracking-wider py-1.5 pl-3 pr-8 rounded-lg border-2 cursor-pointer transition-all w-full min-w-[130px] shadow-sm ${task.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
+                                                            className={`appearance-none outline-none font-black text-[12px] uppercase tracking-wider py-1.5 pl-3 pr-8 rounded-lg border-2 cursor-pointer transition-all w-full min-w-[130px] shadow-sm${task.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
                                                                 task.status === ContentStatus.IN_PROGRESS ? 'bg-blue-500 text-white border-blue-700' :
                                                                     task.status === ContentStatus.REVIEW ? 'bg-amber-400 text-amber-950 border-amber-600' :
                                                                         task.status === ContentStatus.REVISION ? 'bg-rose-500 text-white border-rose-700' :
@@ -2203,7 +2239,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                 <option key={s} value={s}>{formatStatus(s)}</option>
                                                             ))}
                                                         </select>
-                                                        <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${task.status === ContentStatus.TODO || task.status === ContentStatus.REVIEW ? 'text-slate-800' : 'text-white'}`} />
+                                                        <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none${task.status === ContentStatus.TODO || task.status === ContentStatus.REVIEW ? 'text-slate-800' : 'text-white'}`} />
                                                     </div>
                                                 </td>
 
@@ -2236,7 +2272,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-[12px] font-bold text-violet-600 bg-violet-50 border border-violet-200 dark:text-violet-400 dark:bg-violet-500/10 dark:border-violet-500/20 px-2 py-0.5 rounded flex items-center gap-1">
-                                                                {getTypeIcon(task.type)} {task.type}
+                                                                {getTypeIcon(task.type)}{task.type}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -2257,7 +2293,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer text-center">
                                                     <button
                                                         onClick={() => handleCardClick(task)}
-                                                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-105 flex items-center justify-center mx-auto ${task.script
+                                                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-105 flex items-center justify-center mx-auto${task.script
                                                             ? 'bg-slate-900 dark:bg-slate-100 border-slate-700 dark:border-slate-300 text-white dark:text-slate-900 shadow-sm'
                                                             : 'bg-transparent border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-600'
                                                             }`}
@@ -2299,10 +2335,10 @@ export const ContentPlanDetail: React.FC = () => {
                                                     </div>
                                                 </td>
 
-                                                {/* 8. Link Input (Interactive - Controlled) */}
+                                                {/* 8. Link Input (Interactive-Controlled) */}
                                                 <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors">
                                                     <div className="relative flex items-center">
-                                                        <LinkIcon size={14} className={`absolute left-3 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
+                                                        <LinkIcon size={14} className={`absolute left-3 z-10${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
                                                         <input
                                                             type="text"
                                                             value={task.contentLink || ''}
@@ -2387,10 +2423,26 @@ export const ContentPlanDetail: React.FC = () => {
                         overlayClassName={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'bg-indigo-950/20 backdrop-blur-none transition-all' : 'bg-indigo-950/60 backdrop-blur-sm'}
                         className={(isPdfPreviewOpen || isDrivePreviewOpen || isResultModalOpen) ? 'md:-translate-x-[50.5%] shadow-2xl' : 'translate-x-0'}
                     >
-                        <div className="h-[88vh] md:h-[85vh] overflow-y-auto no-scrollbar px-6 md:px-10 pt-8 pb-10">
-                            <div className="flex flex-col lg:flex-row gap-10 items-start">
+                        <div className="h-[88vh] md:h-[85vh] overflow-y-auto no-scrollbar px-2.5 md:px-10 pt-6 md:pt-8 pb-10">
+                            {/* MOBILE TAB NAVIGATION */}
+                            <div className="flex lg:hidden items-center p-1.5 bg-muted rounded-2xl border-[3px] border-border shadow-inner mb-6 sticky top-0 z-20 backdrop-blur-md">
+                                {[
+                                    { id: 'brief', label: 'Brief', icon: <FileText size={14} /> },
+                                    { id: 'assets', label: 'Assets', icon: <ImageIcon size={14} /> }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setMobileDetailTab(tab.id as any)}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-[11px] transition-all${mobileDetailTab === tab.id ? 'bg-card text-foreground shadow-hard-mini-mini border-[2.5px] border-border' : 'text-mutedForeground hover:text-foreground hover:bg-card/50 border-[2.5px] border-transparent'}`}
+                                    >
+                                        {tab.icon}{tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-stretch lg:items-start">
                                 {/* MAIN CONTENT (LEFT) */}
-                                <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
+                                <div className={`flex-1 w-full space-y-6 md:space-y-8 min-w-0 order-1 lg:order-1${mobileDetailTab === 'info' ? 'hidden lg:block' : 'block'}`}>
                                     <div className="space-y-4">
                                         <div className="flex items-start justify-between gap-6">
                                             <div className="space-y-4">
@@ -2407,183 +2459,294 @@ export const ContentPlanDetail: React.FC = () => {
                                                         </div>
                                                     ) : (
                                                         <div className="px-4 py-1.5 bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-full border-[3px] border-slate-900 shadow-hard-mini-mini text-[11px] font-black flex items-center gap-2 transform -rotate-1">
-                                                            {getPlatformIcon(selectedTask.platform)} {selectedTask.platform}
+                                                            {getPlatformIcon(selectedTask.platform)}{selectedTask.platform}
                                                         </div>
                                                     )}
                                                 </div>
 
-                                                <div className="space-y-2">
-                                                    <span className="text-[10px] font-black text-mutedForeground">Campaign Title</span>
-                                                    <h2 className="text-2xl md:text-3xl lg:text-5xl font-black font-heading text-foreground leading-tight tracking-tight">
+                                                <div className="space-y-4 w-full">
+                                                    <span className="text-[10px] font-black text-mutedForeground uppercase tracking-widest bg-muted px-2 py-0.5 rounded-md">Campaign Title</span>
+                                                    <h2 className="text-5xl md:text-3xl lg:text-5xl font-black font-heading text-foreground leading-tight tracking-tight">
                                                         {selectedTask.title}
                                                     </h2>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Brief & Script - Priority Item */}
-                                    <div className="bg-card rounded-[2.5rem] border-[3.5px] border-border shadow-hard relative overflow-hidden group/script hover:shadow-hard-xl transition-all">
-                                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover/script:opacity-20 transition-opacity pointer-events-none">
-                                            <StickyNote size={120} strokeWidth={3} className="text-foreground" />
-                                        </div>
-                                        <div className="p-8 pb-4 relative z-10 flex items-center gap-4">
-                                            <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-[3px] border-border shadow-hard-mini">
-                                                <FileText size={24} strokeWidth={3} />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <h4 className="font-heading font-black text-foreground text-xl tracking-tight">Brief & Content Script</h4>
-                                                <p className="text-[10px] font-black text-mutedForeground">Detailed instructions for production</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-8 pt-0 relative z-10">
-                                            <div className="bg-muted border-[3px] border-border shadow-inner rounded-2xl p-6 min-h-[150px] font-medium font-sans text-foreground leading-relaxed text-base">
-                                                <RichTextRenderer
-                                                    text={(selectedTask as any).script || '<i class="text-mutedForeground italic">Belum ada script atau catatan untuk konten ini.</i>'}
-                                                    onPdfClick={(url) => {
-                                                        const finalUrl = url.startsWith('http')
-                                                            ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
-                                                            : url;
-                                                        setPdfUrl(finalUrl);
-                                                        setIsPdfPreviewOpen(true);
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Content Results */}
-                                    <div className={`p-8 rounded-[2.5rem] border-[3.5px] border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 group ${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50/40 dark:bg-emerald-500/5' : 'bg-card'}`}
-                                        onClick={() => setIsResultModalOpen(true)}
-                                    >
-                                        <div className="flex items-center gap-5 w-full">
-                                            <div className={`w-16 h-16 flex items-center justify-center rounded-[1.5rem] border-[3px] border-border shadow-hard-mini transition-all group-hover:scale-110 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white' : 'bg-background text-foreground'}`}>
-                                                {selectedTask.result_type === 'video' ? <Video size={28} strokeWidth={3} /> : <ImageIcon size={28} strokeWidth={3} />}
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <p className="font-heading font-black text-foreground text-lg tracking-tight">Hasil Produksi Konten</p>
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`w-2 h-2 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-mutedForeground'}`} />
-                                                    <p className="text-[10px] font-black text-accent">
-                                                        {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0
-                                                            ? `${selectedTask.result_type === 'video' ? 'Video asset available' : `${(selectedTask.result_assets as any[]).length} photo(s) in gallery`}`
-                                                            : 'No content results uploaded yet'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className={`shrink-0 px-8 py-4 rounded-[1.5rem] font-black text-xs transition-all border-[3px] border-border shadow-hard-mini flex items-center gap-3 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-foreground text-background dark:bg-muted dark:text-foreground hover:bg-foreground/10'}`}>
-                                            {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'Lihat Hasil' : 'Upload Hasil'} <Plus size={16} strokeWidth={4} />
-                                        </div>
-                                    </div>
-
-                                    {/* Assets Storage Grid */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(() => {
-                                            const isVideo = (selectedTask.type || '').toLowerCase().includes('video') || (selectedTask.type || '').toLowerCase().includes('reels');
-                                            return (
-                                                <div className={`border-[3.5px] rounded-[2rem] p-6 transition-all bg-card relative overflow-hidden group ${isVideo ? 'border-dashed border-border bg-muted/30 opacity-60' : 'border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl'}`}>
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-xl text-violet-600 dark:text-violet-400 border-[2px] border-border">
-                                                                <ImageIcon size={18} strokeWidth={3} />
+                                                    {/* MOBILE METADATA SUMMARY (2 ROWS) */}
+                                                    <div className="lg:hidden grid grid-cols-2 gap-3 pt-4 w-full">
+                                                        {[
+                                                            {
+                                                                icon: <Calendar size={14} strokeWidth={3} />,
+                                                                label: 'Deadline',
+                                                                value: selectedTask.date ? new Date(selectedTask.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-',
+                                                                color: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400'
+                                                            },
+                                                            {
+                                                                icon: getTypeIcon(selectedTask.type),
+                                                                label: 'Type',
+                                                                value: selectedTask.type,
+                                                                color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                                                            },
+                                                            {
+                                                                icon: <User size={14} strokeWidth={3} />,
+                                                                label: 'Assignee',
+                                                                value: selectedTask.pic || 'Unassigned',
+                                                                color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                                                            },
+                                                            {
+                                                                icon: <Hash size={14} strokeWidth={3} />,
+                                                                label: 'Category',
+                                                                value: selectedTask.pillar || '-',
+                                                                color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
+                                                            }
+                                                        ].map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-3 p-3 bg-card border-[2.5px] border-border rounded-2xl shadow-hard-mini w-full">
+                                                                <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border-[2px] border-border shadow-hard-mini-mini${item.color}`}>
+                                                                    {item.icon}
+                                                                </div>
+                                                                <div className="flex flex-col min-w-0 flex-1">
+                                                                    <span className="text-[7px] font-black text-mutedForeground uppercase">{item.label}</span>
+                                                                    <span className="text-[11px] font-black text-foreground truncate">{item.value}</span>
+                                                                </div>
                                                             </div>
-                                                            <span className="text-xs font-black text-foreground">Upload Image</span>
-                                                        </div>
+                                                        ))}
                                                     </div>
-
-                                                    {(selectedTask as any).asset_url ? (
-                                                        <div className="relative group/asset rounded-2xl overflow-hidden border-[3px] border-border shadow-hard-mini transform transition-transform hover:scale-[1.02]">
-                                                            <img src={(selectedTask as any).asset_url} alt="Asset" className="w-full h-32 object-cover" />
-                                                            <div className="absolute inset-0 bg-foreground/80 opacity-0 group-hover/asset:opacity-100 transition-all flex items-center justify-center gap-2">
-                                                                <button onClick={() => assetInputRef.current?.click()} className="p-2 bg-card text-foreground rounded-lg border-[2px] border-border shadow-hard-mini active:translate-y-0.5"><Edit size={16} /></button>
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        await supabase.from('content_items').update({ asset_url: null }).eq('id', selectedTask.id);
-                                                                        setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, asset_url: undefined } : t));
-                                                                        setSelectedTask(prev => prev ? { ...prev, asset_url: undefined } : null);
-                                                                    }}
-                                                                    className="p-2 bg-rose-500 text-white rounded-lg border-[2px] border-border shadow-hard-mini active:translate-y-0.5"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => !isVideo && assetInputRef.current?.click()}
-                                                            disabled={isVideo || savingAsset}
-                                                            className={`w-full h-32 border-[3px] border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-all ${isVideo ? 'border-border cursor-not-allowed' : 'border-violet-300 dark:border-violet-500/30 bg-violet-50/50 dark:bg-violet-500/5 hover:bg-violet-50 hover:border-violet-500 cursor-pointer text-violet-500'}`}
-                                                        >
-                                                            {savingAsset ? <Loader2 size={24} className="animate-spin" /> : <Upload size={24} strokeWidth={3} />}
-                                                            <span className="text-[11px] font-black">JPG / PNG</span>
-                                                        </button>
-                                                    )}
                                                 </div>
-                                            );
-                                        })()}
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                        <div className="border-[3.5px] border-border bg-card rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all relative overflow-hidden">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 border-[2px] border-border">
-                                                        <FolderOpen size={18} strokeWidth={3} />
-                                                    </div>
-                                                    <span className="text-xs font-black text-foreground">Google Drive</span>
+                                    {/* Brief & Script-Priority Item */}
+                                    <div className={`${mobileDetailTab === 'brief' ? 'block' : 'hidden lg:block'}space-y-6 md:space-y-8`}>
+                                        <div className="bg-card rounded-[1.75rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard relative overflow-hidden group/script hover:shadow-hard-xl transition-all">
+                                            <div className="absolute top-0 right-0 p-4 md:p-8 opacity-10 group-hover/script:opacity-20 transition-opacity pointer-events-none">
+                                                <StickyNote strokeWidth={3} className="text-foreground w-20 h-20 md:w-[120px] md:h-[120px]" />
+                                            </div>
+                                            <div className="p-4 md:p-8 pb-3 md:pb-4 relative z-10 flex items-center gap-4">
+                                                <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl md:rounded-2xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-[3px] border-border shadow-hard-mini">
+                                                    <FileText strokeWidth={3} className="w-5 h-5 md:w-6 md:h-6" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <h4 className="font-heading font-black text-foreground text-lg md:text-xl tracking-tight">Brief & Content Script</h4>
+                                                    <p className="text-[10px] font-black text-mutedForeground uppercase tracking-tighter">Production Instructions</p>
                                                 </div>
                                             </div>
 
-                                            {(selectedTask as any).drive_folder_url ? (
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                const embedUrl = getDriveEmbedUrl((selectedTask as any).drive_folder_url);
-                                                                setDrivePreviewUrl(embedUrl);
-                                                                setIsDrivePreviewOpen(true);
-                                                            }}
-                                                            className="flex-1 py-2.5 bg-emerald-500 text-white font-black text-[11px] border-[2.5px] border-border rounded-xl shadow-hard-mini active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
-                                                        >
-                                                            <Eye size={14} /> Preview
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                await supabase.from('content_items').update({ drive_folder_url: null }).eq('id', selectedTask.id);
-                                                                setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, drive_folder_url: undefined } : t));
-                                                                setSelectedTask(prev => prev ? { ...prev, drive_folder_url: undefined } : null);
-                                                            }}
-                                                            className="p-2.5 bg-card border-[2.5px] border-border text-rose-500 rounded-xl shadow-hard-mini active:translate-y-0.5"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                    <a href={(selectedTask as any).drive_folder_url} target="_blank" rel="noreferrer" className="block text-center text-[8px] font-black text-mutedForeground hover:text-accent truncate px-2">Open Full Url</a>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col gap-2">
-                                                    <input
-                                                        type="url"
-                                                        placeholder="Paste link drive..."
-                                                        value={driveUrlInput}
-                                                        onChange={e => setDriveUrlInput(e.target.value)}
-                                                        className="w-full px-4 py-2 bg-muted border-[2.5px] border-border rounded-xl text-[11px] font-black placeholder:text-mutedForeground focus:bg-card outline-none"
+                                            <div className="px-4 md:px-8 pb-5 md:pb-8 pt-0 relative z-10">
+                                                <div className="bg-muted border-[3px] border-border shadow-inner rounded-2xl p-4 md:p-6 min-h-[120px] md:min-h-[150px] font-medium font-sans text-foreground leading-relaxed text-sm md:text-base">
+                                                    <RichTextRenderer
+                                                        text={(selectedTask as any).script || '<i class="text-mutedForeground italic">Belum ada script atau catatan untuk konten ini.</i>'}
+                                                        onPdfClick={(url) => {
+                                                            const finalUrl = url.startsWith('http')
+                                                                ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`
+                                                                : url;
+                                                            setPdfUrl(finalUrl);
+                                                            setIsPdfPreviewOpen(true);
+                                                        }}
                                                     />
-                                                    <button
-                                                        onClick={handleSaveDriveUrl}
-                                                        disabled={!driveUrlInput.trim() || savingDriveUrl}
-                                                        className="py-2.5 bg-emerald-500 text-white font-black text-[10px] border-[2.5px] border-border shadow-hard-mini rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                                                    >
-                                                        Link Drive
-                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Content Results (Moved to Brief tab for Mobile) */}
+                                        <div className={`p-4 md:p-8 rounded-[1.75rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all cursor-pointer flex-col sm:flex-row items-center justify-between gap-6 group${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50/40 dark:bg-emerald-500/5' : 'bg-card'}`}
+                                            onClick={() => setIsResultModalOpen(true)}
+                                        >
+                                            <div className="flex items-center gap-4 md:gap-5 w-full">
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="font-heading font-black text-foreground text-base md:text-lg tracking-tight">Hasil Produksi Konten</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`w-2 h-2 rounded-full${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-mutedForeground'}`} />
+                                                        <p className="text-[10px] font-black text-accent uppercase">
+                                                            {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0
+                                                                ? `${selectedTask.result_type === 'video' ? 'Video available' : `${(selectedTask.result_assets as any[]).length}photos in gallery`}`
+                                                                : 'No uploaded results'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className={`shrink-0 w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-xs transition-all border-[3px] border-border shadow-hard-mini flex items-center justify-center gap-3${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-foreground text-background dark:bg-muted dark:text-foreground hover:bg-foreground/10'}`}>
+                                                {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'Lihat Hasil' : 'Upload Hasil'}<Plus size={16} strokeWidth={4} />
+                                            </div>
+                                        </div>
+
+                                        {/* Assets Storage Grid (Moved to Brief tab for Mobile) */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {(() => {
+                                                const isVideo = (selectedTask.type || '').toLowerCase().includes('video') || (selectedTask.type || '').toLowerCase().includes('reels');
+                                                return (
+                                                    <div className={`border-[3.5px] rounded-[2rem] p-6 transition-all bg-card relative overflow-hidden group${isVideo ? 'border-dashed border-border bg-muted/30 opacity-60' : 'border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl'}`}>
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-xl text-violet-600 dark:text-violet-400 border-[2px] border-border">
+                                                                    <ImageIcon size={18} strokeWidth={3} />
+                                                                </div>
+                                                                <span className="text-xs font-black text-foreground">Upload Image</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {(selectedTask as any).asset_url ? (
+                                                            <div className="relative group/asset rounded-2xl overflow-hidden border-[3px] border-border shadow-hard-mini transform transition-transform hover:scale-[1.02]">
+                                                                <img src={(selectedTask as any).asset_url} alt="Asset" className="w-full h-32 object-cover" />
+                                                                <div className="absolute inset-0 bg-foreground/80 opacity-0 group-hover/asset:opacity-100 transition-all flex items-center justify-center gap-2">
+                                                                    <button onClick={() => assetInputRef.current?.click()} className="p-2 bg-card text-foreground rounded-lg border-[2px] border-border shadow-hard-mini active:translate-y-0.5"><Edit size={16} /></button>
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            await supabase.from('content_items').update({ asset_url: null }).eq('id', selectedTask.id);
+                                                                            setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, asset_url: undefined } : t));
+                                                                            setSelectedTask(prev => prev ? { ...prev, asset_url: undefined } : null);
+                                                                        }}
+                                                                        className="p-2 bg-rose-500 text-white rounded-lg border-[2px] border-border shadow-hard-mini active:translate-y-0.5"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => !isVideo && assetInputRef.current?.click()}
+                                                                disabled={isVideo || savingAsset}
+                                                                className={`w-full h-32 border-[3px] border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-all ${isVideo ? 'border-border cursor-not-allowed' : 'border-violet-300 dark:border-violet-500/30 bg-violet-50/50 dark:bg-violet-500/5 hover:bg-violet-50 hover:border-violet-500 cursor-pointer text-violet-500'}`}
+                                                            >
+                                                                {savingAsset ? <Loader2 size={24} className="animate-spin" /> : <Upload size={24} strokeWidth={3} />}
+                                                                <span className="text-[11px] font-black">JPG / PNG</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
+                                            <div className="border-[3.5px] border-border bg-card rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all relative overflow-hidden">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 border-[2px] border-border">
+                                                            <FolderOpen size={18} strokeWidth={3} />
+                                                        </div>
+                                                        <span className="text-xs font-black text-foreground">Google Drive</span>
+                                                    </div>
+                                                </div>
+
+                                                {(selectedTask as any).drive_folder_url ? (
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const embedUrl = getDriveEmbedUrl((selectedTask as any).drive_folder_url);
+                                                                    setDrivePreviewUrl(embedUrl);
+                                                                    setIsDrivePreviewOpen(true);
+                                                                }}
+                                                                className="flex-1 py-2.5 bg-emerald-500 text-white font-black text-[11px] border-[2.5px] border-border rounded-xl shadow-hard-mini active:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                                                            >
+                                                                <Eye size={14} /> Preview
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    await supabase.from('content_items').update({ drive_folder_url: null }).eq('id', selectedTask.id);
+                                                                    setTasks(prev => prev.map(t => t.id === selectedTask.id ? { ...t, drive_folder_url: undefined } : t));
+                                                                    setSelectedTask(prev => prev ? { ...prev, drive_folder_url: undefined } : null);
+                                                                }}
+                                                                className="p-2.5 bg-card border-[2.5px] border-border text-rose-500 rounded-xl shadow-hard-mini active:translate-y-0.5"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                        <a href={(selectedTask as any).drive_folder_url} target="_blank" rel="noreferrer" className="block text-center text-[8px] font-black text-mutedForeground hover:text-accent truncate px-2">Open Full Url</a>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-2">
+                                                        <input
+                                                            type="url"
+                                                            placeholder="Paste link drive..."
+                                                            value={driveUrlInput}
+                                                            onChange={e => setDriveUrlInput(e.target.value)}
+                                                            className="w-full px-4 py-2 bg-muted border-[2.5px] border-border rounded-xl text-[11px] font-black placeholder:text-mutedForeground focus:bg-card outline-none"
+                                                        />
+                                                        <button
+                                                            onClick={handleSaveDriveUrl}
+                                                            disabled={!driveUrlInput.trim() || savingDriveUrl}
+                                                            className="py-2.5 bg-emerald-500 text-white font-black text-[10px] border-[2.5px] border-border shadow-hard-mini rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                                        >
+                                                            Link Drive
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Mobile-only Action Block in Brief Tab */}
+                                        <div className="lg:hidden grid grid-cols-2 gap-3 pt-4">
+                                            <button
+                                                onClick={() => {
+                                                    setIsDetailModalOpen(false);
+                                                    handleOpenEditModal(selectedTask);
+                                                }}
+                                                className="py-4 bg-violet-600 text-white font-black text-xs border-[3px] border-border rounded-xl shadow-hard flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                            >
+                                                <Edit size={16} strokeWidth={3} /> Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteContent(selectedTask.id)}
+                                                className="py-4 bg-card text-rose-500 font-black text-xs border-[3px] border-border rounded-xl shadow-hard flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                            >
+                                                <Trash2 size={16} strokeWidth={3} /> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Assets Tab Content (Mobile Only Placeholder for balancing 3 tabs) */}
+                                    <div className={`${mobileDetailTab === 'assets' ? 'block' : 'hidden'} space-y-6 md:hidden`}>
+                                        <div className="bg-sky-50 dark:bg-sky-500/10 p-5 rounded-[2rem] border-[3.5px] border-border shadow-hard space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-card rounded-xl border-[2px] border-border shadow-hard-mini flex items-center justify-center text-sky-500">
+                                                    <LinkIcon size={18} strokeWidth={3} />
+                                                </div>
+                                                <p className="font-black text-[12px] text-foreground uppercase tracking-widest">Postingan Live</p>
+                                            </div>
+                                            {selectedTask.contentLink ? (
+                                                <a
+                                                    href={selectedTask.contentLink}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="w-full py-4 bg-sky-500 text-white font-black text-[11px] border-[2.5px] border-border rounded-xl hover:bg-sky-600 transition-all shadow-hard-mini flex items-center justify-center gap-2 active:translate-y-0.5"
+                                                >
+                                                    Buka Link Live <ExternalLink size={14} strokeWidth={3} />
+                                                </a>
+                                            ) : (
+                                                <div className="w-full py-4 bg-muted text-mutedForeground font-black text-[10px] border-[2.5px] border-border rounded-xl text-center grayscale opacity-60 italic">
+                                                    Belum ada link postingan live
                                                 </div>
                                             )}
                                         </div>
+                                        <div className="bg-card border-[3.5px] border-dashed border-border rounded-[2rem] p-10 flex flex-col items-center justify-center text-center gap-3 opacity-60">
+                                            <ImageIcon size={40} className="text-mutedForeground" />
+                                            <p className="text-xs font-bold text-mutedForeground">Gunakan tab 'Brief' untuk mengelola <br /> naskah dan file produksi lainnya.</p>
+                                        </div>
+
+                                        {/* Quick Approval Action Block in Assets Tab */}
+                                        {(currentUserRole === 'Admin' || currentUserRole === 'Owner' || currentUserRole === 'Developer') &&
+                                            selectedTask.status !== ContentStatus.PUBLISHED &&
+                                            selectedTask.approval_status !== 'approved' && (
+                                                <div className="flex flex-col gap-3 pt-2">
+                                                    <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest text-center">Quick Approval</p>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            onClick={() => handleApprove(selectedTask.id, 'approved')}
+                                                            className="h-14 bg-emerald-500 text-white font-black text-xs border-[3px] border-border rounded-2xl shadow-hard flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                                        >
+                                                            <Check size={18} strokeWidth={4} /> Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleApprove(selectedTask.id, 'revision')}
+                                                            className="h-14 bg-rose-500 text-white font-black text-xs border-[3px] border-border rounded-2xl shadow-hard flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                                        >
+                                                            <RefreshCw size={18} strokeWidth={4} /> Revisi
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
 
                                 {/* SIDEBAR (RIGHT) */}
-                                <div className="w-full lg:w-80 space-y-6 order-1 lg:order-2 shrink-0">
+                                <div className={`w-full lg:w-80 space-y-6 order-2 lg:order-2 shrink-0 ${mobileDetailTab === 'info' ? 'block' : 'hidden lg:block'}`}>
                                     {/* 1. Status Indicator */}
                                     <div className="bg-foreground text-background dark:bg-slate-950/40 dark:text-foreground p-6 rounded-[2.5rem] border-[3.5px] border-foreground dark:border-border shadow-hard space-y-4">
                                         <div className="flex items-center justify-between">
@@ -2602,10 +2765,33 @@ export const ContentPlanDetail: React.FC = () => {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Mobile Approval Action Block */}
+                                        {(currentUserRole === 'Admin' || currentUserRole === 'Owner' || currentUserRole === 'Developer') &&
+                                            selectedTask.status !== ContentStatus.PUBLISHED &&
+                                            selectedTask.approval_status !== 'approved' && (
+                                                <div className="lg:hidden flex flex-col gap-3 pt-2">
+                                                    <p className="text-[10px] font-black text-background/60 dark:text-foreground/60 uppercase tracking-widest text-center">Quick Approval</p>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            onClick={() => handleApprove(selectedTask.id, 'approved')}
+                                                            className="h-12 bg-emerald-500 text-white font-black text-xs border-[2.5px] border-background dark:border-slate-800 rounded-xl shadow-hard-mini flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                                        >
+                                                            <Check size={16} strokeWidth={4} /> Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleApprove(selectedTask.id, 'revision')}
+                                                            className="h-12 bg-rose-500 text-white font-black text-xs border-[2.5px] border-background dark:border-slate-800 rounded-xl shadow-hard-mini flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                                        >
+                                                            <RefreshCw size={16} strokeWidth={4} /> Revisi
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                     </div>
 
                                     {/* 2. Metadata Bento Sidebar */}
-                                    <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-6 space-y-6">
+                                    <div className="bg-card border-[3.5px] border-border rounded-[2rem] md:rounded-[2.5rem] shadow-hard p-5 md:p-6 space-y-5 md:space-y-6">
                                         <h5 className="text-[10px] font-black text-mutedForeground mb-2 px-1">Details & Context</h5>
 
                                         {[
@@ -2632,8 +2818,8 @@ export const ContentPlanDetail: React.FC = () => {
                                         ))}
                                     </div>
 
-                                    {/* 3. Post Link (Compact) */}
-                                    <div className="bg-sky-50 dark:bg-sky-500/10 p-5 rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-4">
+                                    {/* 3. Post Link (Compact)-Visible ONLY in Info tab for Desktop, Assets tab for Mobile */}
+                                    <div className={`${mobileDetailTab === 'assets' ? 'block' : 'hidden lg:block'}bg-sky-50 dark:bg-sky-500/10 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-4`}>
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-card rounded-xl border-[2px] border-border shadow-hard-mini flex items-center justify-center text-sky-500">
                                                 <LinkIcon size={18} strokeWidth={3} />
@@ -2645,31 +2831,31 @@ export const ContentPlanDetail: React.FC = () => {
                                                 href={selectedTask.contentLink}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="w-full py-3 bg-sky-500 text-white font-black text-[10px] border-[2.5px] border-border rounded-xl hover:bg-sky-600 transition-all shadow-hard-mini flex items-center justify-center gap-2 active:translate-y-0.5"
+                                                className="w-full py-3 md:py-4 bg-sky-500 text-white font-black text-[10px] border-[2.5px] border-border rounded-xl hover:bg-sky-600 transition-all shadow-hard-mini flex items-center justify-center gap-2 active:translate-y-0.5"
                                             >
                                                 Buka Link <ExternalLink size={14} strokeWidth={3} />
                                             </a>
                                         ) : (
-                                            <div className="w-full py-3 bg-muted text-mutedForeground font-black text-[9px] border-[2.5px] border-border rounded-xl text-center grayscale opacity-60 italic">
+                                            <div className="w-full py-3 md:py-4 bg-muted text-mutedForeground font-black text-[9px] border-[2.5px] border-border rounded-xl text-center grayscale opacity-60 italic">
                                                 No link added
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* 4. Action Block */}
-                                    <div className="grid grid-cols-2 gap-4 pt-4">
+                                    {/* 4. Action Block (Desktop Only) */}
+                                    <div className="hidden lg:grid grid-cols-2 gap-3 md:gap-4 pt-2 md:pt-4">
                                         <button
                                             onClick={() => {
                                                 setIsDetailModalOpen(false);
                                                 handleOpenEditModal(selectedTask);
                                             }}
-                                            className="py-4 bg-violet-600 text-white font-black text-[10px] border-[3px] border-border rounded-2xl hover:bg-violet-700 transition-all shadow-hard active:translate-y-1 flex items-center justify-center gap-2"
+                                            className="py-3 md:py-4 bg-violet-600 text-white font-black text-[10px] border-[3px] border-border rounded-xl md:rounded-2xl hover:bg-violet-700 transition-all shadow-hard active:translate-y-1 flex items-center justify-center gap-2"
                                         >
                                             <Edit size={16} strokeWidth={3} /> Edit
                                         </button>
                                         <button
                                             onClick={() => handleDeleteContent(selectedTask.id)}
-                                            className="py-4 bg-card text-rose-500 font-black text-[10px] border-[3px] border-border rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-hard active:translate-y-1 flex items-center justify-center gap-2"
+                                            className="py-3 md:py-4 bg-card text-rose-500 font-black text-[10px] border-[3px] border-border rounded-xl md:rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-hard active:translate-y-1 flex items-center justify-center gap-2"
                                         >
                                             <Trash2 size={16} strokeWidth={3} /> Delete
                                         </button>
@@ -2677,7 +2863,7 @@ export const ContentPlanDetail: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </Modal>
+                    </Modal >
                 )
             }
 
@@ -2809,7 +2995,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         <h5 className="text-xs font-black text-mutedForeground">Pilih Foto (Maks 15)</h5>
                                         <div className="flex items-center gap-2">
                                             <span className={`text-xs font-black px-2 py-0.5 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length >= 15 ? 'bg-red-100 text-red-600' : 'bg-accent/10 text-accent'}`}>
-                                                {(selectedTask?.result_assets as any[] || []).length} / 15
+                                                {(selectedTask?.result_assets as any[] || []).length}/ 15
                                             </span>
                                         </div>
                                     </div>
@@ -2826,7 +3012,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         onClick={() => resultInputRef.current?.click()}
                                         disabled={uploadingResults || (selectedTask?.result_assets as any[] || []).length >= 15}
-                                        className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98] ${uploadingResults ? 'bg-muted border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-muted border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                        className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98]${uploadingResults ? 'bg-muted border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-muted border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
                                     >
                                         {uploadingResults ? (
                                             <div className="flex items-center gap-3">
@@ -2935,7 +3121,7 @@ export const ContentPlanDetail: React.FC = () => {
 
                                                             return (
                                                                 <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
-                                                                    <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-muted ${isReply ? '' : ''}`}>
+                                                                    <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-muted${isReply ? '' : ''}`}>
                                                                         {/* Avatar */}
                                                                         <div className="flex-shrink-0 pt-0.5">
                                                                             {comment.user_avatar ? (
@@ -2950,7 +3136,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                         {/* Content */}
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="flex items-center gap-2">
-                                                                                <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
+                                                                                <span className={`text-xs font-black${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
                                                                                 <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
                                                                             </div>
 
@@ -2999,7 +3185,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                                         <button
                                                                                             key={emoji}
                                                                                             onClick={() => handleToggleReaction(comment.id, emoji)}
-                                                                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
+                                                                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border${(users as string[]).includes(currentUserId)
                                                                                                 ? 'bg-accent/10 border-accent/30 text-accent'
                                                                                                 : 'bg-muted border-slate-200 text-slate-500 hover:border-accent/30'
                                                                                                 }`}
@@ -3083,7 +3269,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                     <input
                                                         ref={commentInputRef}
                                                         type="text"
-                                                        placeholder={replyingTo ? `Balas ${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
+                                                        placeholder={replyingTo ? `Balas${replyingTo.user_name}...` : 'Tulis komentar revisi...'}
                                                         value={commentInput}
                                                         onChange={e => {
                                                             const val = e.target.value;
@@ -3147,7 +3333,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                         key={m.id}
                                                                         onClick={() => handleSelectMention(m.name)}
                                                                         onMouseEnter={() => setMentionSuggestionIndex(idx)}
-                                                                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${idx === mentionSuggestionIndex ? 'bg-accent text-white' : 'hover:bg-muted'}`}
+                                                                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors${idx === mentionSuggestionIndex ? 'bg-accent text-white' : 'hover:bg-muted'}`}
                                                                     >
                                                                         {m.avatar ? (
                                                                             <img src={m.avatar} alt="" className="w-6 h-6 rounded-lg object-cover border border-slate-200" />
@@ -3157,8 +3343,8 @@ export const ContentPlanDetail: React.FC = () => {
                                                                             </div>
                                                                         )}
                                                                         <div className="flex-1 min-w-0">
-                                                                            <p className={`text-xs font-black truncate ${idx === mentionSuggestionIndex ? 'text-white' : 'text-foreground'}`}>{m.name}</p>
-                                                                            <p className={`text-[9px] font-bold truncate ${idx === mentionSuggestionIndex ? 'text-white/70' : 'text-mutedForeground opacity-70'}`}>@{m.name.toLowerCase().replace(/\s/g, '')}</p>
+                                                                            <p className={`text-xs font-black truncate${idx === mentionSuggestionIndex ? 'text-white' : 'text-foreground'}`}>{m.name}</p>
+                                                                            <p className={`text-[9px] font-bold truncate${idx === mentionSuggestionIndex ? 'text-white/70' : 'text-mutedForeground opacity-70'}`}>@{m.name.toLowerCase().replace(/\s/g, '')}</p>
                                                                         </div>
                                                                     </button>
                                                                 ))
@@ -3286,64 +3472,93 @@ export const ContentPlanDetail: React.FC = () => {
                 </div>
             </Modal>
 
-            {/* Modal Create/Edit Content - Redesigned to Dashboard Layout */}
+            {/* Modal Create/Edit Content-Redesigned to Dashboard Layout */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 maxWidth="max-w-7xl"
+                title={
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-violet-600 rounded-lg shadow-hard-mini text-white">
+                            {modalMode === 'create' ? <Plus size={18} strokeWidth={3} /> : <Edit size={18} strokeWidth={3} />}
+                        </div>
+                        <span className="text-foreground">{modalMode === 'create' ? 'Buat Konten Baru' : 'Edit Konten'}</span>
+                    </div>
+                }
             >
-                <form onSubmit={handleSaveContent} className="relative">
-                    <div className="h-[85vh] md:h-[80vh] overflow-y-auto no-scrollbar px-1 pt-2 pb-10">
+                <form onSubmit={handleSaveContent} className="relative h-full flex flex-col">
+                    <div className="flex-1 overflow-y-auto no-scrollbar px-1 pt-2 pb-24 md:pb-10">
+                        {/* Mobile Tab Navigation */}
+                        <div className="flex lg:hidden items-center p-1.5 bg-muted rounded-2xl border-[3px] border-border shadow-inner mb-6 sticky top-0 z-50 backdrop-blur-md">
+                            {[
+                                { id: 'content', label: 'Konten', icon: <Layout size={14} /> },
+                                { id: 'brief', label: 'Brief', icon: <FileText size={14} /> },
+                                { id: 'config', label: 'Config', icon: <Settings size={14} /> },
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setActiveEditTab(tab.id)}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-black transition-all ${activeEditTab === tab.id ? 'bg-card text-foreground shadow-hard-mini border-[2.5px] border-border' : 'text-mutedForeground hover:text-foreground'}`}
+                                >
+                                    {tab.icon}{tab.label}
+                                </button>
+                            ))}
+                        </div>
+
                         <div className="flex flex-col lg:flex-row gap-10 items-start">
 
                             {/* LEFT SIDE: MAIN WRITING AREA */}
                             <div className="flex-1 space-y-8 min-w-0">
-                                {/* 1. HERO TITLE */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400 border-[2px] border-border shadow-hard-mini-mini">
-                                            <FileText size={18} strokeWidth={3} />
+                                {/* 1. HERO TITLE & 2. PLATFORM (Tab: Content) */}
+                                <div className={`${activeEditTab === 'content' ? 'block' : 'hidden lg:block'} space-y-8`}>
+                                    {/* 1. HERO TITLE */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center text-violet-600 dark:text-violet-400 border-[2px] border-border shadow-hard-mini-mini">
+                                                <FileText size={18} strokeWidth={3} />
+                                            </div>
+                                            <span className="text-[13px] font-black text-mutedForeground">Judul Konten</span>
                                         </div>
-                                        <span className="text-[13px] font-black text-mutedForeground">Judul Konten</span>
+                                        <input
+                                            placeholder="Tulis Judul Konten Kamu Disini..."
+                                            value={formData.title}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                            required
+                                            className="w-full bg-transparent border-none outline-none font-heading font-black text-3xl md:text-5xl text-foreground placeholder:text-mutedForeground/30 focus:ring-0 p-0 tracking-tight"
+                                        />
                                     </div>
-                                    <input
-                                        placeholder="Tulis Judul Konten Kamu Disini..."
-                                        value={formData.title}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        required
-                                        className="w-full bg-transparent border-none outline-none font-heading font-black text-3xl md:text-5xl text-foreground placeholder:text-mutedForeground/30 focus:ring-0 p-0 tracking-tight"
-                                    />
+
+                                    {/* 2. PLATFORM SELECTOR (VISUAL) */}
+                                    <div className="space-y-4">
+                                        <label className="text-[14px] font-black text-mutedForeground px-1">Social Platform</label>
+                                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                                            {[
+                                                { id: Platform.INSTAGRAM, icon: <Instagram size={20} />, active: 'bg-pink-500 text-white shadow-hard-mini' },
+                                                { id: Platform.TIKTOK, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>, active: 'bg-foreground text-background shadow-hard-mini dark:bg-muted dark:text-foreground' },
+                                                { id: Platform.YOUTUBE, icon: <Youtube size={20} />, active: 'bg-rose-600 text-white shadow-hard-mini' },
+                                                { id: Platform.LINKEDIN, icon: <Linkedin size={20} />, active: 'bg-blue-600 text-white shadow-hard-mini' },
+                                                { id: Platform.THREADS, icon: <AtSign size={20} />, active: 'bg-indigo-600 text-white shadow-hard-mini' },
+                                                { id: Platform.FACEBOOK, icon: <Facebook size={20} />, active: 'bg-sky-600 text-white shadow-hard-mini' },
+                                            ].map((p) => (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, platform: p.id })}
+                                                    className={`h-14 flex items-center justify-center rounded-2xl border-[3.5px] border-border transition-all transform active:translate-y-1 ${formData.platform === p.id ? p.active : 'bg-card text-mutedForeground hover:border-accent hover:text-accent'}`}
+                                                    title={p.id}
+                                                >
+                                                    {p.icon}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* 2. PLATFORM SELECTOR (VISUAL) */}
-                                <div className="space-y-4">
-                                    <label className="text-[14px] font-black text-mutedForeground px-1">Social Platform</label>
-                                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                                        {[
-                                            { id: Platform.INSTAGRAM, icon: <Instagram size={20} />, active: 'bg-pink-500 text-white shadow-hard-mini' },
-                                            { id: Platform.TIKTOK, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>, active: 'bg-foreground text-background shadow-hard-mini dark:bg-muted dark:text-foreground' },
-                                            { id: Platform.YOUTUBE, icon: <Youtube size={20} />, active: 'bg-rose-600 text-white shadow-hard-mini' },
-                                            { id: Platform.LINKEDIN, icon: <Linkedin size={20} />, active: 'bg-blue-600 text-white shadow-hard-mini' },
-                                            { id: Platform.THREADS, icon: <AtSign size={20} />, active: 'bg-indigo-600 text-white shadow-hard-mini' },
-                                            { id: Platform.FACEBOOK, icon: <Facebook size={20} />, active: 'bg-sky-600 text-white shadow-hard-mini' },
-                                        ].map((p) => (
-                                            <button
-                                                key={p.id}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, platform: p.id })}
-                                                className={`h-14 flex items-center justify-center rounded-2xl border-[3.5px] border-border transition-all transform active:translate-y-1 ${formData.platform === p.id ? p.active : 'bg-card text-mutedForeground hover:border-accent hover:text-accent'}`}
-                                                title={p.id}
-                                            >
-                                                {p.icon}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* 3. SCRIPT & RESOURCES */}
-                                <div className="space-y-4">
+                                {/* 3. SCRIPT & RESOURCES (Tab: Brief) */}
+                                <div className={`${activeEditTab === 'brief' ? 'block' : 'hidden lg:block'} space-y-4`}>
                                     <label className="text-[14px] font-black text-mutedForeground px-1">Production Brief / Script</label>
-                                    <div className="bg-emerald-50/40 dark:bg-emerald-500/5 p-8 rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-6 text-foreground">
+                                    <div className="bg-emerald-50/40 dark:bg-emerald-500/5 p-4 md:p-8 rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-6 text-foreground">
                                         {/* Brief Input */}
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 mb-1">
@@ -3353,7 +3568,7 @@ export const ContentPlanDetail: React.FC = () => {
                                             <div className="flex gap-3">
                                                 <input
                                                     className="flex-1 px-5 py-4 bg-background border-[3px] border-border rounded-2xl outline-none focus:border-emerald-500 focus:shadow-hard-mini transition-all font-sans font-bold text-[14px] text-foreground placeholder:text-mutedForeground/50"
-                                                    placeholder="Paste Link Google Doc atau Tulis Brief singkat..."
+                                                    placeholder="Paste Link Google Doc..."
                                                     value={formData.script}
                                                     onChange={(e) => setFormData({ ...formData, script: e.target.value })}
                                                 />
@@ -3385,15 +3600,10 @@ export const ContentPlanDetail: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* 4. TEAM & CATEGORY */}
-                                <div className="space-y-4">
+                                {/* 4. TEAM & CATEGORY (Tab: Config) */}
+                                <div className={`${activeEditTab === 'config' ? 'block' : 'hidden lg:block'} space-y-4`}>
                                     <label className="text-[14px] font-black text-mutedForeground px-1">Team & Category</label>
-                                    <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-7 relative overflow-visible">
-                                        {/* Background Effect Container - Clipped */}
-                                        <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
-                                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/5 -ml-16 -mb-16 rounded-full blur-3xl" />
-                                        </div>
-
+                                    <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-5 md:p-7 relative overflow-visible">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                                             {/* PIC */}
                                             <div className="space-y-4">
@@ -3401,7 +3611,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                     <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg border-2 border-border text-emerald-600 dark:text-emerald-400">
                                                         <User size={14} className="currentColor" />
                                                     </div>
-                                                    <span className="text-[13px] font-black text-foreground">Project Lead / PIC</span>
+                                                    <span className="text-[13px] font-black text-foreground">PIC</span>
                                                 </div>
                                                 <CreatableSelect
                                                     placeholder="Assign To..."
@@ -3419,7 +3629,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                     <div className="p-2 bg-sky-100 dark:bg-sky-500/20 rounded-lg border-2 border-border text-sky-600 dark:text-sky-400">
                                                         <CheckCircle size={14} className="currentColor" />
                                                     </div>
-                                                    <span className="text-[13px] font-black text-foreground">Final Approval By</span>
+                                                    <span className="text-[13px] font-black text-foreground">Approver</span>
                                                 </div>
                                                 <CreatableSelect
                                                     placeholder="Approver..."
@@ -3437,10 +3647,10 @@ export const ContentPlanDetail: React.FC = () => {
                                                     <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg border-2 border-border text-amber-600 dark:text-amber-400">
                                                         <Hash size={14} className="currentColor" />
                                                     </div>
-                                                    <span className="text-[13px] font-black text-foreground">Pillar / Category</span>
+                                                    <span className="text-[13px] font-black text-foreground">Category</span>
                                                 </div>
                                                 <input
-                                                    placeholder="E.g. Edukasi, Promo..."
+                                                    placeholder="E.g. Edukasi..."
                                                     value={formData.pillar}
                                                     onChange={(e) => setFormData({ ...formData, pillar: e.target.value })}
                                                     className="w-full h-[52px] bg-background border-[3px] border-border rounded-2xl px-5 font-black text-[14px] focus:border-amber-500 focus:shadow-hard-mini-mini outline-none transition-all"
@@ -3451,10 +3661,10 @@ export const ContentPlanDetail: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* RIGHT SIDE: SIDEBAR METADATA */}
-                            <div className="w-full lg:w-80 space-y-6 shrink-0">
+                            {/* RIGHT SIDE: SIDEBAR METADATA (Tab: Config on Mobile, Sidebar on Desktop) */}
+                            <div className={`${activeEditTab === 'config' ? 'block' : 'hidden lg:block'} w-full lg:w-80 space-y-6 shrink-0 pb-10 md:pb-0`}>
                                 {/* 1. STATUS & PRIORITY BENTO */}
-                                <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-7 space-y-8 relative">
+                                <div className="bg-card border-[3.5px] border-border rounded-[2.5rem] shadow-hard p-5 md:p-7 space-y-8 relative">
                                     <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 -mr-16 -mt-16 rounded-full blur-3xl" />
                                     </div>
@@ -3535,15 +3745,15 @@ export const ContentPlanDetail: React.FC = () => {
                                                             ? 'bg-rose-500 border-border text-white shadow-hard-mini-mini'
                                                             : 'bg-background border-border text-mutedForeground hover:border-rose-400 hover:shadow-hard-mini-mini active:scale-95'}`}
                                                     >
-                                                        {p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()}
+                                                        {p.charAt(0).toUpperCase() + p.slice(0, 1).toLowerCase()}
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* 2. ACTION BUTTONS SIDEBAR */}
-                                    <div className="space-y-3 pt-2">
+                                    {/* 2. ACTION BUTTONS SIDEBAR (Desktop Only) */}
+                                    <div className="hidden lg:block space-y-3 pt-2">
                                         <Button
                                             type="submit"
                                             size="large"
@@ -3564,10 +3774,28 @@ export const ContentPlanDetail: React.FC = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Mobile Sticky Footer */}
+                    <div className="lg:hidden fixed bottom-5 left-4 right-4 p-4 bg-card border-[3px] border-border shadow-hard rounded-[2rem] z-[60] flex gap-3">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setIsModalOpen(false)}
+                            className="flex-1 h-14 rounded-2xl font-black text-xs"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="flex-[2] h-14 rounded-2xl shadow-hard font-black text-xs bg-violet-600 border-[3px] border-border text-white"
+                        >
+                            {modalMode === 'create' ? 'Simpan Konten' : 'Update Perubahan'}
+                        </Button>
+                    </div>
                 </form>
             </Modal>
 
-            {/* Invite Code Modal - Unchanged */}
+            {/* Invite Code Modal-Unchanged */}
             <Modal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
@@ -3643,13 +3871,13 @@ export const ContentPlanDetail: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[2px] border-slate-900 ${getStatusDot(member.online_status || 'offline')}`}></div>
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[2px] border-slate-900${getStatusDot(member.online_status || 'offline')}`}></div>
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-bold text-foreground truncate">{member.name}</h4>
-                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border ${member.role === 'Developer'
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border${member.role === 'Developer'
                                             ? 'bg-purple-100 text-purple-700 border-purple-200'
                                             : member.role === 'Admin' || member.role === 'Owner'
                                                 ? 'bg-amber-100 text-amber-700 border-amber-200'
@@ -3666,7 +3894,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         ) : (
                                             <WifiOff size={10} className="text-mutedForeground" />
                                         )}
-                                        <span className={`text-[10px] font-bold ${member.online_status === 'online'
+                                        <span className={`text-[10px] font-bold${member.online_status === 'online'
                                             ? 'text-emerald-600'
                                             : member.online_status === 'idle'
                                                 ? 'text-amber-600'
@@ -3676,7 +3904,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 ? 'Sedang Aktif'
                                                 : member.online_status === 'idle'
                                                     ? 'Sedang Idle'
-                                                    : `Terakhir aktif: ${formatLastSeen(member.last_activity_at)}`
+                                                    : `Terakhir aktif:${formatLastSeen(member.last_activity_at)}`
                                             }
                                         </span>
                                     </div>
@@ -3722,12 +3950,12 @@ export const ContentPlanDetail: React.FC = () => {
                                     key={t.value}
                                     type="button"
                                     onClick={() => setNewAssetType(t.value)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black border-[3px] transition-all hover:-translate-y-1 active:scale-95 ${newAssetType === t.value
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black border-[3px] transition-all hover:-translate-y-1 active:scale-95${newAssetType === t.value
                                         ? 'bg-card border-slate-900 text-foreground shadow-[4px_4px_0px_#0f172a]'
                                         : 'bg-muted border-slate-200 text-mutedForeground hover:border-slate-900 hover:text-foreground hover:shadow-[4px_4px_0px_#0f172a]'
                                         }`}
                                 >
-                                    {t.icon} {t.label}
+                                    {t.icon}{t.label}
                                 </button>
                             ))}
                         </div>
@@ -3745,7 +3973,7 @@ export const ContentPlanDetail: React.FC = () => {
                         />
                     </div>
 
-                    {/* Content - Dynamic based on type */}
+                    {/* Content-Dynamic based on type */}
                     {newAssetType === 'note' && (
                         <div>
                             <label className="block text-xs font-black text-foreground mb-2">Catatan</label>

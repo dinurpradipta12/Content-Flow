@@ -1641,7 +1641,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         </div>
                     </header>
 
-                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full pb-24 sm:pb-24 md:pb-8 lg:pb-10 ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8' : 'p-4 sm:p-4 md:p-6 md:py-6 lg:px-6 lg:py-8'}`}>
+                    <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0 bg-background w-full pb-20 sm:pb-20 md:pb-8 lg:pb-10 ${location.pathname.startsWith('/carousel') ? 'p-2 sm:p-3 md:p-4 md:px-6 md:py-8' : 'p-4 sm:p-4 md:p-6 md:py-6 lg:px-6 lg:py-8'}`}>
                         <div className="animate-bounce-in flex-1 min-h-0 flex flex-col w-full max-w-full">
                             {children}
                         </div>
