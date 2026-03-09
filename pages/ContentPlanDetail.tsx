@@ -117,7 +117,7 @@ const RichTextRenderer: React.FC<{ text: string; onPdfClick?: (url: string) => v
                                     <img src={fileUrl} alt="preview" className="w-full h-full object-cover" />
                                 </div>
                             ) : (
-                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center flex-shrink-0${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf'))
+                                <div className={`w-12 h-12 rounded-lg border flex items-center justify-center flex-shrink-0 ${(fileName.toLowerCase().endsWith('.pdf') || fileUrl.startsWith('data:application/pdf'))
                                     ? 'bg-red-50 text-red-500 border-red-100'
                                     : 'bg-slate-100 text-slate-500 border-slate-200'
                                     }`}>
@@ -397,7 +397,7 @@ const KanbanColumn: React.FC<{
                 <div className="flex items-center justify-between pb-5 border-b-[4px] border-border group">
                     <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-black text-mutedForeground">Status</span>
-                        <h3 className={`font-heading font-black text-lg sm: text-xl tracking-wide${textColor}drop-shadow-sm group-hover: translate-x-1 transition-transform`}>
+                        <h3 className={`font-heading font-black text-lg sm:text-xl tracking-wide ${textColor} drop-shadow-sm group-hover:translate-x-1 transition-transform`}>
                             {formatStatus(status)}
                         </h3>
                     </div>
@@ -2427,13 +2427,14 @@ export const ContentPlanDetail: React.FC = () => {
                             {/* MOBILE TAB NAVIGATION */}
                             <div className="flex lg:hidden items-center p-1.5 bg-muted rounded-2xl border-[3px] border-border shadow-inner mb-6 sticky top-0 z-20 backdrop-blur-md">
                                 {[
+                                    { id: 'info', label: 'Info', icon: <Info size={14} /> },
                                     { id: 'brief', label: 'Brief', icon: <FileText size={14} /> },
                                     { id: 'assets', label: 'Assets', icon: <ImageIcon size={14} /> }
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setMobileDetailTab(tab.id as any)}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-[11px] transition-all${mobileDetailTab === tab.id ? 'bg-card text-foreground shadow-hard-mini-mini border-[2.5px] border-border' : 'text-mutedForeground hover:text-foreground hover:bg-card/50 border-[2.5px] border-transparent'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-[11px] transition-all ${mobileDetailTab === tab.id ? 'bg-card text-foreground shadow-hard-mini-mini border-[2.5px] border-border' : 'text-mutedForeground hover:text-foreground hover:bg-card/50 border-[2.5px] border-transparent'}`}
                                     >
                                         {tab.icon}{tab.label}
                                     </button>
@@ -2442,7 +2443,7 @@ export const ContentPlanDetail: React.FC = () => {
 
                             <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-stretch lg:items-start">
                                 {/* MAIN CONTENT (LEFT) */}
-                                <div className={`flex-1 w-full space-y-6 md:space-y-8 min-w-0 order-1 lg:order-1${mobileDetailTab === 'info' ? 'hidden lg:block' : 'block'}`}>
+                                <div className="flex-1 w-full space-y-6 md:space-y-8 min-w-0 order-1 lg:order-1 block">
                                     <div className="space-y-4">
                                         <div className="flex items-start justify-between gap-6">
                                             <div className="space-y-4">
@@ -2499,7 +2500,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                             }
                                                         ].map((item, idx) => (
                                                             <div key={idx} className="flex items-center gap-3 p-3 bg-card border-[2.5px] border-border rounded-2xl shadow-hard-mini w-full">
-                                                                <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border-[2px] border-border shadow-hard-mini-mini${item.color}`}>
+                                                                <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center border-[2px] border-border shadow-hard-mini-mini ${item.color}`}>
                                                                     {item.icon}
                                                                 </div>
                                                                 <div className="flex flex-col min-w-0 flex-1">
@@ -2515,7 +2516,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     </div>
 
                                     {/* Brief & Script-Priority Item */}
-                                    <div className={`${mobileDetailTab === 'brief' ? 'block' : 'hidden lg:block'}space-y-6 md:space-y-8`}>
+                                    <div className={`${mobileDetailTab === 'brief' ? 'block' : 'hidden lg:block'} space-y-6 md:space-y-8`}>
                                         <div className="bg-card rounded-[1.75rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard relative overflow-hidden group/script hover:shadow-hard-xl transition-all">
                                             <div className="absolute top-0 right-0 p-4 md:p-8 opacity-10 group-hover/script:opacity-20 transition-opacity pointer-events-none">
                                                 <StickyNote strokeWidth={3} className="text-foreground w-20 h-20 md:w-[120px] md:h-[120px]" />
@@ -2547,14 +2548,14 @@ export const ContentPlanDetail: React.FC = () => {
                                         </div>
 
                                         {/* Content Results (Moved to Brief tab for Mobile) */}
-                                        <div className={`p-4 md:p-8 rounded-[1.75rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all cursor-pointer flex-col sm:flex-row items-center justify-between gap-6 group${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50/40 dark:bg-emerald-500/5' : 'bg-card'}`}
+                                        <div className={`p-4 md:p-8 rounded-[1.75rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all cursor-pointer flex-col sm:flex-row items-center justify-between gap-6 group ${selectedTask.result_assets && (selectedTask.result_assets as any).length > 0 ? 'bg-emerald-50/40 dark:bg-emerald-500/5' : 'bg-card'}`}
                                             onClick={() => setIsResultModalOpen(true)}
                                         >
                                             <div className="flex items-center gap-4 md:gap-5 w-full">
                                                 <div className="flex flex-col gap-1">
                                                     <p className="font-heading font-black text-foreground text-base md:text-lg tracking-tight">Hasil Produksi Konten</p>
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`w-2 h-2 rounded-full${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-mutedForeground'}`} />
+                                                        <span className={`w-2 h-2 rounded-full ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-mutedForeground'}`} />
                                                         <p className="text-[10px] font-black text-accent uppercase">
                                                             {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0
                                                                 ? `${selectedTask.result_type === 'video' ? 'Video available' : `${(selectedTask.result_assets as any[]).length}photos in gallery`}`
@@ -2563,7 +2564,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className={`shrink-0 w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-xs transition-all border-[3px] border-border shadow-hard-mini flex items-center justify-center gap-3${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-foreground text-background dark:bg-muted dark:text-foreground hover:bg-foreground/10'}`}>
+                                            <div className={`shrink-0 w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-xs transition-all border-[3px] border-border shadow-hard-mini flex items-center justify-center gap-3 ${selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'bg-foreground text-background dark:bg-muted dark:text-foreground hover:bg-foreground/10'}`}>
                                                 {selectedTask.result_assets && (selectedTask.result_assets as any[]).length > 0 ? 'Lihat Hasil' : 'Upload Hasil'}<Plus size={16} strokeWidth={4} />
                                             </div>
                                         </div>
@@ -2573,7 +2574,7 @@ export const ContentPlanDetail: React.FC = () => {
                                             {(() => {
                                                 const isVideo = (selectedTask.type || '').toLowerCase().includes('video') || (selectedTask.type || '').toLowerCase().includes('reels');
                                                 return (
-                                                    <div className={`border-[3.5px] rounded-[2rem] p-6 transition-all bg-card relative overflow-hidden group${isVideo ? 'border-dashed border-border bg-muted/30 opacity-60' : 'border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl'}`}>
+                                                    <div className={`border-[3.5px] rounded-[2rem] p-6 transition-all bg-card relative overflow-hidden group ${isVideo ? 'border-dashed border-border bg-muted/30 opacity-60' : 'border-border shadow-hard hover:-translate-y-1 hover:shadow-hard-xl'}`}>
                                                         <div className="flex items-center justify-between mb-4">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-xl text-violet-600 dark:text-violet-400 border-[2px] border-border">
@@ -2753,7 +2754,13 @@ export const ContentPlanDetail: React.FC = () => {
                                             <span className="text-[10px] font-black opacity-60">Status Konten</span>
                                             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse border-[2px] border-background dark:border-slate-800" />
                                         </div>
-                                        <div className="px-5 py-3 rounded-2xl border-[3px] border-background dark:border-border shadow-hard-mini bg-background dark:bg-slate-900 text-foreground text-xs font-black flex items-center justify-center gap-3">
+                                        <div className={`px-5 py-3 rounded-2xl border-[3px] shadow-hard-mini text-xs font-black flex items-center justify-center gap-3 uppercase tracking-widest ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
+                                                selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-blue-500 text-white border-blue-700' :
+                                                    selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-400 text-amber-950 border-amber-600' :
+                                                        selectedTask.status === ContentStatus.REVISION ? 'bg-rose-500 text-white border-rose-700' :
+                                                            selectedTask.status === ContentStatus.SCHEDULED ? 'bg-fuchsia-500 text-white border-fuchsia-700' :
+                                                                'bg-emerald-500 text-white border-emerald-700'
+                                            }`}>
                                             {formatStatus(selectedTask.status)}
                                         </div>
                                         {selectedTask.approval && (
@@ -2819,7 +2826,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     </div>
 
                                     {/* 3. Post Link (Compact)-Visible ONLY in Info tab for Desktop, Assets tab for Mobile */}
-                                    <div className={`${mobileDetailTab === 'assets' ? 'block' : 'hidden lg:block'}bg-sky-50 dark:bg-sky-500/10 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-4`}>
+                                    <div className={`${mobileDetailTab === 'assets' ? 'block' : 'hidden lg:block'} bg-sky-50 dark:bg-sky-500/10 p-4 md:p-5 rounded-[2rem] md:rounded-[2.5rem] border-[3.5px] border-border shadow-hard space-y-4`}>
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-card rounded-xl border-[2px] border-border shadow-hard-mini flex items-center justify-center text-sky-500">
                                                 <LinkIcon size={18} strokeWidth={3} />
@@ -3012,7 +3019,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         onClick={() => resultInputRef.current?.click()}
                                         disabled={uploadingResults || (selectedTask?.result_assets as any[] || []).length >= 15}
-                                        className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98]${uploadingResults ? 'bg-muted border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-muted border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
+                                        className={`w-full py-5 border-3 border-dashed rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-[0.98] ${uploadingResults ? 'bg-muted border-slate-200' : (selectedTask?.result_assets as any[] || []).length >= 15 ? 'bg-muted border-slate-200 cursor-not-allowed opacity-50' : 'border-accent/20 bg-accent/5 hover:border-accent hover:bg-accent/10 cursor-pointer'}`}
                                     >
                                         {uploadingResults ? (
                                             <div className="flex items-center gap-3">
@@ -3121,7 +3128,7 @@ export const ContentPlanDetail: React.FC = () => {
 
                                                             return (
                                                                 <div key={comment.id} className={`${isReply ? 'ml-8 pl-3 border-l-2 border-slate-100' : ''}`}>
-                                                                    <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-muted${isReply ? '' : ''}`}>
+                                                                    <div className={`group flex gap-2.5 py-2 px-2 rounded-xl transition-colors hover:bg-muted ${isReply ? '' : ''}`}>
                                                                         {/* Avatar */}
                                                                         <div className="flex-shrink-0 pt-0.5">
                                                                             {comment.user_avatar ? (
@@ -3136,7 +3143,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                         {/* Content */}
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="flex items-center gap-2">
-                                                                                <span className={`text-xs font-black${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
+                                                                                <span className={`text-xs font-black ${isOwn ? 'text-accent' : 'text-slate-700'}`}>{comment.user_name}</span>
                                                                                 <span className="text-[9px] text-slate-300 font-bold">{timeAgo}</span>
                                                                             </div>
 
@@ -3185,7 +3192,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                                         <button
                                                                                             key={emoji}
                                                                                             onClick={() => handleToggleReaction(comment.id, emoji)}
-                                                                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border${(users as string[]).includes(currentUserId)
+                                                                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${(users as string[]).includes(currentUserId)
                                                                                                 ? 'bg-accent/10 border-accent/30 text-accent'
                                                                                                 : 'bg-muted border-slate-200 text-slate-500 hover:border-accent/30'
                                                                                                 }`}
@@ -3333,7 +3340,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                         key={m.id}
                                                                         onClick={() => handleSelectMention(m.name)}
                                                                         onMouseEnter={() => setMentionSuggestionIndex(idx)}
-                                                                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors${idx === mentionSuggestionIndex ? 'bg-accent text-white' : 'hover:bg-muted'}`}
+                                                                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${idx === mentionSuggestionIndex ? 'bg-accent text-white' : 'hover:bg-muted'}`}
                                                                     >
                                                                         {m.avatar ? (
                                                                             <img src={m.avatar} alt="" className="w-6 h-6 rounded-lg object-cover border border-slate-200" />
@@ -3343,8 +3350,8 @@ export const ContentPlanDetail: React.FC = () => {
                                                                             </div>
                                                                         )}
                                                                         <div className="flex-1 min-w-0">
-                                                                            <p className={`text-xs font-black truncate${idx === mentionSuggestionIndex ? 'text-white' : 'text-foreground'}`}>{m.name}</p>
-                                                                            <p className={`text-[9px] font-bold truncate${idx === mentionSuggestionIndex ? 'text-white/70' : 'text-mutedForeground opacity-70'}`}>@{m.name.toLowerCase().replace(/\s/g, '')}</p>
+                                                                            <p className={`text-xs font-black truncate ${idx === mentionSuggestionIndex ? 'text-white' : 'text-foreground'}`}>{m.name}</p>
+                                                                            <p className={`text-[9px] font-bold truncate ${idx === mentionSuggestionIndex ? 'text-white/70' : 'text-mutedForeground opacity-70'}`}>@{m.name.toLowerCase().replace(/\s/g, '')}</p>
                                                                         </div>
                                                                     </button>
                                                                 ))
@@ -3871,13 +3878,13 @@ export const ContentPlanDetail: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[2px] border-slate-900${getStatusDot(member.online_status || 'offline')}`}></div>
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[2px] border-slate-900 ${getStatusDot(member.online_status || 'offline')}`}></div>
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-bold text-foreground truncate">{member.name}</h4>
-                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border${member.role === 'Developer'
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md border ${member.role === 'Developer'
                                             ? 'bg-purple-100 text-purple-700 border-purple-200'
                                             : member.role === 'Admin' || member.role === 'Owner'
                                                 ? 'bg-amber-100 text-amber-700 border-amber-200'
@@ -3894,7 +3901,7 @@ export const ContentPlanDetail: React.FC = () => {
                                         ) : (
                                             <WifiOff size={10} className="text-mutedForeground" />
                                         )}
-                                        <span className={`text-[10px] font-bold${member.online_status === 'online'
+                                        <span className={`text-[10px] font-bold ${member.online_status === 'online'
                                             ? 'text-emerald-600'
                                             : member.online_status === 'idle'
                                                 ? 'text-amber-600'
@@ -3950,7 +3957,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     key={t.value}
                                     type="button"
                                     onClick={() => setNewAssetType(t.value)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black border-[3px] transition-all hover:-translate-y-1 active:scale-95${newAssetType === t.value
+                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black border-[3px] transition-all hover:-translate-y-1 active:scale-95 ${newAssetType === t.value
                                         ? 'bg-card border-slate-900 text-foreground shadow-[4px_4px_0px_#0f172a]'
                                         : 'bg-muted border-slate-200 text-mutedForeground hover:border-slate-900 hover:text-foreground hover:shadow-[4px_4px_0px_#0f172a]'
                                         }`}

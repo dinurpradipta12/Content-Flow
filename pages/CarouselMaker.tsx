@@ -230,6 +230,7 @@ export const CarouselMaker: React.FC = () => {
 
     return (
         <div className={`flex flex-col bg-slate-50 font-sans text-slate-900 flex-1 min-h-0 relative ${!isMobile ? 'border-4 border-slate-900 rounded-3xl shadow-[12px_12px_0px_0px_#0f172a]' : ''} overflow-hidden theme-${currentTheme}`}>
+            {isMobile && <div className="flex-shrink-0 mobile-safe-top-spacer bg-white" />}
             {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme] }} />}
 
             {showThemeModal && (
@@ -419,7 +420,10 @@ export const CarouselMaker: React.FC = () => {
                     {isMobile && (
                         <>
                             {/* Page Indicator / Mini Navigator */}
-                            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[85] flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-slate-900 shadow-mini">
+                            <div
+                                className="fixed left-1/2 -translate-x-1/2 z-[85] flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-slate-900 shadow-mini"
+                                style={{ bottom: `calc(7rem + env(safe-area-inset-bottom, 0px))` }}
+                            >
                                 <button
                                     disabled={currentPageIndex === 0}
                                     onClick={() => setCurrentPageIndex(currentPageIndex - 1)}
@@ -444,7 +448,10 @@ export const CarouselMaker: React.FC = () => {
                                 </button>
                             </div>
 
-                            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-1 px-4 py-3 bg-white border-4 border-slate-900 shadow-[8px_8px_0px_0px_#0f172a] rounded-[2rem]">
+                            <div
+                                className="fixed left-1/2 -translate-x-1/2 z-[90] flex items-center gap-1 px-4 py-3 bg-white border-4 border-slate-900 shadow-[8px_8px_0px_0px_#0f172a] rounded-[2rem]"
+                                style={{ bottom: `calc(max(1rem, 1.5rem + env(safe-area-inset-bottom, 0px)))` }}
+                            >
                                 {[
                                     { id: 'content', icon: <Plus size={18} strokeWidth={3} />, label: 'Add', active: showMobileSidebar },
                                     { id: 'layers', icon: <Layers size={18} strokeWidth={3} />, label: 'Layers' },
