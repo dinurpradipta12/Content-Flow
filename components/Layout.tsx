@@ -2164,7 +2164,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Mobile Floating Navigation Island */}
             {
-                !isSidebarOpen && !location.pathname.startsWith('/carousel') && (
+                !isSidebarOpen && !location.pathname.startsWith('/carousel') && !showMobileMenu && !showMobileNotifications && (
                     <div className="md:hidden fixed bottom-6 inset-x-0 z-[100] flex justify-center px-6 animate-in slide-in-from-bottom-10 h-16">
                         <nav className="w-full max-w-sm bg-card/85 backdrop-blur-xl border-[3px] border-slate-900 rounded-[2rem] shadow-hard-mini p-2 flex items-center justify-between pointer-events-auto">
                             {[
@@ -2194,7 +2194,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Mobile Full Screen Notification Inbox */}
             {showMobileNotifications && (
-                <div className="md:hidden fixed inset-0 z-[60] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
+                <div className="md:hidden fixed inset-0 z-[150] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
                         <div className="flex items-center gap-3">
@@ -2340,7 +2340,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Mobile Full Screen Menu Drawer */}
             {showMobileMenu && (
-                <div className="md:hidden fixed inset-0 z-[45] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
+                <div className="md:hidden fixed inset-0 z-[140] bg-background flex flex-col animate-in fade-in slide-in-from-right duration-300">
                     {/* ── Drawer Header ── */}
                     <div className="flex items-center justify-between px-4 py-3 bg-card border-b-2 border-border shadow-sm flex-shrink-0 pt-safe">
                         <div className="flex items-center gap-2">
@@ -2365,7 +2365,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
 
                     {/* ── Scrollable Content ── */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pb-[80px]">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pb-10">
 
                         {/* ── Profile Card (Clickable → /profile) ── */}
                         <div className="px-4 pt-4 pb-3">
