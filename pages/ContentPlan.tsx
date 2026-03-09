@@ -509,13 +509,15 @@ export const ContentPlan: React.FC = () => {
                                 className="w-full bg-card border-[3px] border-slate-900 rounded-2xl p-4 flex flex-col gap-3 text-left shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 transition-all active:translate-y-0 active:shadow-[2px_2px_0px_#0f172a] group">
                                 <div className="flex gap-3 items-center w-full">
                                     {/* Logo with Shape Animation */}
-                                    <div className={`w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] bg-card dark:bg-slate-800/50 backdrop-blur-sm transition-all duration-500 group-hover:rounded-full group-hover:scale-105 group-hover:border-accent ws-logo-box relative z-10`}>
-                                        {ws.logoUrl ? (
-                                            <img src={ws.logoUrl} alt="" className="w-full h-full object-contain p-1" />
-                                        ) : (
+                                    {ws.logoUrl ? (
+                                        <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center bg-white ws-logo-box relative z-10">
+                                            <img src={ws.logoUrl} alt="" className="w-full h-full object-contain" />
+                                        </div>
+                                    ) : (
+                                        <div className={`w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] bg-card dark:bg-slate-800/50 backdrop-blur-sm transition-all duration-500 group-hover:rounded-full group-hover:scale-105 group-hover:border-accent ws-logo-box relative z-10`}>
                                             <Layers size={22} strokeWidth={2.5} className={ws.color === 'violet' ? 'text-accent' : ws.color === 'pink' ? 'text-pink-600' : ws.color === 'yellow' ? 'text-amber-600' : 'text-emerald-600'} />
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                     {/* Info */}
                                     <div className="flex-1 min-w-0 pr-1">
                                         <div className="flex items-center gap-2 mb-1">
@@ -637,13 +639,15 @@ export const ContentPlan: React.FC = () => {
 
                                 {/* Header: Logo, Name & Menu */}
                                 <div className="flex items-center gap-4 mb-5 relative z-10 w-full">
-                                    <div className={`w-14 h-14 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center shadow-hard-mini transition-all duration-500 group-hover:rounded-full group-hover:scale-110 group-hover:rotate-12 group-hover:border-accent overflow-hidden bg-card/60 dark:bg-slate-800/40 backdrop-blur-md shrink-0 ws-logo-box relative z-20`}>
-                                        {ws.logoUrl ? (
-                                            <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-contain p-1.5" />
-                                        ) : (
+                                    {ws.logoUrl ? (
+                                        <div className="w-14 h-14 bg-white flex items-center justify-center shrink-0 ws-logo-box relative z-20">
+                                            <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-contain" />
+                                        </div>
+                                    ) : (
+                                        <div className={`w-14 h-14 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center shadow-hard-mini transition-all duration-500 group-hover:rounded-full group-hover:scale-110 group-hover:rotate-12 group-hover:border-accent overflow-hidden bg-card/60 dark:bg-slate-800/40 backdrop-blur-md shrink-0 ws-logo-box relative z-20`}>
                                             <Layers size={24} className={ws.color === 'violet' ? 'text-accent' : ws.color === 'pink' ? 'text-pink-500' : ws.color === 'yellow' ? 'text-amber-500' : 'text-emerald-500'} strokeWidth={2.5} />
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
 
                                     <div className="flex-1 min-w-0 pr-8">
                                         <h3 className="text-xl font-black font-heading text-foreground leading-tight truncate group-hover:text-accent transition-colors">

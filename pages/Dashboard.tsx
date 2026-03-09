@@ -747,9 +747,15 @@ export const Dashboard: React.FC = () => {
                                         <Layers size={80} className="text-slate-300" />
                                     </div>
                                     <div className="flex justify-between items-start mb-6">
-                                        <div className="w-16 h-16 rounded-2xl border-[3.5px] border-border bg-card p-2 flex items-center justify-center shadow-hard-mini overflow-hidden group-hover:rotate-6 transition-transform">
-                                            {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <Layers className="text-slate-300" size={24} />}
-                                        </div>
+                                        {ws.logo_url ? (
+                                            <div className="w-16 h-16 bg-white flex items-center justify-center shrink-0 overflow-hidden group-hover:rotate-6 transition-transform">
+                                                <img src={ws.logo_url} className="w-full h-full object-contain" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-16 h-16 rounded-2xl border-[3.5px] border-border bg-card p-2 flex items-center justify-center shadow-hard-mini overflow-hidden group-hover:rotate-6 transition-transform">
+                                                <Layers className="text-slate-300" size={24} />
+                                            </div>
+                                        )}
                                         <div className="flex flex-col items-end">
                                             <span className="text-[8px] font-black text-mutedForeground uppercase tracking-widest bg-muted px-3 py-1 rounded-full border border-border/50">{ws.period || 'Personal'}</span>
                                             <ArrowUpRight size={20} className="text-slate-300 mt-2" />
@@ -1056,9 +1062,15 @@ export const Dashboard: React.FC = () => {
                                     <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="group bg-card rounded-[3.5rem] border-[3.5px] border-border p-8 shadow-hard hover:shadow-hard-hover transition-all hover:-translate-y-3 cursor-pointer flex flex-col h-full relative overflow-hidden">
                                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-muted rounded-full group-hover:scale-110 transition-transform duration-500" />
                                         <div className="flex justify-between items-start mb-8 relative z-10">
-                                            <div className="w-20 h-20 rounded-[2rem] border-[3.5px] border-border bg-card p-2.5 flex items-center justify-center shadow-hard-mini group-hover:rotate-6 transition-transform overflow-hidden">
-                                                {ws.logo_url ? <img src={ws.logo_url} className="w-full h-full object-contain" /> : <div className="text-4xl font-black text-mutedForeground uppercase">{ws.name?.[0]}</div>}
-                                            </div>
+                                            {ws.logo_url ? (
+                                                <div className="w-20 h-20 bg-white flex items-center justify-center shrink-0 overflow-hidden group-hover:rotate-6 transition-transform">
+                                                    <img src={ws.logo_url} className="w-full h-full object-contain" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-20 h-20 rounded-[2rem] border-[3.5px] border-border bg-card p-2.5 flex items-center justify-center shadow-hard-mini overflow-hidden group-hover:rotate-6 transition-transform">
+                                                    <div className="text-4xl font-black text-mutedForeground uppercase">{ws.name?.[0]}</div>
+                                                </div>
+                                            )}
                                             <div className="px-5 py-2 bg-foreground text-background rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-hard-mini">{ws.period || 'PERSONAL'}</div>
                                         </div>
                                         <h4 className="text-2xl font-black text-foreground font-heading mb-4 group-hover:text-accent transition-colors truncate relative z-10">{ws.name}</h4>
