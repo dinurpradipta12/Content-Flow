@@ -78,7 +78,7 @@ if (!(fabric.Text.prototype as any)._patchedTextBg) {
     }
 }
 
-export const Editor: React.FC = () => {
+export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -1487,7 +1487,7 @@ export const Editor: React.FC = () => {
     };
 
     return (
-        <div ref={containerRef} className="flex-1 bg-slate-200 flex flex-col overflow-hidden relative">
+        <div ref={containerRef} className={`flex-1 bg-slate-200 flex flex-col overflow-hidden relative ${isMobile ? 'pb-24' : ''}`}>
             {cropRect && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl border-4 border-slate-900 shadow-[4px_4px_0px_#0f172a] z-50 flex gap-4 items-center animate-in slide-in-from-top-4">
                     <span className="text-xs font-bold text-slate-500">Sesuaikan area pemotongan</span>
@@ -1497,11 +1497,11 @@ export const Editor: React.FC = () => {
             )}
 
             {/* Canvas Wrapper for Zoom */}
-            <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-slate-200">
+            <div className={`flex-1 relative overflow-hidden flex items-center justify-center ${isMobile ? 'bg-slate-50' : 'bg-slate-200'}`}>
                 <div
-                    className="transition-transform duration-200 ease-out shadow-[8px_8px_0px_0px_#0f172a] border-4 border-slate-900"
+                    className={`transition-transform duration-200 ease-out ${!isMobile ? 'shadow-[8px_8px_0px_0px_#0f172a] border-4 border-slate-900' : ''}`}
                     style={{
-                        transform: `scale(${zoom})`,
+                        transform: `scale(${isMobile ? zoom * 1.0 : zoom})`,
                         width: canvasSize.width,
                         height: canvasSize.height,
                         overflow: 'visible',
@@ -1512,55 +1512,74 @@ export const Editor: React.FC = () => {
                 </div>
             </div>
 
-            {/* Top Right Toolbar: Zoom & Fullscreen & Alignment */}
-            <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
-                {/* Arrange & Group Tools */}
-                {selectedObject && (
-                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-1 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-right-4">
-                        {/* Group / Ungroup */}
-                        {isActiveSelection && (
-                            <button onClick={handleGroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold text-[11px] transition-colors" title="Group selected layers">
-                                <Group size={14} />
-                                <span>Group</span>
-                            </button>
-                        )}
-                        {isGroup && (
-                            <button onClick={handleUngroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold text-[11px] transition-colors" title="Ungroup layers">
-                                <Ungroup size={14} />
-                                <span>Ungroup</span>
-                            </button>
-                        )}
-                        {(isActiveSelection || isGroup) && (
+            {/* Top Right Toolbar: Zoom & Fullscreen & Alignment (Desktop Only) */}
+            {!isMobile && (
+                <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
+                    {/* Arrange & Group Tools */}
+                    {selectedObject && (
+                        <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-1 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-right-4">
+                            {/* Group / Ungroup */}
+                            {isActiveSelection && (
+                                <button onClick={handleGroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold text-[11px] transition-colors" title="Group selected layers">
+                                    <Group size={14} />
+                                    <span>Group</span>
+                                </button>
+                            )}
+                            {isGroup && (
+                                <button onClick={handleUngroup} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold text-[11px] transition-colors" title="Ungroup layers">
+                                    <Ungroup size={14} />
+                                    <span>Ungroup</span>
+                                </button>
+                            )}
+                            {(isActiveSelection || isGroup) && (
+                                <div className="w-px h-5 bg-slate-200 mx-1" />
+                            )}
+
+                            {/* Arrange Layer */}
+                            <button onClick={() => handleZIndex('front')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring to Front"><ChevronsUp size={16} /></button>
+                            <button onClick={() => handleZIndex('forward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring Forward"><ArrowUp size={16} /></button>
+                            <button onClick={() => handleZIndex('backward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send Backward"><ArrowDown size={16} /></button>
+                            <button onClick={() => handleZIndex('back')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send to Back"><ChevronsDown size={16} /></button>
                             <div className="w-px h-5 bg-slate-200 mx-1" />
-                        )}
 
-                        {/* Arrange Layer */}
-                        <button onClick={() => handleZIndex('front')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring to Front"><ChevronsUp size={16} /></button>
-                        <button onClick={() => handleZIndex('forward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Bring Forward"><ArrowUp size={16} /></button>
-                        <button onClick={() => handleZIndex('backward')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send Backward"><ArrowDown size={16} /></button>
-                        <button onClick={() => handleZIndex('back')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Send to Back"><ChevronsDown size={16} /></button>
-                        <div className="w-px h-5 bg-slate-200 mx-1" />
+                            {/* Alignment */}
+                            <button onClick={() => handleAlign('left')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Left"><AlignLeft size={16} /></button>
+                            <button onClick={() => handleAlign('center')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Center"><AlignHorizontalJustifyCenter size={16} /></button>
+                            <button onClick={() => handleAlign('right')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Right"><AlignRight size={16} /></button>
+                            <div className="w-px h-5 bg-slate-200 mx-1" />
+                            <button onClick={() => handleAlign('top')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Top"><ArrowUpToLine size={16} /></button>
+                            <button onClick={() => handleAlign('middle')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Middle"><AlignVerticalJustifyCenter size={16} /></button>
+                            <button onClick={() => handleAlign('bottom')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Bottom"><ArrowDownToLine size={16} /></button>
+                        </div>
+                    )}
 
-                        {/* Alignment */}
-                        <button onClick={() => handleAlign('left')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Left"><AlignLeft size={16} /></button>
-                        <button onClick={() => handleAlign('center')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Center"><AlignHorizontalJustifyCenter size={16} /></button>
-                        <button onClick={() => handleAlign('right')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Right"><AlignRight size={16} /></button>
-                        <div className="w-px h-5 bg-slate-200 mx-1" />
-                        <button onClick={() => handleAlign('top')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Top"><ArrowUpToLine size={16} /></button>
-                        <button onClick={() => handleAlign('middle')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Middle"><AlignVerticalJustifyCenter size={16} /></button>
-                        <button onClick={() => handleAlign('bottom')} className="p-1.5 hover:bg-slate-100 rounded-md" title="Align Bottom"><ArrowDownToLine size={16} /></button>
+                    {/* Zoom Tools */}
+                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
+                        <button onClick={() => setZoom(Math.max(0.1, zoom - 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomOut size={16} /></button>
+                        <span className="text-[10px] font-black w-10 text-center">{Math.round(zoom * 100)}%</span>
+                        <button onClick={() => setZoom(Math.min(5, zoom + 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomIn size={16} /></button>
+                        <div className="w-1 h-6 bg-slate-200 mx-1" />
+                        <button onClick={() => setZoom(1)} className="p-1.5 hover:bg-slate-100 rounded-md" title="Reset Zoom"><Maximize size={16} /></button>
                     </div>
-                )}
-
-                {/* Zoom Tools */}
-                <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex items-center gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
-                    <button onClick={() => setZoom(Math.max(0.1, zoom - 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomOut size={16} /></button>
-                    <span className="text-[10px] font-black w-10 text-center">{Math.round(zoom * 100)}%</span>
-                    <button onClick={() => setZoom(Math.min(5, zoom + 0.1))} className="p-1.5 hover:bg-slate-100 rounded-md"><ZoomIn size={16} /></button>
-                    <div className="w-1 h-6 bg-slate-200 mx-1" />
-                    <button onClick={() => setZoom(1)} className="p-1.5 hover:bg-slate-100 rounded-md" title="Reset Zoom"><Maximize size={16} /></button>
                 </div>
-            </div>
+            )}
+
+            {/* Mobile Zoom FAB */}
+            {isMobile && (
+                <div className="absolute top-6 right-6 flex flex-col gap-2 z-20">
+                    <div className="bg-white border-4 border-slate-900 rounded-full p-1 shadow-[4px_4px_0px_0px_#0f172a] flex flex-col items-center">
+                        <button onClick={() => setZoom(Math.min(5, zoom + 0.1))} className="p-3 active:bg-slate-100 rounded-full transition-colors"><ZoomIn size={24} strokeWidth={3} /></button>
+                        <div className="w-8 h-[2px] bg-slate-200" />
+                        <button onClick={() => setZoom(Math.max(0.1, zoom - 0.1))} className="p-3 active:bg-slate-100 rounded-full transition-colors"><ZoomOut size={24} strokeWidth={3} /></button>
+                    </div>
+                    <button onClick={() => setZoom(1)} className="w-14 h-14 bg-white border-4 border-slate-900 rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#0f172a] active:scale-95 transition-transform">
+                        <Maximize size={24} strokeWidth={3} />
+                    </button>
+                    <button onClick={handleUndo} className="w-14 h-14 bg-white border-4 border-slate-900 rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#0f172a] active:scale-95 transition-transform">
+                        <Undo2 size={24} strokeWidth={3} />
+                    </button>
+                </div>
+            )}
 
             {/* Floating Context Menu */}
             {selectedObject && (
@@ -1589,537 +1608,403 @@ export const Editor: React.FC = () => {
                 </div>
             )}
 
-            {/* Left Vertical Toolbar */}
-            <div className="absolute top-24 left-6 flex flex-col gap-4 z-30">
-                {selectedObject && (
-                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
-                        {/* Typography Group */}
-                        {selectedObject instanceof fabric.IText && (
-                            <>
-                                <div className="relative group">
-                                    <button
-                                        onClick={() => setActiveTool(activeTool === 'typography' ? null : 'typography')}
-                                        className={`p-3 rounded-xl transition-all ${activeTool === 'typography' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                        title="Typography"
-                                    >
-                                        <Type size={20} />
-                                    </button>
-                                    {activeTool === 'typography' && (
-                                        <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                            <h4 className="font-black text-xs mb-3">Typography</h4>
-                                            <div className="space-y-4">
-                                                <div className="space-y-1">
-                                                    <span className="text-[10px] font-bold text-slate-500">Font Family</span>
-                                                    <select
-                                                        value={objectProps.fontFamily}
-                                                        onChange={(e) => handleFontFamily(e.target.value)}
-                                                        className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold focus:outline-none focus:border-slate-900"
-                                                    >
-                                                        {fonts.map(f => <option key={f} value={f}>{f}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <div className="flex-1 space-y-1">
-                                                        <span className="text-[10px] font-bold text-slate-500">Size</span>
-                                                        <input
-                                                            type="number"
-                                                            value={objectProps.fontSize}
-                                                            onChange={(e) => handleFontSize(parseInt(e.target.value))}
+            {/* Left Vertical Toolbar (Desktop Only) */}
+            {!isMobile && (
+                <div className="absolute top-24 left-6 flex flex-col gap-4 z-30">
+                    {selectedObject && (
+                        <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
+                            {/* Typography Group */}
+                            {selectedObject instanceof fabric.IText && (
+                                <>
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setActiveTool(activeTool === 'typography' ? null : 'typography')}
+                                            className={`p-3 rounded-xl transition-all ${activeTool === 'typography' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                            title="Typography"
+                                        >
+                                            <Type size={20} />
+                                        </button>
+                                        {activeTool === 'typography' && (
+                                            <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                                <h4 className="font-black text-xs mb-3">Typography</h4>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1">
+                                                        <span className="text-[10px] font-bold text-slate-500">Font Family</span>
+                                                        <select
+                                                            value={objectProps.fontFamily}
+                                                            onChange={(e) => handleFontFamily(e.target.value)}
                                                             className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold focus:outline-none focus:border-slate-900"
-                                                        />
+                                                        >
+                                                            {fonts.map(f => <option key={f} value={f}>{f}</option>)}
+                                                        </select>
                                                     </div>
-                                                    <div className="flex-1 space-y-1">
-                                                        <span className="text-[10px] font-bold text-slate-500">Color</span>
-                                                        <div className="flex items-center gap-2 h-[34px] bg-slate-50 border-2 border-slate-200 rounded-lg px-2">
+                                                    <div className="flex gap-2">
+                                                        <div className="flex-1 space-y-1">
+                                                            <span className="text-[10px] font-bold text-slate-500">Size</span>
                                                             <input
-                                                                type="color"
-                                                                value={objectProps.fill}
-                                                                onChange={(e) => handleColor(e.target.value)}
-                                                                className="w-6 h-6 rounded border border-slate-300 p-0 overflow-hidden cursor-pointer"
+                                                                type="number"
+                                                                value={objectProps.fontSize}
+                                                                onChange={(e) => handleFontSize(parseInt(e.target.value))}
+                                                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-2 py-2 text-xs font-bold focus:outline-none focus:border-slate-900"
                                                             />
-                                                            <span className="text-[10px] font-mono">{objectProps.fill}</span>
+                                                        </div>
+                                                        <div className="flex-1 space-y-1">
+                                                            <span className="text-[10px] font-bold text-slate-500">Color</span>
+                                                            <div className="flex items-center gap-2 h-[34px] bg-slate-50 border-2 border-slate-200 rounded-lg px-2">
+                                                                <input
+                                                                    type="color"
+                                                                    value={objectProps.fill}
+                                                                    onChange={(e) => handleColor(e.target.value)}
+                                                                    className="w-6 h-6 rounded border border-slate-300 p-0 overflow-hidden cursor-pointer"
+                                                                />
+                                                                <span className="text-[10px] font-mono">{objectProps.fill}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
-                                                    <button onClick={() => {
-                                                        const isBold = (selectedObject as fabric.IText).fontWeight === 'bold';
-                                                        (selectedObject as fabric.IText).set('fontWeight', isBold ? 'normal' : 'bold');
-                                                        fabricCanvas.current?.renderAll();
-                                                    }} className="flex-1 p-1.5 hover:bg-white rounded font-bold text-xs flex justify-center"><Bold size={14} /></button>
-                                                    <button onClick={() => {
-                                                        const isItalic = (selectedObject as fabric.IText).fontStyle === 'italic';
-                                                        (selectedObject as fabric.IText).set('fontStyle', isItalic ? 'normal' : 'italic');
-                                                        fabricCanvas.current?.renderAll();
-                                                    }} className="flex-1 p-1.5 hover:bg-white rounded font-italic text-xs flex justify-center"><Italic size={14} /></button>
-                                                </div>
-                                                <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
-                                                    <button onClick={() => handleTextAlign('left')} className={`flex-1 p-1.5 rounded flex justify-center ${objectProps.textAlign === 'left' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}><AlignLeft size={14} /></button>
-                                                    <button onClick={() => handleTextAlign('center')} className={`flex-1 p-1.5 rounded flex justify-center ${objectProps.textAlign === 'center' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}><AlignCenter size={14} /></button>
-                                                    <button onClick={() => handleTextAlign('right')} className={`flex-1 p-1.5 rounded flex justify-center ${objectProps.textAlign === 'right' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}><AlignRight size={14} /></button>
-                                                </div>
-                                                <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
-                                                    <button onClick={() => handleTextCase('normal')} className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.textCase === 'normal' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}>Aa</button>
-                                                    <button onClick={() => handleTextCase('uppercase')} className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.textCase === 'uppercase' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}>AA</button>
-                                                    <button onClick={() => handleTextCase('lowercase')} className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.textCase === 'lowercase' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}>aa</button>
+                                                    <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
+                                                        <button onClick={() => {
+                                                            const isBold = (selectedObject as fabric.IText).fontWeight === 'bold';
+                                                            (selectedObject as fabric.IText).set('fontWeight', isBold ? 'normal' : 'bold');
+                                                            fabricCanvas.current?.renderAll();
+                                                        }} className="flex-1 p-1.5 hover:bg-white rounded font-bold text-xs flex justify-center"><Bold size={14} /></button>
+                                                        <button onClick={() => {
+                                                            const isItalic = (selectedObject as fabric.IText).fontStyle === 'italic';
+                                                            (selectedObject as fabric.IText).set('fontStyle', isItalic ? 'normal' : 'italic');
+                                                            fabricCanvas.current?.renderAll();
+                                                        }} className="flex-1 p-1.5 hover:bg-white rounded font-italic text-xs flex justify-center"><Italic size={14} /></button>
+                                                    </div>
+                                                    <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
+                                                        <button onClick={() => handleTextAlign('left')} className={`flex-1 p-1.5 rounded flex justify-center ${objectProps.textAlign === 'left' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}><AlignLeft size={14} /></button>
+                                                        <button onClick={() => handleTextAlign('center')} className={`flex-1 p-1.5 rounded flex justify-center ${objectProps.textAlign === 'center' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}><AlignCenter size={14} /></button>
+                                                        <button onClick={() => handleTextAlign('right')} className={`flex-1 p-1.5 rounded flex justify-center ${objectProps.textAlign === 'right' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}><AlignRight size={14} /></button>
+                                                    </div>
+                                                    <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
+                                                        <button onClick={() => handleTextCase('normal')} className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.textCase === 'normal' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}>Aa</button>
+                                                        <button onClick={() => handleTextCase('uppercase')} className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.textCase === 'uppercase' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}>AA</button>
+                                                        <button onClick={() => handleTextCase('lowercase')} className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.textCase === 'lowercase' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}>aa</button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                    </div>
 
-                                <div className="relative group">
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setActiveTool(activeTool === 'spacing' ? null : 'spacing')}
+                                            className={`p-3 rounded-xl transition-all ${activeTool === 'spacing' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                            title="Spacing"
+                                        >
+                                            <KerningIcon size={20} />
+                                        </button>
+                                        {activeTool === 'spacing' && (
+                                            <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                                <h4 className="font-black text-xs mb-3">Spacing</h4>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                            <span>Letter Spacing</span>
+                                                            <span>{objectProps.charSpacing}</span>
+                                                        </div>
+                                                        <input
+                                                            type="range" min="-100" max="500"
+                                                            value={objectProps.charSpacing}
+                                                            onChange={(e) => handleSpacing('char', parseInt(e.target.value))}
+                                                            className="w-full accent-slate-900"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                            <span>Line Height</span>
+                                                            <span>{objectProps.lineHeight}</span>
+                                                        </div>
+                                                        <input
+                                                            type="range" min="0.5" max="3" step="0.1"
+                                                            value={objectProps.lineHeight}
+                                                            onChange={(e) => handleSpacing('line', parseFloat(e.target.value))}
+                                                            className="w-full accent-slate-900"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <button
-                                        onClick={() => setActiveTool(activeTool === 'spacing' ? null : 'spacing')}
-                                        className={`p-3 rounded-xl transition-all ${activeTool === 'spacing' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                        title="Spacing"
+                                        onClick={() => {
+                                            if (selectedObject instanceof fabric.IText) {
+                                                const text = selectedObject.text || '';
+                                                const lines = text.split('\n');
+                                                const allBulleted = lines.every(l => l.startsWith('• '));
+                                                const newText = allBulleted
+                                                    ? lines.map(l => l.replace(/^• /, '')).join('\n')
+                                                    : lines.map(l => l.startsWith('• ') ? l : `• ${l}`).join('\n');
+                                                selectedObject.set('text', newText);
+                                                fabricCanvas.current?.renderAll();
+                                            }
+                                        }}
+                                        className="p-3 rounded-xl bg-white hover:bg-slate-100 transition-all"
+                                        title="Toggle List"
                                     >
-                                        <KerningIcon size={20} />
+                                        <List size={20} />
                                     </button>
-                                    {activeTool === 'spacing' && (
-                                        <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                            <h4 className="font-black text-xs mb-3">Spacing</h4>
-                                            <div className="space-y-4">
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                        <span>Letter Spacing</span>
-                                                        <span>{objectProps.charSpacing}</span>
-                                                    </div>
-                                                    <input
-                                                        type="range" min="-100" max="500"
-                                                        value={objectProps.charSpacing}
-                                                        onChange={(e) => handleSpacing('char', parseInt(e.target.value))}
-                                                        className="w-full accent-slate-900"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                        <span>Line Height</span>
-                                                        <span>{objectProps.lineHeight}</span>
-                                                    </div>
-                                                    <input
-                                                        type="range" min="0.5" max="3" step="0.1"
-                                                        value={objectProps.lineHeight}
-                                                        onChange={(e) => handleSpacing('line', parseFloat(e.target.value))}
-                                                        className="w-full accent-slate-900"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <button
-                                    onClick={() => {
-                                        if (selectedObject instanceof fabric.IText) {
-                                            const text = selectedObject.text || '';
-                                            const lines = text.split('\n');
-                                            const allBulleted = lines.every(l => l.startsWith('• '));
-                                            const newText = allBulleted
-                                                ? lines.map(l => l.replace(/^• /, '')).join('\n')
-                                                : lines.map(l => l.startsWith('• ') ? l : `• ${l}`).join('\n');
-                                            selectedObject.set('text', newText);
-                                            fabricCanvas.current?.renderAll();
-                                        }
-                                    }}
-                                    className="p-3 rounded-xl bg-white hover:bg-slate-100 transition-all"
-                                    title="Toggle List"
-                                >
-                                    <List size={20} />
-                                </button>
-                            </>
-                        )}
-
-                        {/* Color Tool */}
-                        <div className="relative group">
-                            <button
-                                onClick={() => setActiveTool(activeTool === 'color' ? null : 'color')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'color' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                title="Color"
-                            >
-                                <Palette size={20} />
-                            </button>
-                            {activeTool === 'color' && (
-                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs mb-3">Color</h4>
-                                    <div className="space-y-4">
-                                        <div className="flex gap-2 flex-wrap">
-                                            {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6', 'transparent'].map(c => (
-                                                <button
-                                                    key={c}
-                                                    onClick={() => handleColor(c)}
-                                                    className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.fill === c ? 'ring-2 ring-slate-900' : ''}`}
-                                                    style={{ backgroundColor: c === 'transparent' ? '#fff' : c, backgroundImage: c === 'transparent' ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)' : 'none', backgroundSize: '8px 8px', backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px' }}
-                                                />
-                                            ))}
-                                            <input
-                                                type="color"
-                                                value={objectProps.fill === 'transparent' ? '#000000' : objectProps.fill}
-                                                onChange={(e) => handleColor(e.target.value)}
-                                                className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+                                </>
                             )}
-                        </div>
 
-                        {/* Flip Tool */}
-                        <div className="relative group">
-                            <button
-                                onClick={() => setActiveTool(activeTool === 'flip' ? null : 'flip')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'flip' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                title="Flip"
-                            >
-                                <FlipHorizontal size={20} />
-                            </button>
-                            {activeTool === 'flip' && (
-                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-40 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs mb-3">Flip</h4>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => handleFlip('x')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipX ? 'bg-slate-100' : ''}`}><FlipHorizontal className="mx-auto" size={20} /></button>
-                                        <button onClick={() => handleFlip('y')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipY ? 'bg-slate-100' : ''}`}><FlipVertical className="mx-auto" size={20} /></button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Opacity Tool */}
-                        <div className="relative group">
-                            <button
-                                onClick={() => setActiveTool(activeTool === 'opacity' ? null : 'opacity')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'opacity' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                title="Opacity"
-                            >
-                                <div className="flex items-center justify-center w-5 h-5">
-                                    <div className="w-4 h-4 rounded-full bg-current opacity-50 border border-current" />
-                                </div>
-                            </button>
-                            {activeTool === 'opacity' && (
-                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs mb-3">Opacity</h4>
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                            <span>Value</span>
-                                            <span>{Math.round(objectProps.opacity * 100)}%</span>
-                                        </div>
-                                        <input
-                                            type="range" min="0" max="1" step="0.01"
-                                            value={objectProps.opacity}
-                                            onChange={(e) => handleOpacity(parseFloat(e.target.value))}
-                                            className="w-full accent-slate-900"
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Image Filters Tool */}
-                        {selectedObject instanceof fabric.Image && (
+                            {/* Color Tool */}
                             <div className="relative group">
                                 <button
-                                    onClick={() => setActiveTool(activeTool === 'filters' ? null : 'filters')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'filters' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                    title="Image Filters"
+                                    onClick={() => setActiveTool(activeTool === 'color' ? null : 'color')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'color' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Color"
                                 >
-                                    <Wand2 size={20} />
+                                    <Palette size={20} />
                                 </button>
-                                {activeTool === 'filters' && (
+                                {activeTool === 'color' && (
                                     <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                        <h4 className="font-black text-xs mb-3">Image Filters</h4>
+                                        <h4 className="font-black text-xs mb-3">Color</h4>
                                         <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                    <span>Brightness</span>
-                                                    <span>{Math.round(objectProps.brightness * 100)}%</span>
-                                                </div>
-                                                <input
-                                                    type="range" min="-1" max="1" step="0.05"
-                                                    value={objectProps.brightness}
-                                                    onChange={(e) => handleFilter('Brightness', 'brightness', parseFloat(e.target.value))}
-                                                    className="w-full accent-slate-900"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                    <span>Contrast</span>
-                                                    <span>{Math.round(objectProps.contrast * 100)}%</span>
-                                                </div>
-                                                <input
-                                                    type="range" min="-1" max="1" step="0.05"
-                                                    value={objectProps.contrast}
-                                                    onChange={(e) => handleFilter('Contrast', 'contrast', parseFloat(e.target.value))}
-                                                    className="w-full accent-slate-900"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                    <span>Blur</span>
-                                                    <span>{Math.round(objectProps.blur * 100)}%</span>
-                                                </div>
-                                                <input
-                                                    type="range" min="0" max="1" step="0.05"
-                                                    value={objectProps.blur}
-                                                    onChange={(e) => handleFilter('Blur', 'blur', parseFloat(e.target.value))}
-                                                    className="w-full accent-slate-900"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 mt-4">
-                                                <button
-                                                    onClick={() => handleFilter('Grayscale', 'grayscale', !objectProps.grayscale)}
-                                                    className={`py-2 px-3 rounded-lg text-[10px] font-bold border-2 transition-colors ${objectProps.grayscale ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 hover:border-slate-900 hover:bg-slate-50'}`}
-                                                >
-                                                    Grayscale
-                                                </button>
-                                                <button
-                                                    onClick={() => handleFilter('Sepia', 'sepia', !objectProps.sepia)}
-                                                    className={`py-2 px-3 rounded-lg text-[10px] font-bold border-2 transition-colors ${objectProps.sepia ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 hover:border-slate-900 hover:bg-slate-50'}`}
-                                                >
-                                                    Sepia
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Mask/Crop Tool */}
-                        {selectedObject instanceof fabric.Image && (
-                            <div className="relative group">
-                                <button
-                                    onClick={() => setActiveTool(activeTool === 'mask' ? null : 'mask')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'mask' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                    title="Crop to Shape"
-                                >
-                                    <Crop size={20} />
-                                </button>
-                                {activeTool === 'mask' && (
-                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                        <h4 className="font-black text-xs mb-3">Crop Shape</h4>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <button
-                                                onClick={() => handleMask('none')}
-                                                className={`p-2 rounded-lg border-2 ${objectProps.mask === 'none' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
-                                                title="None"
-                                            >
-                                                <Square size={20} className="mx-auto" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleMask('circle')}
-                                                className={`p-2 rounded-lg border-2 ${objectProps.mask === 'circle' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
-                                                title="Circle"
-                                            >
-                                                <Circle size={20} className="mx-auto" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleMask('square')}
-                                                className={`p-2 rounded-lg border-2 ${objectProps.mask === 'square' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
-                                                title="Rounded Square"
-                                            >
-                                                <Square size={20} className="mx-auto rounded-md" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Stroke Tool */}
-                        <div className="relative group">
-                            <button
-                                onClick={() => setActiveTool(activeTool === 'stroke' ? null : 'stroke')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'stroke' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                title="Stroke"
-                            >
-                                <div className={`w-5 h-5 border-2 rounded-sm ${activeTool === 'stroke' ? 'border-white' : 'border-slate-900'}`} />
-                            </button>
-
-                            {activeTool === 'stroke' && (
-                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs mb-3">Stroke Settings</h4>
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                <span>Width</span>
-                                                <span>{objectProps.strokeWidth}px</span>
-                                            </div>
-                                            <input
-                                                type="range" min="0" max="20"
-                                                value={objectProps.strokeWidth}
-                                                onChange={(e) => handleStroke({ strokeWidth: parseInt(e.target.value) })}
-                                                className="w-full accent-slate-900"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <span className="text-[10px] font-bold text-slate-500">Position</span>
-                                            <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
-                                                <button
-                                                    onClick={() => handleStroke({ strokeType: 'middle' })}
-                                                    className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.strokeType === 'middle' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}
-                                                >
-                                                    Middle
-                                                </button>
-                                                <button
-                                                    onClick={() => handleStroke({ strokeType: 'outer' })}
-                                                    className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.strokeType === 'outer' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}
-                                                >
-                                                    Outer
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <span className="text-[10px] font-bold text-slate-500">Color</span>
                                             <div className="flex gap-2 flex-wrap">
-                                                {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
+                                                {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6', 'transparent'].map(c => (
                                                     <button
                                                         key={c}
-                                                        onClick={() => handleStroke({ strokeColor: c })}
-                                                        className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.strokeColor === c ? 'ring-2 ring-slate-900' : ''}`}
-                                                        style={{ backgroundColor: c }}
+                                                        onClick={() => handleColor(c)}
+                                                        className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.fill === c ? 'ring-2 ring-slate-900' : ''}`}
+                                                        style={{ backgroundColor: c === 'transparent' ? '#fff' : c, backgroundImage: c === 'transparent' ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)' : 'none', backgroundSize: '8px 8px', backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px' }}
                                                     />
                                                 ))}
                                                 <input
                                                     type="color"
-                                                    value={objectProps.strokeColor}
-                                                    onChange={(e) => handleStroke({ strokeColor: e.target.value })}
+                                                    value={objectProps.fill === 'transparent' ? '#000000' : objectProps.fill}
+                                                    onChange={(e) => handleColor(e.target.value)}
                                                     className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
                                                 />
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
 
-                        {/* Shadow Tool */}
-                        <div className="relative group">
-                            <button
-                                onClick={() => setActiveTool(activeTool === 'shadow' ? null : 'shadow')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'shadow' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                title="Shadow"
-                            >
-                                <div className={`w-5 h-5 rounded-sm shadow-lg ${activeTool === 'shadow' ? 'bg-white' : 'bg-slate-300'}`} />
-                            </button>
-
-                            {activeTool === 'shadow' && (
-                                <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                    <h4 className="font-black text-xs mb-3">Shadow Settings</h4>
-                                    <div className="space-y-4">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                <span>Distance (Value)</span>
-                                                <span>{objectProps.shadowDistance}px</span>
-                                            </div>
-                                            <input
-                                                type="range" min="0" max="50"
-                                                value={objectProps.shadowDistance}
-                                                onChange={(e) => handleShadow({ shadowDistance: parseInt(e.target.value) })}
-                                                className="w-full accent-slate-900"
-                                            />
+                            {/* Flip Tool */}
+                            <div className="relative group">
+                                <button
+                                    onClick={() => setActiveTool(activeTool === 'flip' ? null : 'flip')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'flip' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Flip"
+                                >
+                                    <FlipHorizontal size={20} />
+                                </button>
+                                {activeTool === 'flip' && (
+                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-40 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                        <h4 className="font-black text-xs mb-3">Flip</h4>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleFlip('x')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipX ? 'bg-slate-100' : ''}`}><FlipHorizontal className="mx-auto" size={20} /></button>
+                                            <button onClick={() => handleFlip('y')} className={`flex-1 p-2 rounded-lg border-2 border-slate-200 hover:border-slate-900 ${objectProps.flipY ? 'bg-slate-100' : ''}`}><FlipVertical className="mx-auto" size={20} /></button>
                                         </div>
+                                    </div>
+                                )}
+                            </div>
 
+                            {/* Opacity Tool */}
+                            <div className="relative group">
+                                <button
+                                    onClick={() => setActiveTool(activeTool === 'opacity' ? null : 'opacity')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'opacity' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Opacity"
+                                >
+                                    <div className="flex items-center justify-center w-5 h-5">
+                                        <div className="w-4 h-4 rounded-full bg-current opacity-50 border border-current" />
+                                    </div>
+                                </button>
+                                {activeTool === 'opacity' && (
+                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                        <h4 className="font-black text-xs mb-3">Opacity</h4>
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                <span>Blur</span>
-                                                <span>{objectProps.shadowBlur}px</span>
-                                            </div>
-                                            <input
-                                                type="range" min="0" max="50"
-                                                value={objectProps.shadowBlur}
-                                                onChange={(e) => handleShadow({ shadowBlur: parseInt(e.target.value) })}
-                                                className="w-full accent-slate-900"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                <span>Rotation</span>
-                                                <span>{objectProps.shadowAngle}°</span>
-                                            </div>
-                                            <input
-                                                type="range" min="0" max="360"
-                                                value={objectProps.shadowAngle}
-                                                onChange={(e) => handleShadow({ shadowAngle: parseInt(e.target.value) })}
-                                                className="w-full accent-slate-900"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                <span>Opacity</span>
-                                                <span>{Math.round(objectProps.shadowOpacity * 100)}%</span>
+                                                <span>Value</span>
+                                                <span>{Math.round(objectProps.opacity * 100)}%</span>
                                             </div>
                                             <input
                                                 type="range" min="0" max="1" step="0.01"
-                                                value={objectProps.shadowOpacity}
-                                                onChange={(e) => handleShadow({ shadowOpacity: parseFloat(e.target.value) })}
+                                                value={objectProps.opacity}
+                                                onChange={(e) => handleOpacity(parseFloat(e.target.value))}
                                                 className="w-full accent-slate-900"
                                             />
                                         </div>
+                                    </div>
+                                )}
+                            </div>
 
-                                        <div className="space-y-2">
-                                            <span className="text-[10px] font-bold text-slate-500">Color</span>
-                                            <div className="flex gap-2 flex-wrap">
-                                                {['#000000', '#0f172a', '#94a3b8', '#f27d26'].map(c => (
-                                                    <button
-                                                        key={c}
-                                                        onClick={() => handleShadow({ shadowColor: c })}
-                                                        className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.shadowColor === c ? 'ring-2 ring-slate-900' : ''}`}
-                                                        style={{ backgroundColor: c }}
+                            {/* Image Filters Tool */}
+                            {selectedObject instanceof fabric.Image && (
+                                <div className="relative group">
+                                    <button
+                                        onClick={() => setActiveTool(activeTool === 'filters' ? null : 'filters')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'filters' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                        title="Image Filters"
+                                    >
+                                        <Wand2 size={20} />
+                                    </button>
+                                    {activeTool === 'filters' && (
+                                        <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                            <h4 className="font-black text-xs mb-3">Image Filters</h4>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                        <span>Brightness</span>
+                                                        <span>{Math.round(objectProps.brightness * 100)}%</span>
+                                                    </div>
+                                                    <input
+                                                        type="range" min="-1" max="1" step="0.05"
+                                                        value={objectProps.brightness}
+                                                        onChange={(e) => handleFilter('Brightness', 'brightness', parseFloat(e.target.value))}
+                                                        className="w-full accent-slate-900"
                                                     />
-                                                ))}
-                                                <input
-                                                    type="color"
-                                                    value={objectProps.shadowColor}
-                                                    onChange={(e) => handleShadow({ shadowColor: e.target.value })}
-                                                    className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
-                                                />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                        <span>Contrast</span>
+                                                        <span>{Math.round(objectProps.contrast * 100)}%</span>
+                                                    </div>
+                                                    <input
+                                                        type="range" min="-1" max="1" step="0.05"
+                                                        value={objectProps.contrast}
+                                                        onChange={(e) => handleFilter('Contrast', 'contrast', parseFloat(e.target.value))}
+                                                        className="w-full accent-slate-900"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                        <span>Blur</span>
+                                                        <span>{Math.round(objectProps.blur * 100)}%</span>
+                                                    </div>
+                                                    <input
+                                                        type="range" min="0" max="1" step="0.05"
+                                                        value={objectProps.blur}
+                                                        onChange={(e) => handleFilter('Blur', 'blur', parseFloat(e.target.value))}
+                                                        className="w-full accent-slate-900"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                                    <button
+                                                        onClick={() => handleFilter('Grayscale', 'grayscale', !objectProps.grayscale)}
+                                                        className={`py-2 px-3 rounded-lg text-[10px] font-bold border-2 transition-colors ${objectProps.grayscale ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 hover:border-slate-900 hover:bg-slate-50'}`}
+                                                    >
+                                                        Grayscale
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleFilter('Sepia', 'sepia', !objectProps.sepia)}
+                                                        className={`py-2 px-3 rounded-lg text-[10px] font-bold border-2 transition-colors ${objectProps.sepia ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-200 hover:border-slate-900 hover:bg-slate-50'}`}
+                                                    >
+                                                        Sepia
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
-                        </div>
 
-                        {/* Text Background Tool (Text Only) */}
-                        {(selectedObject instanceof fabric.IText || selectedObject instanceof fabric.Text) && (
+                            {/* Mask/Crop Tool */}
+                            {selectedObject instanceof fabric.Image && (
+                                <div className="relative group">
+                                    <button
+                                        onClick={() => setActiveTool(activeTool === 'mask' ? null : 'mask')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'mask' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                        title="Crop to Shape"
+                                    >
+                                        <Crop size={20} />
+                                    </button>
+                                    {activeTool === 'mask' && (
+                                        <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                            <h4 className="font-black text-xs mb-3">Crop Shape</h4>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <button
+                                                    onClick={() => handleMask('none')}
+                                                    className={`p-2 rounded-lg border-2 ${objectProps.mask === 'none' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
+                                                    title="None"
+                                                >
+                                                    <Square size={20} className="mx-auto" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMask('circle')}
+                                                    className={`p-2 rounded-lg border-2 ${objectProps.mask === 'circle' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
+                                                    title="Circle"
+                                                >
+                                                    <Circle size={20} className="mx-auto" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleMask('square')}
+                                                    className={`p-2 rounded-lg border-2 ${objectProps.mask === 'square' ? 'border-slate-900 bg-slate-100' : 'border-slate-200 hover:border-slate-900'}`}
+                                                    title="Rounded Square"
+                                                >
+                                                    <Square size={20} className="mx-auto rounded-md" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Stroke Tool */}
                             <div className="relative group">
                                 <button
-                                    onClick={() => setActiveTool(activeTool === 'textbg' ? null : 'textbg')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'textbg' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                    title="Text Block Background"
+                                    onClick={() => setActiveTool(activeTool === 'stroke' ? null : 'stroke')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'stroke' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Stroke"
                                 >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center text-[12px] font-black leading-none ${activeTool === 'textbg' ? 'bg-white text-slate-900' : 'bg-slate-200 text-slate-800'}`}>T</div>
+                                    <div className={`w-5 h-5 border-2 rounded-sm ${activeTool === 'stroke' ? 'border-white' : 'border-slate-900'}`} />
                                 </button>
 
-                                {activeTool === 'textbg' && (
+                                {activeTool === 'stroke' && (
                                     <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                        <h4 className="font-black text-xs mb-3">Text Background</h4>
+                                        <h4 className="font-black text-xs mb-3">Stroke Settings</h4>
                                         <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Width</span>
+                                                    <span>{objectProps.strokeWidth}px</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="20"
+                                                    value={objectProps.strokeWidth}
+                                                    onChange={(e) => handleStroke({ strokeWidth: parseInt(e.target.value) })}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-bold text-slate-500">Position</span>
+                                                <div className="flex gap-1 border-2 border-slate-200 rounded-lg p-1 bg-slate-50">
+                                                    <button
+                                                        onClick={() => handleStroke({ strokeType: 'middle' })}
+                                                        className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.strokeType === 'middle' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}
+                                                    >
+                                                        Middle
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleStroke({ strokeType: 'outer' })}
+                                                        className={`flex-1 p-1.5 rounded text-[10px] font-bold ${objectProps.strokeType === 'outer' ? 'bg-slate-900 text-white' : 'hover:bg-white'}`}
+                                                    >
+                                                        Outer
+                                                    </button>
+                                                </div>
+                                            </div>
+
                                             <div className="space-y-2">
                                                 <span className="text-[10px] font-bold text-slate-500">Color</span>
                                                 <div className="flex gap-2 flex-wrap">
-                                                    <button
-                                                        onClick={() => handleTextBgColor('transparent')}
-                                                        className={`w-6 h-6 rounded border-2 border-slate-200 relative overflow-hidden ${objectProps.textBgColor === 'transparent' ? 'ring-2 ring-slate-900' : ''}`}
-                                                    >
-                                                        <div className="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAoSURBVChTY/gPBmAMZkBUg9QyMDD8x4YZ8CoYxUCwQ4kwfFQAIMAA6Hsc7rEusGMAAAAASUVORK5CYII=')] opacity-50" />
-                                                    </button>
                                                     {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
                                                         <button
                                                             key={c}
-                                                            onClick={() => handleTextBgColor(c)}
-                                                            className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.textBgColor === c ? 'ring-2 ring-slate-900' : ''}`}
+                                                            onClick={() => handleStroke({ strokeColor: c })}
+                                                            className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.strokeColor === c ? 'ring-2 ring-slate-900' : ''}`}
                                                             style={{ backgroundColor: c }}
                                                         />
                                                     ))}
                                                     <input
                                                         type="color"
-                                                        value={objectProps.textBgColor === 'transparent' ? '#ffffff' : objectProps.textBgColor}
-                                                        onChange={(e) => handleTextBgColor(e.target.value)}
+                                                        value={objectProps.strokeColor}
+                                                        onChange={(e) => handleStroke({ strokeColor: e.target.value })}
                                                         className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
                                                     />
                                                 </div>
@@ -2128,121 +2013,257 @@ export const Editor: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                        )}
 
-                        {/* Radius Tool (Rect Only) */}
-                        {selectedObject instanceof fabric.Rect && (
+                            {/* Shadow Tool */}
                             <div className="relative group">
                                 <button
-                                    onClick={() => setActiveTool(activeTool === 'radius' ? null : 'radius')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'radius' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
-                                    title="Corner Radius"
+                                    onClick={() => setActiveTool(activeTool === 'shadow' ? null : 'shadow')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'shadow' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                    title="Shadow"
                                 >
-                                    <Square size={20} className="rounded-md" />
+                                    <div className={`w-5 h-5 rounded-sm shadow-lg ${activeTool === 'shadow' ? 'bg-white' : 'bg-slate-300'}`} />
                                 </button>
-                                {activeTool === 'radius' && (
-                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
-                                        <h4 className="font-black text-xs mb-3">Corner Radius</h4>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                                <span>Value</span>
-                                                <span>{objectProps.cornerRadius}px</span>
+
+                                {activeTool === 'shadow' && (
+                                    <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                        <h4 className="font-black text-xs mb-3">Shadow Settings</h4>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Distance (Value)</span>
+                                                    <span>{objectProps.shadowDistance}px</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="50"
+                                                    value={objectProps.shadowDistance}
+                                                    onChange={(e) => handleShadow({ shadowDistance: parseInt(e.target.value) })}
+                                                    className="w-full accent-slate-900"
+                                                />
                                             </div>
-                                            <input
-                                                type="range" min="0" max="100"
-                                                value={objectProps.cornerRadius}
-                                                onChange={(e) => handleCornerRadius(parseInt(e.target.value))}
-                                                className="w-full accent-slate-900"
-                                            />
+
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Blur</span>
+                                                    <span>{objectProps.shadowBlur}px</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="50"
+                                                    value={objectProps.shadowBlur}
+                                                    onChange={(e) => handleShadow({ shadowBlur: parseInt(e.target.value) })}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Rotation</span>
+                                                    <span>{objectProps.shadowAngle}°</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="360"
+                                                    value={objectProps.shadowAngle}
+                                                    onChange={(e) => handleShadow({ shadowAngle: parseInt(e.target.value) })}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Opacity</span>
+                                                    <span>{Math.round(objectProps.shadowOpacity * 100)}%</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="1" step="0.01"
+                                                    value={objectProps.shadowOpacity}
+                                                    onChange={(e) => handleShadow({ shadowOpacity: parseFloat(e.target.value) })}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-bold text-slate-500">Color</span>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {['#000000', '#0f172a', '#94a3b8', '#f27d26'].map(c => (
+                                                        <button
+                                                            key={c}
+                                                            onClick={() => handleShadow({ shadowColor: c })}
+                                                            className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.shadowColor === c ? 'ring-2 ring-slate-900' : ''}`}
+                                                            style={{ backgroundColor: c }}
+                                                        />
+                                                    ))}
+                                                    <input
+                                                        type="color"
+                                                        value={objectProps.shadowColor}
+                                                        onChange={(e) => handleShadow({ shadowColor: e.target.value })}
+                                                        className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
                             </div>
-                        )}
 
-                        <div className="h-px bg-slate-200 my-1" />
-
-                        {/* Delete */}
-                        <button onClick={handleDelete} className="p-3 bg-red-50 hover:bg-red-500 hover:text-white text-red-500 rounded-xl transition-colors" title="Delete">
-                            <Trash2 size={20} />
-                        </button>
-                    </div>
-                )}
-
-                {/* Drawing Mode Tools */}
-                {isDrawingMode && (
-                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-4 flex flex-col gap-4 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-left-2 w-48">
-                        <h4 className="font-black text-xs">Brush Settings</h4>
-
-                        <div className="space-y-2">
-                            <span className="text-[10px] font-bold text-slate-500">Size ({brushSettings.width}px)</span>
-                            <input
-                                type="range" min="1" max="50"
-                                value={brushSettings.width}
-                                onChange={(e) => {
-                                    const width = parseInt(e.target.value);
-                                    setBrushSettings(prev => ({ ...prev, width }));
-                                    if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
-                                        fabricCanvas.current.freeDrawingBrush.width = width;
-                                    }
-                                }}
-                                className="w-full accent-slate-900"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <span className="text-[10px] font-bold text-slate-500">Color</span>
-                            <div className="flex gap-2 flex-wrap">
-                                {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
+                            {/* Text Background Tool (Text Only) */}
+                            {(selectedObject instanceof fabric.IText || selectedObject instanceof fabric.Text) && (
+                                <div className="relative group">
                                     <button
-                                        key={c}
-                                        onClick={() => {
-                                            setBrushSettings(prev => ({ ...prev, color: c }));
-                                            if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
-                                                fabricCanvas.current.freeDrawingBrush.color = c;
-                                            }
-                                        }}
-                                        className={`w-6 h-6 rounded border-2 border-slate-200 ${brushSettings.color === c ? 'ring-2 ring-slate-900' : ''}`}
-                                        style={{ backgroundColor: c }}
-                                    />
-                                ))}
+                                        onClick={() => setActiveTool(activeTool === 'textbg' ? null : 'textbg')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'textbg' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                        title="Text Block Background"
+                                    >
+                                        <div className={`w-5 h-5 rounded flex items-center justify-center text-[12px] font-black leading-none ${activeTool === 'textbg' ? 'bg-white text-slate-900' : 'bg-slate-200 text-slate-800'}`}>T</div>
+                                    </button>
+
+                                    {activeTool === 'textbg' && (
+                                        <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-64 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                            <h4 className="font-black text-xs mb-3">Text Background</h4>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <span className="text-[10px] font-bold text-slate-500">Color</span>
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        <button
+                                                            onClick={() => handleTextBgColor('transparent')}
+                                                            className={`w-6 h-6 rounded border-2 border-slate-200 relative overflow-hidden ${objectProps.textBgColor === 'transparent' ? 'ring-2 ring-slate-900' : ''}`}
+                                                        >
+                                                            <div className="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAAAoSURBVChTY/gPBmAMZkBUg9QyMDD8x4YZ8CoYxUCwQ4kwfFQAIMAA6Hsc7rEusGMAAAAASUVORK5CYII=')] opacity-50" />
+                                                        </button>
+                                                        {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
+                                                            <button
+                                                                key={c}
+                                                                onClick={() => handleTextBgColor(c)}
+                                                                className={`w-6 h-6 rounded border-2 border-slate-200 ${objectProps.textBgColor === c ? 'ring-2 ring-slate-900' : ''}`}
+                                                                style={{ backgroundColor: c }}
+                                                            />
+                                                        ))}
+                                                        <input
+                                                            type="color"
+                                                            value={objectProps.textBgColor === 'transparent' ? '#ffffff' : objectProps.textBgColor}
+                                                            onChange={(e) => handleTextBgColor(e.target.value)}
+                                                            className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Radius Tool (Rect Only) */}
+                            {selectedObject instanceof fabric.Rect && (
+                                <div className="relative group">
+                                    <button
+                                        onClick={() => setActiveTool(activeTool === 'radius' ? null : 'radius')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'radius' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100'}`}
+                                        title="Corner Radius"
+                                    >
+                                        <Square size={20} className="rounded-md" />
+                                    </button>
+                                    {activeTool === 'radius' && (
+                                        <div className="absolute left-full top-0 ml-4 bg-white border-4 border-slate-900 rounded-2xl p-4 w-48 shadow-[8px_8px_0px_0px_#0f172a] z-50 animate-in slide-in-from-left-2">
+                                            <h4 className="font-black text-xs mb-3">Corner Radius</h4>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                                    <span>Value</span>
+                                                    <span>{objectProps.cornerRadius}px</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="100"
+                                                    value={objectProps.cornerRadius}
+                                                    onChange={(e) => handleCornerRadius(parseInt(e.target.value))}
+                                                    className="w-full accent-slate-900"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="h-px bg-slate-200 my-1" />
+
+                            {/* Delete */}
+                            <button onClick={handleDelete} className="p-3 bg-red-50 hover:bg-red-500 hover:text-white text-red-500 rounded-xl transition-colors" title="Delete">
+                                <Trash2 size={20} />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Drawing Mode Tools */}
+                    {isDrawingMode && (
+                        <div className="bg-white border-4 border-slate-900 rounded-2xl p-4 flex flex-col gap-4 shadow-[4px_4px_0px_0px_#0f172a] animate-in slide-in-from-left-2 w-48">
+                            <h4 className="font-black text-xs">Brush Settings</h4>
+
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-bold text-slate-500">Size ({brushSettings.width}px)</span>
                                 <input
-                                    type="color"
-                                    value={brushSettings.color}
+                                    type="range" min="1" max="50"
+                                    value={brushSettings.width}
                                     onChange={(e) => {
-                                        const color = e.target.value;
-                                        setBrushSettings(prev => ({ ...prev, color }));
+                                        const width = parseInt(e.target.value);
+                                        setBrushSettings(prev => ({ ...prev, width }));
                                         if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
-                                            fabricCanvas.current.freeDrawingBrush.color = color;
+                                            fabricCanvas.current.freeDrawingBrush.width = width;
                                         }
                                     }}
-                                    className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                    className="w-full accent-slate-900"
                                 />
                             </div>
-                        </div>
-                    </div>
-                )}
 
-                {/* Undo / Redo */}
-                <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
-                    <button
-                        onClick={handleUndo}
-                        disabled={historyIndex <= 0}
-                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Undo (Ctrl+Z)"
-                    >
-                        <Undo2 size={20} />
-                    </button>
-                    <button
-                        onClick={handleRedo}
-                        disabled={historyIndex >= history.length - 1}
-                        className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Redo (Ctrl+Shift+Z)"
-                    >
-                        <Redo2 size={20} />
-                    </button>
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-bold text-slate-500">Color</span>
+                                <div className="flex gap-2 flex-wrap">
+                                    {['#000000', '#ffffff', '#f27d26', '#ef4444', '#3b82f6'].map(c => (
+                                        <button
+                                            key={c}
+                                            onClick={() => {
+                                                setBrushSettings(prev => ({ ...prev, color: c }));
+                                                if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
+                                                    fabricCanvas.current.freeDrawingBrush.color = c;
+                                                }
+                                            }}
+                                            className={`w-6 h-6 rounded border-2 border-slate-200 ${brushSettings.color === c ? 'ring-2 ring-slate-900' : ''}`}
+                                            style={{ backgroundColor: c }}
+                                        />
+                                    ))}
+                                    <input
+                                        type="color"
+                                        value={brushSettings.color}
+                                        onChange={(e) => {
+                                            const color = e.target.value;
+                                            setBrushSettings(prev => ({ ...prev, color }));
+                                            if (fabricCanvas.current && fabricCanvas.current.freeDrawingBrush) {
+                                                fabricCanvas.current.freeDrawingBrush.color = color;
+                                            }
+                                        }}
+                                        className="w-6 h-6 rounded border-2 border-slate-200 p-0 overflow-hidden"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Undo / Redo */}
+                    <div className="bg-white border-4 border-slate-900 rounded-2xl p-2 flex flex-col gap-2 shadow-[4px_4px_0px_0px_#0f172a]">
+                        <button
+                            onClick={handleUndo}
+                            disabled={historyIndex <= 0}
+                            className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Undo (Ctrl+Z)"
+                        >
+                            <Undo2 size={20} />
+                        </button>
+                        <button
+                            onClick={handleRedo}
+                            disabled={historyIndex >= history.length - 1}
+                            className="p-3 bg-white hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Redo (Ctrl+Shift+Z)"
+                        >
+                            <Redo2 size={20} />
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

@@ -4,7 +4,7 @@ import { Modal } from '../components/ui/Modal';
 import {
     Users, Target, TrendingUp, Plus, Trash2, Edit3, Save,
     ChevronDown, AlertCircle, CheckCircle, Clock, X, Loader2,
-    BarChart3, User, Bell
+    BarChart3, User, Bell, Award, Search
 } from 'lucide-react';
 import { useNotifications } from '../components/NotificationProvider';
 import { NotificationType } from '../types';
@@ -87,6 +87,16 @@ export const TeamKPIBoard: React.FC = () => {
     const [showMemberInput, setShowMemberInput] = useState(false);
     const [memberActuals, setMemberActuals] = useState<Record<string, { actual_value: number; notes: string }>>({});
     const [savingActuals, setSavingActuals] = useState(false);
+
+    // Mobile-specific states
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [activeTab, setActiveTab] = useState<'overview' | 'vision'>('overview');
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const { sendNotification } = useNotifications();
     const [allAppUsers, setAllAppUsers] = useState<{ id: string, name: string }[]>([]);
@@ -414,494 +424,838 @@ export const TeamKPIBoard: React.FC = () => {
 
     return (
         <div className="space-y-4 md:space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
-                <div>
-                    <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-foreground flex items-center gap-2">
-                        {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
-                    </h1>
-                    <p className="text-slate-500 text-xs sm:text-sm mt-0.5 hidden md:block">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    {/* Workspace Filter */}
-                    {myWorkspaces.length > 1 && (
-                        <select
-                            value={selectedWorkspaceId}
-                            onChange={e => setSelectedWorkspaceId(e.target.value)}
-                            className="bg-card border-[3px] border-slate-900 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-colors cursor-pointer shadow-[2px_2px_0px_#0f172a]"
-                        >
-                            <option value="all">Semua Workspace</option>
-                            {myWorkspaces.map(ws => {
-                                const wsAvatars = new Set(ws.members || []);
-                                const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
-                                return (
-                                    <option key={ws.id} value={ws.id}>
-                                        {ws.name} ({count})
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    )}
-
-                    <select
-                        value={periodFilter}
-                        onChange={e => setPeriodFilter(e.target.value)}
-                        className="bg-card border-[3px] border-slate-900 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-colors cursor-pointer shadow-[2px_2px_0px_#0f172a]"
-                    >
-                        {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    </select>
-
-                </div>
-            </div>
-
-            {/* Split Content layout */}
-            <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-
-                {/* LEFT COLUMN: Main Stats & Member Grid */}
-                <div className="flex-1 space-y-4 md:space-y-6 min-w-0">
-                    {/* Summary Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-                        <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
-                            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-violet-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
-                                <Users className="text-violet-600" size={20} strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <p className="text-2xl sm:text-3xl font-black text-foreground">{totalMembers}</p>
-                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Members</p>
-                            </div>
-                        </div>
-                        <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
-                            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-blue-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
-                                <Target className="text-blue-600" size={20} strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <p className="text-2xl sm:text-3xl font-black text-foreground">{avgCompletion}%</p>
-                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Completion</p>
-                            </div>
-                        </div>
-                        <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 col-span-2 sm:col-span-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
-                            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-emerald-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
-                                <TrendingUp className="text-emerald-600" size={20} strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <p className="text-2xl sm:text-3xl font-black text-foreground">{onTrackCount}/{totalMembers}</p>
-                                <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">On Track</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Member Grid */}
-                    {filteredMembers.length === 0 ? (
-                        <div className="text-center py-12 sm:py-20 bg-card rounded-lg sm:rounded-[2.5rem] border-[3px] border-dashed border-slate-300 shadow-inner">
-                            <Users className="mx-auto text-mutedForeground mb-2 sm:mb-4" size={32} sm:size={48} />
-                            {!isAdmin && myWorkspaces.length === 0 ? (
-                                // Member with no workspace access
-                                <>
-                                    <h3 className="text-sm sm:text-lg font-bold text-mutedForeground">Belum Bergabung ke Workspace</h3>
-                                    <p className="text-[10px] sm:text-sm text-mutedForeground/80 mt-1 max-w-xs mx-auto">
-                                        Anda belum tergabung dalam workspace apapun. Hubungi admin untuk mendapatkan undangan.
-                                    </p>
-                                </>
-                            ) : (
-                                // Admin or member in workspace but no members yet
-                                <>
-                                    <h3 className="text-sm sm:text-lg font-bold text-mutedForeground">Belum ada anggota tim</h3>
-                                    <p className="text-[10px] sm:text-sm text-mutedForeground/80 mt-1">Tidak ada anggota di workspace ini.</p>
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                            {filteredMembers.map(member => {
-                                const rate = getCompletionRate(member.id);
-                                const color = getCompletionColor(rate);
-
-                                // Customize badge colors slightly for Bento
-                                const badgeColorMap = {
-                                    'On Track': 'bg-emerald-400 text-foreground border-[2px] border-slate-900',
-                                    'In Progress': 'bg-amber-400 text-foreground border-[2px] border-slate-900',
-                                    'Di Bawah Target': 'bg-rose-400 text-white border-[2px] border-slate-900'
-                                };
-                                const badgeLabel = rate >= 80 ? 'On Track' : rate >= 50 ? 'In Progress' : 'Di Bawah Target';
-                                const badgeIcon = rate >= 80 ? <CheckCircle size={10} strokeWidth={3} /> : rate >= 50 ? <Clock size={10} strokeWidth={3} /> : <AlertCircle size={10} strokeWidth={3} />;
-                                const badgeCls = badgeColorMap[badgeLabel];
-
-                                const memberKPIs = getMemberKPIs(member.id);
-
-                                return (
-                                    <div
-                                        key={member.id}
-                                        onClick={() => openDetail(member)}
-                                        className="bg-card rounded-[2rem] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 p-4 sm:p-5 cursor-pointer transition-all duration-200 flex flex-col h-full"
-                                    >
-                                        {/* Avatar + Info */}
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <img
-                                                src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
-                                                alt={member.full_name}
-                                                className="w-12 h-12 rounded-xl border-[3px] border-slate-900 hover:rotate-6 object-cover shadow-[2px_2px_0px_#0f172a] transition-transform flex-shrink-0"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-black text-foreground truncate text-sm sm:text-base leading-tight uppercase tracking-tight">{member.full_name}</h3>
-                                                <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Progress Bar */}
-                                        <div className="mb-4 mt-auto">
-                                            <div className="flex justify-between items-center mb-1.5">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Completion</span>
-                                                <span className={`text-sm font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{rate}%</span>
-                                            </div>
-                                            <div className="h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border-[2px] border-slate-900 shadow-inner">
-                                                <div
-                                                    className={`h-full border-r-[2px] border-slate-900 transition-all duration-700 ease-out ${rate >= 80 ? 'bg-emerald-400' : rate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`}
-                                                    style={{ width: `${rate}%` }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Footer */}
-                                        <div className="flex items-center justify-between pt-3 border-t-[3px] border-dashed border-slate-200">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] ${badgeCls}`}>
-                                                {badgeIcon} <span className="hidden sm:inline">{badgeLabel}</span>
-                                            </span>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-mutedForeground bg-slate-100 px-3 py-1 rounded-lg border-[3px] border-slate-200"> {memberKPIs.length} metrics</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div> {/* End Left Col */}
-
-                {/* RIGHT COLUMN: Vision Board */}
-                <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4">
-                    <div className="bg-card border-3 border-slate-900 rounded-3xl shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col">
-                        <div className="bg-amber-400 p-4 border-b-3 border-slate-900 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-card/20 rounded-xl flex items-center justify-center shrink-0">
-                                <TrendingUp className="text-foreground" size={20} />
-                            </div>
-                            <div>
-                                <h3 className="font-heading font-black text-foreground text-lg leading-tight uppercase tracking-wider">Vision Board</h3>
-                                <p className="text-[10px] font-bold text-foreground uppercase tracking-widest">{PERIODS.find(p => p.value === periodFilter)?.label || 'Performance'}</p>
-                            </div>
+            {/* ═══════════════════════════════════════════════════════════════════
+            MOBILE VIEW UI (Redesign)
+            ═══════════════════════════════════════════════════════════════════ */}
+            {isMobile ? (
+                <div className="flex flex-col min-h-screen bg-background pb-32 animate-in fade-in duration-500">
+                    {/* Compact Header Section */}
+                    <div className="flex flex-col gap-4 mb-6">
+                        <div>
+                            <h2 className="text-2xl font-black text-foreground font-heading tracking-tight">{config?.page_titles?.['kpi']?.title || 'KPI Board'}</h2>
+                            <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-1">Real-time Performance Monitoring</p>
                         </div>
 
-                        <div className="p-5 flex-1 flex flex-col items-center relative min-h-[300px]">
-                            {/* Confetti / Badge background decoration */}
-                            <div className="absolute top-4 right-4 w-16 h-16 bg-amber-400/10 rounded-full blur-xl pointer-events-none"></div>
-
-                            {topPerformers.length > 0 ? (
-                                <div className="flex flex-col items-center w-full relative z-10 animate-in fade-in slide-in-from-bottom-4 space-y-4">
-                                    {/* TOP 1 */}
-                                    <div className="flex flex-col items-center w-full pb-4 border-b-2 border-border/50 border-dashed">
-                                        <div className="relative mb-4">
-                                            <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 shadow-lg bg-card relative z-10">
-                                                <img
-                                                    src={topPerformers[0].member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(topPerformers[0].member.full_name)}`}
-                                                    alt={topPerformers[0].member.full_name}
-                                                    className="w-full h-full rounded-full object-cover"
-                                                />
-                                            </div>
-                                            {/* Crown Icon / Badge */}
-                                            <div className="absolute -top-3 -right-2 bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-1 rounded-full border-[3px] border-amber-400 transform rotate-12 shadow-[4px_4px_0px_#0f172a] z-20">
-                                                #1 TOP
-                                            </div>
-                                        </div>
-
-                                        <h4 className="font-black text-xl text-center text-foreground">{topPerformers[0].member.full_name}</h4>
-                                        <p className="text-xs text-mutedForeground font-bold mb-4">{topPerformers[0].member.role} {topPerformers[0].member.department ? ` • ${topPerformers[0].member.department}` : ''}</p>
-
-                                        <div className="w-full bg-muted rounded-2xl p-4 border-[3px] border-slate-900 border-dashed mb-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Completion Score</span>
-                                                <span className="text-lg font-black text-amber-500">{topPerformers[0].rate}%</span>
-                                            </div>
-                                            <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
-                                                <div className="h-full bg-amber-400 rounded-full" style={{ width: `${topPerformers[0].rate}%` }}></div>
-                                            </div>
-                                        </div>
-
-                                        <div className="w-full text-left">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5"><Target size={12} /> Metrik Terfasilitasi</p>
-                                            <div className="space-y-2">
-                                                {getMemberKPIs(topPerformers[0].member.id).slice(0, 3).map(kpi => (
-                                                    <div key={kpi.id} className="flex flex-col gap-1 p-2 bg-card border border-border shadow-sm rounded-xl">
-                                                        <p className="text-[10px] font-bold text-foreground line-clamp-1">{kpi.metric_name}</p>
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="text-[9px] font-medium text-mutedForeground">
-                                                                {kpi.actual_value} / {kpi.target_value} {kpi.unit}
-                                                            </span>
-                                                            <span className="text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
-                                                                {kpi.target_value > 0 ? ((kpi.actual_value / kpi.target_value) * 100).toFixed(0) : 0}%
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {getMemberKPIs(topPerformers[0].member.id).length > 3 && (
-                                                    <p className="text-[10px] text-center text-mutedForeground font-bold pt-1">
-                                                        + {getMemberKPIs(topPerformers[0].member.id).length - 3} metrik lainnya
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Sub-leaders (Best 2 and Best 3) */}
-                                    {(topPerformers.length > 1) && (
-                                        <div className="w-full flex gap-3 mt-2">
-                                            {topPerformers.slice(1, 3).map((p, index) => (
-                                                <div key={p.member.id} className="flex-1 bg-muted border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center relative">
-                                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-slate-100 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm z-20">
-                                                        #{index + 2}
-                                                    </div>
-                                                    <img
-                                                        src={p.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.member.full_name)}`}
-                                                        alt={p.member.full_name}
-                                                        className="w-12 h-12 rounded-full border-[3px] border-slate-900 object-cover mt-2 mb-2 shadow-[2px_2px_0px_#0f172a]"
-                                                    />
-                                                    <h5 className="font-extrabold text-[10px] text-center line-clamp-1 w-full text-foreground">{p.member.full_name}</h5>
-                                                    <p className="text-[8px] text-slate-500 font-bold mb-1 truncate w-full text-center">{p.member.role}</p>
-                                                    <div className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-xl border border-amber-200 w-full text-center">
-                                                        {p.rate}%
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* PREVIOUS MONTH MVP */}
-                                    {previousMonthBestPerformer && (
-                                        <div className="w-full mt-4 pt-4 border-t-2 border-border/50 border-dashed">
-                                            <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest text-center mb-3">🏅 MVP Bulan Lalu</p>
-                                            <div className="bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border-2 border-violet-500/20 rounded-2xl p-3 flex items-center gap-3">
-                                                <img
-                                                    src={previousMonthBestPerformer.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(previousMonthBestPerformer.member.full_name)}`}
-                                                    alt={previousMonthBestPerformer.member.full_name}
-                                                    className="w-10 h-10 rounded-full border-2 border-violet-300 object-cover"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <h5 className="font-extrabold text-xs text-foreground truncate">{previousMonthBestPerformer.member.full_name}</h5>
-                                                    <p className="text-[9px] text-violet-600 font-black truncate">{previousMonthBestPerformer.member.role}</p>
-                                                </div>
-                                                <div className="bg-violet-600 text-white font-black text-xs px-2 py-1 flex items-center justify-center rounded-lg shadow-sm whitespace-nowrap">
-                                                    {previousMonthBestPerformer.rate}%
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                </div>
-                            ) : (
-                                <div className="text-center flex flex-col justify-center items-center h-full text-mutedForeground mt-10">
-                                    <TrendingUp size={48} className="opacity-20 mb-3" />
-                                    <p className="font-bold text-sm">Belum Ada Data</p>
-                                    <p className="text-[10px]">Capaian KPI teratas akan muncul di sini</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ====== DETAIL MODAL ====== */}
-            <Modal isOpen={isDetailOpen} onClose={() => { setIsDetailOpen(false); setShowMemberInput(false); }} title={selectedMember?.full_name || 'Detail'} maxWidth="max-w-4xl">
-                {selectedMember && (() => {
-                    const memberKPIs = getMemberKPIs(selectedMember.id);
-                    const rate = getCompletionRate(selectedMember.id);
-                    const color = getCompletionColor(rate);
-
-                    const badgeColorMap = {
-                        'On Track': 'bg-emerald-400 text-foreground border-[2px] border-slate-900',
-                        'In Progress': 'bg-amber-400 text-foreground border-[2px] border-slate-900',
-                        'Di Bawah Target': 'bg-rose-400 text-white border-[2px] border-slate-900'
-                    };
-                    const badgeLabel = rate >= 80 ? 'On Track' : rate >= 50 ? 'In Progress' : 'Di Bawah Target';
-                    const badgeIcon = rate >= 80 ? <CheckCircle size={10} strokeWidth={3} /> : rate >= 50 ? <Clock size={10} strokeWidth={3} /> : <AlertCircle size={10} strokeWidth={3} />;
-                    const badgeCls = badgeColorMap[badgeLabel];
-
-                    return (
-                        <div className="flex gap-4 overflow-hidden transition-all duration-300" style={{ minHeight: 420 }}>
-                            {/* ====== LEFT CARD: Member Profile + KPI List ====== */}
-                            <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto w-full ${showMemberInput ? 'pr-4 border-r-[3px] border-slate-900 border-dashed' : ''} ${showMemberInput ? 'w-1/2' : ''}`}>
-                                {/* Member Header */}
-                                <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-card border-[3px] border-slate-900 mb-4 shrink-0 rounded-[1.5rem] shadow-[4px_4px_0px_#0f172a]">
-                                    <img
-                                        src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
-                                        alt={selectedMember.full_name}
-                                        className="w-14 sm:w-16 h-14 sm:h-16 rounded-[1rem] border-[3px] border-slate-900 object-cover shadow-[2px_2px_0px_#0f172a] flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <h2 className="text-base sm:text-lg font-black text-foreground uppercase tracking-tight truncate">{selectedMember.full_name}</h2>
-                                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
-                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] ${badgeCls}`}>
-                                                {badgeIcon} <span className="hidden sm:inline">{badgeLabel}</span>
-                                            </span>
-                                            <span className={`text-sm sm:text-base font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{rate}%</span>
-                                        </div>
-                                    </div>
-                                    {isAdmin && (
-                                        <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 sm:p-2.5 bg-rose-100 hover:bg-rose-200 text-rose-600 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a] rounded-xl transition-all shrink-0" title="Hapus anggota">
-                                            <Trash2 size={16} strokeWidth={2.5} />
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Period Filter + Action Button */}
-                                <div className="flex items-center justify-between mb-4 shrink-0 gap-2">
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                            {myWorkspaces.length > 1 && (
+                                <div className="flex-shrink-0 relative">
                                     <select
-                                        value={periodFilter}
-                                        onChange={e => setPeriodFilter(e.target.value)}
-                                        className="bg-slate-100 border-[3px] border-slate-900 text-foreground rounded-xl px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer shadow-[2px_2px_0px_#0f172a]"
+                                        value={selectedWorkspaceId}
+                                        onChange={e => setSelectedWorkspaceId(e.target.value)}
+                                        className="appearance-none bg-card border-2 border-slate-900 rounded-xl pl-3 pr-8 py-2 text-[10px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] focus:outline-none"
                                     >
-                                        {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                        <option value="all">Workspaces</option>
+                                        {myWorkspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name}</option>)}
                                     </select>
-                                    {isAdmin ? (
-                                        <button
-                                            onClick={() => setIsAddKPIOpen(true)}
-                                            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all whitespace-nowrap"
-                                        >
-                                            <Plus size={14} strokeWidth={3} /> <span className="hidden sm:inline">Tambah KPI</span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => openMemberInputPanel(memberKPIs)}
-                                            disabled={memberKPIs.length === 0 || showMemberInput}
-                                            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:hover:-translate-y-0 disabled:hover:shadow-[2px_2px_0px_#0f172a] text-foreground px-3 py-1.5 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all whitespace-nowrap"
-                                        >
-                                            <Edit3 size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Input</span>
-                                        </button>
-                                    )}
+                                    <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
                                 </div>
+                            )}
+                            <div className="flex gap-1.5">
+                                {PERIODS.map(p => (
+                                    <button
+                                        key={p.value}
+                                        onClick={() => setPeriodFilter(p.value)}
+                                        className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${periodFilter === p.value ? 'bg-indigo-600 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a]' : 'bg-card border-slate-200 text-slate-500'}`}
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-                                {/* KPI List */}
-                                {memberKPIs.length === 0 ? (
-                                    <div className="text-center py-8 sm:py-10 bg-muted rounded-2xl border-[3px] border-dashed border-slate-300">
-                                        <Target className="mx-auto text-mutedForeground mb-2" size={32} strokeWidth={2} />
-                                        <p className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-widest">Belum ada KPI untuk periode ini</p>
+                    {/* Horizontal Summary Stats - Compact 3 Columns */}
+                    <div className="grid grid-cols-3 gap-2 mb-6">
+                        {[
+                            { label: 'Members', val: totalMembers, icon: <Users size={14} />, color: 'bg-indigo-50 border-indigo-200 text-indigo-600' },
+                            { label: 'Avg Rate', val: `${avgCompletion}%`, icon: <Target size={14} />, color: 'bg-blue-50 border-blue-200 text-blue-600' },
+                            { label: 'On Track', val: `${onTrackCount}`, icon: <TrendingUp size={14} />, color: 'bg-emerald-50 border-emerald-200 text-emerald-600' }
+                        ].map((stat, i) => (
+                            <div key={i} className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 ${stat.color} shadow-sm`}>
+                                <div className="p-1.5 rounded-lg bg-white/50 mb-1">{stat.icon}</div>
+                                <p className="text-lg font-black leading-none mb-0.5">{stat.val}</p>
+                                <p className="text-[7px] font-black uppercase tracking-tighter opacity-70">{stat.label}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Tab Switcher */}
+                    <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] mb-6">
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200' : 'text-slate-500'}`}
+                        >
+                            <Users size={14} /> Overview
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('vision')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'vision' ? 'bg-white text-amber-500 shadow-sm border border-slate-200' : 'text-slate-500'}`}
+                        >
+                            <TrendingUp size={14} /> Vision Board
+                        </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="flex-1">
+                        {activeTab === 'overview' ? (
+                            <div className="space-y-3">
+                                {filteredMembers.length === 0 ? (
+                                    <div className="py-12 text-center bg-card rounded-3xl border-2 border-dashed border-slate-200">
+                                        <p className="text-xs font-bold text-slate-400">Belum ada anggota tim.</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-3 overflow-y-auto flex-1 pr-1 pb-4" style={{ maxHeight: '350px' }}>
-                                        {memberKPIs.map(kpi => {
-                                            const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
-                                            const kpiColor = getCompletionColor(kpiRate);
-                                            const isEditing = editingKPI === kpi.id;
-
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {filteredMembers.map(member => {
+                                            const rate = getCompletionRate(member.id);
                                             return (
-                                                <div key={kpi.id} className="bg-card border-[3px] border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_rgba(148,163,184,0.3)] hover:shadow-[4px_4px_0px_#0f172a] transition-all group">
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div className="flex-1 min-w-0">
-                                                            <h4 className="font-black text-foreground text-sm truncate uppercase">{kpi.metric_name}</h4>
-                                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
+                                                <div
+                                                    key={member.id}
+                                                    onClick={() => openDetail(member)}
+                                                    className="bg-card border-2 border-slate-900 rounded-3xl p-4 shadow-[4px_4px_0px_#0f172a] flex items-center gap-4 active:scale-95 transition-all"
+                                                >
+                                                    <div className="relative">
+                                                        <img src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`} className="w-12 h-12 rounded-2xl border-2 border-slate-900 shadow-sm object-cover" />
+                                                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-slate-900 flex items-center justify-center text-[8px] font-black text-white ${rate >= 80 ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}>
+                                                            {rate}
                                                         </div>
-                                                        {isAdmin && (
-                                                            <div className="flex items-center gap-1.5 ml-3 shrink-0">
-                                                                {!isEditing ? (
-                                                                    <>
-                                                                        <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1.5 hover:bg-slate-100 text-mutedForeground hover:text-foreground rounded-lg transition-colors border-[2.5px] border-transparent hover:border-slate-900" title="Edit KPI"><Edit3 size={14} /></button>
-                                                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1.5 hover:bg-rose-100 text-mutedForeground hover:text-rose-600 rounded-lg transition-colors border-[2.5px] border-transparent hover:border-rose-600" title="Hapus"><Trash2 size={14} /></button>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1.5 bg-emerald-400 text-foreground border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 rounded-lg transition-all"><Save size={14} strokeWidth={2.5} /></button>
-                                                                        <button onClick={() => setEditingKPI(null)} className="p-1.5 bg-slate-200 text-foreground border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 rounded-lg transition-all"><X size={14} strokeWidth={2.5} /></button>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        )}
                                                     </div>
-                                                    {/* Progress bar */}
-                                                    <div className="flex items-center gap-3 mb-3">
-                                                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden border-[2px] border-slate-900 shadow-inner">
-                                                            <div className={`h-full border-r-[2px] border-slate-900 ${kpiRate >= 80 ? 'bg-emerald-400' : kpiRate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{ width: `${kpiRate}%` }} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-sm font-black text-foreground uppercase truncate">{member.full_name}</h4>
+                                                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate">{member.role}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-10 w-[2px] bg-slate-100" />
+                                                        <div className="text-right">
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Metric</p>
+                                                            <p className="text-sm font-black text-foreground">{getMemberKPIs(member.id).length}</p>
                                                         </div>
-                                                        <span className={`text-xs font-black ${kpiRate >= 80 ? 'text-emerald-600' : kpiRate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{kpiRate}%</span>
                                                     </div>
-                                                    {/* Values */}
-                                                    <div className="flex items-center gap-4 text-[10px] sm:text-xs">
-                                                        <span className="font-bold text-slate-500 uppercase tracking-widest">Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></span>
-                                                        {isEditing ? (
-                                                            <span className="flex items-center gap-1 font-bold text-slate-500 uppercase tracking-widest">
-                                                                Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-16 border-[2px] border-slate-900 rounded-md px-1 py-0.5 text-xs font-black text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 bg-card shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" onClick={e => e.stopPropagation()} />{kpi.unit}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="font-bold text-slate-500 uppercase tracking-widest">Actual: <strong className="text-foreground">{kpi.actual_value}{kpi.unit}</strong></span>
-                                                        )}
-                                                    </div>
-                                                    {isEditing && (
-                                                        <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-3 w-full border-[2px] border-slate-900 rounded-xl px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 bg-card placeholder:text-mutedForeground placeholder:font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" onClick={e => e.stopPropagation()} />
-                                                    )}
                                                 </div>
                                             );
                                         })}
                                     </div>
                                 )}
                             </div>
+                        ) : (
+                            <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                                {topPerformers.length > 0 ? (
+                                    <>
+                                        {/* Podium Look - Simplified for Mobile */}
+                                        <div className="flex flex-col items-center bg-gradient-to-b from-amber-400/20 to-card border-2 border-slate-900 rounded-[2.5rem] p-6 shadow-[6px_6px_0px_#0f172a] relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
-                            {/* ====== RIGHT CARD: Member Actual Input Slide Panel ====== */}
-                            <div className={`transition-all duration-300 ease-in-out ${showMemberInput ? 'w-1/2 opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
-                                {showMemberInput && (
-                                    <div className="flex flex-col h-full bg-muted rounded-[1.5rem] border-[3px] border-slate-900 shadow-[inset_0_0_10px_rgba(0,0,0,0.05)] p-4">
-                                        {/* Panel header */}
-                                        <div className="flex items-center justify-between mb-5">
-                                            <div>
-                                                <h3 className="font-black text-foreground text-sm uppercase tracking-widest">✏️ Input Pencapaian</h3>
-                                                <p className="text-[10px] text-slate-500 font-bold mt-1">Isi rentang capaian bulan ini</p>
-                                            </div>
-                                            <button onClick={() => setShowMemberInput(false)} className="p-2 border-[2px] border-slate-300 hover:border-slate-900 hover:bg-rose-100 hover:text-rose-600 text-slate-500 rounded-xl transition-all shadow-sm">
-                                                <X size={16} strokeWidth={2.5} />
-                                            </button>
-                                        </div>
-
-                                        {/* Per-KPI inputs */}
-                                        <div className="flex-1 overflow-y-auto space-y-4 pr-1" style={{ maxHeight: '350px' }}>
-                                            {memberKPIs.map(kpi => (
-                                                <div key={kpi.id} className="bg-card border-[3px] border-slate-900 rounded-[1.2rem] p-4 shadow-[4px_4px_0px_rgba(148,163,184,0.3)]">
-                                                    <p className="text-xs font-black text-foreground uppercase tracking-tight mb-1">{kpi.metric_name}</p>
-                                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{kpi.period} · Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></p>
-
-                                                    <div className="space-y-3">
-                                                        <div>
-                                                            <label className="text-[9px] font-black text-violet-600 uppercase tracking-widest block mb-1">Nilai Aktual ({kpi.unit})</label>
-                                                            <input
-                                                                type="number" min={0}
-                                                                value={memberActuals[kpi.id]?.actual_value ?? kpi.actual_value}
-                                                                onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], actual_value: Number(e.target.value) } }))}
-                                                                className="w-full border-[3px] border-slate-900 bg-card shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-3 py-2 text-sm font-black text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Catatan</label>
-                                                            <input
-                                                                type="text" placeholder="Keterangan..."
-                                                                value={memberActuals[kpi.id]?.notes ?? kpi.notes ?? ''}
-                                                                onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], notes: e.target.value } }))}
-                                                                className="w-full border-[2px] border-slate-300 focus:border-slate-900 rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-mutedForeground"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                            <div className="relative mb-4">
+                                                <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 shadow-lg bg-card">
+                                                    <img src={topPerformers[0].member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(topPerformers[0].member.full_name)}`} className="w-full h-full rounded-full object-cover" />
                                                 </div>
-                                            ))}
+                                                <div className="absolute -top-2 -right-2 bg-slate-900 text-amber-400 text-[10px] font-black px-3 py-1 rounded-full border-2 border-amber-400 shadow-[2px_2px_0px_#0f172a] z-20">#1 MVP</div>
+                                            </div>
+
+                                            <h3 className="text-xl font-black text-foreground uppercase italic">{topPerformers[0].member.full_name}</h3>
+                                            <p className="text-[10px] font-black text-amber-600 bg-amber-50 px-4 py-1 rounded-full border border-amber-200 mt-2">{topPerformers[0].rate}% COMPLETION</p>
+
+                                            <div className="grid grid-cols-2 gap-3 w-full mt-8 pt-6 border-t-2 border-slate-900 border-dashed">
+                                                {topPerformers.slice(1, 3).map((p, i) => (
+                                                    <div key={i} className="bg-white border-2 border-slate-900 rounded-2xl p-3 flex flex-col items-center">
+                                                        <div className="w-10 h-10 rounded-full border-2 border-slate-900 mb-2 relative overflow-hidden">
+                                                            <img src={p.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.member.full_name)}`} className="w-full h-full object-cover" />
+                                                        </div>
+                                                        <h5 className="text-[9px] font-black uppercase text-center truncate w-full">#{i + 2} {p.member.full_name.split(' ')[0]}</h5>
+                                                        <p className="text-[10px] font-black text-indigo-600">{p.rate}%</p>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
 
-                                        {/* Save button */}
-                                        <button
-                                            onClick={handleSaveMemberActuals}
-                                            disabled={savingActuals}
-                                            className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-foreground py-3 rounded-xl border-[3px] border-slate-900 font-black uppercase tracking-widest text-sm transition-all shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1"
-                                        >
-                                            {savingActuals ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} strokeWidth={2.5} />}
-                                            {savingActuals ? 'Menyimpan...' : 'Simpan Pencapaian'}
-                                        </button>
+                                        {/* Monthly Reward Card */}
+                                        {previousMonthBestPerformer && (
+                                            <div className="bg-indigo-600 rounded-[2rem] p-5 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                                                    <Award size={24} className="text-white" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[9px] font-black text-white/70 uppercase tracking-widest leading-none mb-1">Last Month MVP</p>
+                                                    <h4 className="text-base font-black text-white truncate uppercase">{previousMonthBestPerformer.member.full_name}</h4>
+                                                </div>
+                                                <div className="bg-white text-indigo-600 h-10 w-10 flex items-center justify-center rounded-xl font-black text-xs shadow-sm">
+                                                    {previousMonthBestPerformer.rate}%
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="py-20 text-center text-slate-400">
+                                        <TrendingUp size={40} className="mx-auto opacity-10 mb-2" />
+                                        <p className="text-xs font-bold uppercase tracking-widest">Belum ada data ranking</p>
                                     </div>
                                 )}
                             </div>
+                        )}
+                    </div>
+                </div>
+            ) : (
+                /* ═══════════════════════════════════════════════════════════════════
+                   DESKTOP VIEW UI (Existing Bento)
+                   ═══════════════════════════════════════════════════════════════════ */
+                <>
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+                        <div>
+                            <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-foreground flex items-center gap-2">
+                                {config?.page_titles?.['kpi']?.title || 'Team KPI Board'}
+                            </h1>
+                            <p className="text-slate-500 text-xs sm:text-sm mt-0.5 hidden md:block">{config?.page_titles?.['kpi']?.subtitle || 'Monitor performa dan pencapaian tim secara real-time'}</p>
                         </div>
-                    );
-                })()}
-            </Modal>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                            {/* Workspace Filter */}
+                            {myWorkspaces.length > 1 && (
+                                <select
+                                    value={selectedWorkspaceId}
+                                    onChange={e => setSelectedWorkspaceId(e.target.value)}
+                                    className="bg-card border-[3px] border-slate-900 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-colors cursor-pointer shadow-[2px_2px_0px_#0f172a]"
+                                >
+                                    <option value="all">Semua Workspace</option>
+                                    {myWorkspaces.map(ws => {
+                                        const wsAvatars = new Set(ws.members || []);
+                                        const count = members.filter(m => wsAvatars.has(m.avatar_url)).length;
+                                        return (
+                                            <option key={ws.id} value={ws.id}>
+                                                {ws.name} ({count})
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            )}
+
+                            <select
+                                value={periodFilter}
+                                onChange={e => setPeriodFilter(e.target.value)}
+                                className="bg-card border-[3px] border-slate-900 text-foreground rounded-lg sm:rounded-xl px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-colors cursor-pointer shadow-[2px_2px_0px_#0f172a]"
+                            >
+                                {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                            </select>
+
+                        </div>
+                    </div>
+
+                    {/* Split Content layout */}
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+
+                        {/* LEFT COLUMN: Main Stats & Member Grid */}
+                        <div className="flex-1 space-y-4 md:space-y-6 min-w-0">
+                            {/* Summary Stats */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
+                                <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                                    <div className="w-12 sm:w-14 h-12 sm:h-14 bg-violet-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
+                                        <Users className="text-violet-600" size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl sm:text-3xl font-black text-foreground">{totalMembers}</p>
+                                        <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Members</p>
+                                    </div>
+                                </div>
+                                <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                                    <div className="w-12 sm:w-14 h-12 sm:h-14 bg-blue-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
+                                        <Target className="text-blue-600" size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl sm:text-3xl font-black text-foreground">{avgCompletion}%</p>
+                                        <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">Completion</p>
+                                    </div>
+                                </div>
+                                <div className="bg-card rounded-[2rem] border-[3.5px] border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 flex items-center gap-3 sm:gap-4 col-span-2 sm:col-span-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all">
+                                    <div className="w-12 sm:w-14 h-12 sm:h-14 bg-emerald-100 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center flex-shrink-0 shadow-[2px_2px_0px_#0f172a]">
+                                        <TrendingUp className="text-emerald-600" size={20} strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl sm:text-3xl font-black text-foreground">{onTrackCount}/{totalMembers}</p>
+                                        <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest leading-none mt-1">On Track</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Member Grid */}
+                            {filteredMembers.length === 0 ? (
+                                <div className="text-center py-12 sm:py-20 bg-card rounded-lg sm:rounded-[2.5rem] border-[3px] border-dashed border-slate-300 shadow-inner">
+                                    <Users className="mx-auto text-mutedForeground mb-2 sm:mb-4" size={32} sm:size={48} />
+                                    {!isAdmin && myWorkspaces.length === 0 ? (
+                                        // Member with no workspace access
+                                        <>
+                                            <h3 className="text-sm sm:text-lg font-bold text-mutedForeground">Belum Bergabung ke Workspace</h3>
+                                            <p className="text-[10px] sm:text-sm text-mutedForeground/80 mt-1 max-w-xs mx-auto">
+                                                Anda belum tergabung dalam workspace apapun. Hubungi admin untuk mendapatkan undangan.
+                                            </p>
+                                        </>
+                                    ) : (
+                                        // Admin or member in workspace but no members yet
+                                        <>
+                                            <h3 className="text-sm sm:text-lg font-bold text-mutedForeground">Belum ada anggota tim</h3>
+                                            <p className="text-[10px] sm:text-sm text-mutedForeground/80 mt-1">Tidak ada anggota di workspace ini.</p>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                                    {filteredMembers.map(member => {
+                                        const rate = getCompletionRate(member.id);
+                                        const color = getCompletionColor(rate);
+
+                                        // Customize badge colors slightly for Bento
+                                        const badgeColorMap = {
+                                            'On Track': 'bg-emerald-400 text-foreground border-[2px] border-slate-900',
+                                            'In Progress': 'bg-amber-400 text-foreground border-[2px] border-slate-900',
+                                            'Di Bawah Target': 'bg-rose-400 text-white border-[2px] border-slate-900'
+                                        };
+                                        const badgeLabel = rate >= 80 ? 'On Track' : rate >= 50 ? 'In Progress' : 'Di Bawah Target';
+                                        const badgeIcon = rate >= 80 ? <CheckCircle size={10} strokeWidth={3} /> : rate >= 50 ? <Clock size={10} strokeWidth={3} /> : <AlertCircle size={10} strokeWidth={3} />;
+                                        const badgeCls = badgeColorMap[badgeLabel];
+
+                                        const memberKPIs = getMemberKPIs(member.id);
+
+                                        return (
+                                            <div
+                                                key={member.id}
+                                                onClick={() => openDetail(member)}
+                                                className="bg-card rounded-[2rem] border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1 p-4 sm:p-5 cursor-pointer transition-all duration-200 flex flex-col h-full"
+                                            >
+                                                {/* Avatar + Info */}
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <img
+                                                        src={member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.full_name)}`}
+                                                        alt={member.full_name}
+                                                        className="w-12 h-12 rounded-xl border-[3px] border-slate-900 hover:rotate-6 object-cover shadow-[2px_2px_0px_#0f172a] transition-transform flex-shrink-0"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-black text-foreground truncate text-sm sm:text-base leading-tight uppercase tracking-tight">{member.full_name}</h3>
+                                                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest truncate">{member.role}{member.department ? ` · ${member.department}` : ''}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Progress Bar */}
+                                                <div className="mb-4 mt-auto">
+                                                    <div className="flex justify-between items-center mb-1.5">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Completion</span>
+                                                        <span className={`text-sm font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{rate}%</span>
+                                                    </div>
+                                                    <div className="h-2.5 sm:h-3 bg-slate-100 rounded-full overflow-hidden border-[2px] border-slate-900 shadow-inner">
+                                                        <div
+                                                            className={`h-full border-r-[2px] border-slate-900 transition-all duration-700 ease-out ${rate >= 80 ? 'bg-emerald-400' : rate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`}
+                                                            style={{ width: `${rate}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Footer */}
+                                                <div className="flex items-center justify-between pt-3 border-t-[3px] border-dashed border-slate-200">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] ${badgeCls}`}>
+                                                        {badgeIcon} <span className="hidden sm:inline">{badgeLabel}</span>
+                                                    </span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-mutedForeground bg-slate-100 px-3 py-1 rounded-lg border-[3px] border-slate-200"> {memberKPIs.length} metrics</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div> {/* End Left Col */}
+
+                        {/* RIGHT COLUMN: Vision Board */}
+                        <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4">
+                            <div className="bg-card border-3 border-slate-900 rounded-3xl shadow-[6px_6px_0px_#0f172a] overflow-hidden flex flex-col">
+                                <div className="bg-amber-400 p-4 border-b-3 border-slate-900 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-card/20 rounded-xl flex items-center justify-center shrink-0">
+                                        <TrendingUp className="text-foreground" size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-heading font-black text-foreground text-lg leading-tight uppercase tracking-wider">Vision Board</h3>
+                                        <p className="text-[10px] font-bold text-foreground uppercase tracking-widest">{PERIODS.find(p => p.value === periodFilter)?.label || 'Performance'}</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-5 flex-1 flex flex-col items-center relative min-h-[300px]">
+                                    {/* Confetti / Badge background decoration */}
+                                    <div className="absolute top-4 right-4 w-16 h-16 bg-amber-400/10 rounded-full blur-xl pointer-events-none"></div>
+
+                                    {topPerformers.length > 0 ? (
+                                        <div className="flex flex-col items-center w-full relative z-10 animate-in fade-in slide-in-from-bottom-4 space-y-4">
+                                            {/* TOP 1 */}
+                                            <div className="flex flex-col items-center w-full pb-4 border-b-2 border-border/50 border-dashed">
+                                                <div className="relative mb-4">
+                                                    <div className="w-24 h-24 rounded-full border-4 border-amber-400 p-1 shadow-lg bg-card relative z-10">
+                                                        <img
+                                                            src={topPerformers[0].member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(topPerformers[0].member.full_name)}`}
+                                                            alt={topPerformers[0].member.full_name}
+                                                            className="w-full h-full rounded-full object-cover"
+                                                        />
+                                                    </div>
+                                                    {/* Crown Icon / Badge */}
+                                                    <div className="absolute -top-3 -right-2 bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-1 rounded-full border-[3px] border-amber-400 transform rotate-12 shadow-[4px_4px_0px_#0f172a] z-20">
+                                                        #1 TOP
+                                                    </div>
+                                                </div>
+
+                                                <h4 className="font-black text-xl text-center text-foreground">{topPerformers[0].member.full_name}</h4>
+                                                <p className="text-xs text-mutedForeground font-bold mb-4">{topPerformers[0].member.role} {topPerformers[0].member.department ? ` • ${topPerformers[0].member.department}` : ''}</p>
+
+                                                <div className="w-full bg-muted rounded-2xl p-4 border-[3px] border-slate-900 border-dashed mb-4">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Completion Score</span>
+                                                        <span className="text-lg font-black text-amber-500">{topPerformers[0].rate}%</span>
+                                                    </div>
+                                                    <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                                                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${topPerformers[0].rate}%` }}></div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="w-full text-left">
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5"><Target size={12} /> Metrik Terfasilitasi</p>
+                                                    <div className="space-y-2">
+                                                        {getMemberKPIs(topPerformers[0].member.id).slice(0, 3).map(kpi => (
+                                                            <div key={kpi.id} className="flex flex-col gap-1 p-2 bg-card border border-border shadow-sm rounded-xl">
+                                                                <p className="text-[10px] font-bold text-foreground line-clamp-1">{kpi.metric_name}</p>
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[9px] font-medium text-mutedForeground">
+                                                                        {kpi.actual_value} / {kpi.target_value} {kpi.unit}
+                                                                    </span>
+                                                                    <span className="text-[9px] font-black text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                                                        {kpi.target_value > 0 ? ((kpi.actual_value / kpi.target_value) * 100).toFixed(0) : 0}%
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                        {getMemberKPIs(topPerformers[0].member.id).length > 3 && (
+                                                            <p className="text-[10px] text-center text-mutedForeground font-bold pt-1">
+                                                                + {getMemberKPIs(topPerformers[0].member.id).length - 3} metrik lainnya
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Sub-leaders (Best 2 and Best 3) */}
+                                            {(topPerformers.length > 1) && (
+                                                <div className="w-full flex gap-3 mt-2">
+                                                    {topPerformers.slice(1, 3).map((p, index) => (
+                                                        <div key={p.member.id} className="flex-1 bg-muted border-2 border-slate-200 rounded-2xl p-3 flex flex-col items-center relative">
+                                                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-slate-100 text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm z-20">
+                                                                #{index + 2}
+                                                            </div>
+                                                            <img
+                                                                src={p.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(p.member.full_name)}`}
+                                                                alt={p.member.full_name}
+                                                                className="w-12 h-12 rounded-full border-[3px] border-slate-900 object-cover mt-2 mb-2 shadow-[2px_2px_0px_#0f172a]"
+                                                            />
+                                                            <h5 className="font-extrabold text-[10px] text-center line-clamp-1 w-full text-foreground">{p.member.full_name}</h5>
+                                                            <p className="text-[8px] text-slate-500 font-bold mb-1 truncate w-full text-center">{p.member.role}</p>
+                                                            <div className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-xl border border-amber-200 w-full text-center">
+                                                                {p.rate}%
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* PREVIOUS MONTH MVP */}
+                                            {previousMonthBestPerformer && (
+                                                <div className="w-full mt-4 pt-4 border-t-2 border-border/50 border-dashed">
+                                                    <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest text-center mb-3">🏅 MVP Bulan Lalu</p>
+                                                    <div className="bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border-2 border-violet-500/20 rounded-2xl p-3 flex items-center gap-3">
+                                                        <img
+                                                            src={previousMonthBestPerformer.member.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(previousMonthBestPerformer.member.full_name)}`}
+                                                            alt={previousMonthBestPerformer.member.full_name}
+                                                            className="w-10 h-10 rounded-full border-2 border-violet-300 object-cover"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <h5 className="font-extrabold text-xs text-foreground truncate">{previousMonthBestPerformer.member.full_name}</h5>
+                                                            <p className="text-[9px] text-violet-600 font-black truncate">{previousMonthBestPerformer.member.role}</p>
+                                                        </div>
+                                                        <div className="bg-violet-600 text-white font-black text-xs px-2 py-1 flex items-center justify-center rounded-lg shadow-sm whitespace-nowrap">
+                                                            {previousMonthBestPerformer.rate}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        </div>
+                                    ) : (
+                                        <div className="text-center flex flex-col justify-center items-center h-full text-mutedForeground mt-10">
+                                            <TrendingUp size={48} className="opacity-20 mb-3" />
+                                            <p className="font-bold text-sm">Belum Ada Data</p>
+                                            <p className="text-[10px]">Capaian KPI teratas akan muncul di sini</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* ═══════════════════════════════════════════════════════════════════
+               MEMBER DETAIL - DRAWER (Mobile) vs MODAL (Desktop)
+               ═══════════════════════════════════════════════════════════════════ */}
+            {isMobile ? (
+                <div
+                    className={`fixed inset-0 z-[100] transition-all duration-500 ${isDetailOpen ? 'visible' : 'invisible'}`}
+                >
+                    {/* Backdrop */}
+                    <div
+                        className={`absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 ${isDetailOpen ? 'opacity-100' : 'opacity-0'}`}
+                        onClick={() => { setIsDetailOpen(false); setShowMemberInput(false); }}
+                    />
+
+                    {/* Drawer Content */}
+                    <div
+                        className={`absolute inset-x-0 bottom-0 bg-white border-t-2 border-slate-900 rounded-t-[2.5rem] shadow-[0_-8px_30px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col max-h-[92vh] ${isDetailOpen ? 'translate-y-0' : 'translate-y-full'}`}
+                    >
+                        {/* Drawer Handle & Header */}
+                        <div className="flex flex-col items-center pt-3 pb-2 shrink-0">
+                            <div className="w-12 h-1.5 bg-slate-200 rounded-full mb-4" />
+                            <div className="w-full px-6 flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-black uppercase tracking-tight text-foreground truncate max-w-[70%]">
+                                    {selectedMember?.full_name}
+                                </h3>
+                                <button
+                                    onClick={() => { setIsDetailOpen(false); setShowMemberInput(false); }}
+                                    className="p-2.5 bg-slate-100 rounded-2xl border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] active:translate-y-0.5 active:shadow-none transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto px-6 pb-20 custom-scrollbar">
+                            {selectedMember && (() => {
+                                const memberKPIs = getMemberKPIs(selectedMember.id);
+                                const rate = getCompletionRate(selectedMember.id);
+
+                                return (
+                                    <div className="space-y-6">
+                                        {/* Mobile Profile Header */}
+                                        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-3xl border-2 border-slate-100">
+                                            <img
+                                                src={selectedMember.avatar_url}
+                                                className="w-16 h-16 rounded-2xl border-2 border-slate-900 shadow-sm object-cover"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none mb-1">{selectedMember.role}</p>
+                                                <h4 className="text-base font-black text-foreground uppercase truncate">{selectedMember.full_name}</h4>
+                                                <div className="flex items-center gap-3 mt-1.5">
+                                                    <span className={`text-xs font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>
+                                                        {rate}% Success Rate
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Tabs for Detail or Input */}
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setShowMemberInput(false)}
+                                                className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${!showMemberInput ? 'bg-slate-900 text-white border-slate-900 shadow-[4px_4px_0px_#cbd5e1]' : 'bg-card border-slate-100 text-slate-500'}`}
+                                            >
+                                                Statistics
+                                            </button>
+                                            <button
+                                                onClick={() => openMemberInputPanel(memberKPIs)}
+                                                className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${showMemberInput ? 'bg-emerald-500 text-foreground border-slate-900 shadow-[4px_4px_0px_#cbd5e1]' : 'bg-card border-slate-100 text-slate-500'}`}
+                                            >
+                                                Update Data
+                                            </button>
+                                        </div>
+
+                                        {showMemberInput ? (
+                                            /* Input View Mobile */
+                                            <div className="space-y-4 pb-4 animate-in slide-in-from-right-4 duration-300">
+                                                {memberKPIs.map(kpi => (
+                                                    <div key={kpi.id} className="bg-slate-50 border-2 border-slate-200 rounded-3xl p-4">
+                                                        <p className="text-xs font-black text-foreground uppercase mb-3">{kpi.metric_name}</p>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Actual ({kpi.unit})</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={memberActuals[kpi.id]?.actual_value ?? kpi.actual_value}
+                                                                    onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], actual_value: Number(e.target.value) } }))}
+                                                                    className="w-full bg-white border-2 border-slate-900 rounded-xl px-3 py-2 text-sm font-black focus:outline-none"
+                                                                />
+                                                            </div>
+                                                            <div className="flex flex-col justify-end">
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Target</p>
+                                                                <p className="text-sm font-black text-slate-600">{kpi.target_value}{kpi.unit}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <button
+                                                    onClick={handleSaveMemberActuals}
+                                                    disabled={savingActuals}
+                                                    className="w-full py-4 bg-emerald-500 text-foreground border-2 border-slate-900 rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-[4px_4px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    {savingActuals ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                                    {savingActuals ? 'Saving...' : 'Save Analytics'}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            /* Stats View Mobile */
+                                            <div className="space-y-4 pb-4 animate-in slide-in-from-left-4 duration-300">
+                                                {memberKPIs.length === 0 ? (
+                                                    <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-3xl">
+                                                        <Target size={30} className="mx-auto text-slate-300 mb-2" />
+                                                        <p className="text-xs font-bold text-slate-400">Belum ada KPI</p>
+                                                    </div>
+                                                ) : (
+                                                    memberKPIs.map(kpi => {
+                                                        const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
+                                                        return (
+                                                            <div key={kpi.id} className="bg-white border-2 border-slate-100 rounded-3xl p-4 shadow-sm">
+                                                                <div className="flex justify-between items-start mb-3">
+                                                                    <div className="max-w-[70%]">
+                                                                        <h5 className="text-xs font-black uppercase text-foreground leading-tight">{kpi.metric_name}</h5>
+                                                                        <p className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">{kpi.category}</p>
+                                                                    </div>
+                                                                    <span className={`text-base font-black ${kpiRate >= 80 ? 'text-emerald-500' : kpiRate >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                                        {kpiRate}%
+                                                                    </span>
+                                                                </div>
+                                                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                                                    <div
+                                                                        className={`h-full transition-all duration-700 ${kpiRate >= 80 ? 'bg-emerald-400' : kpiRate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`}
+                                                                        style={{ width: `${kpiRate}%` }}
+                                                                    />
+                                                                </div>
+                                                                <div className="flex justify-between mt-3">
+                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Target: {kpi.target_value}{kpi.unit}</p>
+                                                                    <p className="text-[10px] font-black text-slate-700 uppercase">Actual: {kpi.actual_value}{kpi.unit}</p>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+
+                                                {isAdmin && (
+                                                    <div className="pt-4 flex gap-2">
+                                                        <button
+                                                            onClick={() => setIsAddKPIOpen(true)}
+                                                            className="flex-1 py-3 bg-violet-600 text-white rounded-2xl border-2 border-slate-900 font-black text-[10px] uppercase tracking-widest shadow-[4px_4px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all"
+                                                        >
+                                                            Add New Metric
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteMember(selectedMember.id)}
+                                                            className="p-3 bg-rose-50 text-rose-500 rounded-2xl border-2 border-rose-100 active:scale-95 transition-all"
+                                                        >
+                                                            <Trash2 size={20} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <Modal isOpen={isDetailOpen} onClose={() => { setIsDetailOpen(false); setShowMemberInput(false); }} title={selectedMember?.full_name || 'Detail'} maxWidth="max-w-4xl">
+                    {selectedMember && (() => {
+                        const memberKPIs = getMemberKPIs(selectedMember.id);
+                        const rate = getCompletionRate(selectedMember.id);
+                        const color = getCompletionColor(rate);
+
+                        const badgeColorMap = {
+                            'On Track': 'bg-emerald-400 text-foreground border-[2px] border-slate-900',
+                            'In Progress': 'bg-amber-400 text-foreground border-[2px] border-slate-900',
+                            'Di Bawah Target': 'bg-rose-400 text-white border-[2px] border-slate-900'
+                        };
+                        const badgeLabel = rate >= 80 ? 'On Track' : rate >= 50 ? 'In Progress' : 'Di Bawah Target';
+                        const badgeIcon = rate >= 80 ? <CheckCircle size={10} strokeWidth={3} /> : rate >= 50 ? <Clock size={10} strokeWidth={3} /> : <AlertCircle size={10} strokeWidth={3} />;
+                        const badgeCls = badgeColorMap[badgeLabel];
+
+                        return (
+                            <div className="flex gap-4 overflow-hidden transition-all duration-300" style={{ minHeight: 420 }}>
+                                {/* ====== LEFT CARD: Member Profile + KPI List ====== */}
+                                <div className={`flex flex-col transition-all duration-300 ease-in-out overflow-y-auto w-full ${showMemberInput ? 'pr-4 border-r-[3px] border-slate-900 border-dashed' : ''} ${showMemberInput ? 'w-1/2' : ''}`}>
+                                    {/* Member Header */}
+                                    <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 bg-card border-[3px] border-slate-900 mb-4 shrink-0 rounded-[1.5rem] shadow-[4px_4px_0px_#0f172a]">
+                                        <img
+                                            src={selectedMember.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedMember.full_name)}`}
+                                            alt={selectedMember.full_name}
+                                            className="w-14 sm:w-16 h-14 sm:h-16 rounded-[1rem] border-[3px] border-slate-900 object-cover shadow-[2px_2px_0px_#0f172a] flex-shrink-0"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <h2 className="text-base sm:text-lg font-black text-foreground uppercase tracking-tight truncate">{selectedMember.full_name}</h2>
+                                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest truncate">{selectedMember.role}{selectedMember.department ? ` · ${selectedMember.department}` : ''}</p>
+                                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#0f172a] ${badgeCls}`}>
+                                                    {badgeIcon} <span className="hidden sm:inline">{badgeLabel}</span>
+                                                </span>
+                                                <span className={`text-sm sm:text-base font-black ${rate >= 80 ? 'text-emerald-600' : rate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{rate}%</span>
+                                            </div>
+                                        </div>
+                                        {isAdmin && (
+                                            <button onClick={() => handleDeleteMember(selectedMember.id)} className="p-2 sm:p-2.5 bg-rose-100 hover:bg-rose-200 text-rose-600 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a] rounded-xl transition-all shrink-0" title="Hapus anggota">
+                                                <Trash2 size={16} strokeWidth={2.5} />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Period Filter + Action Button */}
+                                    <div className="flex items-center justify-between mb-4 shrink-0 gap-2">
+                                        <select
+                                            value={periodFilter}
+                                            onChange={e => setPeriodFilter(e.target.value)}
+                                            className="bg-slate-100 border-[3px] border-slate-900 text-foreground rounded-xl px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer shadow-[2px_2px_0px_#0f172a]"
+                                        >
+                                            {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                        </select>
+                                        {isAdmin ? (
+                                            <button
+                                                onClick={() => setIsAddKPIOpen(true)}
+                                                className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white px-3 py-1.5 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all whitespace-nowrap"
+                                            >
+                                                <Plus size={14} strokeWidth={3} /> <span className="hidden sm:inline">Tambah KPI</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => openMemberInputPanel(memberKPIs)}
+                                                disabled={memberKPIs.length === 0 || showMemberInput}
+                                                className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:hover:-translate-y-0 disabled:hover:shadow-[2px_2px_0px_#0f172a] text-foreground px-3 py-1.5 border-[3px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:shadow-[4px_4px_0px_#0f172a] hover:-translate-y-1 rounded-xl font-black uppercase tracking-widest text-[10px] sm:text-xs transition-all whitespace-nowrap"
+                                            >
+                                                <Edit3 size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Input</span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* KPI List */}
+                                    {memberKPIs.length === 0 ? (
+                                        <div className="text-center py-8 sm:py-10 bg-muted rounded-2xl border-[3px] border-dashed border-slate-300">
+                                            <Target className="mx-auto text-mutedForeground mb-2" size={32} strokeWidth={2} />
+                                            <p className="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-widest">Belum ada KPI untuk periode ini</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3 overflow-y-auto flex-1 pr-1 pb-4" style={{ maxHeight: '350px' }}>
+                                            {memberKPIs.map(kpi => {
+                                                const kpiRate = kpi.target_value > 0 ? Math.min(Math.round((kpi.actual_value / kpi.target_value) * 100), 100) : 0;
+                                                const kpiColor = getCompletionColor(kpiRate);
+                                                const isEditing = editingKPI === kpi.id;
+
+                                                return (
+                                                    <div key={kpi.id} className="bg-card border-[3px] border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_rgba(148,163,184,0.3)] hover:shadow-[4px_4px_0px_#0f172a] transition-all group">
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="font-black text-foreground text-sm truncate uppercase">{kpi.metric_name}</h4>
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{kpi.category} · {kpi.period} · {new Date(kpi.period_date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</p>
+                                                            </div>
+                                                            {isAdmin && (
+                                                                <div className="flex items-center gap-1.5 ml-3 shrink-0">
+                                                                    {!isEditing ? (
+                                                                        <>
+                                                                            <button onClick={(e) => { e.stopPropagation(); setEditingKPI(kpi.id); setEditValues({ actual_value: kpi.actual_value, notes: kpi.notes }); }} className="p-1.5 hover:bg-slate-100 text-mutedForeground hover:text-foreground rounded-lg transition-colors border-[2.5px] border-transparent hover:border-slate-900" title="Edit KPI"><Edit3 size={14} /></button>
+                                                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteKPI(kpi.id); }} className="p-1.5 hover:bg-rose-100 text-mutedForeground hover:text-rose-600 rounded-lg transition-colors border-[2.5px] border-transparent hover:border-rose-600" title="Hapus"><Trash2 size={14} /></button>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <button onClick={() => handleUpdateKPI(kpi.id)} className="p-1.5 bg-emerald-400 text-foreground border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 rounded-lg transition-all"><Save size={14} strokeWidth={2.5} /></button>
+                                                                            <button onClick={() => setEditingKPI(null)} className="p-1.5 bg-slate-200 text-foreground border-[2px] border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:-translate-y-0.5 rounded-lg transition-all"><X size={14} strokeWidth={2.5} /></button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {/* Progress bar */}
+                                                        <div className="flex items-center gap-3 mb-3">
+                                                            <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden border-[2px] border-slate-900 shadow-inner">
+                                                                <div className={`h-full border-r-[2px] border-slate-900 ${kpiRate >= 80 ? 'bg-emerald-400' : kpiRate >= 50 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{ width: `${kpiRate}%` }} />
+                                                            </div>
+                                                            <span className={`text-xs font-black ${kpiRate >= 80 ? 'text-emerald-600' : kpiRate >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>{kpiRate}%</span>
+                                                        </div>
+                                                        {/* Values */}
+                                                        <div className="flex items-center gap-4 text-[10px] sm:text-xs">
+                                                            <span className="font-bold text-slate-500 uppercase tracking-widest">Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></span>
+                                                            {isEditing ? (
+                                                                <span className="flex items-center gap-1 font-bold text-slate-500 uppercase tracking-widest">
+                                                                    Actual: <input type="number" value={editValues.actual_value} onChange={e => setEditValues(v => ({ ...v, actual_value: Number(e.target.value) }))} className="w-16 border-[2px] border-slate-900 rounded-md px-1 py-0.5 text-xs font-black text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 bg-card shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" onClick={e => e.stopPropagation()} />{kpi.unit}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="font-bold text-slate-500 uppercase tracking-widest">Actual: <strong className="text-foreground">{kpi.actual_value}{kpi.unit}</strong></span>
+                                                            )}
+                                                        </div>
+                                                        {isEditing && (
+                                                            <input type="text" placeholder="Catatan (opsional)" value={editValues.notes} onChange={e => setEditValues(v => ({ ...v, notes: e.target.value }))} className="mt-3 w-full border-[2px] border-slate-900 rounded-xl px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 bg-card placeholder:text-mutedForeground placeholder:font-medium shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]" onClick={e => e.stopPropagation()} />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* ====== RIGHT CARD: Member Actual Input Slide Panel ====== */}
+                                <div className={`transition-all duration-300 ease-in-out ${showMemberInput ? 'w-1/2 opacity-100' : 'w-0 opacity-0 overflow-hidden'}`}>
+                                    {showMemberInput && (
+                                        <div className="flex flex-col h-full bg-muted rounded-[1.5rem] border-[3px] border-slate-900 shadow-[inset_0_0_10px_rgba(0,0,0,0.05)] p-4">
+                                            {/* Panel header */}
+                                            <div className="flex items-center justify-between mb-5">
+                                                <div>
+                                                    <h3 className="font-black text-foreground text-sm uppercase tracking-widest">✏️ Input Pencapaian</h3>
+                                                    <p className="text-[10px] text-slate-500 font-bold mt-1">Isi rentang capaian bulan ini</p>
+                                                </div>
+                                                <button onClick={() => setShowMemberInput(false)} className="p-2 border-[2px] border-slate-300 hover:border-slate-900 hover:bg-rose-100 hover:text-rose-600 text-slate-500 rounded-xl transition-all shadow-sm">
+                                                    <X size={16} strokeWidth={2.5} />
+                                                </button>
+                                            </div>
+
+                                            {/* Per-KPI inputs */}
+                                            <div className="flex-1 overflow-y-auto space-y-4 pr-1" style={{ maxHeight: '350px' }}>
+                                                {memberKPIs.map(kpi => (
+                                                    <div key={kpi.id} className="bg-card border-[3px] border-slate-900 rounded-[1.2rem] p-4 shadow-[4px_4px_0px_rgba(148,163,184,0.3)]">
+                                                        <p className="text-xs font-black text-foreground uppercase tracking-tight mb-1">{kpi.metric_name}</p>
+                                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{kpi.period} · Target: <strong className="text-foreground">{kpi.target_value}{kpi.unit}</strong></p>
+
+                                                        <div className="space-y-3">
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-violet-600 uppercase tracking-widest block mb-1">Nilai Aktual ({kpi.unit})</label>
+                                                                <input
+                                                                    type="number" min={0}
+                                                                    value={memberActuals[kpi.id]?.actual_value ?? kpi.actual_value}
+                                                                    onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], actual_value: Number(e.target.value) } }))}
+                                                                    className="w-full border-[3px] border-slate-900 bg-card shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] rounded-xl px-3 py-2 text-sm font-black text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Catatan</label>
+                                                                <input
+                                                                    type="text" placeholder="Keterangan..."
+                                                                    value={memberActuals[kpi.id]?.notes ?? kpi.notes ?? ''}
+                                                                    onChange={e => setMemberActuals(prev => ({ ...prev, [kpi.id]: { ...prev[kpi.id], notes: e.target.value } }))}
+                                                                    className="w-full border-[2px] border-slate-300 focus:border-slate-900 rounded-xl px-3 py-2 text-xs font-bold text-foreground focus:outline-none transition-all placeholder:text-mutedForeground"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Save button */}
+                                            <button
+                                                onClick={handleSaveMemberActuals}
+                                                disabled={savingActuals}
+                                                className="mt-4 w-full flex items-center justify-center gap-2 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-foreground py-3 rounded-xl border-[3px] border-slate-900 font-black uppercase tracking-widest text-sm transition-all shadow-[4px_4px_0px_#0f172a] hover:shadow-[6px_6px_0px_#0f172a] hover:-translate-y-1"
+                                            >
+                                                {savingActuals ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} strokeWidth={2.5} />}
+                                                {savingActuals ? 'Menyimpan...' : 'Simpan Pencapaian'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </Modal>
+            )}
 
             {/* ====== ADD MEMBER MODAL ====== */}
             <Modal isOpen={isAddMemberOpen} onClose={() => setIsAddMemberOpen(false)} title={<span className="font-black uppercase tracking-widest text-foreground">Add Team Member</span>}>

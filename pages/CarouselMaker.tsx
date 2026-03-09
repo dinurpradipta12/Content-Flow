@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../src/components/Sidebar';
 import { Editor } from '../src/components/Editor';
 import { BottomBar } from '../src/components/BottomBar';
-import { Sparkles, Plus, ChevronLeft, ChevronRight, Palette, X, Loader2, Save, ArrowLeft, Menu, Wrench } from 'lucide-react';
+import {
+    Sparkles, Plus, ChevronLeft, ChevronRight, Palette, X, Loader2, Save, ArrowLeft, Menu, Wrench, StickyNote,
+    Layers,
+    Copy,
+    Trash2,
+    FolderOpen,
+    MoreHorizontal
+} from 'lucide-react';
 import { useCarouselStore } from '../src/store/useCarouselStore';
 import { NotesPanel } from '../src/components/NotesPanel';
 import { useAppConfig } from '../components/AppConfigProvider';
@@ -21,6 +28,14 @@ export const CarouselMaker: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const [showMobileBottomBar, setShowMobileBottomBar] = useState(false);
+    const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const isFree = localStorage.getItem('user_subscription_package') === 'Free' && localStorage.getItem('user_role') !== 'Developer';
 
     const {
@@ -30,7 +45,12 @@ export const CarouselMaker: React.FC = () => {
         loadFonts,
         currentProjectId,
         pages,
-        canvasSize
+        canvasSize,
+        currentPageIndex,
+        setCurrentPageIndex,
+        addPage,
+        duplicatePage,
+        deletePage
     } = useCarouselStore();
 
     useEffect(() => {
@@ -101,6 +121,14 @@ export const CarouselMaker: React.FC = () => {
             .theme-dark .hover\\:text-red-500:hover { color: #60a5fa !important; }
             .theme-dark .bg-yellow-400 { background-color: #2563eb !important; color: #fff !important; }
             .theme-dark .text-accent { color: #60a5fa !important; }
+            .theme-dark div[class*="bg-[#fdfbf6]"], .theme-dark div[class*="bg-[#f4f0e6]"] { background-color: #1e293b !important; color: #f8fafc !important; }
+            .theme-dark .prose { color: #f8fafc !important; }
+            .theme-dark [contenteditable] { color: #f8fafc !important; background-color: rgba(0,0,0,0.2) !important; }
+            .theme-dark .bg-amber-400 { background-color: #fbbf24 !important; color: #000 !important; }
+            .theme-dark .bg-amber-400 h3, .theme-dark .bg-amber-400 span, .theme-dark .bg-amber-400 button { color: #000 !important; }
+            .theme-dark .fixed.bottom-28, .theme-dark .fixed.bottom-6 { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
+            .theme-dark .fixed.bottom-28 div.bg-slate-300 { background-color: #334155 !important; }
+            .theme-dark .fixed.bottom-28 button:hover, .theme-dark .fixed.bottom-6 button:hover { background-color: rgba(255,255,255,0.05) !important; }
         `,
         midnight: `
             .theme-midnight { background-color: #0c1130 !important; color: #e0e7ff !important; }
@@ -119,6 +147,14 @@ export const CarouselMaker: React.FC = () => {
             .theme-midnight .bg-yellow-400 { background-color: #4f46e5 !important; color: #fff !important; }
             .theme-midnight .bg-slate-900 .text-red-500, .theme-midnight aside .text-red-500 { color: #c7d2fe !important; }
             .theme-midnight .bg-slate-900 .hover\\:bg-red-50:hover, .theme-midnight aside .hover\\:bg-red-50:hover { background-color: rgba(99,102,241,0.2) !important; color: #e0e7ff !important; }
+            .theme-midnight div[class*="bg-[#fdfbf6]"], .theme-midnight div[class*="bg-[#f4f0e6]"] { background-color: #1e1b4b !important; color: #e0e7ff !important; }
+            .theme-midnight .prose { color: #e0e7ff !important; }
+            .theme-midnight [contenteditable] { color: #e0e7ff !important; background-color: rgba(0,0,0,0.2) !important; }
+            .theme-midnight .bg-amber-400 { background-color: #f59e0b !important; color: #000 !important; }
+            .theme-midnight .bg-amber-400 h3, .theme-midnight .bg-amber-400 span, .theme-midnight .bg-amber-400 button { color: #000 !important; }
+            .theme-midnight .fixed.bottom-28, .theme-midnight .fixed.bottom-6 { background-color: #1e1b4b !important; border-color: #3730a3 !important; color: #e0e7ff !important; }
+            .theme-midnight .fixed.bottom-28 div.bg-slate-300 { background-color: #3730a3 !important; }
+            .theme-midnight .fixed.bottom-28 button:hover, .theme-midnight .fixed.bottom-6 button:hover { background-color: rgba(255,255,255,0.05) !important; }
         `,
         pastel: `
             .theme-pastel { background-color: #fff1f2 !important; border-color: #fb7185 !important; }
@@ -193,7 +229,7 @@ export const CarouselMaker: React.FC = () => {
     }
 
     return (
-        <div className={`flex flex-col bg-slate-50 font-sans text-slate-900 flex-1 min-h-0 relative border-4 border-slate-900 rounded-3xl overflow-hidden shadow-[12px_12px_0px_0px_#0f172a] theme-${currentTheme}`}>
+        <div className={`flex flex-col bg-slate-50 font-sans text-slate-900 flex-1 min-h-0 relative ${!isMobile ? 'border-4 border-slate-900 rounded-3xl shadow-[12px_12px_0px_0px_#0f172a]' : ''} overflow-hidden theme-${currentTheme}`}>
             {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme] }} />}
 
             {showThemeModal && (
@@ -310,41 +346,239 @@ export const CarouselMaker: React.FC = () => {
             </header>
 
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden min-h-0">
-                <div className={`${showMobileSidebar ? 'flex absolute inset-y-14 sm:inset-y-16 left-0 z-40 bg-white shadow-2xl h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)]' : 'hidden'} sm:flex min-w-0 max-w-full relative transition-all duration-300`}>
-                    <Sidebar />
-                    {/* Mobile Sidebar Close Button */}
-                    {showMobileSidebar && (
-                        <button onClick={() => setShowMobileSidebar(false)} className="sm:hidden absolute top-2 -right-10 p-1.5 bg-white rounded-r-lg border-y-2 border-r-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
-                            <X size={16} />
-                        </button>
-                    )}
-                </div>
-                <div className="flex-1 flex overflow-hidden relative min-h-0 w-full">
-                    <div className="flex-1 flex flex-col overflow-hidden relative transition-all duration-300 min-h-0 w-full">
-                        <Editor />
+            <div className="flex-1 flex overflow-hidden min-h-0 relative">
+                {/* DESKTOP SIDEBAR */}
+                {!isMobile && (
+                    <div className="flex min-w-0 max-w-full relative shrink-0">
+                        <Sidebar />
+                    </div>
+                )}
 
-                        {/* BottomBar: hidden on mobile, visible on desktop */}
-                        <div className="hidden sm:block">
-                            <BottomBar />
+                {/* MOBILE SLIDE-UP DRAWER (SIDEBAR) */}
+                {isMobile && (
+                    <div
+                        className={`fixed inset-x-0 bottom-0 z-[100] transition-transform duration-300 ease-in-out transform ${showMobileSidebar ? 'translate-y-0' : 'translate-y-full'}`}
+                        style={{ height: '70vh' }}
+                    >
+                        {/* Drawer Backdrop - can be dismissed by clicking outside if needed */}
+                        <div
+                            className={`fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 transition-opacity duration-300 ${showMobileSidebar ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                            onClick={() => setShowMobileSidebar(false)}
+                        />
+
+                        {/* Content Container */}
+                        <div className="h-full bg-white border-t-4 border-slate-900 rounded-t-[2.5rem] flex flex-col shadow-[0_-12px_40px_rgba(0,0,0,0.2)] overflow-hidden">
+                            {/* Handle & Close */}
+                            <div className="w-full h-12 flex items-center justify-between px-6 shrink-0">
+                                <div className="w-10" /> {/* Spacer */}
+                                <div className="w-12 h-1.5 bg-slate-200 rounded-full" onClick={() => setShowMobileSidebar(false)} />
+                                <button
+                                    onClick={() => setShowMobileSidebar(false)}
+                                    className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-xl border-2 border-slate-900 shadow-mini active:translate-y-[2px] active:shadow-none transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Sidebar Content (Version Mobile) */}
+                            <div className="flex-1 overflow-hidden">
+                                <Sidebar isMobile={true} onClose={() => setShowMobileSidebar(false)} />
+                            </div>
                         </div>
                     </div>
+                )}
 
+                <div className="flex-1 flex overflow-hidden relative min-h-0 w-full">
+                    <div className="flex-1 flex flex-col overflow-hidden relative transition-all duration-300 min-h-0 w-full">
+                        <Editor isMobile={isMobile} />
 
-                    {/* Toggle Button for Notes */}
-                    <button
-                        onClick={() => setIsNotesOpen(!isNotesOpen)}
-                        className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-white border-2 border-slate-900 rounded-l-lg sm:rounded-l-xl p-1 sm:p-1.5 shadow-[-4px_4px_0px_0px_#0f172a] hover:bg-amber-100 transition-all duration-300 ${isNotesOpen ? 'right-[calc(min(336px,50vw))]' : 'right-0'
-                            }`}
-                        title="Toggle Script Notes"
-                    >
-                        {isNotesOpen ? <ChevronRight size={16} className="text-slate-700 sm:w-5 sm:h-5" /> : <ChevronLeft size={16} className="text-slate-700 sm:w-5 sm:h-5" />}
-                    </button>
-
-                    {/* Right Notes Panel */}
-                    <div className="py-1 sm:py-2.5 pr-1 sm:pr-2.5 flex shrink-0 h-full relative z-10 transition-all duration-300 max-w-[50vw]">
-                        <NotesPanel isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} />
+                        {/* Desktop BottomBar */}
+                        {!isMobile && (
+                            <BottomBar />
+                        )}
                     </div>
+
+                    {/* Desktop Toolbar - Notes Toggle (Modified for mobile coexistence) */}
+                    {!isMobile && (
+                        <>
+                            <button
+                                onClick={() => setIsNotesOpen(!isNotesOpen)}
+                                className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center bg-white border-2 border-slate-900 rounded-l-lg sm:rounded-l-xl p-1 sm:p-1.5 shadow-[-4px_4px_0px_0px_#0f172a] hover:bg-amber-100 transition-all duration-300 ${isNotesOpen ? 'right-[calc(min(336px,50vw))]' : 'right-0'}`}
+                                title="Toggle Script Notes"
+                            >
+                                {isNotesOpen ? <ChevronRight size={16} className="text-slate-700 sm:w-5 sm:h-5" /> : <ChevronLeft size={16} className="text-slate-700 sm:w-5 sm:h-5" />}
+                            </button>
+
+                            <div className="py-1 sm:py-2.5 pr-1 sm:pr-2.5 flex shrink-0 h-full relative z-10 transition-all duration-300 max-w-[50vw]">
+                                <NotesPanel isOpen={isNotesOpen} onClose={() => setIsNotesOpen(false)} />
+                            </div>
+                        </>
+                    )}
+
+                    {/* MOBILE TOOLBAR (Bottom Navigation) */}
+                    {isMobile && (
+                        <>
+                            {/* Page Indicator / Mini Navigator */}
+                            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[85] flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-slate-900 shadow-mini">
+                                <button
+                                    disabled={currentPageIndex === 0}
+                                    onClick={() => setCurrentPageIndex(currentPageIndex - 1)}
+                                    className="p-1 hover:bg-slate-100 rounded-lg disabled:opacity-20"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <div className="flex items-center gap-1.5 px-2">
+                                    {pages.map((_, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`h-1.5 transition-all duration-300 rounded-full ${currentPageIndex === idx ? 'w-6 bg-accent' : 'w-1.5 bg-slate-300'}`}
+                                        />
+                                    ))}
+                                </div>
+                                <button
+                                    disabled={currentPageIndex === pages.length - 1}
+                                    onClick={() => setCurrentPageIndex(currentPageIndex + 1)}
+                                    className="p-1 hover:bg-slate-100 rounded-lg disabled:opacity-20"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+
+                            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-1 px-4 py-3 bg-white border-4 border-slate-900 shadow-[8px_8px_0px_0px_#0f172a] rounded-[2rem]">
+                                {[
+                                    { id: 'content', icon: <Plus size={18} strokeWidth={3} />, label: 'Add', active: showMobileSidebar },
+                                    { id: 'layers', icon: <Layers size={18} strokeWidth={3} />, label: 'Layers' },
+                                    { id: 'projects', icon: <FolderOpen size={18} strokeWidth={3} />, label: 'Files' },
+                                    { id: 'pages', icon: <Copy size={18} strokeWidth={3} />, label: 'Pages', action: () => setShowMobileBottomBar(!showMobileBottomBar) },
+                                    { id: 'more', icon: <MoreHorizontal size={18} strokeWidth={3} />, label: 'More', action: () => setShowMobileMoreMenu(!showMobileMoreMenu) },
+                                ].map((btn) => (
+                                    <button
+                                        key={btn.id}
+                                        onClick={() => {
+                                            if (btn.action) {
+                                                btn.action();
+                                            } else {
+                                                setShowMobileSidebar(true);
+                                                window.dispatchEvent(new CustomEvent('sidebar:switch-tab', { detail: { tab: btn.id } }));
+                                            }
+                                        }}
+                                        className={`flex flex-col items-center gap-1 px-2 min-w-[50px] transition-transform active:scale-90 ${btn.active || (btn.id === 'pages' && showMobileBottomBar) || (btn.id === 'more' && showMobileMoreMenu) ? 'text-accent' : 'text-slate-900'}`}
+                                    >
+                                        <div className={`p-1 rounded-lg ${btn.active || (btn.id === 'pages' && showMobileBottomBar) || (btn.id === 'more' && showMobileMoreMenu) ? 'bg-amber-100' : ''}`}>
+                                            {btn.icon}
+                                        </div>
+                                        <span className="text-[9px] font-black uppercase tracking-widest">{btn.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* MOBILE MORE MENU */}
+                            <div
+                                className={`fixed inset-x-0 bottom-0 z-[110] transition-transform duration-300 ease-in-out transform ${showMobileMoreMenu ? 'translate-y-0' : 'translate-y-full'}`}
+                            >
+                                <div
+                                    className={`fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 transition-opacity duration-300 ${showMobileMoreMenu ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                    onClick={() => setShowMobileMoreMenu(false)}
+                                />
+                                <div className="bg-white border-t-4 border-slate-900 rounded-t-[2rem] p-6 shadow-2xl flex flex-col gap-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h3 className="font-black text-lg uppercase tracking-tighter">More Actions</h3>
+                                        <button onClick={() => setShowMobileMoreMenu(false)} className="p-2 hover:bg-slate-100 rounded-xl"><X size={20} /></button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => { setShowThemeModal(true); setShowMobileMoreMenu(false); }}
+                                            className="flex flex-col items-center gap-3 p-6 border-4 border-slate-900 rounded-2xl bg-white shadow-mini active:translate-y-1 active:shadow-none transition-all"
+                                        >
+                                            <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                                                <Palette size={24} />
+                                            </div>
+                                            <span className="font-black text-xs">Window Theme</span>
+                                        </button>
+                                        <button
+                                            onClick={() => { setIsNotesOpen(true); setShowMobileMoreMenu(false); }}
+                                            className="flex flex-col items-center gap-3 p-6 border-4 border-slate-900 rounded-2xl bg-white shadow-mini active:translate-y-1 active:shadow-none transition-all"
+                                        >
+                                            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                                                <StickyNote size={24} />
+                                            </div>
+                                            <span className="font-black text-xs">Script Notes</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* MOBILE PAGE DRAWER (Thumbnails) */}
+                            <div
+                                className={`fixed inset-x-0 bottom-0 z-[95] transition-transform duration-300 ease-in-out transform ${showMobileBottomBar ? 'translate-y-0' : 'translate-y-full'}`}
+                                style={{ height: '40vh' }}
+                            >
+                                <div
+                                    className={`fixed inset-0 bg-black/40 backdrop-blur-sm -z-10 transition-opacity duration-300 ${showMobileBottomBar ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                    onClick={() => setShowMobileBottomBar(false)}
+                                />
+                                <div className="h-full bg-white border-t-4 border-slate-900 rounded-t-[2rem] flex flex-col p-6 shadow-2xl">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="font-black text-lg">Manage Pages</h3>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={addPage} className="flex items-center gap-2 bg-yellow-400 border-2 border-slate-900 px-3 py-1.5 rounded-xl font-bold text-xs shadow-mini active:translate-y-[1px]">
+                                                <Plus size={14} /> Add
+                                            </button>
+                                            <button
+                                                onClick={() => setShowMobileBottomBar(false)}
+                                                className="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-lg border-2 border-slate-900 shadow-mini active:translate-y-[1px]"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                                        {pages.map((page, index) => (
+                                            <div
+                                                key={page.id}
+                                                onClick={() => setCurrentPageIndex(index)}
+                                                className={`relative shrink-0 w-32 aspect-[4/5] bg-slate-100 rounded-xl border-2 border-slate-900 overflow-hidden transition-all ${currentPageIndex === index ? 'ring-4 ring-accent ring-offset-2 scale-105' : 'opacity-70'}`}
+                                                style={{ backgroundColor: page.background }}
+                                            >
+                                                {page.previewUrl && <img src={page.previewUrl} className="w-full h-full object-contain" />}
+                                                <div className="absolute top-2 left-2 bg-white/90 px-1.5 rounded-md border border-slate-900 text-[8px] font-black">
+                                                    #{index + 1}
+                                                </div>
+                                                <div className="absolute bottom-2 right-2 flex gap-1">
+                                                    <button onClick={(e) => { e.stopPropagation(); duplicatePage(index); }} className="p-1 bg-white border border-slate-900 rounded-md"><Copy size={10} /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); deletePage(index); }} className="p-1 bg-white border border-slate-900 rounded-md text-red-500"><Trash2 size={10} /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* MOBILE SIDE-DRAWER NOTES */}
+                    {isMobile && (
+                        <div className={`fixed inset-0 z-[110] transition-opacity duration-300 ${isNotesOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                            {/* Backdrop */}
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsNotesOpen(false)} />
+
+                            {/* Drawer Content */}
+                            <div className={`absolute top-0 right-0 h-full w-[85vw] max-w-[400px] bg-white border-l-4 border-slate-900 shadow-[-12px_0_40px_rgba(0,0,0,0.2)] flex flex-col p-6 transition-transform duration-300 ease-in-out transform ${isNotesOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                                <div className="flex items-center justify-between mb-6 shrink-0">
+                                    <h3 className="text-xl font-black uppercase tracking-tighter">Design Script</h3>
+                                    <button
+                                        onClick={() => setIsNotesOpen(false)}
+                                        className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-xl border-2 border-slate-900 shadow-mini active:translate-y-[2px] active:shadow-none transition-all"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div className="flex-1 min-h-0">
+                                    <NotesPanel isOpen={true} onClose={() => setIsNotesOpen(false)} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

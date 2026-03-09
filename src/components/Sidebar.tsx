@@ -58,7 +58,7 @@ const SortableLayerItem: React.FC<{ layer: any }> = ({ layer }) => {
     );
 };
 
-export const Sidebar: React.FC = () => {
+export const Sidebar: React.FC<{ isMobile?: boolean, onClose?: () => void }> = ({ isMobile, onClose }) => {
     const {
         pages,
         currentPageIndex,
@@ -138,8 +138,17 @@ export const Sidebar: React.FC = () => {
     // Listen for open-shortcuts event from BottomBar
     useEffect(() => {
         const handleOpenShortcuts = () => setShowShortcutsModal(true);
+        const handleSwitchTab = (e: any) => {
+            if (e.detail?.tab === 'content' || e.detail?.tab === 'projects' || e.detail?.tab === 'layers') {
+                setActiveTab(e.detail.tab);
+            }
+        };
         window.addEventListener('canvas:open-shortcuts', handleOpenShortcuts);
-        return () => window.removeEventListener('canvas:open-shortcuts', handleOpenShortcuts);
+        window.addEventListener('sidebar:switch-tab', handleSwitchTab);
+        return () => {
+            window.removeEventListener('canvas:open-shortcuts', handleOpenShortcuts);
+            window.removeEventListener('sidebar:switch-tab', handleSwitchTab);
+        };
     }, []);
 
     const fetchPresets = async () => {
@@ -299,7 +308,7 @@ export const Sidebar: React.FC = () => {
     };
 
     return (
-        <div className="w-80 bg-white border-r-4 border-slate-900 flex flex-col overflow-hidden min-h-0 flex-shrink-0">
+        <div className={`${isMobile ? 'w-full h-full' : 'w-80 border-r-4'} bg-white border-slate-900 flex flex-col overflow-hidden min-h-0 flex-shrink-0`}>
             {/* Tabs */}
             <div className="flex border-b-4 border-slate-900 shrink-0">
                 <button
