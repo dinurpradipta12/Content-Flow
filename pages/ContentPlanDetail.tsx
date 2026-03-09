@@ -313,7 +313,7 @@ const KanbanCard: React.FC<{
                         </span>
 
                         {item.pillar && (
-                            <span className={`px-2 py-1 rounded-md text-[10px] font-black${getPillarStyle(item.pillar).replace('border-[2px]', 'border-[1.5px]')}`}>
+                            <span className={`px-2 py-1 rounded-md text-[10px] font-black ${getPillarStyle(item.pillar).replace('border-[2px]', 'border-[1.5px]')}`}>
                                 {item.pillar}
                             </span>
                         )}
@@ -1637,14 +1637,14 @@ export const ContentPlanDetail: React.FC = () => {
                 {/* Platform filter-horizontal scroll */}
                 <div className="flex gap-1.5 overflow-x-auto no-scrollbar pt-4 pb-2 mb-2 flex-shrink-0">
                     <button onClick={() => setFilterPlatform('all')}
-                        className={`flex-shrink-0 h-10 px-4 flex items-center justify-center rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-hard-mini -translate-y-1' : 'bg-card border-slate-900 text-foreground shadow-hard-mini'}`}>
+                        className={`flex-shrink-0 h-10 px-4 flex items-center justify-center rounded-xl border-2 transition-all font-black text-[10px] uppercase tracking-widest ${filterPlatform === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-hard-mini -translate-y-1' : 'bg-card border-slate-900 text-foreground shadow-hard-mini'}`}>
                         Semua
                     </button>
                     {workspaceData.platforms.map(p => {
                         const platformValue = p === 'IG' ? Platform.INSTAGRAM : p === 'TK' ? Platform.TIKTOK : p === 'YT' ? Platform.YOUTUBE : p === 'LI' ? Platform.LINKEDIN : p === 'FB' ? Platform.FACEBOOK : p === 'TH' ? Platform.THREADS : p;
                         return (
                             <button key={p} onClick={() => setFilterPlatform(platformValue as any)}
-                                className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all${filterPlatform !== 'all' && filterPlatform === platformValue ? 'bg-accent text-white border-slate-900 shadow-hard-mini-accent -translate-y-1' : 'bg-card border-slate-900 text-foreground shadow-hard-mini'}`}>
+                                className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border-2 transition-all ${filterPlatform !== 'all' && filterPlatform === platformValue ? 'bg-accent text-white border-slate-900 shadow-hard-mini-accent -translate-y-1' : 'bg-card border-slate-900 text-foreground shadow-hard-mini'}`}>
                                 {getPlatformIcon(platformValue as any)}
                             </button>
                         );
@@ -1665,10 +1665,10 @@ export const ContentPlanDetail: React.FC = () => {
                         const count = s.value === 'all' ? tasks.length : tasks.filter(t => t.status === s.value).length;
                         return (
                             <button key={s.value} onClick={() => setMobileStatusTab(s.value)}
-                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all${mobileStatusTab === s.value ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
-                                <div className={`w-2 h-2 rounded-full${s.color}`} />
+                                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all ${mobileStatusTab === s.value ? 'bg-foreground text-background border-foreground' : 'bg-card border-border text-foreground'}`}>
+                                <div className={`w-2 h-2 rounded-full ${s.color}`} />
                                 {s.label}
-                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full${mobileStatusTab === s.value ? 'bg-card/20' : 'bg-muted'}`}>{count}</span>
+                                <span className={`text-[8px] font-black px-1 py-0.5 rounded-full ${mobileStatusTab === s.value ? 'bg-card/20' : 'bg-muted'}`}>{count}</span>
                             </button>
                         );
                     })}
@@ -1707,7 +1707,7 @@ export const ContentPlanDetail: React.FC = () => {
                                 };
                                 return (
                                     <button key={task.id} onClick={() => handleCardClick(task)}
-                                        className={`w-full bg-card border border-border border-l-4${statusColors[task.status] || 'border-l-slate-300'}rounded-xl p-3 text-left active:scale-[0.99] transition-transform`}>
+                                        className={`w-full bg-card border border-border border-l-4 ${statusColors[task.status] || 'border-l-slate-300'} rounded-xl p-3 text-left active:scale-[0.99] transition-transform`}>
                                         <div className="flex gap-3">
                                             {/* Left side: Text Content */}
                                             <div className="flex-1 min-w-0">
@@ -1902,7 +1902,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         key={tab.id}
                                         onClick={() => setViewMode(tab.id as any)}
-                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[12px] font-black${viewMode === tab.id ? `bg-card${tab.color}shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all text-[12px] font-black ${viewMode === tab.id ? `bg-card ${tab.color} shadow-hard-mini border-[2.5px] border-border` : 'text-mutedForeground hover:text-foreground bg-transparent border-[2.5px] border-transparent'}`}
                                     >
                                         <tab.icon size={14} strokeWidth={4} />
                                         <span>{tab.label}</span>
@@ -1916,7 +1916,7 @@ export const ContentPlanDetail: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-3 justify-center">
                                 <button
                                     onClick={() => setFilterPlatform('all')}
-                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[12px] transition-all flex items-center gap-2${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
+                                    className={`px-6 py-2.5 rounded-xl border-[2.5px] border-border font-black text-[12px] transition-all flex items-center gap-2 ${filterPlatform === 'all' ? 'bg-foreground text-background translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-hard-mini'}`}
                                 >
                                     Semua
                                 </button>
@@ -1933,7 +1933,7 @@ export const ContentPlanDetail: React.FC = () => {
                                     <button
                                         key={formatStatus(p)}
                                         onClick={() => setFilterPlatform(p)}
-                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[12px] transition-all flex items-center gap-2${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
+                                        className={`px-6 py-2.5 rounded-xl border-[2.5px] border-indigo-950 font-black text-[12px] transition-all flex items-center gap-2 ${filterPlatform === p ? 'bg-violet-600 border-indigo-950 text-white translate-y-[1px]' : 'bg-card text-foreground hover:-translate-y-1 hover:shadow-[3px_3px_0px_#1e1b4b]'}`}
                                     >
                                         {getPlatformIcon(p)}
                                         {formatStatus(p)}
@@ -2227,7 +2227,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                             value={task.status}
                                                             onChange={(e) => handleQuickUpdateStatus(task.id, e.target.value as ContentStatus)}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className={`appearance-none outline-none font-black text-[12px] uppercase tracking-wider py-1.5 pl-3 pr-8 rounded-lg border-2 cursor-pointer transition-all w-full min-w-[130px] shadow-sm${task.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
+                                                            className={`appearance-none outline-none font-black text-[12px] uppercase tracking-wider py-1.5 pl-3 pr-8 rounded-lg border-2 cursor-pointer transition-all w-full min-w-[130px] shadow-sm ${task.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
                                                                 task.status === ContentStatus.IN_PROGRESS ? 'bg-blue-500 text-white border-blue-700' :
                                                                     task.status === ContentStatus.REVIEW ? 'bg-amber-400 text-amber-950 border-amber-600' :
                                                                         task.status === ContentStatus.REVISION ? 'bg-rose-500 text-white border-rose-700' :
@@ -2239,7 +2239,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                                 <option key={s} value={s}>{formatStatus(s)}</option>
                                                             ))}
                                                         </select>
-                                                        <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none${task.status === ContentStatus.TODO || task.status === ContentStatus.REVIEW ? 'text-slate-800' : 'text-white'}`} />
+                                                        <ChevronDown size={14} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${task.status === ContentStatus.TODO || task.status === ContentStatus.REVIEW ? 'text-slate-800' : 'text-white'}`} />
                                                     </div>
                                                 </td>
 
@@ -2293,7 +2293,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors cursor-pointer text-center">
                                                     <button
                                                         onClick={() => handleCardClick(task)}
-                                                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-105 flex items-center justify-center mx-auto${task.script
+                                                        className={`w-8 h-8 rounded-lg border-2 transition-all hover:scale-105 flex items-center justify-center mx-auto ${task.script
                                                             ? 'bg-slate-900 dark:bg-slate-100 border-slate-700 dark:border-slate-300 text-white dark:text-slate-900 shadow-sm'
                                                             : 'bg-transparent border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-600'
                                                             }`}
@@ -2338,7 +2338,7 @@ export const ContentPlanDetail: React.FC = () => {
                                                 {/* 8. Link Input (Interactive-Controlled) */}
                                                 <td className="p-3 border-y-[2.5px] border-border bg-inherit transition-colors">
                                                     <div className="relative flex items-center">
-                                                        <LinkIcon size={14} className={`absolute left-3 z-10${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
+                                                        <LinkIcon size={14} className={`absolute left-3 z-10 ${task.contentLink ? 'text-blue-500' : 'text-mutedForeground'}`} />
                                                         <input
                                                             type="text"
                                                             value={task.contentLink || ''}
@@ -2755,11 +2755,11 @@ export const ContentPlanDetail: React.FC = () => {
                                             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse border-[2px] border-background dark:border-slate-800" />
                                         </div>
                                         <div className={`px-5 py-3 rounded-2xl border-[3px] shadow-hard-mini text-xs font-black flex items-center justify-center gap-3 uppercase tracking-widest ${selectedTask.status === ContentStatus.TODO ? 'bg-slate-200 text-slate-800 border-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600' :
-                                                selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-blue-500 text-white border-blue-700' :
-                                                    selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-400 text-amber-950 border-amber-600' :
-                                                        selectedTask.status === ContentStatus.REVISION ? 'bg-rose-500 text-white border-rose-700' :
-                                                            selectedTask.status === ContentStatus.SCHEDULED ? 'bg-fuchsia-500 text-white border-fuchsia-700' :
-                                                                'bg-emerald-500 text-white border-emerald-700'
+                                            selectedTask.status === ContentStatus.IN_PROGRESS ? 'bg-blue-500 text-white border-blue-700' :
+                                                selectedTask.status === ContentStatus.REVIEW ? 'bg-amber-400 text-amber-950 border-amber-600' :
+                                                    selectedTask.status === ContentStatus.REVISION ? 'bg-rose-500 text-white border-rose-700' :
+                                                        selectedTask.status === ContentStatus.SCHEDULED ? 'bg-fuchsia-500 text-white border-fuchsia-700' :
+                                                            'bg-emerald-500 text-white border-emerald-700'
                                             }`}>
                                             {formatStatus(selectedTask.status)}
                                         </div>
