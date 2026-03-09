@@ -521,7 +521,7 @@ export const ContentPlan: React.FC = () => {
                                     {/* Info */}
                                     <div className="flex-1 min-w-0 pr-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <p className="text-lg font-black font-heading text-foreground truncate tracking-tight group-hover:text-accent transition-colors">{ws.name}</p>
+                                            <p className="text-lg font-black font-heading text-foreground truncate tracking-tight group-hover:text-slate-900 transition-colors">{ws.name}</p>
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             {ws.workspace_type === 'personal' ? (
@@ -628,7 +628,7 @@ export const ContentPlan: React.FC = () => {
                         {workspaces.map((ws) => (
                             <div
                                 key={ws.id}
-                                className={`group relative bg-card rounded-[2.5rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[14px_14px_0px_rgba(139,92,246,0.25)] hover:border-accent hover:-translate-y-3 transition-all duration-300 p-6 flex flex-col cursor-pointer overflow-hidden animate-in fade-in zoom-in-95 duration-500 h-full`}
+                                className={`group relative bg-card rounded-[2.5rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[14px_14px_0px_rgba(15,23,42,0.25)] hover:border-slate-900 hover:-translate-y-3 transition-all duration-300 p-6 flex flex-col cursor-pointer overflow-hidden animate-in fade-in zoom-in-95 duration-500 h-full`}
                                 onClick={() => navigate(`/plan/${ws.id}`)}
                             >
                                 {/* Moving Ornaments */}
@@ -644,13 +644,13 @@ export const ContentPlan: React.FC = () => {
                                             <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-contain" />
                                         </div>
                                     ) : (
-                                        <div className={`w-14 h-14 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center shadow-hard-mini transition-all duration-500 group-hover:rounded-full group-hover:scale-110 group-hover:rotate-12 group-hover:border-accent overflow-hidden bg-card/60 dark:bg-slate-800/40 backdrop-blur-md shrink-0 ws-logo-box relative z-20`}>
-                                            <Layers size={24} className={ws.color === 'violet' ? 'text-accent' : ws.color === 'pink' ? 'text-pink-500' : ws.color === 'yellow' ? 'text-amber-500' : 'text-emerald-500'} strokeWidth={2.5} />
+                                        <div className={`w-14 h-14 rounded-2xl border-[3px] border-slate-900 flex items-center justify-center shadow-hard-mini transition-all duration-500 group-hover:rounded-full group-hover:scale-110 group-hover:rotate-12 group-hover:border-slate-900 overflow-hidden bg-card/60 dark:bg-slate-800/40 backdrop-blur-md shrink-0 ws-logo-box relative z-20`}>
+                                            <Layers size={24} className={ws.color === 'violet' ? 'text-slate-900' : ws.color === 'pink' ? 'text-pink-500' : ws.color === 'yellow' ? 'text-amber-500' : 'text-emerald-500'} strokeWidth={2.5} />
                                         </div>
                                     )}
 
                                     <div className="flex-1 min-w-0 pr-8">
-                                        <h3 className="text-xl font-black font-heading text-foreground leading-tight truncate group-hover:text-accent transition-colors">
+                                        <h3 className="text-xl font-black font-heading text-foreground leading-tight truncate group-hover:text-slate-900 transition-colors">
                                             {ws.name}
                                         </h3>
                                         <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest mt-0.5">{ws.role}</p>
@@ -732,7 +732,7 @@ export const ContentPlan: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <div className="h-8 px-4 rounded-xl bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest flex items-center gap-2 transition-all group-hover:bg-accent group-hover:shadow-hard shadow-hard-mini">
+                                        <div className="h-8 px-4 rounded-xl bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest flex items-center gap-2 transition-all group-hover:bg-slate-800 group-hover:shadow-hard shadow-hard-mini">
                                             Buka <ArrowRight size={12} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                                         </div>
                                     </div>

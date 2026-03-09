@@ -1059,7 +1059,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                                 {workspaces.slice(0, 6).map(ws => (
-                                    <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="group bg-card rounded-[3.5rem] border-[3.5px] border-border p-8 shadow-hard hover:shadow-hard-hover transition-all hover:-translate-y-3 cursor-pointer flex flex-col h-full relative overflow-hidden">
+                                    <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="group bg-card rounded-[3.5rem] border-[3.5px] border-border p-8 shadow-hard hover:shadow-[14px_14px_0px_rgba(15,23,42,0.25)] hover:border-slate-900 transition-all hover:-translate-y-3 cursor-pointer flex flex-col h-full relative overflow-hidden">
                                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-muted rounded-full group-hover:scale-110 transition-transform duration-500" />
                                         <div className="flex justify-between items-start mb-8 relative z-10">
                                             {ws.logo_url ? (
@@ -1073,7 +1073,7 @@ export const Dashboard: React.FC = () => {
                                             )}
                                             <div className="px-5 py-2 bg-foreground text-background rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-hard-mini">{ws.period || 'PERSONAL'}</div>
                                         </div>
-                                        <h4 className="text-2xl font-black text-foreground font-heading mb-4 group-hover:text-accent transition-colors truncate relative z-10">{ws.name}</h4>
+                                        <h4 className="text-2xl font-black text-foreground font-heading mb-4 group-hover:text-slate-900 transition-colors truncate relative z-10">{ws.name}</h4>
                                         <p className="text-sm font-bold text-slate-500 mb-10 line-clamp-3 leading-relaxed flex-1 relative z-10">{ws.description || "Content Plan Workspace untuk memanajemen konten secara tersistem & maksimal."}</p>
                                         <div className="flex items-center justify-between pt-6 border-t-[3.5px] border-dashed border-border relative z-10">
                                             <div className="flex -space-x-4">
@@ -1082,7 +1082,7 @@ export const Dashboard: React.FC = () => {
                                                 ))}
                                                 {ws.members && ws.members.length > 4 && <div className="w-12 h-12 rounded-full border-[3.5px] border-card bg-muted text-xs font-black flex items-center justify-center text-mutedForeground z-10 shadow-soft">+{ws.members.length - 4}</div>}
                                             </div>
-                                            <div className="w-12 h-12 rounded-2xl bg-foreground text-background flex items-center justify-center group-hover:bg-accent group-hover:text-white group-hover:scale-110 transition-all shadow-hard-mini">
+                                            <div className="w-12 h-12 rounded-2xl bg-foreground text-background flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white group-hover:scale-110 transition-all shadow-hard-mini">
                                                 <ArrowUpRight size={22} strokeWidth={3} />
                                             </div>
                                         </div>
