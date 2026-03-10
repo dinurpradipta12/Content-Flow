@@ -4,73 +4,74 @@ import { supabase } from '../services/supabaseClient';
 export const UserPresence = () => {
     useEffect(() => {
         const userId = localStorage.getItem('user_id');
+        const userAvatar = localStorage.getItem('user_avatar');
+        const userName = localStorage.getItem('user_name');
         if (!userId) return;
 
-        let idleTimer: NodeJS.Timeout;
-        const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+        // Initialize Realtime Channel for Presence (In-memory, light on DB)
+        const channel = supabase.channel('online-users', {
+            config: {
+                presence: {
+                    key: userId,
+                },
+            },
+        });
 
-        const updateStatus = async (status: 'online' | 'idle' | 'offline', force = false) => {
-            // Rate limit updates: don't update if same status was sent recently, 
-            // unless it's a critical change (online -> idle/offline)
+        // BACKGROUND: Sync to DB once in a while (10 mins) for persistence
+        const syncToDatabase = async (status: string) => {
+            const lastSync = Number(sessionStorage.getItem('last_presence_db_sync') || 0);
             const now = Date.now();
-            const lastUpdate = Number(sessionStorage.getItem('last_presence_update') || 0);
-            const lastStatus = sessionStorage.getItem('last_presence_status');
-
-            if (!force && status === 'online' && lastStatus === 'online' && (now - lastUpdate < 60000)) {
-                return; // Only update 'online' once per minute
-            }
+            if (now - lastSync < 10 * 60 * 1000 && status === 'online') return;
 
             try {
-                sessionStorage.setItem('last_presence_update', now.toString());
-                sessionStorage.setItem('last_presence_status', status);
-
-                const { error } = await supabase
-                    .from('app_users')
-                    .update({
-                        online_status: status,
-                        last_activity_at: new Date().toISOString()
-                    })
+                sessionStorage.setItem('last_presence_db_sync', now.toString());
+                await supabase.from('app_users')
+                    .update({ online_status: status, last_activity_at: new Date().toISOString() })
                     .eq('id', userId);
-
-                if (error) {
-                    if (error.code !== 'PGRST116') console.warn('Presence update error:', error.message);
-                }
-            } catch (err) {
-                // Ignore background errors
-            }
+            } catch (err) { /* ignore */ }
         };
+
+        const trackPresence = (status: 'online' | 'idle') => {
+            channel.track({
+                id: userId,
+                name: userName || 'User',
+                avatar: userAvatar,
+                status,
+                online_at: new Date().toISOString(),
+            });
+            syncToDatabase(status);
+        };
+
+        let idleTimer: NodeJS.Timeout;
+        const IDLE_TIMEOUT = 5 * 60 * 1000;
 
         const handleActivity = () => {
             clearTimeout(idleTimer);
-            updateStatus('online');
-            idleTimer = setTimeout(() => updateStatus('idle', true), IDLE_TIMEOUT);
+            const lastStatus = sessionStorage.getItem('last_presence_status');
+            if (lastStatus !== 'online') {
+                sessionStorage.setItem('last_presence_status', 'online');
+                trackPresence('online');
+            }
+            idleTimer = setTimeout(() => {
+                sessionStorage.setItem('last_presence_status', 'idle');
+                trackPresence('idle');
+            }, IDLE_TIMEOUT);
         };
 
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'hidden') {
-                updateStatus('idle', true);
-            } else {
+        const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+
+        channel.subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
                 handleActivity();
             }
-        };
+        });
 
-        // Event listeners for activity
-        const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
         events.forEach(event => window.addEventListener(event, handleActivity));
-
-        // Tab lifecycle listeners
-        window.addEventListener('beforeunload', () => updateStatus('offline'));
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        // Initial online status
-        updateStatus('online');
-        idleTimer = setTimeout(() => updateStatus('idle'), IDLE_TIMEOUT);
 
         return () => {
             events.forEach(event => window.removeEventListener(event, handleActivity));
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            updateStatus('offline');
             clearTimeout(idleTimer);
+            supabase.removeChannel(channel);
         };
     }, []);
 

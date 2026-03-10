@@ -65,7 +65,9 @@ export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchConfigValue = async () => {
         try {
-            const { data, error } = await supabase.from('app_config').select('*').single();
+            const { data, error } = await supabase.from('app_config')
+                .select('app_name, app_logo, app_logo_light, app_favicon, page_titles, hidden_pages, app_version, changelog, payment_config')
+                .single();
             if (data) {
                 setConfig(data);
                 // Store only app_name as a key identifier, not the whole config
