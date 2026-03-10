@@ -11,31 +11,31 @@ interface MoodTrackerModalProps {
 const MOODS = [
     {
         emoji: '😵‍💫', label: 'Burnout',
-        gradient: 'linear-gradient(135deg, #ef4444, #e11d48)',
+        gradient: '#64748b',
         isLow: true,
         motivation: '💙 Wajar banget untuk merasa begini. Ambil napas dalam, minum air, dan ingat: kamu sudah melakukan yang terbaik. Istirahat sejenak itu bukan kelemahan — itu kebutuhan.',
         tip: 'Coba istirahat 5–10 menit sebelum melanjutkan.'
     },
     {
         emoji: '🫩', label: 'Capek',
-        gradient: 'linear-gradient(135deg, #f59e0b, #f97316)',
+        gradient: '#78350f',
         isLow: true,
         motivation: '🌿 Kelelahan adalah tanda kamu sudah bekerja keras. Pelan-pelan saja hari ini — kualitas lebih baik dari kecepatan.',
         tip: 'Prioritaskan 1–2 tugas terpenting saja hari ini.'
     },
     {
         emoji: '😐', label: 'Biasa',
-        gradient: 'linear-gradient(135deg, #64748b, #475569)',
+        gradient: '#3b82f6',
         isLow: false, motivation: null, tip: null
     },
     {
         emoji: '🙂', label: 'Baik',
-        gradient: 'linear-gradient(135deg, #3b82f6, #4f46e5)',
+        gradient: '#f97316',
         isLow: false, motivation: null, tip: null
     },
     {
         emoji: '🔥', label: 'Semangat',
-        gradient: 'linear-gradient(135deg, #ec4899, #c026d3)',
+        gradient: '#ef4444',
         isLow: false, motivation: null, tip: null
     },
 ];
@@ -98,7 +98,13 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
         supabase.from('user_moods').insert({
             user_id: userId, workspace_id: wsId,
             mood_emoji: mood.emoji, mood_label: mood.label, is_private: false,
-        }).then(({ error }) => { if (error) console.error('Mood save error:', error); });
+        }).then(({ error }) => {
+            if (error) console.error('Mood save error:', error);
+            else {
+                // Dispatch event agar Dashboard dll bisa refresh
+                window.dispatchEvent(new CustomEvent('mood-updated'));
+            }
+        });
         setIsSaving(false);
     };
 

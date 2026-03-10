@@ -468,8 +468,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     const MOOD_OPTIONS = [
         { emoji: '🔥', label: 'Semangat' },
-        { emoji: '🙂', label: 'Baik' },
-        { emoji: '😐', label: 'Biasa' },
+        { emoji: '🙂', label: 'Happy' },
+        { emoji: '😐', label: 'Biasa aja' },
         { emoji: '🫩', label: 'Capek' },
         { emoji: '😵‍💫', label: 'Burnout' },
     ];
@@ -500,6 +500,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             window.dispatchEvent(new CustomEvent('app-alert', {
                 detail: { type: 'success', message: `Mood diupdate: ${mood.emoji} ${mood.label}` }
             }));
+
+            // Sync with Dashboard and other components
+            window.dispatchEvent(new Event('mood-updated'));
         } catch (err) {
             console.error(err);
             // Rollback jika gagal
@@ -507,6 +510,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             setCurrentMood(prev);
         }
     };
+
+    useEffect(() => {
+        const syncMood = () => {
+            const userId = localStorage.getItem('user_id');
+            const savedMood = localStorage.getItem(`current_mood_${userId}`);
+            if (savedMood) setCurrentMood(savedMood);
+        };
+
+        window.addEventListener('mood-updated', syncMood);
+        return () => window.removeEventListener('mood-updated', syncMood);
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -854,6 +868,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             )
             .subscribe();
 
+        // --- NEW GLOBAL EVENT BINDINGS FOR MOOD ---
+        const handleOpenMood = () => setIsMoodModalOpen(true);
+        const handleForceMoodRefresh = () => fetchMood();
+
+        window.addEventListener('open-mood-modal', handleOpenMood);
+        window.addEventListener('mood-updated', handleForceMoodRefresh);
+
         return () => {
             clearInterval(interval);
             window.removeEventListener('user_updated', handleUserUpdate);
@@ -861,6 +882,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             window.removeEventListener('open-payment-modal', handleOpenPayment);
             window.removeEventListener('app-alert', handleAppAlert);
             window.removeEventListener('app-confirm', handleAppConfirm);
+            window.removeEventListener('open-mood-modal', handleOpenMood);
+            window.removeEventListener('mood-updated', handleForceMoodRefresh);
             supabase.removeChannel(broadcastChannel);
         };
     }, []);

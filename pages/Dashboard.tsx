@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card } from '../components/ui/Card';
 import { RELIGION_CONTENT } from './religionData';
 import { Button } from '../components/ui/Button';
@@ -68,6 +68,20 @@ export const Dashboard: React.FC = () => {
     const userId = localStorage.getItem('user_id');
     const userRole = localStorage.getItem('user_role');
     const subPkg = localStorage.getItem('subscription_package') || 'Free';
+
+    const relativeTime = (iso: string) => {
+        try {
+            const diff = Date.now() - new Date(iso).getTime();
+            const m = Math.floor(diff / 60000);
+            if (m < 1) return 'Baru saja';
+            if (m < 60) return `${m} menit lalu`;
+            const h = Math.floor(m / 60);
+            if (h < 24) return `${h} jam lalu`;
+            return `${Math.floor(h / 24)} hari lalu`;
+        } catch {
+            return 'Baru saja';
+        }
+    };
 
     const getPlanDisplay = () => {
         if (userRole === 'Developer') return 'Developer';
@@ -625,6 +639,197 @@ export const Dashboard: React.FC = () => {
         return num.toString();
     };
 
+    // --- Personal Mood State ---
+    const [personalMood, setPersonalMood] = useState<{ emoji: string; label: string; created_at?: string } | null>(null);
+    const [moodLoading, setMoodLoading] = useState(true);
+    const [showMoodDashMenu, setShowMoodDashMenu] = useState(false);
+
+    const DASH_MOOD_OPTIONS = [
+        { emoji: '🔥', label: 'Semangat' },
+        { emoji: '🙂', label: 'Happy' },
+        { emoji: '😐', label: 'Biasa aja' },
+        { emoji: '🫩', label: 'Capek' },
+        { emoji: '😵‍💫', label: 'Burnout' },
+    ];
+
+    const fetchLatestMood = useCallback(async () => {
+        if (!userId) return;
+        const { data, error } = await supabase
+            .from('user_moods')
+            .select('mood_emoji, mood_label, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (data) {
+            setPersonalMood({
+                emoji: data.mood_emoji,
+                label: data.mood_label,
+                created_at: data.created_at
+            });
+        }
+        setMoodLoading(false);
+    }, [userId]);
+
+    const updateMoodInDashboard = async (m: any) => {
+        if (!userId) return;
+
+        // Optimistic update
+        setPersonalMood({
+            emoji: m.emoji,
+            label: m.label,
+            created_at: new Date().toISOString()
+        });
+        localStorage.setItem(`current_mood_${userId}`, m.emoji);
+        setShowMoodDashMenu(false);
+
+        try {
+            const workspaceId = localStorage.getItem('active_workspace_id');
+            const { error } = await supabase
+                .from('user_moods')
+                .insert({
+                    user_id: userId,
+                    workspace_id: workspaceId || '',
+                    mood_emoji: m.emoji,
+                    mood_label: m.label,
+                });
+
+            if (error) throw error;
+            window.dispatchEvent(new Event('mood-updated'));
+        } catch (err) {
+            console.error(err);
+            fetchLatestMood();
+        }
+    };
+
+    useEffect(() => {
+        fetchLatestMood();
+
+        // Listen for manual updates
+        window.addEventListener('mood-updated', fetchLatestMood);
+
+        // Subscribe to real-time mood changes
+        const channel = supabase
+            .channel('mood-dashboard-sync')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'user_moods',
+                filter: `user_id=eq.${userId}`
+            }, () => {
+                fetchLatestMood();
+            })
+            .subscribe();
+
+        return () => {
+            window.removeEventListener('mood-updated', fetchLatestMood);
+            supabase.removeChannel(channel);
+        };
+    }, [userId, fetchLatestMood]);
+
+    const getMoodBadgeStyles = (label: string) => {
+        const l = label?.toLowerCase() || '';
+        if (l.includes('semangat')) return 'bg-[#ef4444] text-white';
+        if (l.includes('baik') || l.includes('happy')) return 'bg-[#f97316] text-black';
+        if (l.includes('biasa')) return 'bg-[#3b82f6] text-white';
+        if (l.includes('capek')) return 'bg-[#78350f] text-white';
+        if (l.includes('burnout')) return 'bg-[#64748b] text-white';
+        return 'bg-foreground text-background';
+    };
+
+    const PersonalMoodCard = () => {
+        const mood = personalMood || { emoji: '✨', label: 'Tap to Update', created_at: new Date().toISOString() };
+        const badgeStyles = getMoodBadgeStyles(mood.label);
+
+        return (
+            <div className="bg-card rounded-[3rem] border-[3.5px] border-border p-8 shadow-hard hover:shadow-hard-hover transition-all relative z-10 group">
+                <style>{`
+                    @keyframes float-small {
+                        0%, 100% { transform: translateY(0px) rotate(-1deg); }
+                        50% { transform: translateY(-8px) rotate(1deg); }
+                    }
+                    @keyframes moodDropIn {
+                        from { opacity: 0; transform: translate(-50%, -10px) scale(0.9); }
+                        to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+                    }
+                    .animate-float-small { animation: float-small 4s ease-in-out infinite; }
+                `}</style>
+
+                <div className="flex items-center gap-7">
+                    {/* Left Section: Emoticon & Badge */}
+                    <div
+                        className="flex flex-col items-center gap-2 cursor-pointer shrink-0 relative group/emoji"
+                        onMouseEnter={() => setShowMoodDashMenu(true)}
+                        onMouseLeave={() => setShowMoodDashMenu(false)}
+                    >
+                        <div className="animate-float-small">
+                            <span className="text-8xl select-none inline-block drop-shadow-xl">{mood.emoji}</span>
+                        </div>
+                        <div className={`${badgeStyles} px-3 py-1 rounded-xl border-[3px] border-border shadow-hard-mini`}>
+                            <span className="text-[10px] font-black uppercase tracking-widest">{mood.label}</span>
+                        </div>
+
+                        {/* ── Dashboard Mood Hover Dropdown ── */}
+                        {showMoodDashMenu && (
+                            <div
+                                className="absolute top-[80%] left-1/2 -translate-x-1/2 mt-4 z-[100] w-64 pt-4"
+                                style={{ animation: 'moodDropIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both' }}
+                            >
+                                <div className="bg-card border-[3.5px] border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] overflow-hidden">
+                                    <div className="p-3 bg-slate-50 border-b-2 border-slate-100">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Update Pulse</p>
+                                    </div>
+                                    <div className="p-3 grid grid-cols-5 gap-2">
+                                        {DASH_MOOD_OPTIONS.map((m) => {
+                                            const isActive = mood.emoji === m.emoji;
+                                            return (
+                                                <button
+                                                    key={m.label}
+                                                    onClick={(e) => { e.stopPropagation(); updateMoodInDashboard(m); }}
+                                                    className={`
+                                                        aspect-square rounded-xl border-[2.5px] transition-all flex items-center justify-center text-xl
+                                                        ${isActive ? 'bg-accent border-slate-900 shadow-hard-mini text-white scale-110' : 'bg-white border-slate-200 hover:border-slate-800 hover:scale-110'}
+                                                    `}
+                                                    title={m.label}
+                                                >
+                                                    {m.emoji}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="px-3 pb-3">
+                                        <p className="text-[8px] font-bold text-slate-400 italic text-center">Pilih mood untuk mengupdate radar tim</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Section: Info & Action */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                            <div className="space-y-1">
+                                <h3 className="text-3xl font-black text-foreground truncate leading-tight mt-1">
+                                    Halo {userName}
+                                </h3>
+                                <div className="mt-2 flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 text-[10px] font-black text-mutedForeground opacity-50 uppercase tracking-widest">
+                                        <Clock size={12} strokeWidth={3} className="text-accent" />
+                                        <span>Update {relativeTime(mood.created_at || new Date().toISOString())}</span>
+                                    </div>
+                                    <p className="text-[11px] font-bold text-slate-400 italic line-clamp-1">
+                                        "Click emoji to update pulse"
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-transparent pb-20 selection:bg-accent/30 selection:text-white">
             {/* ═══════════════════════════════════════════════════════════════════
@@ -1094,6 +1299,9 @@ export const Dashboard: React.FC = () => {
 
                     {/* --- RIGHT AREA: PRIVATE HUB (3 cols) --- */}
                     <div className="lg:col-span-3 space-y-10">
+
+                        {/* Current Mood Tracking - NEW */}
+                        <PersonalMoodCard />
 
                         {/* 1. Global Filter Hub */}
                         <div className="bg-card rounded-[3rem] border-[3.5px] border-border p-8 shadow-hard space-y-6">
