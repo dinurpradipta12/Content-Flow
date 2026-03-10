@@ -883,9 +883,9 @@ export const AdminMoodTracker: React.FC = () => {
                                         className={hasMood ? `${meta.bg} flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-hard border-slate-900 border-opacity-20 hover:border-opacity-100 dark:border-opacity-40 relative overflow-hidden min-h-[90px]` : `flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer border-slate-300 dark:border-slate-700 grayscale-[40%] opacity-80 bg-slate-50 dark:bg-slate-800/30 relative overflow-hidden min-h-[90px]`}
                                     >
                                         {hasMood && (
-                                            <div className="absolute top-2.5 right-2.5 z-10">
+                                            <div className="absolute top-0 right-6 -translate-y-1/2 z-[30] pointer-events-none">
                                                 <span
-                                                    className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-hard-mini border border-slate-900 border-opacity-10"
+                                                    className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-hard border-[2px] border-slate-900 transform -rotate-1 inline-block whitespace-nowrap"
                                                     style={{ backgroundColor: meta.color }}
                                                 >
                                                     {getMeta(m!.mood_label).mood_label}
