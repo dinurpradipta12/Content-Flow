@@ -1184,22 +1184,7 @@ export const AdminMoodTracker: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Why It Matters (Brutalism Edition) ───────────────────────────────── */}
-            <div className="bg-amber-300 dark:bg-amber-900/30 border-[3.5px] border-slate-900 dark:border-amber-700/50 rounded-[2.5rem] p-8 md:p-10 shadow-hard relative mt-4">
-                <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
-                    <div className="w-20 h-20 bg-amber-400 dark:bg-amber-700/50 rounded-2xl border-[3px] border-slate-900 dark:border-amber-500/50 shadow-hard-mini flex items-center justify-center flex-shrink-0 transform -rotate-6">
-                        <Heart className="text-slate-900 dark:text-amber-100" size={36} strokeWidth={2.5} />
-                    </div>
-                    <div className="space-y-3 flex-1">
-                        <h3 className="text-2xl md:text-3xl font-heading font-black text-slate-900 dark:text-amber-100 tracking-tight uppercase">
-                            Catatan HR: Psychological Safety
-                        </h3>
-                        <p className="text-slate-900 dark:text-amber-100/90 font-bold text-base leading-relaxed max-w-4xl">
-                            Dalam rutinitas kerja yang padat, bertanya <span className="bg-amber-100 dark:bg-amber-950/50 border-[2px] border-slate-900 dark:border-amber-500/50 px-2 py-0.5 rounded-md font-black italic text-slate-900 dark:text-amber-200">"Bagaimana kabarmu?"</span> sering terlewat. Sistem Team Reflection memastikan kesejahteraan psikologis setiap anggota terpantau tanpa terkesan menginterogasi. Riset internal membuktikan bahwa tim yang didukung secara emosional mencatat stabilitas output hingga <span className="text-slate-900 dark:text-amber-200 font-black border-b-[4px] border-slate-900 dark:border-amber-500/50 uppercase">300% Lebih Konsisten</span>.
-                        </p>
-                    </div>
-                </div>
-            </div>
+
 
             {/* ── Modals ───────────────────────────────────────────────────────────── */}
             {
