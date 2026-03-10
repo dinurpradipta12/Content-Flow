@@ -260,7 +260,7 @@ export const ContentDataInsight: React.FC = () => {
         try {
             const metrics = await analyzeContentLink(url);
             const timestamp = new Date().toISOString();
-            const metricsData = { ...metrics, lastUpdated: timestamp };
+            const metricsData = { ...metrics, lastUpdated: timestamp, updatedBy: 'AI Scraper' };
 
             const { error } = await supabase
                 .from('content_items')
@@ -319,10 +319,12 @@ export const ContentDataInsight: React.FC = () => {
             // Preserve existing metrics data (like caption/username) but overwrite numbers
             const existingMetrics = selectedItemForInput.metrics || {};
 
+            const updatedBy = localStorage.getItem('user_name') || 'User';
             const updatedMetrics = {
                 ...existingMetrics,
                 ...manualMetrics,
                 lastUpdated: timestamp,
+                updatedBy,
                 isManual: true // Flag to indicate manual entry
             };
 
@@ -945,7 +947,7 @@ export const ContentDataInsight: React.FC = () => {
                     {/* Interactions */}
                     <div
                         onClick={() => setSelectedMetric('interactions')}
-                        className="bg-card p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
+                        className="bg-indigo-600 p-5 rounded-2xl border-[3px] border-border shadow-[6px_6px_0px_var(--shadow-color)] flex flex-col justify-between h-36 relative overflow-hidden group hover:-translate-y-2 hover:shadow-[10px_10px_0px_var(--shadow-color)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                             <Zap size={70} className="text-white" />
@@ -1393,7 +1395,16 @@ export const ContentDataInsight: React.FC = () => {
                                                                 <div className="mt-8 pt-4 border-t border-border/10 flex items-center justify-between opacity-60">
                                                                     <div className="flex items-center gap-2 text-muted-foreground">
                                                                         <RefreshCw size={12} />
-                                                                        <span className="text-[10px] font-black uppercase tracking-widest">Update: {item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString() : 'N/A'}</span>
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 flex-wrap">
+                                                                            <span className="text-muted-foreground">Telah di-update</span>
+                                                                            {(item.metrics as any)?.updatedBy && (
+                                                                                <span className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-md text-slate-700 dark:text-slate-300">
+                                                                                    {(item.metrics as any).updatedBy}
+                                                                                </span>
+                                                                            )}
+                                                                            <span className="text-muted-foreground">terakhir pukul</span>
+                                                                            <span className="text-foreground">{item.metrics?.lastUpdated ? new Date(item.metrics.lastUpdated).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A'}</span>
+                                                                        </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
