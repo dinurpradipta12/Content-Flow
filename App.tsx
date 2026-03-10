@@ -27,6 +27,7 @@ import { CollectIdea } from './pages/CollectIdea';
 import { NotificationProvider } from './components/NotificationProvider';
 import { AppConfigProvider } from './components/AppConfigProvider';
 import { supabase } from './services/supabaseClient';
+import { AppUpdater } from './components/AppUpdater';
 
 // --- AUTH CONTEXT FOR SECURE SESSION MANAGEMENT ---
 interface AuthContextType {
@@ -233,6 +234,7 @@ const App: React.FC = () => {
                   <Route path="admin/analytics/report/:type?" element={<RequireDeveloper><DeveloperReport /></RequireDeveloper>} />
                 </Route>
               </Routes>
+              <AppUpdater />
             </NotificationProvider>
           </AppConfigProvider>
         </AuthProvider>
