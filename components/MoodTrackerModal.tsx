@@ -10,14 +10,14 @@ interface MoodTrackerModalProps {
 
 const MOODS = [
     {
-        emoji: '😭', label: 'Burnout',
+        emoji: '😵‍💫', label: 'Burnout',
         gradient: 'linear-gradient(135deg, #ef4444, #e11d48)',
         isLow: true,
         motivation: '💙 Wajar banget untuk merasa begini. Ambil napas dalam, minum air, dan ingat: kamu sudah melakukan yang terbaik. Istirahat sejenak itu bukan kelemahan — itu kebutuhan.',
         tip: 'Coba istirahat 5–10 menit sebelum melanjutkan.'
     },
     {
-        emoji: '😴', label: 'Capek',
+        emoji: '🫩', label: 'Capek',
         gradient: 'linear-gradient(135deg, #f59e0b, #f97316)',
         isLow: true,
         motivation: '🌿 Kelelahan adalah tanda kamu sudah bekerja keras. Pelan-pelan saja hari ini — kualitas lebih baik dari kecepatan.',
@@ -34,7 +34,7 @@ const MOODS = [
         isLow: false, motivation: null, tip: null
     },
     {
-        emoji: '🤩', label: 'Semangat',
+        emoji: '🔥', label: 'Semangat',
         gradient: 'linear-gradient(135deg, #ec4899, #c026d3)',
         isLow: false, motivation: null, tip: null
     },

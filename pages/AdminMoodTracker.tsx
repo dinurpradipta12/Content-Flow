@@ -28,11 +28,32 @@ interface UserMood {
 
 // ── Constants ────────────────────────────────────────────────────
 const BASE_MOOD_META: Record<string, { color: string; bg: string; text: string; gradient: string; score: number }> = {
+    // Current Indonesian
     'Semangat': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
     'Baik': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
     'Biasa': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
     'Capek': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
     'Burnout': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+
+    // Colloquial Indonesian (from your screenshots)
+    'Semangat!': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
+    'Lagi Happy': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
+    'Biasa Aja': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
+    'Lagi Capek': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
+    'Lagi Burnout': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+
+    // Legacy English (Case Insensitive equivalents in getMeta)
+    'HAPPY': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
+    'EXCITED': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
+    'SUPER': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
+    'GOOD': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
+    'CALM': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
+    'FINE': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
+    'NEUTRAL': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
+    'TIRED': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
+    'SAD': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
+    'ANGRY': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+    'BURNOUT': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
 };
 
 const SCORE_STYLES: Record<number, { color: string; bg: string; text: string; gradient: string }> = {
@@ -46,11 +67,11 @@ const SCORE_STYLES: Record<number, { color: string; bg: string; text: string; gr
 const PIE_COLORS = ['#c026d3', '#4f46e5', '#475569', '#f97316', '#e11d48'];
 
 const DEFAULT_MOOD_CONFIG = {
-    5: { label: 'Semangat', emoji: '🚀' },
+    5: { label: 'Semangat', emoji: '🔥' },
     4: { label: 'Baik', emoji: '😊' },
     3: { label: 'Biasa', emoji: '😐' },
-    2: { label: 'Capek', emoji: '😫' },
-    1: { label: 'Burnout', emoji: '🔥' }
+    2: { label: 'Capek', emoji: '🫩' },
+    1: { label: 'Burnout', emoji: '😵‍💫' }
 };
 
 // ── Helper ───────────────────────────────────────────────────────
@@ -100,15 +121,18 @@ export const AdminMoodTracker: React.FC = () => {
 
     // ── Dynamic Mood Logic ─────────────────────────────────────────
     const getMeta = useCallback((label: string) => {
-        // 1. Check if the current settings have this exact label
-        const currentEntry = Object.entries(moodSettings).find(([_, data]) => (data as any).label === label);
+        const upLabel = label.toUpperCase();
+
+        // 1. Check if the current settings have this exact label (case insensitive search)
+        const currentEntry = Object.entries(moodSettings).find(([_, data]) => (data as any).label.toUpperCase() === upLabel);
         if (currentEntry) {
             const score = parseInt(currentEntry[0]);
             return { ...SCORE_STYLES[score], score, mood_label: (moodSettings as any)[score].label, mood_emoji: (moodSettings as any)[score].emoji };
         }
 
         // 2. If not found, check BASE_MOOD_META to find what "level/score" this label historically represents
-        const base = BASE_MOOD_META[label];
+        // Also check uppercase variant for legacy data robustness
+        const base = BASE_MOOD_META[label] || BASE_MOOD_META[upLabel];
         if (base) {
             const score = base.score;
             // Map historical label to the CURRENT configuration for this score level
@@ -121,7 +145,7 @@ export const AdminMoodTracker: React.FC = () => {
                     mood_emoji: currentConfig.emoji
                 };
             }
-            return base;
+            return { ...base, mood_label: label, mood_emoji: '😐' };
         }
 
         // Final fallback
@@ -1570,39 +1594,51 @@ export const AdminMoodTracker: React.FC = () => {
                             ))}
                         </div>
 
-                        <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/30 border-t-[3.5px] border-slate-900 dark:border-slate-700 flex justify-end gap-3 mt-auto">
+                        <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/30 border-t-[3.5px] border-slate-900 dark:border-slate-700 flex flex-wrap justify-between items-center gap-4 mt-auto">
                             <button
-                                onClick={() => setShowSettingsModal(false)}
-                                disabled={savingSettings}
-                                className="px-6 py-3 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    setSavingSettings(true);
-                                    try {
-                                        const { error } = await supabase
-                                            .from('workspaces')
-                                            .update({ mood_config: moodSettings })
-                                            .eq('id', selectedWorkspaceId);
-
-                                        if (error) throw error;
-
-                                        localStorage.setItem('mood_tracker_settings', JSON.stringify(moodSettings));
-                                        setShowSettingsModal(false);
-                                    } catch (err) {
-                                        console.error('Error saving mood settings:', err);
-                                        alert('Gagal menyimpan pengaturan ke database.');
-                                    } finally {
-                                        setSavingSettings(false);
+                                onClick={() => {
+                                    if (confirm('Reset semua emoticon dan label ke setelan default kode?')) {
+                                        setMoodSettings(DEFAULT_MOOD_CONFIG);
                                     }
                                 }}
-                                disabled={savingSettings}
-                                className="px-8 py-3 rounded-2xl bg-indigo-600 border-[3.5px] border-slate-900 text-white font-black uppercase tracking-widest text-[10px] shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors"
                             >
-                                {savingSettings ? 'Menyimpan...' : 'Simpan Global'}
+                                ↺ Reset ke Default
                             </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowSettingsModal(false)}
+                                    disabled={savingSettings}
+                                    className="px-6 py-3 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        setSavingSettings(true);
+                                        try {
+                                            const { error } = await supabase
+                                                .from('workspaces')
+                                                .update({ mood_config: moodSettings })
+                                                .eq('id', selectedWorkspaceId);
+
+                                            if (error) throw error;
+
+                                            localStorage.setItem('mood_tracker_settings', JSON.stringify(moodSettings));
+                                            setShowSettingsModal(false);
+                                        } catch (err) {
+                                            console.error('Error saving mood settings:', err);
+                                            alert('Gagal menyimpan pengaturan ke database.');
+                                        } finally {
+                                            setSavingSettings(false);
+                                        }
+                                    }}
+                                    disabled={savingSettings}
+                                    className="px-8 py-3 rounded-2xl bg-indigo-600 border-[3.5px] border-slate-900 text-white font-black uppercase tracking-widest text-[10px] shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                                >
+                                    {savingSettings ? 'Menyimpan...' : 'Simpan Global'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
