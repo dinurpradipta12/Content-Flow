@@ -216,9 +216,10 @@ export const AdminMoodTracker: React.FC = () => {
                     wsData.members.forEach((m: string) => {
                         if (m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i)) {
                             memberIds.add(m);
-                        } else if (m.startsWith('http') || m.includes('%2F') || m.startsWith('data:')) {
+                        } else if (m.startsWith('http') || m.includes('%2F')) {
                             avatarTokens.add(m);
                         }
+                        // Note: intentionally skipping m.startsWith('data:') as they cause massive GET requests leading to HTTP/2 Protocol Errors.
                     });
                 }
             }
