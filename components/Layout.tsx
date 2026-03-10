@@ -467,11 +467,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const notificationRef = useRef<HTMLDivElement>(null);
 
     const MOOD_OPTIONS = [
-        { emoji: '🤩', label: 'Inspired' },
-        { emoji: '🙂', label: 'Good' },
-        { emoji: '😐', label: 'Neutral' },
-        { emoji: '😴', label: 'Tired' },
-        { emoji: '😭', label: 'Burnout' },
+        { emoji: '🔥', label: 'Semangat' },
+        { emoji: '🙂', label: 'Baik' },
+        { emoji: '😐', label: 'Biasa' },
+        { emoji: '🫩', label: 'Capek' },
+        { emoji: '😵‍💫', label: 'Burnout' },
     ];
 
     const handleUpdateMood = async (mood: any) => {
@@ -1801,11 +1801,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                         {MOOD_OPTIONS.map((m) => {
                                                             const isActive = currentMood === m.emoji;
                                                             const gradientStyles: Record<string, string> = {
-                                                                '🤩': 'linear-gradient(135deg, #f472b6, #c026d3)',
+                                                                '🔥': 'linear-gradient(135deg, #f472b6, #c026d3)',
                                                                 '🙂': 'linear-gradient(135deg, #60a5fa, #4f46e5)',
                                                                 '😐': 'linear-gradient(135deg, #94a3b8, #475569)',
-                                                                '😴': 'linear-gradient(135deg, #fbbf24, #f97316)',
-                                                                '😭': 'linear-gradient(135deg, #f87171, #e11d48)',
+                                                                '🫩': 'linear-gradient(135deg, #fbbf24, #f97316)',
+                                                                '😵‍💫': 'linear-gradient(135deg, #f87171, #e11d48)',
                                                             };
                                                             return (
                                                                 <button
