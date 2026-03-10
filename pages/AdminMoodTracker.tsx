@@ -3,7 +3,7 @@ import { supabase } from '../services/supabaseClient';
 import {
     Smile, Heart, Users, Calendar, Activity, TrendingUp,
     RefreshCw, BarChart3, PieChart as PieIcon,
-    AlertTriangle, Clock, Coffee, HandHeart, X
+    AlertTriangle, Clock, Coffee, HandHeart, X, Settings
 } from 'lucide-react';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -27,24 +27,33 @@ interface UserMood {
 }
 
 // ── Constants ────────────────────────────────────────────────────
-const MOOD_META: Record<string, { color: string; bg: string; text: string; gradient: string; score: number }> = {
+const BASE_MOOD_META: Record<string, { color: string; bg: string; text: string; gradient: string; score: number }> = {
     'Semangat': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'Happy': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
     'Baik': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'Good': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
     'Biasa': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'Neutral': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
     'Capek': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'Tired': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
     'Burnout': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+};
+
+const SCORE_STYLES: Record<number, { color: string; bg: string; text: string; gradient: string }> = {
+    5: { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500' },
+    4: { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500' },
+    3: { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600' },
+    2: { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500' },
+    1: { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600' },
 };
 
 const PIE_COLORS = ['#c026d3', '#4f46e5', '#475569', '#f97316', '#e11d48'];
 
-// ── Helper ───────────────────────────────────────────────────────
-const getMeta = (label: string) =>
-    MOOD_META[label] ?? { color: '#64748b', bg: 'bg-slate-100 text-slate-700', text: '#475569', gradient: 'from-slate-400 to-slate-600', score: 3 };
+const DEFAULT_MOOD_CONFIG = {
+    5: { label: 'Semangat', emoji: '🚀' },
+    4: { label: 'Baik', emoji: '😊' },
+    3: { label: 'Biasa', emoji: '😐' },
+    2: { label: 'Capek', emoji: '😫' },
+    1: { label: 'Burnout', emoji: '🔥' }
+};
 
+// ── Helper ───────────────────────────────────────────────────────
 const relativeTime = (iso: string) => {
     const diff = Date.now() - new Date(iso).getTime();
     const m = Math.floor(diff / 60000);
@@ -55,100 +64,7 @@ const relativeTime = (iso: string) => {
     return `${Math.floor(h / 24)} hari lalu`;
 };
 
-// ── Mood Heatmap Component ────────────────────────────────────────
-const MoodHeatmap: React.FC<{ moods: UserMood[] }> = ({ moods }) => {
-    // Build 35-day grid (5 weeks)
-    const days: { date: string; label: string; score: number | null; count: number; emoji: string }[] = [];
-    const today = new Date();
-    for (let i = 34; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        const dayMoods = moods.filter(m => m.created_at.startsWith(dateStr));
-        const score = dayMoods.length > 0
-            ? dayMoods.reduce((s, m) => s + getMeta(m.mood_label).score, 0) / dayMoods.length
-            : null;
-        // dominant emoji
-        const emojiCount: Record<string, number> = {};
-        dayMoods.forEach(m => { emojiCount[m.mood_emoji] = (emojiCount[m.mood_emoji] || 0) + 1; });
-        const topEmoji = Object.entries(emojiCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
-        days.push({
-            date: dateStr,
-            label: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-            score,
-            count: dayMoods.length,
-            emoji: topEmoji
-        });
-    }
 
-    const getCellColor = (score: number | null) => {
-        if (score === null) return 'var(--border)';
-        if (score >= 4.5) return '#c026d3';  // Semangat
-        if (score >= 3.5) return '#4f46e5';  // Baik
-        if (score >= 2.5) return '#94a3b8';  // Biasa
-        if (score >= 1.5) return '#f97316';  // Capek
-        return '#e11d48';                     // Burnout
-    };
-
-    const WEEK_LABELS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    const startDow = new Date(days[0].date).getDay();
-    const padded = [...Array(startDow).fill(null), ...days];
-    const weeks = Math.ceil(padded.length / 7);
-
-    return (
-        <div className="space-y-3">
-            {/* Week labels */}
-            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${weeks}, 1fr)` }}>
-                {/* intentionally empty header row — done via column labels below */}
-            </div>
-            <div className="flex gap-1 items-start">
-                {/* Day of week column */}
-                <div className="flex flex-col gap-1.5 pt-0">
-                    {WEEK_LABELS.map(d => (
-                        <div key={d} className="h-7 flex items-center">
-                            <span className="text-[8px] font-black text-slate-400 uppercase w-6">{d}</span>
-                        </div>
-                    ))}
-                </div>
-                {/* Heatmap grid — column per week */}
-                <div className="flex-1 overflow-x-auto">
-                    <div className="flex gap-1.5" style={{ minWidth: `${weeks * 32}px` }}>
-                        {Array.from({ length: weeks }).map((_, wIdx) => (
-                            <div key={wIdx} className="flex flex-col gap-1.5">
-                                {Array.from({ length: 7 }).map((_, dIdx) => {
-                                    const cell = padded[wIdx * 7 + dIdx];
-                                    if (!cell) return <div key={dIdx} className="w-7 h-7" />;
-                                    const bg = getCellColor(cell.score);
-                                    const isToday = cell.date === today.toISOString().split('T')[0];
-                                    return (
-                                        <div
-                                            key={dIdx}
-                                            title={`${cell.label}\n${cell.count} entri${cell.score !== null ? ` • Skor: ${cell.score.toFixed(1)}` : ''}${cell.emoji ? ` ${cell.emoji}` : ''}`}
-                                            className={`w-7 h-7 rounded-md flex items-center justify-center text-[11px] transition-transform hover:scale-125 cursor-default ${isToday ? 'ring-2 ring-slate-900 ring-offset-1' : ''
-                                                }`}
-                                            style={{ background: bg }}
-                                        >
-                                            {cell.count > 0 && cell.emoji ? cell.emoji : ''}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-            {/* Legend */}
-            <div className="flex items-center gap-2 pt-1">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rendah</span>
-                {['#e11d48', '#f97316', '#94a3b8', '#4f46e5', '#c026d3'].map(c => (
-                    <div key={c} className="w-4 h-4 rounded" style={{ background: c }} />
-                ))}
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tinggi</span>
-                <span className="ml-2 text-[9px] text-slate-300 font-semibold">• = hari dengan data</span>
-            </div>
-        </div>
-    );
-};
 
 // ── Component ─────────────────────────────────────────────────────
 export const AdminMoodTracker: React.FC = () => {
@@ -174,7 +90,117 @@ export const AdminMoodTracker: React.FC = () => {
     // Support indicators
     const [receivedSupports, setReceivedSupports] = useState<Set<string>>(new Set());
 
-    // ── Reactive dark mode detection (for Recharts inline styles) ─
+    // Settings Modal State
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [savingSettings, setSavingSettings] = useState(false);
+    const [moodSettings, setMoodSettings] = useState<Record<number, { label: string; emoji: string }>>(DEFAULT_MOOD_CONFIG);
+
+    const currentUserId = localStorage.getItem('user_id');
+    const isDeveloper = workspaceUsers.find(u => u.id === currentUserId)?.role === 'Developer';
+
+    // ── Dynamic Mood Logic ─────────────────────────────────────────
+    const getMeta = useCallback((label: string) => {
+        // Find if this label is currently assigned to a score in settings
+        const settingEntry = Object.entries(moodSettings).find(([_, data]) => (data as any).label === label);
+        if (settingEntry) {
+            const score = parseInt(settingEntry[0]);
+            return { ...SCORE_STYLES[score], score, mood_label: label, mood_emoji: (moodSettings as any)[score].emoji };
+        }
+        // Fallback to BASE_MOOD_META
+        const base = BASE_MOOD_META[label];
+        if (base) return base;
+
+        // Final fallback
+        return { ...SCORE_STYLES[3], score: 3, mood_label: label, mood_emoji: '😐' };
+    }, [moodSettings]);
+
+    // ── Mood Heatmap Component (Internal) ──────────────────────────
+    const MoodHeatmap: React.FC<{ moods: UserMood[] }> = ({ moods }) => {
+        const days: { date: string; label: string; score: number | null; count: number; emoji: string }[] = [];
+        const today = new Date();
+        for (let i = 34; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const dayMoods = moods.filter(m => m.created_at.startsWith(dateStr));
+            const score = dayMoods.length > 0
+                ? dayMoods.reduce((s, m) => s + getMeta(m.mood_label).score, 0) / dayMoods.length
+                : null;
+
+            const emojiCount: Record<string, number> = {};
+            dayMoods.forEach(m => { emojiCount[m.mood_emoji] = (emojiCount[m.mood_emoji] || 0) + 1; });
+            const topEmoji = Object.entries(emojiCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+
+            days.push({
+                date: dateStr,
+                label: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+                score,
+                count: dayMoods.length,
+                emoji: topEmoji
+            });
+        }
+
+        const getCellColor = (score: number | null) => {
+            if (score === null) return isDarkMode ? '#1e293b' : '#f1f5f9';
+            if (score >= 4.5) return SCORE_STYLES[5].color;
+            if (score >= 3.5) return SCORE_STYLES[4].color;
+            if (score >= 2.5) return SCORE_STYLES[3].color;
+            if (score >= 1.5) return SCORE_STYLES[2].color;
+            return SCORE_STYLES[1].color;
+        };
+
+        const WEEK_LABELS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const startDow = new Date(days[0].date).getDay();
+        const padded = [...Array(startDow).fill(null), ...days];
+        const weeks = Math.ceil(padded.length / 7);
+
+        return (
+            <div className="space-y-3">
+                <div className="flex gap-1 items-start">
+                    <div className="flex flex-col gap-1.5 pt-0">
+                        {WEEK_LABELS.map(d => (
+                            <div key={d} className="h-7 flex items-center">
+                                <span className="text-[8px] font-black text-slate-400 uppercase w-6">{d}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex-1 overflow-x-auto">
+                        <div className="flex gap-1.5" style={{ minWidth: `${weeks * 32}px` }}>
+                            {Array.from({ length: weeks }).map((_, wIdx) => (
+                                <div key={wIdx} className="flex flex-col gap-1.5">
+                                    {Array.from({ length: 7 }).map((_, dIdx) => {
+                                        const cell = padded[wIdx * 7 + dIdx];
+                                        if (!cell) return <div key={dIdx} className="w-7 h-7" />;
+                                        const bg = getCellColor(cell.score);
+                                        const isToday = cell.date === today.toISOString().split('T')[0];
+                                        return (
+                                            <div
+                                                key={dIdx}
+                                                title={`${cell.label}\n${cell.count} entri${cell.score !== null ? ` • Skor: ${cell.score.toFixed(1)}` : ''}`}
+                                                className={`w-7 h-7 rounded-md flex items-center justify-center text-[11px] transition-transform hover:scale-125 cursor-default ${isToday ? 'ring-2 ring-slate-900 ring-offset-1' : ''}`}
+                                                style={{ background: bg }}
+                                            >
+                                                {cell.count > 0 && cell.emoji ? cell.emoji : (cell.count > 0 ? '·' : '')}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 pt-1 justify-center">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rendah</span>
+                    {[1, 2, 3, 4, 5].map(s => (
+                        <div key={s} className="w-4 h-4 rounded" style={{ background: SCORE_STYLES[s].color }} />
+                    ))}
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tinggi</span>
+                </div>
+            </div>
+        );
+    };
+
+    // ── Reactive dark mode detection ──────────────────────────────
     const [isDarkMode, setIsDarkMode] = useState(() =>
         document.documentElement.classList.contains('theme-dark') ||
         document.documentElement.classList.contains('theme-midnight')
@@ -223,8 +249,15 @@ export const AdminMoodTracker: React.FC = () => {
         else setRefreshing(true);
 
         try {
-            // 1. Fetch workspace users first
-            const { data: wsData } = await supabase.from('workspaces').select('owner_id, members, admin_id').eq('id', wsId).single();
+            // 1. Fetch workspace users & config
+            const { data: wsData } = await supabase.from('workspaces').select('owner_id, members, admin_id, mood_config').eq('id', wsId).single();
+
+            if (wsData?.mood_config) {
+                setMoodSettings(wsData.mood_config);
+            } else {
+                setMoodSettings(DEFAULT_MOOD_CONFIG);
+            }
+
             const currentUserId = localStorage.getItem('user_id');
             const tenantId = localStorage.getItem('tenant_id') || currentUserId;
 
@@ -706,6 +739,16 @@ export const AdminMoodTracker: React.FC = () => {
                         <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} strokeWidth={3} />
                     </button>
 
+                    {isDeveloper && (
+                        <button
+                            onClick={() => setShowSettingsModal(true)}
+                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-white transition-all shrink-0"
+                            title="Mood Settings"
+                        >
+                            <Settings size={20} strokeWidth={3} />
+                        </button>
+                    )}
+
                     <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 shadow-hard gap-0.5 overflow-x-auto w-full sm:w-auto">
                         {(['today', '7d', '30d', 'all'] as const).map((r) => (
                             <button
@@ -760,7 +803,7 @@ export const AdminMoodTracker: React.FC = () => {
                 {/* ── Left: Today's Team Mood Snapshot ────────────── */}
                 {latestPerUser.length > 0 && (
                     <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden h-full flex flex-col">
-                        <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-800/20 dark:bg-slate-800/50">
+                        <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-rose-200 dark:bg-rose-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
                                     <Smile size={24} className="text-rose-700 dark:text-rose-400" strokeWidth={2.5} />
@@ -861,7 +904,7 @@ export const AdminMoodTracker: React.FC = () => {
 
                 {/* ── Right: Mood Heatmap 35 Hari ─────────────────── */}
                 <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden h-full flex flex-col">
-                    <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-800/20 dark:bg-slate-800/50">
+                    <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-indigo-200 dark:bg-indigo-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
                                 <Calendar size={24} className="text-indigo-700 dark:text-indigo-400" strokeWidth={2.5} />
@@ -947,7 +990,7 @@ export const AdminMoodTracker: React.FC = () => {
 
             {/* ── 3. Minggu Ini Card ────────────────────────────── */}
             <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden">
-                <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-800/20 dark:bg-slate-800/50">
+                <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
                     <div className="w-12 h-12 bg-violet-200 dark:bg-violet-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
                         <span className="text-xl">📆</span>
                     </div>
@@ -1004,7 +1047,7 @@ export const AdminMoodTracker: React.FC = () => {
 
                 {/* Pie Chart */}
                 <div className="lg:col-span-5 bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden">
-                    <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-800/20 dark:bg-slate-800/50">
+                    <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
                         <div className="w-12 h-12 bg-violet-200 dark:bg-violet-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
                             <PieIcon size={24} className="text-violet-700 dark:text-violet-400" strokeWidth={2.5} />
                         </div>
@@ -1052,11 +1095,11 @@ export const AdminMoodTracker: React.FC = () => {
                             </div>
                         )
                     }
-                </div >
+                </div>
 
                 {/* Area Chart — Trend */}
-                < div className="lg:col-span-7 bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden" >
-                    <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-800/20 dark:bg-slate-800/50">
+                <div className="lg:col-span-7 bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden">
+                    <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
                         <div className="w-12 h-12 bg-blue-200 dark:bg-blue-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
                             <BarChart3 size={24} className="text-blue-700 dark:text-blue-400" strokeWidth={2.5} />
                         </div>
@@ -1095,12 +1138,12 @@ export const AdminMoodTracker: React.FC = () => {
                             </div>
                         )
                     }
-                </div >
-            </div >
+                </div>
+            </div>
 
             {/* ── Full History Table ────────────────────────────── */}
-            < div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden" >
-                <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-800/20 dark:bg-slate-800/50">
+            <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden">
+                <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-emerald-200 dark:bg-emerald-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
                             <Activity size={24} className="text-emerald-700 dark:text-emerald-400" strokeWidth={2.5} />
@@ -1424,6 +1467,117 @@ export const AdminMoodTracker: React.FC = () => {
                     );
                 })()
             }
+
+            {/* ── Modal: Mood Settings (Global) ────────────────────────────── */}
+            {showSettingsModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <div
+                        className="bg-card w-full max-w-lg border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-indigo-200 dark:bg-indigo-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                                    <Settings size={24} className="text-indigo-700 dark:text-indigo-400" strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Team Configuration</h3>
+                                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Atur emoticon & label mood secara global</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowSettingsModal(false)}
+                                className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border-[2.5px] border-slate-900 dark:border-slate-700 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors shadow-hard-mini"
+                            >
+                                <X size={20} strokeWidth={3} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 md:p-8 space-y-4 overflow-y-auto">
+                            <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 p-4 rounded-2xl mb-4">
+                                <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase flex items-center gap-2">
+                                    <AlertTriangle size={14} /> Developer Access Only
+                                </p>
+                                <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-1 leading-relaxed">
+                                    Perubahan ini akan memperbarui definisi mood bagi seluruh tim di workspace ini. Pastikan label unik untuk setiap skor.
+                                </p>
+                            </div>
+
+                            {[5, 4, 3, 2, 1].map((score) => (
+                                <div key={score} className="p-4 bg-slate-50 dark:bg-slate-800/30 border-[3px] border-slate-200 dark:border-slate-700 rounded-2xl space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg border-2 border-slate-900 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-[10px] font-black shadow-hard-mini">
+                                                {score}
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                                                Level {score === 5 ? 'Tertinggi' : score === 1 ? 'Terendah' : 'Media'}
+                                            </span>
+                                        </div>
+                                        <div className="w-4 h-4 rounded-full border border-slate-900" style={{ backgroundColor: SCORE_STYLES[score].color }} />
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <div className="w-16">
+                                            <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1 text-center">Emoji</p>
+                                            <input
+                                                type="text"
+                                                value={(moodSettings as any)[score].emoji}
+                                                onChange={(e) => setMoodSettings({ ...moodSettings, [score]: { ...(moodSettings as any)[score], emoji: e.target.value } })}
+                                                className="w-full h-12 p-2 rounded-xl border-[2.5px] border-slate-900 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-center text-xl shadow-hard-mini outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1">Keterangan / Label</p>
+                                            <input
+                                                type="text"
+                                                value={(moodSettings as any)[score].label}
+                                                onChange={(e) => setMoodSettings({ ...moodSettings, [score]: { ...(moodSettings as any)[score], label: e.target.value } })}
+                                                className="w-full h-12 p-3 px-4 rounded-xl border-[2.5px] border-slate-900 dark:border-slate-700 bg-white dark:bg-slate-900 font-black text-xs uppercase tracking-widest shadow-hard-mini outline-none focus:border-indigo-500"
+                                                placeholder="Contoh: Semangat"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/30 border-t-[3.5px] border-slate-900 dark:border-slate-700 flex justify-end gap-3 mt-auto">
+                            <button
+                                onClick={() => setShowSettingsModal(false)}
+                                disabled={savingSettings}
+                                className="px-6 py-3 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setSavingSettings(true);
+                                    try {
+                                        const { error } = await supabase
+                                            .from('workspaces')
+                                            .update({ mood_config: moodSettings })
+                                            .eq('id', selectedWorkspaceId);
+
+                                        if (error) throw error;
+
+                                        localStorage.setItem('mood_tracker_settings', JSON.stringify(moodSettings));
+                                        setShowSettingsModal(false);
+                                    } catch (err) {
+                                        console.error('Error saving mood settings:', err);
+                                        alert('Gagal menyimpan pengaturan ke database.');
+                                    } finally {
+                                        setSavingSettings(false);
+                                    }
+                                }}
+                                disabled={savingSettings}
+                                className="px-8 py-3 rounded-2xl bg-indigo-600 border-[3.5px] border-slate-900 text-white font-black uppercase tracking-widest text-[10px] shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                            >
+                                {savingSettings ? 'Menyimpan...' : 'Simpan Global'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 @keyframes moodPulseFloat {
