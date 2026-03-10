@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabaseClient';
 import {
     Smile, Heart, Users, Calendar, Activity, TrendingUp,
-    RefreshCw, BarChart3, PieChart as PieIcon, Sparkles,
+    RefreshCw, BarChart3, PieChart as PieIcon,
     AlertTriangle, Clock, Coffee, HandHeart
 } from 'lucide-react';
 import {
@@ -500,29 +500,31 @@ export const AdminMoodTracker: React.FC = () => {
         <div className="space-y-6 pb-20 animate-in fade-in duration-500">
 
             {/* ── Header ─────────────────────────────────────────── */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-pink-100 border-2 border-pink-300 rounded-full w-fit">
-                            <Heart size={11} className="text-pink-500 fill-pink-500" />
-                            <span className="text-[9px] font-black text-pink-600 uppercase tracking-widest">Admin Zone</span>
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard mb-12">
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="px-4 py-1.5 rounded-full border-[3px] border-slate-900 bg-pink-100/50 text-pink-600 font-black text-[10px] uppercase tracking-[0.2em] shadow-hard-mini flex items-center gap-2">
+                            <Heart size={14} fill="currentColor" strokeWidth={3} /> Admin Zone
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-lg border-[2px] border-slate-200">
+                            <Activity size={14} className="text-accent" strokeWidth={3} /> Psychological Tracker
                         </div>
                     </div>
-                    <h2 className="text-3xl md:text-5xl font-heading font-black text-foreground tracking-tighter uppercase italic leading-none">
+                    <h1 className="text-4xl lg:text-6xl font-heading font-black text-foreground leading-tight uppercase tracking-tight">
                         Team Pulse
-                    </h2>
-                    <p className="text-muted-foreground font-bold mt-2 text-sm pl-1 border-l-4 border-accent">
-                        Monitor kesejahteraan psikologis tim secara real-time.
+                    </h1>
+                    <p className="text-slate-500 font-bold max-w-xl text-lg leading-relaxed">
+                        Monitor kesejahteraan psikologis tim secara real-time untuk menciptakan lingkungan kerja yang lebih produktif dan empatik.
                     </p>
                 </div>
 
-                <div className="flex flex-wrap flex-col sm:flex-row items-end sm:items-center gap-2">
+                <div className="flex flex-wrap items-center gap-3 -mb-1">
                     {/* Workspace Filter */}
                     <div className="relative">
                         <select
                             value={selectedWorkspaceId}
                             onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                            className="p-2 sm:p-2.5 rounded-xl border-2 border-indigo-200 shadow-[4px_4px_0px_0px_rgba(79,70,229,0.2)] font-black text-[10px] sm:text-[11px] uppercase tracking-widest text-indigo-700 bg-indigo-50 outline-none focus:border-indigo-500 cursor-pointer min-w-[140px]"
+                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-indigo-300 shadow-hard font-black text-xs uppercase tracking-widest text-indigo-700 bg-indigo-50 outline-none focus:border-indigo-500 cursor-pointer min-w-[160px]"
                         >
                             {workspaces.map(ws => (
                                 <option key={ws.id} value={ws.id}>{ws.name}</option>
@@ -535,7 +537,7 @@ export const AdminMoodTracker: React.FC = () => {
                         <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="p-2 sm:p-2.5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] font-black text-[10px] sm:text-[11px] uppercase tracking-widest text-slate-700 bg-white outline-none focus:border-indigo-500 cursor-pointer min-w-[140px]"
+                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 shadow-hard font-black text-xs uppercase tracking-widest text-slate-700 bg-white outline-none focus:border-slate-900 cursor-pointer min-w-[160px]"
                         >
                             <option value="all">Semua Anggota</option>
                             {workspaceUsers.map(u => (
@@ -547,18 +549,18 @@ export const AdminMoodTracker: React.FC = () => {
                     <button
                         onClick={() => fetchMoods(true)}
                         disabled={refreshing}
-                        className="p-2.5 rounded-xl border-2 border-slate-200 hover:border-slate-900 text-muted-foreground hover:text-foreground transition-all shrink-0"
+                        className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none bg-white text-slate-700 hover:text-slate-900 transition-all shrink-0"
                         title="Refresh"
                     >
-                        <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                        <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} strokeWidth={3} />
                     </button>
 
-                    <div className="flex bg-muted p-1.5 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] gap-0.5 overflow-x-auto">
+                    <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border-[3.5px] border-slate-900 shadow-hard gap-0.5 overflow-x-auto w-full sm:w-auto">
                         {(['today', '7d', '30d', 'all'] as const).map((r) => (
                             <button
                                 key={r}
                                 onClick={() => setTimeRange(r)}
-                                className={`px-3 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === r ? 'bg-slate-900 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === r ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-900'}`}
                             >
                                 {r === 'today' ? 'Hari Ini' : r === '7d' ? '7 Hari' : r === '30d' ? '30 Hari' : 'Semua'}
                             </button>
@@ -569,54 +571,54 @@ export const AdminMoodTracker: React.FC = () => {
 
             {/* ── Alert: Burnout Detection ─────────────────────── */}
             {burnoutCount > 0 && (
-                <div className="bg-red-50 border-[3px] border-red-400 rounded-2xl p-4 flex items-start gap-4 shadow-[4px_4px_0px_0px_rgba(239,68,68,0.3)]">
-                    <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-red-700">
-                        <AlertTriangle size={18} className="text-white" />
+                <div className="bg-rose-100 border-[3.5px] border-slate-900 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center gap-5 shadow-hard-mini transition-all hover:-translate-y-1">
+                    <div className="w-14 h-14 bg-rose-500 rounded-2xl flex items-center justify-center flex-shrink-0 border-[3px] border-slate-900 shadow-hard-mini transform -rotate-6">
+                        <AlertTriangle size={24} className="text-white" strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h4 className="font-black text-sm text-red-700 uppercase tracking-wide">⚠️ Perhatian Diperlukan</h4>
-                        <p className="text-xs font-semibold text-red-600 mt-0.5 leading-relaxed">
-                            <strong>{burnoutCount} anggota tim</strong> saat ini melaporkan mood <strong>Burnout</strong>.
-                            Pertimbangkan untuk menyapa atau memberikan dukungan ekstra kepada mereka hari ini.
+                        <h4 className="font-black text-base text-rose-700 uppercase tracking-widest mb-1">⚠️ Perhatian Diperlukan</h4>
+                        <p className="text-sm font-bold text-rose-900/80 leading-relaxed max-w-3xl">
+                            Ada <span className="bg-rose-200 px-1.5 py-0.5 rounded border border-rose-300 text-rose-900">{burnoutCount} anggota tim</span> saat ini melaporkan bahwa mereka merasa <strong className="text-rose-700">Burnout</strong>.
+                            Direkomendasikan segera menyapa atau memberikan dukungan moral.
                         </p>
                     </div>
                 </div>
             )}
 
             {/* ── Stats Grid ───────────────────────────────────── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {STATS.map((s, i) => (
-                    <div key={i} className="bg-card border-[3px] border-slate-900 rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] hover:-translate-y-1 transition-all">
-                        <div className={`w-10 h-10 ${s.bg} border rounded-xl flex items-center justify-center mb-3`}>
-                            <s.icon size={18} className={s.color} />
+                    <div key={i} className="bg-card border-[3.5px] border-slate-900 rounded-[2rem] p-6 shadow-hard hover:-translate-y-2 hover:shadow-[10px_10px_0px_rgba(15,23,42,1)] transition-all duration-300">
+                        <div className={`w-14 h-14 ${s.bg} border-[3px] border-slate-900 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4`}>
+                            <s.icon size={24} className={s.color} strokeWidth={2.5} />
                         </div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{s.label}</p>
-                        <p className="text-2xl font-black text-foreground leading-none">{s.value}</p>
-                        <p className="text-[9px] text-muted-foreground font-semibold mt-0.5">{s.note}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{s.label}</p>
+                        <p className="text-4xl font-black font-heading text-slate-900 leading-none">{s.value}</p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-2 bg-slate-100 rounded-md px-2 py-1 uppercase tracking-widest inline-block">{s.note}</p>
                     </div>
                 ))}
             </div>
 
             {/* ── Today's Team Mood Snapshot ────────────────────── */}
             {latestPerUser.length > 0 && (
-                <div className="bg-card border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] overflow-hidden">
-                    <div className="p-4 border-b-2 border-slate-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-center">
-                                <Smile size={16} className="text-rose-500" />
+                <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
+                    <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 flex items-center justify-between bg-slate-50/50">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-rose-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                                <Smile size={24} className="text-rose-700" strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h3 className="font-black text-sm text-foreground">Mood Terkini Per Anggota</h3>
-                                <p className="text-[9px] font-semibold text-muted-foreground">Entri mood paling baru dari setiap user</p>
+                                <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Mood Terkini Per Anggota</h3>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Entri mood paling baru dari setiap user</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Live</span>
+                        <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1.5 rounded-xl border-[2.5px] border-slate-900 shadow-hard-mini">
+                            <span className="w-2.5 h-2.5 bg-emerald-500 border border-slate-900 rounded-full animate-pulse" />
+                            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Live</span>
                         </div>
                     </div>
 
-                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {latestPerUser.map((item) => {
                             const m = item.mood;
                             const hasMood = !!m;
@@ -627,20 +629,18 @@ export const AdminMoodTracker: React.FC = () => {
                             return (
                                 <div
                                     key={item.user_id}
-                                    className={`flex items-start gap-3 p-3 rounded-xl border-2 transition-all ${hasMood ? 'hover:border-slate-300 border-slate-100 hover:shadow-sm' : 'border-slate-100 grayscale-[50%] opacity-80'}`}
+                                    className={`flex items-start gap-4 p-4 rounded-2xl border-[3.5px] transition-all duration-300 ${hasMood ? 'hover:-translate-y-1 hover:shadow-hard border-slate-900' : 'border-slate-300 grayscale-[40%] opacity-80'}`}
                                     style={{ background: meta.bg }}
                                 >
                                     <div className="relative shrink-0">
                                         <img
                                             src={item.user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${item.user.full_name}`}
-                                            className="w-10 h-10 rounded-full border-2 object-cover"
-                                            style={{ borderColor: meta.color }}
+                                            className="w-12 h-12 rounded-[1rem] border-[3px] border-slate-900 object-cover shadow-hard-mini"
                                             alt=""
                                         />
                                         {hasMood && (
                                             <span
-                                                className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full text-sm flex items-center justify-center border border-white shadow-sm"
-                                                style={{ animation: 'moodPulseFloat 3s ease-in-out infinite' }}
+                                                className="absolute -bottom-2 -right-2 w-7 h-7 bg-white rounded-full text-base flex items-center justify-center border-[2.5px] border-slate-900 shadow-hard-mini"
                                             >
                                                 {m!.mood_emoji}
                                             </span>
@@ -761,17 +761,17 @@ export const AdminMoodTracker: React.FC = () => {
             )}
 
             {/* ── Mood Heatmap 35 Hari ─────────────────────────── */}
-            <div className="bg-card border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] overflow-hidden">
-                <div className="p-4 border-b-2 border-slate-100 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-center">
-                        <Calendar size={16} className="text-indigo-500" />
+            <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
+                <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 flex items-center gap-4 bg-slate-50/50">
+                    <div className="w-12 h-12 bg-indigo-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
+                        <Calendar size={24} className="text-indigo-700" strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h3 className="font-black text-sm text-foreground">Heatmap Mood Tim</h3>
-                        <p className="text-[9px] font-semibold text-muted-foreground">Tren mood 35 hari terakhir — hover untuk detail per hari</p>
+                        <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Heatmap Mood Tim</h3>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tren mood 35 hari terakhir — hover untuk detail per hari</p>
                     </div>
                 </div>
-                <div className="p-5">
+                <div className="p-6 md:p-8">
                     {filteredMoods.length > 0 ? (
                         <MoodHeatmap moods={filteredHeatmap} />
                     ) : (
@@ -787,18 +787,18 @@ export const AdminMoodTracker: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* Pie Chart */}
-                <div className="lg:col-span-5 bg-card border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] overflow-hidden">
-                    <div className="p-4 border-b-2 border-slate-100 flex items-center gap-2">
-                        <div className="w-8 h-8 bg-violet-50 border border-violet-200 rounded-xl flex items-center justify-center">
-                            <PieIcon size={16} className="text-violet-500" />
+                <div className="lg:col-span-5 bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
+                    <div className="p-6 border-b-[3.5px] border-slate-900 flex items-center gap-4 bg-slate-50/50">
+                        <div className="w-12 h-12 bg-violet-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                            <PieIcon size={24} className="text-violet-700" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-sm text-foreground">Distribusi Mood</h3>
-                            <p className="text-[9px] font-semibold text-muted-foreground">Proporsi setiap mood dalam periode ini</p>
+                            <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Distribusi Mood</h3>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Proporsi setiap mood dalam periode ini</p>
                         </div>
                     </div>
                     {distribution.length > 0 ? (
-                        <div className="p-4 h-[280px]">
+                        <div className="p-6 h-[320px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -836,18 +836,18 @@ export const AdminMoodTracker: React.FC = () => {
                 </div>
 
                 {/* Area Chart — Trend */}
-                <div className="lg:col-span-7 bg-card border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] overflow-hidden">
-                    <div className="p-4 border-b-2 border-slate-100 flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center">
-                            <BarChart3 size={16} className="text-blue-500" />
+                <div className="lg:col-span-7 bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
+                    <div className="p-6 border-b-[3.5px] border-slate-900 flex items-center gap-4 bg-slate-50/50">
+                        <div className="w-12 h-12 bg-blue-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
+                            <BarChart3 size={24} className="text-blue-700" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-sm text-foreground">Tren Mood Tim</h3>
-                            <p className="text-[9px] font-semibold text-muted-foreground">Rata-rata skor harian (1=Burnout → 5=Semangat)</p>
+                            <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Tren Mood Tim</h3>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Rata-rata skor harian (1=Burnout → 5=Semangat)</p>
                         </div>
                     </div>
                     {trendData.length > 0 ? (
-                        <div className="p-4 h-[280px]">
+                        <div className="p-6 h-[320px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={trendData}>
                                     <defs>
@@ -877,15 +877,15 @@ export const AdminMoodTracker: React.FC = () => {
             </div>
 
             {/* ── Full History Table ────────────────────────────── */}
-            <div className="bg-card border-[3px] border-slate-900 rounded-2xl shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] overflow-hidden">
-                <div className="p-4 border-b-2 border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center">
-                            <Activity size={16} className="text-emerald-500" />
+            <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
+                <div className="p-6 border-b-[3.5px] border-slate-900 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                            <Activity size={24} className="text-emerald-700" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-sm text-foreground">Riwayat Lengkap</h3>
-                            <p className="text-[9px] font-semibold text-muted-foreground">{moods.length} entri total dalam periode ini</p>
+                            <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Riwayat Lengkap</h3>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{moods.length} entri total dalam periode ini</p>
                         </div>
                     </div>
                 </div>
@@ -962,25 +962,18 @@ export const AdminMoodTracker: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Why It Matters ───────────────────────────────── */}
-            <div className="bg-slate-900 border-[3px] border-slate-900 rounded-2xl p-6 md:p-8 overflow-hidden relative">
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4" />
-                </div>
-                <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                    <div className="w-16 h-16 bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="text-white" size={32} />
+            {/* ── Why It Matters (Brutalism Edition) ───────────────────────────────── */}
+            <div className="bg-amber-300 border-[3.5px] border-slate-900 rounded-[2.5rem] p-8 md:p-10 shadow-hard relative mt-4">
+                <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
+                    <div className="w-20 h-20 bg-amber-400 rounded-2xl border-[3px] border-slate-900 shadow-hard-mini flex items-center justify-center flex-shrink-0 transform -rotate-6">
+                        <Heart className="text-slate-900" size={36} strokeWidth={2.5} />
                     </div>
-                    <div className="space-y-2 flex-1">
-                        <h3 className="text-2xl md:text-3xl font-heading font-black text-white italic tracking-tight">
-                            Kenapa Mood Tracker Ini Ada?
+                    <div className="space-y-3 flex-1">
+                        <h3 className="text-2xl md:text-3xl font-heading font-black text-slate-900 tracking-tight uppercase">
+                            Catatan HR: Psychological Safety
                         </h3>
-                        <p className="text-slate-400 font-semibold text-sm leading-relaxed">
-                            Dalam tim yang padat kerja, kita sering tidak sempat bertanya <em className="text-white">"Kamu baik-baik saja?"</em> kepada rekan. Mood tracker menjadi jembatan kecil itu —
-                            satu emoji yang membantu membangun empati tanpa harus bercerita panjang. Riset membuktikan tim yang
-                            memiliki <span className="text-white font-black">psychological safety</span> menghasilkan output hingga
-                            <span className="text-white font-black"> 3× lebih baik</span>.
+                        <p className="text-slate-900 font-bold text-base leading-relaxed max-w-4xl">
+                            Dalam rutinitas kerja yang padat, bertanya <span className="bg-amber-100 border-[2px] border-slate-900 px-2 py-0.5 rounded-md font-black italic">"Bagaimana kabarmu?"</span> sering terlewat. Sistem Team Pulse memastikan kesejahteraan psikologis setiap anggota terpantau tanpa terkesan menginterogasi. Riset internal membuktikan bahwa tim yang didukung secara emosional mencatat stabilitas output hingga <span className="text-slate-900 font-black border-b-[4px] border-slate-900 uppercase">300% Lebih Konsisten</span>.
                         </p>
                     </div>
                 </div>
