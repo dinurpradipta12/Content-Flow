@@ -442,6 +442,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
     const [currentMood, setCurrentMood] = useState<string | null>(localStorage.getItem(`current_mood_${localStorage.getItem('user_id')}`));
     const [showMoodMenu, setShowMoodMenu] = useState(false);
+    // Key yang berubah setiap login baru → memaksa MoodTrackerModal re-mount fresh
+    const [moodModalKey, setMoodModalKey] = useState(0);
 
     const activeWorkspaceId = localStorage.getItem('active_workspace_id');
     const notificationRef = useRef<HTMLDivElement>(null);
@@ -1136,6 +1138,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handleLogout = () => {
         if (confirm('Apakah Anda yakin ingin keluar?')) {
             clearSessionPreserveTheme();
+            // Reset mood modal key agar popup muncul kembali saat login berikutnya
+            setMoodModalKey(0);
             navigate('/login');
         }
     };
@@ -1696,7 +1700,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
 
                             <div className="h-6 w-[2px] bg-slate-100"></div>
-                            <div className="flex items-center gap-3 md:gap-4 pl-1 cursor-pointer group" onClick={() => navigate('/profile')}>
+                            <div className="flex items-center gap-3 md:gap-4 pl-1 cursor-pointer group" onClick={(e) => { if ((e.target as HTMLElement).closest('[data-mood-dropdown]')) return; navigate('/profile'); }}>
                                 <div className="text-right hidden md:block">
                                     <p className="font-bold text-sm md:text-base text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
                                     <p className="text-[11px] md:text-xs text-slate-500 font-bold">{userProfile.jobTitle || userProfile.role}</p>
@@ -1711,8 +1715,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     {/* ── Mood Hover Dropdown ── */}
                                     {showMoodMenu && (
                                         <div
+                                            data-mood-dropdown="true"
                                             className="absolute top-full right-0 mt-2 z-[200] w-64"
                                             style={{ animation: 'moodDropIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onMouseEnter={() => setShowMoodMenu(true)}
+                                            onMouseLeave={() => setShowMoodMenu(false)}
                                         >
                                             <div className="bg-card border-[3px] border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_rgba(15,23,42,0.85)] overflow-hidden">
                                                 {/* Header */}
@@ -2663,11 +2671,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {userProfile.id && activeWorkspaceId && (
                 <MoodTrackerModal
+                    key={`mood-modal-${userProfile.id}-${moodModalKey}`}
                     userId={userProfile.id}
                     workspaceId={activeWorkspaceId}
                     onClose={() => {
                         const todayMood = localStorage.getItem(`current_mood_${userProfile.id}`);
                         if (todayMood) setCurrentMood(todayMood);
+                        // Naikan key agar tidak muncul lagi di session ini
+                        setMoodModalKey(prev => prev + 1);
                     }}
                 />
             )}
