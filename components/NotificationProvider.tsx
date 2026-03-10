@@ -311,22 +311,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         fetchNotifications();
 
-        // ── Smart Sync: Personal users use polling, team users use realtime ──
+        // ── Team & Realtime: We use realtime for everyone now to ensure features like Quick Support (Mood) are instant ──
         const isPersonal = (() => {
             const pkg = localStorage.getItem('user_subscription_package') || '';
             return pkg.toLowerCase().includes('personal') || pkg.toLowerCase() === 'free';
         })();
 
-        if (isPersonal) {
-            // Personal: Poll every 2 minutes instead of realtime
-            console.log('[SmartSync] Using polling for notifications (personal user)');
-            const pollInterval = setInterval(() => {
-                fetchNotifications();
-            }, 2 * 60 * 1000);
-            return () => clearInterval(pollInterval);
-        }
-
-        // Team: Full realtime subscription
+        // Even for personal users, we want realtime for MOOD_SUPPORT, so we use the channel for all.
         const channel = supabase
             .channel(`notif_realtime_${currentUserId}`)
             .on(
@@ -339,23 +330,32 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 },
                 async (payload) => {
                     try {
-                        playNotificationSound(payload.new.metadata?.sound === 'special' ? 'special' : 'default');
+                        const newNotifRaw = payload.new;
+                        playNotificationSound(newNotifRaw.metadata?.sound === 'special' ? 'special' : 'default');
                         fetchNotifications();
 
                         let actorData = null;
-                        if (payload.new.actor_id) {
+                        if (newNotifRaw.actor_id) {
                             const { data } = await supabase
                                 .from('app_users')
                                 .select('full_name, avatar_url')
-                                .eq('id', payload.new.actor_id)
+                                .eq('id', newNotifRaw.actor_id)
                                 .single();
                             actorData = data;
                         }
 
                         const newNotif = {
-                            ...payload.new,
+                            ...newNotifRaw,
                             actor: actorData || { full_name: 'Seseorang', avatar_url: null }
                         } as AppNotification;
+
+                        // 🔔 Push to Popup Queue if it's a MOOD_SUPPORT type requiring a popup
+                        if (newNotif.type === 'MOOD_SUPPORT' || newNotifRaw.metadata?.show_popup) {
+                            setPopupQueue(prev => {
+                                if (prev.find(n => n.id === newNotif.id)) return prev;
+                                return [...prev, newNotif];
+                            });
+                        }
 
                         setToasts(prev => {
                             if (prev.find(t => t.id === newNotif.id)) return prev;
@@ -363,17 +363,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             return updated.slice(-3);
                         });
 
-                        window.dispatchEvent(new CustomEvent('new-notification', { detail: payload.new }));
+                        window.dispatchEvent(new CustomEvent('new-notification', { detail: newNotifRaw }));
 
                         // Show local OS notification when app is in background/minimized
                         if (document.hidden && Notification.permission === 'granted') {
                             const actorName = actorData?.full_name || 'Seseorang';
-                            const body = payload.new.metadata?.hide_actor_name
-                                ? payload.new.content
-                                : `${actorName}: ${payload.new.content}`;
-                            showLocalNotification(payload.new.title || 'Notifikasi Baru', {
+                            const body = newNotifRaw.metadata?.hide_actor_name
+                                ? newNotifRaw.content
+                                : `${actorName}: ${newNotifRaw.content}`;
+                            showLocalNotification(newNotifRaw.title || 'Notifikasi Baru', {
                                 body,
-                                tag: payload.new.id,
+                                tag: newNotifRaw.id,
                                 data: { url: '/' }
                             });
                         }

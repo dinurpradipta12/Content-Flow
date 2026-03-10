@@ -158,7 +158,7 @@ export const AdminMoodTracker: React.FC = () => {
     const [activeWorkspaceId] = useState(localStorage.getItem('active_workspace_id'));
     const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d' | 'all'>('7d');
     const [selectedUserId, setSelectedUserId] = useState<string>('all');
-    const [workspaceUsers, setWorkspaceUsers] = useState<{ id: string; name: string }[]>([]);
+    const [workspaceUsers, setWorkspaceUsers] = useState<{ id: string; name: string; avatar_url?: string; role?: string }[]>([]);
 
     // Workspace Selection State
     const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
@@ -200,42 +200,118 @@ export const AdminMoodTracker: React.FC = () => {
         else setRefreshing(true);
 
         try {
+            // 1. Fetch workspace users first
+            const { data: wsData } = await supabase.from('workspaces').select('owner_id, members, admin_id').eq('id', wsId).single();
+            const currentUserId = localStorage.getItem('user_id');
+            const tenantId = localStorage.getItem('tenant_id') || currentUserId;
+
+            // 1. Identify all users who should be in this workspace explicitly
+            const memberIds = new Set<string>();
+            const avatarTokens = new Set<string>();
+
+            if (wsData) {
+                if (wsData.owner_id) memberIds.add(wsData.owner_id);
+                if (wsData.admin_id) memberIds.add(wsData.admin_id);
+                if (Array.isArray(wsData.members)) {
+                    wsData.members.forEach((m: string) => {
+                        if (m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i)) {
+                            memberIds.add(m);
+                        } else if (m.startsWith('http') || m.includes('%2F') || m.startsWith('data:')) {
+                            avatarTokens.add(m);
+                        }
+                    });
+                }
+            }
+            if (currentUserId) memberIds.add(currentUserId);
+            if (tenantId) memberIds.add(tenantId);
+
+            let userMap: Record<string, { full_name: string; avatar_url: string; role: string; job_title?: string }> = {};
+            let wsUsersList: { id: string; name: string; avatar_url?: string; role?: string }[] = [];
+
+            // 2. Strict fetch of users in this workspace
+            const idList = Array.from(memberIds);
+            const avatarList = Array.from(avatarTokens);
+
+            let allUsers: any[] = [];
+
+            if (idList.length > 0) {
+                const { data } = await supabase.from('app_users').select('id,full_name,avatar_url,role,job_title').in('id', idList);
+                if (data) allUsers.push(...data);
+            }
+
+            if (avatarList.length > 0) {
+                const { data } = await supabase.from('app_users').select('id,full_name,avatar_url,role,job_title').in('avatar_url', avatarList);
+                if (data) allUsers.push(...data);
+            }
+
+            // Deduplicate users
+            const uniqueUsersMap = new Map();
+            allUsers.forEach(u => uniqueUsersMap.set(u.id, u));
+            const users = Array.from(uniqueUsersMap.values());
+
+            if (users.length > 0) {
+                userMap = Object.fromEntries(users.map(u => [u.id, u]));
+                wsUsersList = users.map(u => ({
+                    id: u.id,
+                    name: u.full_name,
+                    avatar_url: u.avatar_url,
+                    role: u.role
+                })).sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            setWorkspaceUsers(wsUsersList);
+            const userIds = wsUsersList.map(u => u.id);
+
+            // If no users, stop
+            if (userIds.length === 0) {
+                setLoading(false);
+                setRefreshing(false);
+                return;
+            }
+
+            // 2. Fetch moods for these users
             const now = new Date();
 
             // ── Date boundary untuk main query ─
             let fromDate: string | null = null;
             if (timeRange === 'today') {
-                fromDate = `${now.toISOString().split('T')[0]}T00:00:00`;
+                const d = new Date();
+                d.setHours(0, 0, 0, 0); // local midnight
+                fromDate = d.toISOString();
             } else if (timeRange === '7d') {
-                const d = new Date(now); d.setDate(d.getDate() - 7);
+                const d = new Date();
+                d.setDate(d.getDate() - 7);
+                d.setHours(0, 0, 0, 0);
                 fromDate = d.toISOString();
             } else if (timeRange === '30d') {
-                const d = new Date(now); d.setDate(d.getDate() - 30);
+                const d = new Date();
+                d.setDate(d.getDate() - 30);
+                d.setHours(0, 0, 0, 0);
                 fromDate = d.toISOString();
             }
 
-            // ── Heatmap: 35 hari terakhir, ringan (tanpa join) ─
-            const heatmapFrom = new Date(now);
+            // ── Heatmap: 35 hari terakhir ─
+            const heatmapFrom = new Date();
             heatmapFrom.setDate(heatmapFrom.getDate() - 34);
+            heatmapFrom.setHours(0, 0, 0, 0);
 
-            // Jalankan kedua query secara paralel
             const [mainRes, heatRes] = await Promise.all([
-                // Query utama: tanpa join, dengan limit
+                // Query utama (limit increased to 1000 to ensure we find everyone's latest)
                 (() => {
                     let q = supabase
                         .from('user_moods')
                         .select('id,user_id,workspace_id,mood_emoji,mood_label,is_private,created_at')
-                        .eq('workspace_id', wsId)
+                        .in('user_id', userIds)
                         .order('created_at', { ascending: false })
-                        .limit(300);
+                        .limit(1000);
                     if (fromDate) q = q.gte('created_at', fromDate);
                     return q;
                 })(),
-                // Heatmap: selalu 35 hari, tanpa join, minimal kolom
+                // Heatmap query
                 supabase
                     .from('user_moods')
                     .select('user_id,mood_emoji,mood_label,created_at')
-                    .eq('workspace_id', wsId)
+                    .in('user_id', userIds)
                     .gte('created_at', heatmapFrom.toISOString())
                     .order('created_at', { ascending: false })
                     .limit(1000)
@@ -243,40 +319,6 @@ export const AdminMoodTracker: React.FC = () => {
 
             if (mainRes.error) throw mainRes.error;
             const rawMoods: UserMood[] = mainRes.data || [];
-
-            // ── Batch-fetch all workspace members ─
-            const { data: wsData } = await supabase.from('workspaces').select('owner_id, members, admin_id').eq('id', wsId).single();
-            const memberIds = new Set<string>();
-            const currentUserId = localStorage.getItem('user_id');
-            const tenantId = localStorage.getItem('tenant_id') || currentUserId;
-
-            if (wsData) {
-                if (wsData.owner_id) memberIds.add(wsData.owner_id);
-                if (wsData.admin_id) memberIds.add(wsData.admin_id);
-                if (Array.isArray(wsData.members)) {
-                    wsData.members.forEach((m: string) => {
-                        if (m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i)) memberIds.add(m);
-                    });
-                }
-            }
-            if (tenantId) memberIds.add(tenantId);
-
-            const uniqueWorkspaceUserIds = Array.from(memberIds);
-            let userMap: Record<string, { full_name: string; avatar_url: string; role: string; job_title?: string }> = {};
-            let wsUsersList: { id: string; name: string }[] = [];
-
-            if (uniqueWorkspaceUserIds.length > 0) {
-                const { data: users } = await supabase
-                    .from('app_users')
-                    .select('id,full_name,avatar_url,role,job_title')
-                    .in('id', uniqueWorkspaceUserIds);
-                if (users) {
-                    userMap = Object.fromEntries(users.map(u => [u.id, u]));
-                    wsUsersList = users.map(u => ({ id: u.id, name: u.full_name })).sort((a, b) => a.name.localeCompare(b.name));
-                }
-            }
-
-            setWorkspaceUsers(wsUsersList);
 
             // Gabungkan data user ke moods
             const enriched: UserMood[] = rawMoods.map(m => ({
@@ -298,13 +340,26 @@ export const AdminMoodTracker: React.FC = () => {
 
     // ── Realtime subscription ─────────────────────────────────────
     useEffect(() => {
-        if (!selectedWorkspaceId) return;
+        if (!selectedWorkspaceId || workspaceUsers.length === 0) return;
+
+        const userIds = workspaceUsers.map(u => u.id);
         const channel = supabase
-            .channel(`admin_mood_realtime_${selectedWorkspaceId}`)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_moods', filter: `workspace_id=eq.${selectedWorkspaceId}` }, () => fetchMoods(true))
+            .channel(`admin_mood_realtime_global`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'user_moods'
+            }, (payload) => {
+                // If the new mood belongs to one of our workspace members, refresh
+                if (userIds.includes(payload.new.user_id)) {
+                    console.log('[Realtime] New mood detected for team member:', payload.new.user_id);
+                    fetchMoods(true);
+                }
+            })
             .subscribe();
+
         return () => { supabase.removeChannel(channel); };
-    }, [selectedWorkspaceId, fetchMoods]);
+    }, [selectedWorkspaceId, workspaceUsers, fetchMoods]);
 
     // ── Virtual Support ────────────────────────────────────────────
     const sendVirtualSupport = async (targetMood: UserMood, type: 'hug' | 'coffee' | 'donut' | 'music' | 'high_five' | 'rocket') => {
@@ -365,9 +420,15 @@ export const AdminMoodTracker: React.FC = () => {
     const filteredHeatmap = selectedUserId === 'all' ? heatmapMoods : heatmapMoods.filter(m => m.user_id === selectedUserId);
 
     const latestPerUser = (() => {
-        const map = new Map<string, UserMood>();
-        filteredMoods.forEach(m => { if (!map.has(m.user_id)) map.set(m.user_id, m); });
-        return Array.from(map.values());
+        const usersToShow = selectedUserId === 'all' ? workspaceUsers : workspaceUsers.filter(u => u.id === selectedUserId);
+        return usersToShow.map(u => {
+            const userMood = filteredMoods.find(m => m.user_id === u.id);
+            return {
+                user_id: u.id,
+                user: { full_name: u.name, avatar_url: u.avatar_url || '', role: u.role || '' },
+                mood: userMood // could be undefined if they haven't submitted
+            };
+        });
     })();
 
     const distribution = (() => {
@@ -545,46 +606,59 @@ export const AdminMoodTracker: React.FC = () => {
                     </div>
 
                     <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {latestPerUser.map((m) => {
-                            const meta = getMeta(m.mood_label);
-                            const isLowMood = meta.score <= 2;
+                        {latestPerUser.map((item) => {
+                            const m = item.mood;
+                            const hasMood = !!m;
+                            const meta = hasMood ? getMeta(m!.mood_label) : { bg: '#f8fafc', color: '#cbd5e1', score: 0 };
+                            const isLowMood = hasMood && meta.score <= 2;
                             const currentUserId = localStorage.getItem('user_id');
-                            const isSelf = m.user_id === currentUserId;
+                            const isSelf = item.user_id === currentUserId;
                             return (
                                 <div
-                                    key={m.user_id}
-                                    className="flex items-start gap-3 p-3 rounded-xl border-2 border-slate-100 hover:border-slate-300 hover:shadow-sm transition-all"
+                                    key={item.user_id}
+                                    className={`flex items-start gap-3 p-3 rounded-xl border-2 transition-all ${hasMood ? 'hover:border-slate-300 border-slate-100 hover:shadow-sm' : 'border-slate-100 grayscale-[50%] opacity-80'}`}
                                     style={{ background: meta.bg }}
                                 >
                                     <div className="relative shrink-0">
                                         <img
-                                            src={m.user?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${m.user?.full_name}`}
+                                            src={item.user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${item.user.full_name}`}
                                             className="w-10 h-10 rounded-full border-2 object-cover"
                                             style={{ borderColor: meta.color }}
                                             alt=""
                                         />
-                                        <span
-                                            className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full text-sm flex items-center justify-center border border-white shadow-sm"
-                                            style={{ animation: 'moodPulseFloat 3s ease-in-out infinite' }}
-                                        >
-                                            {m.mood_emoji}
-                                        </span>
+                                        {hasMood && (
+                                            <span
+                                                className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full text-sm flex items-center justify-center border border-white shadow-sm"
+                                                style={{ animation: 'moodPulseFloat 3s ease-in-out infinite' }}
+                                            >
+                                                {m!.mood_emoji}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-black text-foreground truncate">{m.user?.full_name || '–'}</p>
-                                        <p className="text-[9px] font-semibold text-muted-foreground truncate">{m.user?.role || ''}</p>
-                                        <div className="flex items-center gap-1 mt-0.5">
-                                            <span
-                                                className="inline-block px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wide"
-                                                style={{ background: meta.color, color: '#fff' }}
-                                            >
-                                                {m.mood_label}
-                                            </span>
-                                            <span className="text-[8px] text-muted-foreground font-semibold">{relativeTime(m.created_at)}</span>
-                                        </div>
+                                        <p className={`text-xs font-black truncate ${hasMood ? 'text-foreground' : 'text-slate-400'}`}>{item.user.full_name || '–'}</p>
+                                        <p className="text-[9px] font-semibold text-muted-foreground truncate">{item.user.role || ''}</p>
+
+                                        {hasMood ? (
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                <span
+                                                    className="inline-block px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wide"
+                                                    style={{ background: meta.color, color: '#fff' }}
+                                                >
+                                                    {m!.mood_label}
+                                                </span>
+                                                <span className="text-[8px] text-muted-foreground font-semibold">{relativeTime(m!.created_at)}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1 mt-1">
+                                                <span className="inline-block px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wide bg-slate-200 text-slate-500">
+                                                    Belum Input
+                                                </span>
+                                            </div>
+                                        )}
 
                                         {/* Virtual Support Buttons — available for all moods if not self */}
-                                        {!isSelf && (
+                                        {hasMood && !isSelf && (
                                             <div className="flex flex-wrap gap-1.5 mt-2">
                                                 {isLowMood ? (
                                                     // Mood Rendah (Burnout, Capek)
