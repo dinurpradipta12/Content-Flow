@@ -100,15 +100,29 @@ export const AdminMoodTracker: React.FC = () => {
 
     // ── Dynamic Mood Logic ─────────────────────────────────────────
     const getMeta = useCallback((label: string) => {
-        // Find if this label is currently assigned to a score in settings
-        const settingEntry = Object.entries(moodSettings).find(([_, data]) => (data as any).label === label);
-        if (settingEntry) {
-            const score = parseInt(settingEntry[0]);
-            return { ...SCORE_STYLES[score], score, mood_label: label, mood_emoji: (moodSettings as any)[score].emoji };
+        // 1. Check if the current settings have this exact label
+        const currentEntry = Object.entries(moodSettings).find(([_, data]) => (data as any).label === label);
+        if (currentEntry) {
+            const score = parseInt(currentEntry[0]);
+            return { ...SCORE_STYLES[score], score, mood_label: (moodSettings as any)[score].label, mood_emoji: (moodSettings as any)[score].emoji };
         }
-        // Fallback to BASE_MOOD_META
+
+        // 2. If not found, check BASE_MOOD_META to find what "level/score" this label historically represents
         const base = BASE_MOOD_META[label];
-        if (base) return base;
+        if (base) {
+            const score = base.score;
+            // Map historical label to the CURRENT configuration for this score level
+            const currentConfig = (moodSettings as any)[score];
+            if (currentConfig) {
+                return {
+                    ...SCORE_STYLES[score],
+                    score,
+                    mood_label: currentConfig.label,
+                    mood_emoji: currentConfig.emoji
+                };
+            }
+            return base;
+        }
 
         // Final fallback
         return { ...SCORE_STYLES[3], score: 3, mood_label: label, mood_emoji: '😐' };
@@ -128,7 +142,10 @@ export const AdminMoodTracker: React.FC = () => {
                 : null;
 
             const emojiCount: Record<string, number> = {};
-            dayMoods.forEach(m => { emojiCount[m.mood_emoji] = (emojiCount[m.mood_emoji] || 0) + 1; });
+            dayMoods.forEach(m => {
+                const meta = getMeta(m.mood_label);
+                emojiCount[meta.mood_emoji] = (emojiCount[meta.mood_emoji] || 0) + 1;
+            });
             const topEmoji = Object.entries(emojiCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
 
             days.push({
@@ -426,6 +443,17 @@ export const AdminMoodTracker: React.FC = () => {
                     fetchMoods(true);
                 }
             })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'workspaces',
+                filter: `id=eq.${selectedWorkspaceId}`
+            }, (payload) => {
+                if (payload.new.mood_config) {
+                    console.log('[Realtime] Mood configuration updated globally');
+                    setMoodSettings(payload.new.mood_config);
+                }
+            })
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
@@ -558,14 +586,15 @@ export const AdminMoodTracker: React.FC = () => {
     })();
 
     const distribution = (() => {
-        const dist: Record<string, { count: number; emoji: string; color: string }> = {};
+        const dist: Record<string, { count: number; emoji: string; color: string; label: string }> = {};
         filteredMoods.forEach(m => {
-            const key = m.mood_label;
-            if (!dist[key]) dist[key] = { count: 0, emoji: m.mood_emoji, color: getMeta(key).color };
+            const meta = getMeta(m.mood_label);
+            const key = meta.mood_label; // use the current label from settings
+            if (!dist[key]) dist[key] = { count: 0, emoji: meta.mood_emoji, color: meta.color, label: meta.mood_label };
             dist[key].count++;
         });
         return Object.entries(dist)
-            .map(([name, d]) => ({ name, value: d.count, emoji: d.emoji, color: d.color }))
+            .map(([_, d]) => ({ name: d.label, value: d.count, emoji: d.emoji, color: d.color }))
             .sort((a, b) => b.value - a.value);
     })();
 
@@ -835,7 +864,7 @@ export const AdminMoodTracker: React.FC = () => {
                                                     className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-hard-mini border border-slate-900 border-opacity-10"
                                                     style={{ backgroundColor: meta.color }}
                                                 >
-                                                    {m!.mood_label}
+                                                    {getMeta(m!.mood_label).mood_label}
                                                 </span>
                                             </div>
                                         )}
@@ -849,7 +878,7 @@ export const AdminMoodTracker: React.FC = () => {
                                             />
                                             {hasMood && (
                                                 <span className="absolute -bottom-1.5 -right-1.5 w-9 h-9 bg-white dark:bg-slate-800 rounded-full text-xl flex items-center justify-center border-[3px] border-slate-900 dark:border-slate-600 shadow-hard-mini z-10 transition-transform hover:scale-110">
-                                                    {m!.mood_emoji}
+                                                    {getMeta(m!.mood_label).mood_emoji}
                                                 </span>
                                             )}
                                             {item.receivedSupport && (
@@ -1380,11 +1409,11 @@ export const AdminMoodTracker: React.FC = () => {
                                     {/* Latest Status */}
                                     {latest && latestMeta && (
                                         <div className={`flex items-center gap-4 p-4 rounded-[1.5rem] border-[3px] border-slate-900 dark:border-slate-700 shadow-hard-mini ${latestMeta.bg}`}>
-                                            <div className="text-4xl bg-white dark:bg-slate-800 w-16 h-16 rounded-2xl border-2 border-slate-900 dark:border-slate-700 shadow-sm flex items-center justify-center -rotate-3">{latest.mood_emoji}</div>
+                                            <div className="text-4xl bg-white dark:bg-slate-800 w-16 h-16 rounded-2xl border-2 border-slate-900 dark:border-slate-700 shadow-sm flex items-center justify-center -rotate-3">{latestMeta.mood_emoji}</div>
                                             <div>
                                                 <h4 className="font-black text-sm uppercase tracking-widest text-slate-600 dark:text-slate-300 mb-1">Status Terbaru</h4>
                                                 <div className="flex items-center gap-2 font-bold text-lg text-slate-900 dark:text-slate-100">
-                                                    {latest.mood_label}
+                                                    {latestMeta.mood_label}
                                                     <span className="text-xs font-semibold px-2 py-0.5 bg-white dark:bg-slate-800 rounded-md border border-slate-900 dark:border-slate-700 shadow-sm">{relativeTime(latest.created_at)}</span>
                                                 </div>
                                             </div>
@@ -1414,7 +1443,7 @@ export const AdminMoodTracker: React.FC = () => {
                                                                     </td>
                                                                     <td className="p-3 align-middle">
                                                                         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border-[2px] border-slate-900 dark:border-slate-700 text-xs font-bold shadow-sm whitespace-nowrap text-foreground">
-                                                                            <span className="text-sm leading-none">{m.mood_emoji}</span> {m.mood_label}
+                                                                            <span className="text-sm leading-none">{getMeta(m.mood_label).mood_emoji}</span> {getMeta(m.mood_label).mood_label}
                                                                         </span>
                                                                     </td>
                                                                     <td className="p-3 hidden sm:table-cell align-middle">
