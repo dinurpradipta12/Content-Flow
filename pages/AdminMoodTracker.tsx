@@ -157,15 +157,40 @@ export const AdminMoodTracker: React.FC = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [activeWorkspaceId] = useState(localStorage.getItem('active_workspace_id'));
     const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d' | 'all'>('7d');
+    const [selectedUserId, setSelectedUserId] = useState<string>('all');
+
+    // Workspace Selection State
+    const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
+    const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>(localStorage.getItem('active_workspace_id') || '');
+
     const [sendingSupport, setSendingSupport] = useState<string | null>(null); // userId being supported
     const [sentSupport, setSentSupport] = useState<Set<string>>(new Set()); // userIds already sent
+
+    // ── Fetch Workspaces ──────────────────────────────────────────
+    useEffect(() => {
+        const fetchWs = async () => {
+            const userId = localStorage.getItem('user_id');
+            if (!userId) return;
+            const { data } = await supabase.from('workspaces').select('id, name, owner_id, members').limit(100);
+            if (data) {
+                const myWs = data.filter(ws =>
+                    ws.owner_id === userId ||
+                    (Array.isArray(ws.members) && ws.members.includes(userId))
+                );
+                setWorkspaces(myWs.map(ws => ({ id: ws.id, name: ws.name || 'Workspace' })));
+                if (myWs.length > 0 && !myWs.find(w => w.id === selectedWorkspaceId)) {
+                    setSelectedWorkspaceId(myWs[0].id);
+                }
+            }
+        };
+        fetchWs();
+    }, []);
 
     // ── Fetch ─────────────────────────────────────────────────────
     const [heatmapMoods, setHeatmapMoods] = useState<UserMood[]>([]);
 
     const fetchMoods = useCallback(async (silent = false) => {
-        // Baca fresh dari localStorage setiap fetch (bukan dari stale state)
-        const wsId = localStorage.getItem('active_workspace_id');
+        const wsId = selectedWorkspaceId;
         if (!wsId) {
             setLoading(false);
             return;
@@ -246,40 +271,65 @@ export const AdminMoodTracker: React.FC = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [activeWorkspaceId, timeRange]);
+    }, [selectedWorkspaceId, timeRange]);
 
     useEffect(() => { fetchMoods(); }, [fetchMoods]);
 
     // ── Realtime subscription ─────────────────────────────────────
     useEffect(() => {
-        if (!activeWorkspaceId) return;
+        if (!selectedWorkspaceId) return;
         const channel = supabase
-            .channel('admin_mood_realtime')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_moods' }, () => fetchMoods(true))
+            .channel(`admin_mood_realtime_${selectedWorkspaceId}`)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_moods', filter: `workspace_id=eq.${selectedWorkspaceId}` }, () => fetchMoods(true))
             .subscribe();
         return () => { supabase.removeChannel(channel); };
-    }, [activeWorkspaceId, fetchMoods]);
+    }, [selectedWorkspaceId, fetchMoods]);
 
     // ── Virtual Support ────────────────────────────────────────────
-    const sendVirtualSupport = async (targetMood: UserMood, type: 'hug' | 'coffee') => {
+    const sendVirtualSupport = async (targetMood: UserMood, type: 'hug' | 'coffee' | 'donut' | 'music' | 'high_five' | 'rocket') => {
         const actorId = localStorage.getItem('user_id');
         const actorName = localStorage.getItem('user_name') || 'Rekan tim';
         if (!actorId || targetMood.user_id === actorId) return;
 
         setSendingSupport(targetMood.user_id + type);
         try {
-            const icon = type === 'hug' ? '🤗' : '☕';
-            const label = type === 'hug' ? 'Virtual Hug' : 'Virtual Coffee';
+            let icon = '🤗';
+            let label = 'Virtual Hug';
+            let message = 'mengirimkan pelukan virtual untukmu. Kamu tidak sendirian, semangat ya! 💪';
+
+            if (type === 'coffee') {
+                icon = '☕'; label = 'Virtual Coffee';
+                message = 'mentraktir kopi virtual. Istirahat sebentar dan charger energimu! ☕😄';
+            } else if (type === 'donut') {
+                icon = '🍩'; label = 'Virtual Donut';
+                message = 'ngasih cemilan virtual biar harinya agak manis! 🍩✨';
+            } else if (type === 'music') {
+                icon = '🎧'; label = 'Virtual Music';
+                message = 'ngirimin playlist virtual. Coba dengerin lagu favoritmu 1x putaran biar rileks! 🎵';
+            } else if (type === 'high_five') {
+                icon = '🤚'; label = 'High Five';
+                message = 'ngasih Toss online! 🤚 Jaga terus vibe positifmu hari ini!';
+            } else if (type === 'rocket') {
+                icon = '🚀'; label = 'Virtual Rocket';
+                message = 'ngelihat kamu lagi on fire banget nih kayanya, keep it up! 🚀🔥';
+            }
+
+            // We set show_popup and popup_type in metadata so NotificationProvider can show our Top-Center Modal
             await supabase.from('notifications').insert([{
                 recipient_id: targetMood.user_id,
                 actor_id: actorId,
                 workspace_id: localStorage.getItem('active_workspace_id'),
                 type: 'MOOD_SUPPORT',
                 title: `${icon} ${label} dari ${actorName}`,
-                content: type === 'hug'
-                    ? 'mengirimkan pelukan virtual untukmu. Kamu tidak sendirian, semangat ya! 💪'
-                    : 'mentraktir kopi virtual. Istirahat sebentar dan charger energimu! ☕😄',
-                metadata: { sound: 'special', type, hide_actor_name: false }
+                content: message,
+                metadata: {
+                    sound: 'special',
+                    type,
+                    hide_actor_name: false,
+                    show_popup: true,
+                    popup_type: type,
+                    actor_name: actorName
+                }
             }]);
             setSentSupport(prev => new Set([...prev, targetMood.user_id + type]));
         } catch (err) {
@@ -290,15 +340,28 @@ export const AdminMoodTracker: React.FC = () => {
     };
 
     // ── Computed ──────────────────────────────────────────────────
+    const uniqueUsers = (() => {
+        const map = new Map<string, { id: string; name: string }>();
+        moods.forEach(m => {
+            if (m.user && !map.has(m.user_id)) {
+                map.set(m.user_id, { id: m.user_id, name: m.user.full_name });
+            }
+        });
+        return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    })();
+
+    const filteredMoods = selectedUserId === 'all' ? moods : moods.filter(m => m.user_id === selectedUserId);
+    const filteredHeatmap = selectedUserId === 'all' ? heatmapMoods : heatmapMoods.filter(m => m.user_id === selectedUserId);
+
     const latestPerUser = (() => {
         const map = new Map<string, UserMood>();
-        moods.forEach(m => { if (!map.has(m.user_id)) map.set(m.user_id, m); });
+        filteredMoods.forEach(m => { if (!map.has(m.user_id)) map.set(m.user_id, m); });
         return Array.from(map.values());
     })();
 
     const distribution = (() => {
         const dist: Record<string, { count: number; emoji: string; color: string }> = {};
-        moods.forEach(m => {
+        filteredMoods.forEach(m => {
             const key = m.mood_label;
             if (!dist[key]) dist[key] = { count: 0, emoji: m.mood_emoji, color: getMeta(key).color };
             dist[key].count++;
@@ -310,7 +373,7 @@ export const AdminMoodTracker: React.FC = () => {
 
     const trendData = (() => {
         const byDate: Record<string, { date: string; total: number; score: number }> = {};
-        moods.forEach(m => {
+        filteredMoods.forEach(m => {
             const date = new Date(m.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
             if (!byDate[date]) byDate[date] = { date, total: 0, score: 0 };
             byDate[date].total++;
@@ -322,20 +385,20 @@ export const AdminMoodTracker: React.FC = () => {
             .slice(-14);
     })();
 
-    const avgScore = moods.length > 0
-        ? (moods.reduce((s, m) => s + getMeta(m.mood_label).score, 0) / moods.length).toFixed(2)
+    const avgScore = filteredMoods.length > 0
+        ? (filteredMoods.reduce((s, m) => s + getMeta(m.mood_label).score, 0) / filteredMoods.length).toFixed(2)
         : '–';
 
     const burnoutCount = latestPerUser.filter(m => m.mood_label === 'Burnout').length;
     const respondersToday = (() => {
         const today = new Date().toISOString().split('T')[0];
-        return new Set(moods.filter(m => m.created_at.startsWith(today)).map(m => m.user_id)).size;
+        return new Set(filteredMoods.filter(m => m.created_at.startsWith(today)).map(m => m.user_id)).size;
     })();
 
     const topMood = distribution[0];
 
     const STATS = [
-        { label: 'Total Entri', value: moods.length, icon: Activity, color: 'text-blue-500', bg: 'bg-blue-50 border-blue-200', note: 'semua respons' },
+        { label: 'Total Entri', value: filteredMoods.length, icon: Activity, color: 'text-blue-500', bg: 'bg-blue-50 border-blue-200', note: 'semua respons' },
         { label: 'Anggota Aktif', value: latestPerUser.length, icon: Users, color: 'text-violet-500', bg: 'bg-violet-50 border-violet-200', note: 'unik responden' },
         { label: 'Responden Hari Ini', value: respondersToday, icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-50 border-emerald-200', note: 'login hari ini' },
         { label: 'Rata-Rata Mood', value: `${avgScore}/5`, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200', note: 'skor tim' },
@@ -370,17 +433,44 @@ export const AdminMoodTracker: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap flex-col sm:flex-row items-end sm:items-center gap-2">
+                    {/* Workspace Filter */}
+                    <div className="relative">
+                        <select
+                            value={selectedWorkspaceId}
+                            onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                            className="p-2 sm:p-2.5 rounded-xl border-2 border-indigo-200 shadow-[4px_4px_0px_0px_rgba(79,70,229,0.2)] font-black text-[10px] sm:text-[11px] uppercase tracking-widest text-indigo-700 bg-indigo-50 outline-none focus:border-indigo-500 cursor-pointer min-w-[140px]"
+                        >
+                            {workspaces.map(ws => (
+                                <option key={ws.id} value={ws.id}>{ws.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* User Filter */}
+                    <div className="relative">
+                        <select
+                            value={selectedUserId}
+                            onChange={(e) => setSelectedUserId(e.target.value)}
+                            className="p-2 sm:p-2.5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] font-black text-[10px] sm:text-[11px] uppercase tracking-widest text-slate-700 bg-white outline-none focus:border-indigo-500 cursor-pointer min-w-[140px]"
+                        >
+                            <option value="all">Semua Anggota</option>
+                            {uniqueUsers.map(u => (
+                                <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <button
                         onClick={() => fetchMoods(true)}
                         disabled={refreshing}
-                        className="p-2.5 rounded-xl border-2 border-slate-200 hover:border-slate-900 text-muted-foreground hover:text-foreground transition-all"
+                        className="p-2.5 rounded-xl border-2 border-slate-200 hover:border-slate-900 text-muted-foreground hover:text-foreground transition-all shrink-0"
                         title="Refresh"
                     >
                         <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                     </button>
 
-                    <div className="flex bg-muted p-1.5 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] gap-0.5">
+                    <div className="flex bg-muted p-1.5 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] gap-0.5 overflow-x-auto">
                         {(['today', '7d', '30d', 'all'] as const).map((r) => (
                             <button
                                 key={r}
@@ -482,31 +572,88 @@ export const AdminMoodTracker: React.FC = () => {
                                             <span className="text-[8px] text-muted-foreground font-semibold">{relativeTime(m.created_at)}</span>
                                         </div>
 
-                                        {/* Virtual Support Buttons — only for low mood & not self */}
-                                        {isLowMood && !isSelf && (
-                                            <div className="flex gap-1.5 mt-2">
-                                                <button
-                                                    onClick={() => sendVirtualSupport(m, 'hug')}
-                                                    disabled={sendingSupport === m.user_id + 'hug' || sentSupport.has(m.user_id + 'hug')}
-                                                    title="Kirim Virtual Hug"
-                                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'hug')
-                                                        ? 'border-rose-300 bg-rose-50 text-rose-500 cursor-default'
-                                                        : 'border-rose-200 bg-white hover:border-rose-500 hover:bg-rose-50 text-rose-500 active:scale-95'
-                                                        }`}
-                                                >
-                                                    {sentSupport.has(m.user_id + 'hug') ? '🤗 Terkirim!' : '🤗 Hug'}
-                                                </button>
-                                                <button
-                                                    onClick={() => sendVirtualSupport(m, 'coffee')}
-                                                    disabled={sendingSupport === m.user_id + 'coffee' || sentSupport.has(m.user_id + 'coffee')}
-                                                    title="Kirim Virtual Coffee"
-                                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'coffee')
-                                                        ? 'border-amber-300 bg-amber-50 text-amber-600 cursor-default'
-                                                        : 'border-amber-200 bg-white hover:border-amber-500 hover:bg-amber-50 text-amber-600 active:scale-95'
-                                                        }`}
-                                                >
-                                                    {sentSupport.has(m.user_id + 'coffee') ? '☕ Terkirim!' : '☕ Kopi'}
-                                                </button>
+                                        {/* Virtual Support Buttons — available for all moods if not self */}
+                                        {!isSelf && (
+                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                {isLowMood ? (
+                                                    // Mood Rendah (Burnout, Capek)
+                                                    <>
+                                                        <button
+                                                            onClick={() => sendVirtualSupport(m, 'hug')}
+                                                            disabled={sendingSupport === m.user_id + 'hug' || sentSupport.has(m.user_id + 'hug')}
+                                                            title="Kirim Virtual Hug"
+                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'hug')
+                                                                ? 'border-rose-300 bg-rose-50 text-rose-500 cursor-default'
+                                                                : 'border-rose-200 bg-white hover:border-rose-500 hover:bg-rose-50 text-rose-500 active:scale-95'
+                                                                }`}
+                                                        >
+                                                            {sentSupport.has(m.user_id + 'hug') ? '🤗 Terkirim' : '🤗 Hug'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => sendVirtualSupport(m, 'coffee')}
+                                                            disabled={sendingSupport === m.user_id + 'coffee' || sentSupport.has(m.user_id + 'coffee')}
+                                                            title="Kirim Virtual Coffee"
+                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'coffee')
+                                                                ? 'border-amber-300 bg-amber-50 text-amber-600 cursor-default'
+                                                                : 'border-amber-200 bg-white hover:border-amber-500 hover:bg-amber-50 text-amber-600 active:scale-95'
+                                                                }`}
+                                                        >
+                                                            {sentSupport.has(m.user_id + 'coffee') ? '☕ Terkirim' : '☕ Kopi'}
+                                                        </button>
+                                                    </>
+                                                ) : meta.score === 3 ? (
+                                                    // Mood Netral (Biasa)
+                                                    <>
+                                                        <button
+                                                            onClick={() => sendVirtualSupport(m, 'donut')}
+                                                            disabled={sendingSupport === m.user_id + 'donut' || sentSupport.has(m.user_id + 'donut')}
+                                                            title="Kirim Donat"
+                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'donut')
+                                                                ? 'border-sky-300 bg-sky-50 text-sky-500 cursor-default'
+                                                                : 'border-sky-200 bg-white hover:border-sky-500 hover:bg-sky-50 text-sky-500 active:scale-95'
+                                                                }`}
+                                                        >
+                                                            {sentSupport.has(m.user_id + 'donut') ? '🍩 Terkirim' : '🍩 Donat'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => sendVirtualSupport(m, 'music')}
+                                                            disabled={sendingSupport === m.user_id + 'music' || sentSupport.has(m.user_id + 'music')}
+                                                            title="Kirim Musik"
+                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'music')
+                                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-500 cursor-default'
+                                                                : 'border-indigo-200 bg-white hover:border-indigo-500 hover:bg-indigo-50 text-indigo-500 active:scale-95'
+                                                                }`}
+                                                        >
+                                                            {sentSupport.has(m.user_id + 'music') ? '🎧 Terkirim' : '🎧 Musik'}
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    // Mood Tinggi (Baik, Semangat)
+                                                    <>
+                                                        <button
+                                                            onClick={() => sendVirtualSupport(m, 'high_five')}
+                                                            disabled={sendingSupport === m.user_id + 'high_five' || sentSupport.has(m.user_id + 'high_five')}
+                                                            title="High Five"
+                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'high_five')
+                                                                ? 'border-emerald-300 bg-emerald-50 text-emerald-600 cursor-default'
+                                                                : 'border-emerald-200 bg-white hover:border-emerald-500 hover:bg-emerald-50 text-emerald-600 active:scale-95'
+                                                                }`}
+                                                        >
+                                                            {sentSupport.has(m.user_id + 'high_five') ? '🤚 Terkirim' : '🤚 High Five'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => sendVirtualSupport(m, 'rocket')}
+                                                            disabled={sendingSupport === m.user_id + 'rocket' || sentSupport.has(m.user_id + 'rocket')}
+                                                            title="Rocket"
+                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'rocket')
+                                                                ? 'border-purple-300 bg-purple-50 text-purple-600 cursor-default'
+                                                                : 'border-purple-200 bg-white hover:border-purple-500 hover:bg-purple-50 text-purple-600 active:scale-95'
+                                                                }`}
+                                                        >
+                                                            {sentSupport.has(m.user_id + 'rocket') ? '🚀 Terkirim' : '🚀 Roket'}
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -529,8 +676,8 @@ export const AdminMoodTracker: React.FC = () => {
                     </div>
                 </div>
                 <div className="p-5">
-                    {moods.length > 0 ? (
-                        <MoodHeatmap moods={heatmapMoods} />
+                    {filteredMoods.length > 0 ? (
+                        <MoodHeatmap moods={filteredHeatmap} />
                     ) : (
                         <div className="py-8 text-center">
                             <span className="text-4xl opacity-20">📅</span>

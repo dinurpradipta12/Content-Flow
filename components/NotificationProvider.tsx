@@ -255,6 +255,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     }, [currentPopup, popupQueue]);
 
+    // Auto-dismiss for MOOD_SUPPORT popups (Top-center modal)
+    useEffect(() => {
+        if (currentPopup && currentPopup.type === 'MOOD_SUPPORT') {
+            const timer = setTimeout(() => {
+                markAsRead(currentPopup.id);
+                setCurrentPopup(null);
+            }, 8000); // 8 seconds display before auto-hiding
+            return () => clearTimeout(timer);
+        }
+    }, [currentPopup]);
+
     // Initial check for upcoming content on mount or login
     useEffect(() => {
         if (currentUserId) {
@@ -601,8 +612,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         >
                             {/* Dynamic Island Pill */}
                             <div className={`relative flex items-center gap-3 px-4 py-3 rounded-[22px] shadow-[0_8px_32px_rgba(0,0,0,0.35)] overflow-hidden cursor-pointer active:scale-[0.97] transition-transform ${isSpecial
-                                    ? 'bg-[#1a1200] border border-amber-500/30'
-                                    : 'bg-[#0d0d0d] border border-white/10'
+                                ? 'bg-[#1a1200] border border-amber-500/30'
+                                : 'bg-[#0d0d0d] border border-white/10'
                                 }`}>
                                 {/* Shimmer effect */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer pointer-events-none"></div>
@@ -663,8 +674,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             key={toast.id}
                             onClick={() => handleNotificationClick(toast)}
                             className={`pointer-events-auto border-2 rounded-2xl shadow-hard p-4 w-80 animate-notification-slide-in flex items-start gap-4 relative overflow-hidden group cursor-pointer transition-all ${isSpecial
-                                    ? 'bg-amber-50 border-amber-500 hover:bg-amber-100'
-                                    : 'bg-white border-slate-800 hover:bg-slate-50'
+                                ? 'bg-amber-50 border-amber-500 hover:bg-amber-100'
+                                : 'bg-white border-slate-800 hover:bg-slate-50'
                                 }`}
                         >
                             {/* Progress Bar */}
@@ -707,10 +718,44 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
             {/* ══════════════════════════════════════════════════════════════════
                 PERSISTENT POPUP
+                - MOOD_SUPPORT: Special Top-Center auto-dismiss modal
                 - Mobile/Tablet: Bottom sheet (slides up from bottom)
                 - Desktop: Bottom-right card
             ══════════════════════════════════════════════════════════════════ */}
-            {currentPopup && (
+            {currentPopup && currentPopup.type === 'MOOD_SUPPORT' && (
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-[420px] px-4 z-[10000]">
+                    <div
+                        className="bg-card w-full border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.8)] rounded-2xl overflow-hidden flex flex-col relative"
+                        style={{ animation: 'moodPopupDown 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}
+                    >
+                        <div className="p-4 sm:p-5 flex items-center gap-4">
+                            <div className="text-4xl sm:text-5xl shrink-0 drop-shadow-md" style={{ animation: 'moodBounce 2s infinite' }}>
+                                {currentPopup.title.split(' ')[0] || '🤗'}
+                            </div>
+                            <div className="flex-1 min-w-0 pr-2">
+                                <h3 className="font-black text-foreground text-sm sm:text-base leading-tight">
+                                    {currentPopup.metadata?.actor_name || 'Rekan tim'} {currentPopup.content}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => { markAsRead(currentPopup.id); setCurrentPopup(null); }}
+                                className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-200 border border-transparent hover:border-slate-300 rounded-lg transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                        {/* Auto-dismiss progress bar */}
+                        <div className="h-1.5 w-full bg-slate-100">
+                            <div
+                                className="h-full bg-indigo-500 rounded-r-full"
+                                style={{ animation: 'moodProgress 8s linear forwards' }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {currentPopup && currentPopup.type !== 'MOOD_SUPPORT' && (
                 <>
                     {/* MOBILE: Bottom Sheet */}
                     <div className="md:hidden fixed inset-0 z-[10000] flex flex-col justify-end">
@@ -731,7 +776,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
                             {/* Header */}
                             <div className={`mx-4 mb-4 rounded-2xl p-4 flex items-center gap-3 ${currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
-                                    currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
+                                currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
                                 }`}>
                                 <div className="relative flex-shrink-0">
                                     {currentPopup.actor?.avatar_url ? (
@@ -789,7 +834,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     <div className="hidden md:block fixed bottom-6 right-6 z-[10000] w-[400px] animate-in slide-in-from-right-10 fade-in duration-500">
                         <div className="bg-card border-2 border-slate-900 shadow-hard rounded-2xl overflow-hidden flex flex-col">
                             <div className={`p-4 flex items-center gap-4 border-b-2 border-slate-900 ${currentPopup.type === 'CONTENT_H1' ? 'bg-amber-500' :
-                                    currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
+                                currentPopup.type === 'STATUS_CHANGE' ? 'bg-emerald-500' : 'bg-accent'
                                 }`}>
                                 <div className="relative">
                                     {currentPopup.actor?.avatar_url ? (
@@ -848,6 +893,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         transform: translateY(-100%) scale(0.8);
                         opacity: 0;
                         border-radius: 50px;
+                    }
+                    100% {
+                        transform: translateY(0) scale(1);
+                        opacity: 1;
+                        border-radius: 100px;
+                    }
+                }
+                @keyframes moodPopupDown {
+                    from { transform: translateY(-40px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                @keyframes moodBounce {
+                    0%, 100% { transform: translateY(0) scale(1); }
+                    50% { transform: translateY(-5px) scale(1.1); }
+                }
+                @keyframes moodProgress {
+                    from { width: 100%; }
+                    to { width: 0%; }
+                }
                     }
                     60% {
                         transform: translateY(4px) scale(1.02);
