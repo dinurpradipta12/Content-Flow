@@ -723,7 +723,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 - Desktop: Bottom-right card
             ══════════════════════════════════════════════════════════════════ */}
             {currentPopup && currentPopup.type === 'MOOD_SUPPORT' && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-[420px] px-4 z-[10000]">
+                <div className="fixed top-24 left-1/2 -translate-x-1/2 w-full max-w-[420px] px-4 z-[10000]">
                     <div
                         className="bg-card w-full border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.8)] rounded-2xl overflow-hidden flex flex-col relative"
                         style={{ animation: 'moodPopupDown 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}

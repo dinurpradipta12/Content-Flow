@@ -158,6 +158,7 @@ export const AdminMoodTracker: React.FC = () => {
     const [activeWorkspaceId] = useState(localStorage.getItem('active_workspace_id'));
     const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d' | 'all'>('7d');
     const [selectedUserId, setSelectedUserId] = useState<string>('all');
+    const [workspaceUsers, setWorkspaceUsers] = useState<{ id: string; name: string }[]>([]);
 
     // Workspace Selection State
     const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
@@ -243,19 +244,39 @@ export const AdminMoodTracker: React.FC = () => {
             if (mainRes.error) throw mainRes.error;
             const rawMoods: UserMood[] = mainRes.data || [];
 
-            // ── Batch-fetch user info untuk user_id unik (1 request saja) ─
-            const uniqueUserIds = [...new Set(rawMoods.map(m => m.user_id))];
-            let userMap: Record<string, { full_name: string; avatar_url: string; role: string; job_title?: string }> = {};
+            // ── Batch-fetch all workspace members ─
+            const { data: wsData } = await supabase.from('workspaces').select('owner_id, members, admin_id').eq('id', wsId).single();
+            const memberIds = new Set<string>();
+            const currentUserId = localStorage.getItem('user_id');
+            const tenantId = localStorage.getItem('tenant_id') || currentUserId;
 
-            if (uniqueUserIds.length > 0) {
+            if (wsData) {
+                if (wsData.owner_id) memberIds.add(wsData.owner_id);
+                if (wsData.admin_id) memberIds.add(wsData.admin_id);
+                if (Array.isArray(wsData.members)) {
+                    wsData.members.forEach((m: string) => {
+                        if (m.match(/^[0-9a-f]{8}-[0-9a-f]{4}-/i)) memberIds.add(m);
+                    });
+                }
+            }
+            if (tenantId) memberIds.add(tenantId);
+
+            const uniqueWorkspaceUserIds = Array.from(memberIds);
+            let userMap: Record<string, { full_name: string; avatar_url: string; role: string; job_title?: string }> = {};
+            let wsUsersList: { id: string; name: string }[] = [];
+
+            if (uniqueWorkspaceUserIds.length > 0) {
                 const { data: users } = await supabase
                     .from('app_users')
                     .select('id,full_name,avatar_url,role,job_title')
-                    .in('id', uniqueUserIds);
+                    .in('id', uniqueWorkspaceUserIds);
                 if (users) {
                     userMap = Object.fromEntries(users.map(u => [u.id, u]));
+                    wsUsersList = users.map(u => ({ id: u.id, name: u.full_name })).sort((a, b) => a.name.localeCompare(b.name));
                 }
             }
+
+            setWorkspaceUsers(wsUsersList);
 
             // Gabungkan data user ke moods
             const enriched: UserMood[] = rawMoods.map(m => ({
@@ -340,16 +361,6 @@ export const AdminMoodTracker: React.FC = () => {
     };
 
     // ── Computed ──────────────────────────────────────────────────
-    const uniqueUsers = (() => {
-        const map = new Map<string, { id: string; name: string }>();
-        moods.forEach(m => {
-            if (m.user && !map.has(m.user_id)) {
-                map.set(m.user_id, { id: m.user_id, name: m.user.full_name });
-            }
-        });
-        return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-    })();
-
     const filteredMoods = selectedUserId === 'all' ? moods : moods.filter(m => m.user_id === selectedUserId);
     const filteredHeatmap = selectedUserId === 'all' ? heatmapMoods : heatmapMoods.filter(m => m.user_id === selectedUserId);
 
@@ -455,7 +466,7 @@ export const AdminMoodTracker: React.FC = () => {
                             className="p-2 sm:p-2.5 rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)] font-black text-[10px] sm:text-[11px] uppercase tracking-widest text-slate-700 bg-white outline-none focus:border-indigo-500 cursor-pointer min-w-[140px]"
                         >
                             <option value="all">Semua Anggota</option>
-                            {uniqueUsers.map(u => (
+                            {workspaceUsers.map(u => (
                                 <option key={u.id} value={u.id}>{u.name}</option>
                             ))}
                         </select>

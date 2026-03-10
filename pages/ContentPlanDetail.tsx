@@ -970,7 +970,7 @@ export const ContentPlanDetail: React.FC = () => {
                         try { return decodeURIComponent(m) === decodeURIComponent(freshAvatar || '') || m === freshAvatar; }
                         catch { return m === freshAvatar; }
                     });
-                    if (!isMember) {
+                    if (!isMember && freshRole !== 'Admin' && freshRole !== 'Developer') {
                         throw new Error("Akses Ditolak. Anda tidak terdaftar sebagai anggota workspace ini.");
                     }
                 }
