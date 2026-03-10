@@ -34,10 +34,16 @@ export const AppUpdater = () => {
         // Check right away after a short delay to not block main thread
         setTimeout(checkForUpdate, 5000);
 
-        // Then check every 15 minutes
-        intervalId = setInterval(checkForUpdate, 15 * 60 * 1000);
+        // Then check every 30 seconds for near real-time updates
+        intervalId = setInterval(checkForUpdate, 30 * 1000);
 
-        return () => clearInterval(intervalId);
+        // Also check immediately when user focuses back on the tab
+        window.addEventListener('focus', checkForUpdate);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('focus', checkForUpdate);
+        };
     }, [initialVersion]);
 
     const handleUpdate = () => {
