@@ -53,9 +53,6 @@ import { UserPresence } from './UserPresence';
 import { PresenceToast } from './PresenceToast';
 import { FirstLoginModal } from './FirstLoginModal';
 import { EmailSetupModal } from './EmailSetupModal';
-import { MoodTrackerModal } from './MoodTrackerModal';
-import { MoodIndicator } from './MoodIndicator';
-import { Smile } from 'lucide-react';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -439,48 +436,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Notification State
     const { notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick, clearAllNotifications } = useNotifications();
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
-    const [currentMood, setCurrentMood] = useState<string | null>(localStorage.getItem(`current_mood_${localStorage.getItem('user_id')}`));
-    const [showMoodMenu, setShowMoodMenu] = useState(false);
 
     const activeWorkspaceId = localStorage.getItem('active_workspace_id');
     const notificationRef = useRef<HTMLDivElement>(null);
-
-    const MOOD_OPTIONS = [
-        { emoji: '🤩', label: 'Inspired' },
-        { emoji: '🙂', label: 'Good' },
-        { emoji: '😐', label: 'Neutral' },
-        { emoji: '😴', label: 'Tired' },
-        { emoji: '😭', label: 'Burnout' },
-    ];
-
-    const handleUpdateMood = async (mood: any) => {
-        const userId = localStorage.getItem('user_id');
-        const wsId = localStorage.getItem('active_workspace_id');
-        if (!userId || !wsId) return;
-
-        try {
-            const { error } = await supabase
-                .from('user_moods')
-                .insert({
-                    user_id: userId,
-                    workspace_id: wsId,
-                    mood_emoji: mood.emoji,
-                    mood_label: mood.label
-                });
-
-            if (error) throw error;
-            setCurrentMood(mood.emoji);
-            localStorage.setItem(`current_mood_${userId}`, mood.emoji);
-            setShowMoodMenu(false);
-
-            window.dispatchEvent(new CustomEvent('app-alert', {
-                detail: { type: 'success', message: `Mood diupdate ke ${mood.label}!` }
-            }));
-        } catch (err) {
-            console.error(err);
-        }
-    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -683,30 +641,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
         };
         checkEmailSetup();
-
-        // Fetch user mood for today
-        const fetchMood = async () => {
-            const userId = localStorage.getItem('user_id');
-            const wsId = localStorage.getItem('active_workspace_id');
-            if (!userId || !wsId) return;
-
-            const today = new Date().toISOString().split('T')[0];
-            const { data, error } = await supabase
-                .from('user_moods')
-                .select('mood_emoji')
-                .eq('user_id', userId)
-                .eq('workspace_id', wsId)
-                .gte('created_at', `${today}T00:00:00`)
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            if (data && data[0]) {
-                setCurrentMood(data[0].mood_emoji);
-                localStorage.setItem(`current_mood_${userId}`, data[0].mood_emoji);
-            }
-        };
-        fetchMood();
-
 
         // 4. Listen for User Updates (Sync between Profile page and Layout)
         const handleUserUpdate = () => {
@@ -1408,7 +1342,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
-            { id: 'mood', path: '/admin/mood-tracker', label: 'Team Pulse', icon: Smile, adminOnly: true },
         ],
         'Superuser': [
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
@@ -1701,31 +1634,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <p className="font-bold text-sm md:text-base text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
                                     <p className="text-[11px] md:text-xs text-slate-500 font-bold">{userProfile.jobTitle || userProfile.role}</p>
                                 </div>
-                                <div className="relative group/avatar"
-                                    onMouseEnter={() => setShowMoodMenu(true)}
-                                    onMouseLeave={() => setShowMoodMenu(false)}>
+                                <div className="relative">
                                     <img src={userProfile.avatar} alt="User" className="w-11 h-11 md:w-13 md:h-13 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
                                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                                    <MoodIndicator moodEmoji={currentMood} size="sm" />
-
-                                    {/* Mood Selection Dropdown on Hover */}
-                                    {showMoodMenu && (
-                                        <div className="absolute top-full right-0 mt-2 bg-card border-2 border-slate-900 shadow-hard rounded-2xl p-3 z-50 w-48 animate-in slide-in-from-top-2 duration-200">
-                                            <p className="text-[10px] font-black uppercase text-muted-foreground mb-2 px-1 tracking-widest">Update Mood Kamu</p>
-                                            <div className="flex justify-between gap-1">
-                                                {MOOD_OPTIONS.map((m) => (
-                                                    <button
-                                                        key={m.label}
-                                                        onClick={() => handleUpdateMood(m)}
-                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted border border-transparent hover:border-slate-900 transition-all text-lg"
-                                                        title={m.label}
-                                                    >
-                                                        {m.emoji}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -2585,16 +2496,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
             )}
 
-            {userProfile.id && activeWorkspaceId && (
-                <MoodTrackerModal
-                    userId={userProfile.id}
-                    workspaceId={activeWorkspaceId}
-                    onClose={() => {
-                        const todayMood = localStorage.getItem(`current_mood_${userProfile.id}`);
-                        if (todayMood) setCurrentMood(todayMood);
-                    }}
-                />
-            )}
         </>
     );
 };

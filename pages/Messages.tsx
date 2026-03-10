@@ -11,6 +11,7 @@ import { Modal } from '../components/ui/Modal';
 import { useNotifications } from '../components/NotificationProvider';
 import { useAppConfig } from '../components/AppConfigProvider';
 import { useNavigate } from 'react-router-dom';
+import { MoodIndicator } from '../components/MoodIndicator';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ interface WorkspaceMember {
     online_status: string;
     last_activity_at?: string;
     custom_status?: string;
+    mood_emoji?: string | null;
 }
 
 interface DMConversation {
@@ -67,6 +69,7 @@ interface DMConversation {
     userAvatar: string;
     userStatus: string;
     unread: number;
+    mood_emoji?: string | null;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -377,14 +380,37 @@ export const Messages: React.FC = () => {
     const fetchWorkspaceMembers = async (ws: Workspace) => {
         const { data } = await supabase.from('app_users').select('id, full_name, avatar_url, role, online_status, last_activity_at');
         if (data) {
-            const members = data.filter(u =>
+            // Fetch Current Moods for today
+            const today = new Date().toISOString().split('T')[0];
+            const { data: moodData } = await supabase
+                .from('user_moods')
+                .select('user_id, mood_emoji')
+                .gte('created_at', `${today}T00:00:00`)
+                .order('created_at', { ascending: false });
+
+            const moodMap = new Map();
+            if (moodData) {
+                moodData.forEach(m => {
+                    if (!moodMap.has(m.user_id)) moodMap.set(m.user_id, m.mood_emoji);
+                });
+            }
+
+            const membersWithMoods = data.filter(u =>
                 ws.members?.includes(u.id) || ws.members?.includes(u.avatar_url) ||
                 u.id === ws.admin_id || u.id === ws.owner_id
-            );
-            setWorkspaceMembers(members as WorkspaceMember[]);
-            const dms: DMConversation[] = members
+            ).map(u => ({ ...u, mood_emoji: moodMap.get(u.id) }));
+
+            setWorkspaceMembers(membersWithMoods as WorkspaceMember[]);
+            const dms: DMConversation[] = membersWithMoods
                 .filter(u => u.id !== currentUser.id)
-                .map(u => ({ userId: u.id, userName: u.full_name, userAvatar: u.avatar_url, userStatus: u.online_status || 'offline', unread: dmUnread[u.id] || 0 }));
+                .map(u => ({
+                    userId: u.id,
+                    userName: u.full_name,
+                    userAvatar: u.avatar_url,
+                    userStatus: u.online_status || 'offline',
+                    unread: dmUnread[u.id] || 0,
+                    mood_emoji: u.mood_emoji
+                }));
             setDmConversations(dms);
         }
     };
@@ -1091,7 +1117,10 @@ export const Messages: React.FC = () => {
                                             }}
                                                 className="w-full flex items-center gap-3 px-2 py-2 text-left">
                                                 <div className="relative flex-shrink-0">
-                                                    <img src={u.avatar_url} alt="" className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-border object-cover bg-muted" />
+                                                    <div className="relative shrink-0">
+                                                        <img src={u.avatar_url} alt="" className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-border object-cover bg-muted" />
+                                                        <MoodIndicator moodEmoji={u.mood_emoji} size="sm" />
+                                                    </div>
                                                     <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(u.online_status)}`} />
                                                 </div>
                                                 <div className="flex-1 min-w-0 py-0.5 flex flex-col justify-center">
@@ -1592,7 +1621,10 @@ export const Messages: React.FC = () => {
                                                 }}
                                                     className="w-full px-2 py-2 flex items-center gap-3 text-left">
                                                     <div className="relative flex-shrink-0">
-                                                        <img src={u.avatar_url} alt="" className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-border object-cover bg-muted" />
+                                                        <div className="relative shrink-0">
+                                                            <img src={u.avatar_url} alt="" className="w-10 h-10 md:w-11 md:h-11 rounded-full border border-border object-cover bg-muted" />
+                                                            <MoodIndicator moodEmoji={u.mood_emoji} size="sm" />
+                                                        </div>
                                                         <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(u.online_status)}`} />
                                                     </div>
                                                     <div className="flex-1 min-w-0 py-0.5 flex flex-col justify-center">
@@ -2123,7 +2155,10 @@ export const Messages: React.FC = () => {
                                                     className="w-4 h-4 accent-accent rounded"
                                                 />
                                                 <div className="relative flex-shrink-0">
-                                                    <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full border border-border object-cover bg-muted" />
+                                                    <div className="relative shrink-0">
+                                                        <img src={m.avatar_url} alt="" className="w-7 h-7 rounded-full border border-border object-cover bg-muted" />
+                                                        <MoodIndicator moodEmoji={workspaceMembers.find(u => u.id === m.sender_id)?.mood_emoji} size="sm" />
+                                                    </div>
                                                     <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-card ${getStatusColor(m.online_status)}`} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -2152,7 +2187,10 @@ export const Messages: React.FC = () => {
                         <div className="bg-card border-2 border-border rounded-2xl p-6 shadow-hard max-w-sm w-full" onClick={e => e.stopPropagation()}>
                             <div className="flex items-start gap-4 mb-4">
                                 <div className="relative">
-                                    <img src={userInfoModal.avatar_url} alt="" className="w-16 h-16 rounded-2xl border-2 border-border object-cover" />
+                                    <div className="relative shrink-0">
+                                        <img src={userInfoModal.avatar_url} alt="" className="w-16 h-16 rounded-2xl border-2 border-border object-cover" />
+                                        <MoodIndicator moodEmoji={userInfoModal.mood_emoji} size="md" />
+                                    </div>
                                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${getStatusColor(userInfoModal.online_status)}`} />
                                 </div>
                                 <div className="flex-1">

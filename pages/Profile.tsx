@@ -7,7 +7,8 @@ import { Card } from '../components/ui/Card';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { googleCalendarService } from '../services/googleCalendarService';
-import { Globe } from 'lucide-react';
+import { Globe, Smile } from 'lucide-react';
+import { MoodIndicator } from '../components/MoodIndicator';
 
 interface UserData {
   id: string;
@@ -67,6 +68,7 @@ export const Profile: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState<KPI[]>([]);
+  const [currentMood, setCurrentMood] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Derived
@@ -74,16 +76,20 @@ export const Profile: React.FC = () => {
   const memberSince = user?.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
 
   // --- FETCH DATA ---
-  useEffect(() => {
-    fetchProfileData();
-
-    // Listen for updates from Layout modal
-    const handleUserUpdate = () => {
-      fetchProfileData();
-    };
-    window.addEventListener('user_updated', handleUserUpdate);
-    return () => window.removeEventListener('user_updated', handleUserUpdate);
-  }, []);
+  const fetchMood = async () => {
+    if (!userId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const { data: moodData } = await supabase
+      .from('user_moods')
+      .select('mood_emoji')
+      .eq('user_id', userId)
+      .gte('created_at', `${today}T00:00:00`)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (moodData && moodData[0]) {
+      setCurrentMood(moodData[0].mood_emoji);
+    }
+  };
 
   const fetchProfileData = async () => {
     // Note: Don't set global loading true on refresh to avoid flickering whole page
@@ -129,14 +135,33 @@ export const Profile: React.FC = () => {
             .order('created_at', { ascending: false });
           if (userKpis) setKpis(userKpis);
         }
-      }
 
+        fetchMood();
+      }
     } catch (err) {
       console.error("Profile load error:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProfileData();
+
+    // Listen for updates from Layout modal
+    const handleUserUpdate = () => {
+      fetchProfileData();
+    };
+    const handleMoodUpdate = () => {
+      fetchMood();
+    };
+    window.addEventListener('user_updated', handleUserUpdate);
+    window.addEventListener('mood_updated', handleMoodUpdate);
+    return () => {
+      window.removeEventListener('user_updated', handleUserUpdate);
+      window.removeEventListener('mood_updated', handleMoodUpdate);
+    };
+  }, []);
 
   const updateProfile = async (updates: any) => {
     if (!user) return;
@@ -222,6 +247,7 @@ export const Profile: React.FC = () => {
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
               <Upload size={24} className="text-white sm:w-8 sm:h-8 md:w-8 md:h-8" />
             </div>
+            <MoodIndicator moodEmoji={currentMood} size="lg" />
           </div>
           <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 bg-quaternary border-3 sm:border-4 border-slate-800 rounded-full flex items-center justify-center pointer-events-none">
             <div className="w-full h-full rounded-full bg-quaternary animate-ping opacity-75 absolute" />

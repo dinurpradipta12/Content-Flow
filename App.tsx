@@ -20,7 +20,6 @@ import { TeamManagement } from './pages/TeamManagement';
 import { Profile } from './pages/Profile';
 import { CalendarPage } from './pages/CalendarPage';
 import { WorkspaceSettings } from './pages/WorkspaceSettings';
-import { AdminMoodTracker } from './pages/AdminMoodTracker';
 import { DeveloperAnalytics } from './pages/DeveloperAnalytics';
 import { DeveloperReport } from './pages/DeveloperReport';
 import { CollectIdea } from './pages/CollectIdea';
@@ -221,7 +220,6 @@ const App: React.FC = () => {
 
                   {/* Team & Admin Routes */}
                   <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
-                  <Route path="admin/mood-tracker" element={<RequireAdmin><AdminMoodTracker /></RequireAdmin>} />
 
                   {/* Superuser / Developer Infrastructure */}
                   <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />

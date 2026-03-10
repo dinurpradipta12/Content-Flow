@@ -5,7 +5,8 @@ import { Workspace } from '../types';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
-import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save, Bell } from 'lucide-react';
+import { Search, Users, Briefcase, ChevronRight, UserMinus, Key, EyeOff, Eye, Loader2, Globe, Layers, X, Plus, Target, Edit3, Save, Bell, Smile } from 'lucide-react';
+import { MoodIndicator } from '../components/MoodIndicator';
 import { useNotifications } from '../components/NotificationProvider';
 import { useAppConfig } from '../components/AppConfigProvider';
 
@@ -29,6 +30,7 @@ interface AppUser {
     subscription_package?: string;
     online_status?: 'online' | 'idle' | 'offline';
     last_activity_at?: string;
+    mood_emoji?: string | null;
 }
 
 interface WorkspaceData extends Workspace {
@@ -208,10 +210,32 @@ export const TeamManagement: React.FC = () => {
                 supabase.from('team_kpis').select('*')
             ]);
 
-            // 4. Batch Updates
+            // 4. Fetch Latest Moods (Today)
+            const today = new Date().toISOString().split('T')[0];
+            const { data: moodData } = await supabase
+                .from('user_moods')
+                .select('user_id, mood_emoji')
+                .gte('created_at', `${today}T00:00:00`)
+                .order('created_at', { ascending: false });
+
+            const moodMap = new Map();
+            if (moodData) {
+                moodData.forEach(m => {
+                    if (!moodMap.has(m.user_id)) {
+                        moodMap.set(m.user_id, m.mood_emoji);
+                    }
+                });
+            }
+
+            const usersWithMoods = finalUsers.map(u => ({
+                ...u,
+                mood_emoji: moodMap.get(u.id) || null
+            }));
+
+            // 5. Batch Updates
             setWorkspaces(myWorkspaces);
             setAllWorkspaces(wsData || []);
-            setUsers(finalUsers as AppUser[]);
+            setUsers(usersWithMoods);
             if (tmRes.data) setTeamMembers(tmRes.data);
             if (kRes.data) setKpis(kRes.data);
 
@@ -965,6 +989,7 @@ export const TeamManagement: React.FC = () => {
                                                             alt="Avatar"
                                                         />
                                                         <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm ${user.online_status === 'online' ? 'bg-emerald-500' : user.online_status === 'idle' ? 'bg-amber-400' : 'bg-slate-300'}`} />
+                                                        <MoodIndicator moodEmoji={user.mood_emoji || null} size="sm" />
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <p className="font-black text-xs text-foreground truncate leading-tight">{user.full_name}</p>
@@ -1002,8 +1027,11 @@ export const TeamManagement: React.FC = () => {
                             {/* Header User */}
                             <div className="flex items-start gap-4 p-4 border-[3px] border-border rounded-2xl bg-muted relative overflow-hidden shadow-[4px_4px_0px_var(--shadow-color)] transition-all">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
-                                <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
-                                    className="w-16 h-16 rounded-xl border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] object-cover relative z-10 bg-card" alt="Avatar" />
+                                <div className="relative shrink-0">
+                                    <img src={selectedUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedUser.full_name || 'U')}`}
+                                        className="w-16 h-16 rounded-xl border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] object-cover relative z-10 bg-card" alt="Avatar" />
+                                    <MoodIndicator moodEmoji={selectedUser.mood_emoji || null} size="md" />
+                                </div>
                                 <div className="relative z-10 w-full">
                                     <div className="flex items-center justify-between gap-2">
                                         <h3 className="text-xl font-heading font-black text-foreground truncate">{selectedUser.full_name}</h3>

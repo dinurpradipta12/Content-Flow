@@ -15,8 +15,8 @@ export const MoodIndicator: React.FC<MoodIndicatorProps> = ({ moodEmoji, size = 
     };
 
     return (
-        <div className={`absolute ${sizeClasses[size]} bg-white dark:bg-slate-800 rounded-full flex items-center justify-center border-slate-900 shadow-hard-mini transition-transform duration-300 hover:scale-125 z-10 animate-bounce-in`}>
-            {moodEmoji}
+        <div className={`absolute ${sizeClasses[size]} bg-gradient-to-br from-white to-slate-50 dark:from-slate-700 dark:to-slate-800 rounded-full flex items-center justify-center border-slate-900 shadow-hard-mini transition-all duration-300 hover:scale-125 z-10 animate-bounce-in ring-2 ring-white/50`}>
+            <span className="relative drop-shadow-sm">{moodEmoji}</span>
         </div>
     );
 };

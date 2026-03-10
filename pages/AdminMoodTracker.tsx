@@ -10,6 +10,7 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
     Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area
 } from 'recharts';
+import { MoodIndicator } from '../components/MoodIndicator';
 
 interface UserMood {
     id: string;
@@ -259,7 +260,10 @@ export const AdminMoodTracker: React.FC = () => {
                                 <tr key={mood.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <img src={mood.user?.avatar_url} className="w-10 h-10 rounded-full border-2 border-slate-900" alt="" />
+                                            <div className="relative shrink-0">
+                                                <img src={mood.user?.avatar_url} className="w-10 h-10 rounded-full border-2 border-slate-900" alt="" />
+                                                <MoodIndicator moodEmoji={mood.mood_emoji} size="sm" />
+                                            </div>
                                             <div>
                                                 <p className="text-sm font-black text-foreground">{mood.user?.full_name}</p>
                                                 <p className="text-[10px] font-bold text-mutedForeground">{mood.user?.role}</p>
