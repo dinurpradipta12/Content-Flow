@@ -3,7 +3,7 @@ import { supabase } from '../services/supabaseClient';
 import {
     Smile, Heart, Users, Calendar, Activity, TrendingUp,
     RefreshCw, BarChart3, PieChart as PieIcon,
-    AlertTriangle, Clock, Coffee, HandHeart
+    AlertTriangle, Clock, Coffee, HandHeart, X
 } from 'lucide-react';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
@@ -166,6 +166,10 @@ export const AdminMoodTracker: React.FC = () => {
 
     const [sendingSupport, setSendingSupport] = useState<string | null>(null); // userId being supported
     const [sentSupport, setSentSupport] = useState<Set<string>>(new Set()); // userIds already sent
+
+    // Modal States
+    const [selectedStatModal, setSelectedStatModal] = useState<string | null>(null);
+    const [selectedUserModal, setSelectedUserModal] = useState<string | null>(null);
 
     // ── Fetch Workspaces ──────────────────────────────────────────
     useEffect(() => {
@@ -588,7 +592,11 @@ export const AdminMoodTracker: React.FC = () => {
             {/* ── Stats Grid ───────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {STATS.map((s, i) => (
-                    <div key={i} className="bg-card border-[3.5px] border-slate-900 rounded-[2rem] p-6 shadow-hard hover:-translate-y-2 hover:shadow-[10px_10px_0px_rgba(15,23,42,1)] transition-all duration-300">
+                    <div
+                        key={i}
+                        onClick={() => setSelectedStatModal(s.label)}
+                        className="bg-card border-[3.5px] border-slate-900 rounded-[2rem] p-6 shadow-hard hover:-translate-y-2 hover:shadow-[10px_10px_0px_rgba(15,23,42,1)] transition-all duration-300 cursor-pointer"
+                    >
                         <div className={`w-14 h-14 ${s.bg} border-[3px] border-slate-900 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4`}>
                             <s.icon size={24} className={s.color} strokeWidth={2.5} />
                         </div>
@@ -629,7 +637,8 @@ export const AdminMoodTracker: React.FC = () => {
                             return (
                                 <div
                                     key={item.user_id}
-                                    className={`flex items-start gap-4 p-4 rounded-2xl border-[3.5px] transition-all duration-300 ${hasMood ? 'hover:-translate-y-1 hover:shadow-hard border-slate-900' : 'border-slate-300 grayscale-[40%] opacity-80'}`}
+                                    onClick={() => setSelectedUserModal(item.user_id)}
+                                    className={`flex items-start gap-4 p-4 rounded-2xl border-[3.5px] transition-all duration-300 cursor-pointer ${hasMood ? 'hover:-translate-y-1 hover:shadow-hard border-slate-900' : 'border-slate-300 grayscale-[40%] opacity-80'}`}
                                     style={{ background: meta.bg }}
                                 >
                                     <div className="relative shrink-0">
@@ -978,6 +987,241 @@ export const AdminMoodTracker: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* ── Modals ───────────────────────────────────────────────────────────── */}
+            {selectedStatModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.target === e.currentTarget && setSelectedStatModal(null) }}>
+                    <div className="bg-white border-[4px] border-slate-900 w-full max-w-md rounded-[2rem] shadow-[12px_12px_0px_rgba(15,23,42,1)] overflow-hidden animate-in zoom-in-95 mt-10">
+                        <div className="p-4 bg-slate-100 border-b-[4px] border-slate-900 flex justify-between items-center">
+                            <h2 className="font-black text-xl uppercase tracking-tight text-slate-900 flex items-center gap-2">
+                                <BarChart3 className="text-accent" size={20} strokeWidth={3} /> {selectedStatModal}
+                            </h2>
+                            <button onClick={() => setSelectedStatModal(null)} className="p-1.5 hover:bg-slate-200 rounded-xl transition-colors border-2 border-transparent hover:border-slate-900"><X size={20} strokeWidth={3} /></button>
+                        </div>
+                        <div className="p-6 max-h-[70vh] overflow-y-auto">
+                            {(() => {
+                                if (selectedStatModal === 'Total Entri') {
+                                    return (
+                                        <div className="space-y-4">
+                                            <p className="font-bold text-slate-700">Detail entri mood dalam periode yang dipilih.</p>
+                                            <div className="bg-slate-100 p-4 border-[3px] border-slate-900 rounded-2xl shadow-hard-mini">
+                                                <ul className="space-y-2">
+                                                    {workspaceUsers.map(u => {
+                                                        const userMoods = filteredMoods.filter(m => m.user_id === u.id);
+                                                        return (
+                                                            <li key={u.id} className="flex justify-between items-center border-b-2 border-slate-200 pb-2 last:border-0 last:pb-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className="w-8 h-8 rounded-lg border-2 border-slate-900" alt="" />
+                                                                    <span className="font-bold text-sm">{u.name}</span>
+                                                                </div>
+                                                                <span className="font-black text-slate-900 bg-white px-2 py-1 rounded-md border-2 border-slate-900">{userMoods.length} entri</span>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    );
+                                } else if (selectedStatModal === 'Anggota Aktif') {
+                                    const activeUsers = new Set(filteredMoods.map(m => m.user_id));
+                                    return (
+                                        <div className="space-y-4">
+                                            <p className="font-bold text-slate-700">Anggota yang telah mengisi mood pada periode yang dipilih.</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {workspaceUsers.map(u => {
+                                                    const isActive = activeUsers.has(u.id);
+                                                    return (
+                                                        <div key={u.id} className={`flex items-center gap-3 p-3 rounded-xl border-[3px] shadow-hard-mini ${isActive ? 'bg-emerald-100 border-emerald-900' : 'bg-slate-100 border-slate-400 opacity-60'}`}>
+                                                            <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className={`w-10 h-10 rounded-lg border-2 ${isActive ? 'border-emerald-900' : 'border-slate-400'} shadow-sm`} alt="" />
+                                                            <div className="overflow-hidden">
+                                                                <div className="font-bold text-sm truncate text-slate-900">{u.name}</div>
+                                                                <div className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-emerald-700' : 'text-slate-500'}`}>{isActive ? 'Aktif' : 'Pasif'}</div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                } else if (selectedStatModal === 'Responden Hari Ini') {
+                                    const todayStr = new Date().toISOString().split('T')[0];
+                                    const todayMoods = moods.filter(m => m.created_at.startsWith(todayStr));
+                                    const responderIds = new Set(todayMoods.map(m => m.user_id));
+                                    return (
+                                        <div className="space-y-4">
+                                            <p className="font-bold text-slate-700">Responden yang telah mengisi mood hari ini ({todayMoods.length} Entri).</p>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Sudah Mengisi</h4>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {workspaceUsers.filter(u => responderIds.has(u.id)).map(u => (
+                                                            <div key={u.id} className="flex items-center gap-2 bg-white border-[2px] border-slate-900 rounded-lg p-1.5 shadow-hard-mini font-bold text-xs"><img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className="w-6 h-6 rounded border border-slate-900" alt="" />{u.name}</div>
+                                                        ))}
+                                                        {workspaceUsers.filter(u => responderIds.has(u.id)).length === 0 && <p className="text-xs text-slate-400 italic font-bold">Belum ada responden</p>}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Belum Mengisi</h4>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {workspaceUsers.filter(u => !responderIds.has(u.id)).map(u => (
+                                                            <div key={u.id} className="bg-slate-100 border-[2px] border-slate-300 rounded-lg px-2 py-1.5 font-bold text-xs text-slate-500">{u.name}</div>
+                                                        ))}
+                                                        {workspaceUsers.filter(u => !responderIds.has(u.id)).length === 0 && <p className="text-xs text-slate-400 italic font-bold">Semua sudah mengisi</p>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                } else if (selectedStatModal === 'Rata-Rata Mood') {
+                                    return (
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-center p-8 bg-violet-100 border-[4px] border-violet-900 rounded-2xl shadow-hard">
+                                                <div className="text-center">
+                                                    <span className="text-6xl font-black text-violet-900 font-heading">{avgScore}</span>
+                                                    <p className="text-xs font-black text-violet-700 uppercase tracking-widest mt-2">Dari Skala 1 - 5</p>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white border-[3px] border-slate-900 rounded-2xl p-4 shadow-hard-mini">
+                                                <h4 className="font-black text-sm uppercase tracking-widest text-slate-700 mb-4 border-b-2 border-slate-200 pb-2">Distribusi Skor</h4>
+                                                <div className="space-y-2">
+                                                    {[5, 4, 3, 2, 1].map(score => {
+                                                        const count = filteredMoods.filter(m => getMeta(m.mood_label).score === score).length;
+                                                        const pct = filteredMoods.length ? Math.round((count / filteredMoods.length) * 100) : 0;
+                                                        return (
+                                                            <div key={score} className="flex items-center gap-3">
+                                                                <div className="w-12 font-black text-slate-500">Skor {score}</div>
+                                                                <div className="flex-1 h-4 bg-slate-100 rounded-full border border-slate-900 overflow-hidden">
+                                                                    <div className="h-full bg-slate-800 border-r border-slate-900 transition-all" style={{ width: `${pct}%` }} />
+                                                                </div>
+                                                                <div className="w-10 text-right font-bold text-sm">{count}</div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {selectedUserModal && (() => {
+                const user = workspaceUsers.find(u => u.id === selectedUserModal);
+                if (!user) return null;
+
+                const userMoods = moods.filter(m => m.user_id === selectedUserModal).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                const latest = userMoods[0];
+                const latestMeta = latest ? getMeta(latest.mood_label) : null;
+                const currentUserId = localStorage.getItem('user_id');
+
+                return (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.target === e.currentTarget && setSelectedUserModal(null) }}>
+                        <div className="bg-white border-[4px] border-slate-900 w-full max-w-2xl rounded-[2rem] shadow-[12px_12px_0px_rgba(15,23,42,1)] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 mt-10">
+                            <div className="p-4 bg-slate-100 border-b-[4px] border-slate-900 flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} className="w-10 h-10 rounded-xl border-2 border-slate-900 bg-white" alt="" />
+                                    <div>
+                                        <h2 className="font-black text-lg uppercase tracking-tight text-slate-900">{user.name}</h2>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{user.role || 'Member'}</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedUserModal(null)} className="p-1.5 hover:bg-slate-200 rounded-xl transition-colors border-2 border-transparent hover:border-slate-900"><X size={20} strokeWidth={3} /></button>
+                            </div>
+
+                            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                                {/* Latest Status */}
+                                {latest && latestMeta && (
+                                    <div className="flex items-center gap-4 p-4 rounded-[1.5rem] border-[3px] border-slate-900 shadow-hard-mini" style={{ backgroundColor: latestMeta.bg }}>
+                                        <div className="text-4xl bg-white w-16 h-16 rounded-2xl border-2 border-slate-900 shadow-sm flex items-center justify-center -rotate-3">{latest.mood_emoji}</div>
+                                        <div>
+                                            <h4 className="font-black text-sm uppercase tracking-widest text-slate-600 mb-1">Status Terbaru</h4>
+                                            <div className="flex items-center gap-2 font-bold text-lg text-slate-900">
+                                                {latest.mood_label}
+                                                <span className="text-xs font-semibold px-2 py-0.5 bg-white rounded-md border border-slate-900 shadow-sm">{relativeTime(latest.created_at)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Recent History Inline Table */}
+                                <div className="space-y-3">
+                                    <h4 className="font-black text-xs uppercase tracking-widest text-slate-500 flex items-center gap-2"><Clock size={14} strokeWidth={3} /> Riwayat Terakhir</h4>
+                                    {userMoods.length > 0 ? (
+                                        <div className="bg-slate-50 border-[3px] border-slate-900 rounded-2xl overflow-hidden shadow-hard-mini">
+                                            <table className="w-full text-left border-collapse min-w-full">
+                                                <thead>
+                                                    <tr className="bg-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 border-b-[3px] border-slate-900">
+                                                        <th className="p-3 whitespace-nowrap">Waktu</th>
+                                                        <th className="p-3">Mood</th>
+                                                        <th className="p-3 hidden sm:table-cell w-24">Skor</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {userMoods.slice(0, 10).map(m => {
+                                                        const meta = getMeta(m.mood_label);
+                                                        return (
+                                                            <tr key={m.id} className="border-b-2 border-slate-200 last:border-b-0 hover:bg-white transition-colors">
+                                                                <td className="p-3 text-xs font-bold text-slate-700 whitespace-nowrap align-middle">
+                                                                    {new Date(m.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', ':')}
+                                                                </td>
+                                                                <td className="p-3 align-middle">
+                                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white border-[2px] border-slate-900 text-xs font-bold shadow-sm whitespace-nowrap">
+                                                                        <span className="text-sm leading-none">{m.mood_emoji}</span> {m.mood_label}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-3 hidden sm:table-cell align-middle">
+                                                                    <div className="flex gap-0.5">
+                                                                        {[1, 2, 3, 4, 5].map(s => (
+                                                                            <div key={s} className={`w-2 h-3 rounded-[1px] border border-slate-900 ${s <= meta.score ? 'bg-slate-800' : 'bg-transparent'}`}></div>
+                                                                        ))}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 bg-slate-50 border-[3px] border-slate-900 rounded-2xl border-dashed text-center font-bold text-slate-400">Belum ada data riwayat</div>
+                                    )}
+                                </div>
+
+                                {/* Support Actions */}
+                                {user.id !== currentUserId && latest && (
+                                    <div className="space-y-3">
+                                        <h4 className="font-black text-xs uppercase tracking-widest text-slate-500 flex items-center gap-2"><HandHeart size={14} strokeWidth={3} /> Kirim Dukungan (Maksimal 1 Jam Berapa Pun)</h4>
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                            {(['hug', 'coffee', 'donut', 'high_five'] as const).map(type => {
+                                                const emojis = { hug: '🤗', coffee: '☕', donut: '🍩', high_five: '🙌' };
+                                                const labels = { hug: 'Hug', coffee: 'Coffee', donut: 'Donut', high_five: 'High Five' };
+                                                return (
+                                                    <button
+                                                        key={type}
+                                                        disabled={sendingSupport === user.id || sentSupport.has(user.id)}
+                                                        onClick={() => sendVirtualSupport(latest, type)}
+                                                        className="p-3 rounded-xl border-[3px] border-slate-900 bg-white hover:-translate-y-1 hover:shadow-hard-mini transition-all active:translate-y-0 active:shadow-none font-bold text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex flex-col items-center gap-1.5"
+                                                    >
+                                                        <span className="text-3xl">{emojis[type]}</span>
+                                                        <span className="text-[10px] uppercase tracking-widest">{labels[type]}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        {(sendingSupport === user.id || sentSupport.has(user.id)) && (
+                                            <p className="text-xs font-black text-emerald-600 text-center mt-2">✨ Dukungan berhasil dikirim! Silakan tunggu jika ingin mengirim lagi nanti.</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             <style>{`
                 @keyframes moodPulseFloat {
