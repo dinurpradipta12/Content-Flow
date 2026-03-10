@@ -60,9 +60,8 @@ export const updateSupabaseConfig = (url: string, key: string) => {
 export const checkConnectionLatency = async (): Promise<number> => {
     const start = performance.now();
     try {
-        // Simple head request to check round-trip time
-        // Using a lightweight query
-        await supabase.from('workspaces').select('id').limit(1);
+        // Using a very small table point query
+        await supabase.from('app_config').select('app_name').limit(1);
         const end = performance.now();
         return end - start;
     } catch (error) {

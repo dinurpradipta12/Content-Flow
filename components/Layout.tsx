@@ -708,8 +708,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
 
         // Defer execution slightly to prioritize main render
-        setTimeout(checkNetwork, 1000);
-        const interval = setInterval(checkNetwork, 15000);
+        setTimeout(checkNetwork, 5000);
+        const interval = setInterval(checkNetwork, 60000);
 
         // Theme Load
         const savedTheme = localStorage.getItem('app_ui_theme');
