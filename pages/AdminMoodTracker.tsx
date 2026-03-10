@@ -27,44 +27,44 @@ interface UserMood {
 }
 
 // ── Constants ────────────────────────────────────────────────────
-const BASE_MOOD_META: Record<string, { color: string; bg: string; text: string; gradient: string; score: number }> = {
+const BASE_MOOD_META: Record<string, { color: string; bg: string; text: string; score: number }> = {
     // Current Indonesian
-    'Semangat': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'Baik': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'Biasa': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'Capek': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'Burnout': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+    'Semangat': { color: '#ef4444', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 5 },
+    'Baik': { color: '#f97316', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#000000', score: 4 },
+    'Biasa': { color: '#3b82f6', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 3 },
+    'Capek': { color: '#78350f', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 2 },
+    'Burnout': { color: '#64748b', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 1 },
 
     // Colloquial Indonesian (from your screenshots)
-    'Semangat!': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'Lagi Happy': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'Biasa Aja': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'Lagi Capek': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'Lagi Burnout': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+    'Semangat!': { color: '#ef4444', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 5 },
+    'Lagi Happy': { color: '#f97316', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#000000', score: 4 },
+    'Biasa Aja': { color: '#3b82f6', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 3 },
+    'Lagi Capek': { color: '#78350f', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 2 },
+    'Lagi Burnout': { color: '#64748b', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 1 },
 
     // Legacy English (Case Insensitive equivalents in getMeta)
-    'HAPPY': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'EXCITED': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'SUPER': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'GOOD': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'CALM': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'FINE': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'NEUTRAL': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'TIRED': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'SAD': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'ANGRY': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
-    'BURNOUT': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+    'HAPPY': { color: '#ef4444', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 5 },
+    'EXCITED': { color: '#ef4444', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 5 },
+    'SUPER': { color: '#ef4444', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 5 },
+    'GOOD': { color: '#f97316', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#000000', score: 4 },
+    'CALM': { color: '#f97316', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#000000', score: 4 },
+    'FINE': { color: '#3b82f6', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 3 },
+    'NEUTRAL': { color: '#3b82f6', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 3 },
+    'TIRED': { color: '#78350f', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 2 },
+    'SAD': { color: '#78350f', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 2 },
+    'ANGRY': { color: '#64748b', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 1 },
+    'BURNOUT': { color: '#64748b', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff', score: 1 },
 };
 
-const SCORE_STYLES: Record<number, { color: string; bg: string; text: string; gradient: string }> = {
-    5: { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500' },
-    4: { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500' },
-    3: { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600' },
-    2: { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500' },
-    1: { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600' },
+const SCORE_STYLES: Record<number, { color: string; bg: string; text: string }> = {
+    5: { color: '#ef4444', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff' },
+    4: { color: '#f97316', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#000000' },
+    3: { color: '#3b82f6', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff' },
+    2: { color: '#78350f', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff' },
+    1: { color: '#64748b', bg: 'bg-slate-50 text-slate-900 dark:bg-slate-800/40 dark:text-slate-100', text: '#ffffff' },
 };
 
-const PIE_COLORS = ['#c026d3', '#4f46e5', '#475569', '#f97316', '#e11d48'];
+const PIE_COLORS = ['#ef4444', '#f97316', '#3b82f6', '#78350f', '#64748b'];
 
 const DEFAULT_MOOD_CONFIG = {
     5: { label: 'Semangat', emoji: '🔥' },
@@ -869,7 +869,7 @@ export const AdminMoodTracker: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 flex-1 items-start">
+                        <div className="p-4 md:p-6 pt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-6 flex-1 items-start">
                             {latestPerUser.map((item) => {
                                 const m = item.mood;
                                 const hasMood = !!m;
@@ -880,13 +880,13 @@ export const AdminMoodTracker: React.FC = () => {
                                     <div
                                         key={item.user_id}
                                         onClick={() => setSelectedUserModal(item.user_id)}
-                                        className={hasMood ? `${meta.bg} flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-hard border-slate-900 border-opacity-20 hover:border-opacity-100 dark:border-opacity-40 relative overflow-hidden min-h-[90px]` : `flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer border-slate-300 dark:border-slate-700 grayscale-[40%] opacity-80 bg-slate-50 dark:bg-slate-800/30 relative overflow-hidden min-h-[90px]`}
+                                        className={hasMood ? `${meta.bg} flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-hard border-slate-900 border-opacity-20 hover:border-opacity-100 dark:border-opacity-40 relative min-h-[90px]` : `flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer border-slate-300 dark:border-slate-700 grayscale-[40%] opacity-80 bg-slate-50 dark:bg-slate-800/30 relative min-h-[90px]`}
                                     >
                                         {hasMood && (
-                                            <div className="absolute top-0 right-6 -translate-y-1/2 z-[30] pointer-events-none">
+                                            <div className="absolute top-0 right-2 -translate-y-[70%] z-[30] pointer-events-none">
                                                 <span
-                                                    className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-hard border-[2px] border-slate-900 transform -rotate-1 inline-block whitespace-nowrap"
-                                                    style={{ backgroundColor: meta.color }}
+                                                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-hard border-[2px] border-slate-900 transform -rotate-1 inline-block whitespace-nowrap`}
+                                                    style={{ backgroundColor: meta.color, color: meta.text }}
                                                 >
                                                     {getMeta(m!.mood_label).mood_label}
                                                 </span>
@@ -913,7 +913,7 @@ export const AdminMoodTracker: React.FC = () => {
                                         </div>
 
                                         {/* Content Area: Name, Time, Dots */}
-                                        <div className="flex-1 min-w-0 pr-16 space-y-1">
+                                        <div className="flex-1 min-w-0 pr-4 space-y-1">
                                             <div className="flex items-center gap-1.5">
                                                 <p className={`text-base tracking-tight font-black truncate ${hasMood ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-400'}`}>{item.user.full_name || '–'}</p>
                                                 {item.streak > 1 && (
