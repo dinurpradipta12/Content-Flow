@@ -408,6 +408,16 @@ export const AdminMoodTracker: React.FC = () => {
                     actor_name: actorName
                 }
             }]);
+
+            // 🚀 Force Realtime via Broadcast (fallback if Postgres Changes is off)
+            const brChannel = supabase.channel(`notif_realtime_${targetMood.user_id}`);
+            brChannel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    await brChannel.send({ type: 'broadcast', event: 'trigger_fetch', payload: {} });
+                    supabase.removeChannel(brChannel);
+                }
+            });
+
             setSentSupport(prev => new Set([...prev, targetMood.user_id + type]));
         } catch (err) {
             console.error('Virtual support error:', err);

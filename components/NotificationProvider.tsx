@@ -386,6 +386,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     }
                 }
             )
+            .on(
+                'broadcast',
+                { event: 'trigger_fetch' },
+                () => {
+                    console.log('Received broadcast trigger_fetch!');
+                    fetchNotifications();
+                }
+            )
             .subscribe((status, error) => {
                 if (error) console.error('Subscription error:', error);
                 if (status === 'CHANNEL_ERROR') {
@@ -728,18 +736,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                         className="bg-card w-full border-[3px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,0.8)] rounded-2xl overflow-hidden flex flex-col relative"
                         style={{ animation: 'moodPopupDown 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}
                     >
-                        <div className="p-4 sm:p-5 flex items-center gap-4">
+                        <div className="p-4 sm:p-5 flex items-start gap-4">
                             <div className="text-4xl sm:text-5xl shrink-0 drop-shadow-md" style={{ animation: 'moodBounce 2s infinite' }}>
                                 {currentPopup.title.split(' ')[0] || '🤗'}
                             </div>
-                            <div className="flex-1 min-w-0 pr-2">
+                            <div className="flex-1 min-w-0 mt-1">
                                 <h3 className="font-black text-foreground text-sm sm:text-base leading-tight">
                                     {currentPopup.metadata?.actor_name || 'Rekan tim'} {currentPopup.content}
                                 </h3>
                             </div>
                             <button
                                 onClick={() => { markAsRead(currentPopup.id); setCurrentPopup(null); }}
-                                className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-200 border border-transparent hover:border-slate-300 rounded-lg transition-all"
+                                className="shrink-0 p-1.5 text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-200 border border-transparent hover:border-slate-300 rounded-lg transition-all"
                             >
                                 <X size={16} />
                             </button>
