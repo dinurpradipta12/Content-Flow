@@ -28,22 +28,22 @@ interface UserMood {
 
 // ── Constants ────────────────────────────────────────────────────
 const MOOD_META: Record<string, { color: string; bg: string; text: string; gradient: string; score: number }> = {
-    'Semangat': { color: '#c026d3', bg: '#fdf4ff', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'Happy': { color: '#c026d3', bg: '#fdf4ff', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
-    'Baik': { color: '#4f46e5', bg: '#eef2ff', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'Good': { color: '#4f46e5', bg: '#eef2ff', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
-    'Biasa': { color: '#475569', bg: '#f1f5f9', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'Neutral': { color: '#475569', bg: '#f1f5f9', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
-    'Capek': { color: '#f97316', bg: '#fff7ed', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'Tired': { color: '#f97316', bg: '#fff7ed', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
-    'Burnout': { color: '#e11d48', bg: '#fff1f2', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
+    'Semangat': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
+    'Happy': { color: '#c026d3', bg: 'bg-purple-100 text-purple-700', text: '#86198f', gradient: 'from-pink-400 to-fuchsia-500', score: 5 },
+    'Baik': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
+    'Good': { color: '#4f46e5', bg: 'bg-blue-100 text-blue-700', text: '#3730a3', gradient: 'from-blue-400 to-indigo-500', score: 4 },
+    'Biasa': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
+    'Neutral': { color: '#475569', bg: 'bg-slate-100 text-slate-700', text: '#334155', gradient: 'from-slate-400 to-slate-600', score: 3 },
+    'Capek': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
+    'Tired': { color: '#f97316', bg: 'bg-orange-100 text-orange-700', text: '#c2410c', gradient: 'from-amber-400 to-orange-500', score: 2 },
+    'Burnout': { color: '#e11d48', bg: 'bg-red-100 text-red-700', text: '#9f1239', gradient: 'from-red-500 to-rose-600', score: 1 },
 };
 
 const PIE_COLORS = ['#c026d3', '#4f46e5', '#475569', '#f97316', '#e11d48'];
 
 // ── Helper ───────────────────────────────────────────────────────
 const getMeta = (label: string) =>
-    MOOD_META[label] ?? { color: '#64748b', bg: '#f8fafc', text: '#475569', gradient: 'from-slate-400 to-slate-600', score: 3 };
+    MOOD_META[label] ?? { color: '#64748b', bg: 'bg-slate-100 text-slate-700', text: '#475569', gradient: 'from-slate-400 to-slate-600', score: 3 };
 
 const relativeTime = (iso: string) => {
     const diff = Date.now() - new Date(iso).getTime();
@@ -82,7 +82,7 @@ const MoodHeatmap: React.FC<{ moods: UserMood[] }> = ({ moods }) => {
     }
 
     const getCellColor = (score: number | null) => {
-        if (score === null) return '#f1f5f9';
+        if (score === null) return 'var(--border)';
         if (score >= 4.5) return '#c026d3';  // Semangat
         if (score >= 3.5) return '#4f46e5';  // Baik
         if (score >= 2.5) return '#94a3b8';  // Biasa
@@ -170,6 +170,25 @@ export const AdminMoodTracker: React.FC = () => {
     // Modal States
     const [selectedStatModal, setSelectedStatModal] = useState<string | null>(null);
     const [selectedUserModal, setSelectedUserModal] = useState<string | null>(null);
+
+    // Support indicators
+    const [receivedSupports, setReceivedSupports] = useState<Set<string>>(new Set());
+
+    // ── Reactive dark mode detection (for Recharts inline styles) ─
+    const [isDarkMode, setIsDarkMode] = useState(() =>
+        document.documentElement.classList.contains('theme-dark') ||
+        document.documentElement.classList.contains('theme-midnight')
+    );
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDarkMode(
+                document.documentElement.classList.contains('theme-dark') ||
+                document.documentElement.classList.contains('theme-midnight')
+            );
+        });
+        observer.observe(document.documentElement, { attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
 
     // ── Fetch Workspaces ──────────────────────────────────────────
     useEffect(() => {
@@ -331,8 +350,21 @@ export const AdminMoodTracker: React.FC = () => {
                 user: userMap[m.user_id] || { full_name: 'Unknown', avatar_url: '', role: '' }
             }));
 
+
             setMoods(enriched);
             setHeatmapMoods((heatRes.data as UserMood[]) || []);
+
+            // 3. Fetch support notifications for the last 24h
+            const { data: supportNotifs } = await supabase
+                .from('notifications')
+                .select('recipient_id')
+                .in('recipient_id', userIds)
+                .eq('type', 'MOOD_SUPPORT')
+                .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+            if (supportNotifs) {
+                setReceivedSupports(new Set(supportNotifs.map(n => n.recipient_id)));
+            }
         } catch (err) {
             console.error('Error fetching mood stats:', err);
         } finally {
@@ -436,13 +468,59 @@ export const AdminMoodTracker: React.FC = () => {
 
     const latestPerUser = (() => {
         const usersToShow = selectedUserId === 'all' ? workspaceUsers : workspaceUsers.filter(u => u.id === selectedUserId);
+
         return usersToShow.map(u => {
-            const userMood = filteredMoods.find(m => m.user_id === u.id);
+            // Find all historical moods for this user (from heatmapMoods because it has 35 days)
+            const userHistory = heatmapMoods
+                .filter(m => m.user_id === u.id)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            const latest = userHistory[0];
+
+            // 1. Dots (Last 5 unique days)
+            const uniqueDays: Record<string, UserMood> = {};
+            userHistory.forEach(m => {
+                const d = m.created_at.split('T')[0];
+                if (!uniqueDays[d]) uniqueDays[d] = m;
+            });
+            const dots = Object.values(uniqueDays).slice(0, 5).map(m => getMeta(m.mood_label).color);
+
+            // 2. Streak count (consecutive days)
+            let streak = 0;
+            const daysSet = new Set(Object.keys(uniqueDays));
+            const check = new Date();
+            // If didn't check in today, starts from yesterday
+            if (!daysSet.has(check.toISOString().split('T')[0])) {
+                check.setDate(check.getDate() - 1);
+            }
+            while (daysSet.has(check.toISOString().split('T')[0])) {
+                streak++;
+                check.setDate(check.getDate() - 1);
+            }
+
+            // 3. Trend Indicator
+            let trend = 'stable'; // 'up' | 'down' | 'stable'
+            const prev = Object.values(uniqueDays)[1];
+            if (latest && prev) {
+                const s1 = getMeta(latest.mood_label).score;
+                const s2 = getMeta(prev.mood_label).score;
+                if (s1 > s2) trend = 'up';
+                else if (s1 < s2) trend = 'down';
+            }
+
             return {
                 user_id: u.id,
                 user: { full_name: u.name, avatar_url: u.avatar_url || '', role: u.role || '' },
-                mood: userMood // could be undefined if they haven't submitted
+                mood: latest,
+                dots,
+                streak,
+                trend,
+                receivedSupport: receivedSupports.has(u.id)
             };
+        }).sort((a, b) => {
+            const timeA = a.mood ? new Date(a.mood.created_at).getTime() : 0;
+            const timeB = b.mood ? new Date(b.mood.created_at).getTime() : 0;
+            return timeB - timeA;
         });
     })();
 
@@ -484,12 +562,81 @@ export const AdminMoodTracker: React.FC = () => {
 
     const topMood = distribution[0];
 
+    // ── Heatmap Insight Computations (A) ─────────────────────────────
+    const heatmapInsights = (() => {
+        const DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        // Best/worst day of week
+        const byDow: Record<number, { total: number; score: number; count: number }> = {};
+        filteredMoods.forEach(m => {
+            const d = new Date(m.created_at).getDay();
+            if (!byDow[d]) byDow[d] = { total: 0, score: 0, count: 0 };
+            byDow[d].total++;
+            byDow[d].score += getMeta(m.mood_label).score;
+            byDow[d].count++;
+        });
+        const dowAvgs = Object.entries(byDow)
+            .map(([d, v]) => ({ day: DOW[Number(d)], avg: v.score / v.total }))
+            .sort((a, b) => b.avg - a.avg);
+        const bestDay = dowAvgs[0] ?? null;
+        const worstDay = dowAvgs[dowAvgs.length - 1] ?? null;
+
+        // Check-in rate today
+        const today = new Date().toISOString().split('T')[0];
+        const checkedInToday = new Set(moods.filter(m => m.created_at.startsWith(today)).map(m => m.user_id)).size;
+        const totalMembers = workspaceUsers.length || 1;
+        const checkinRate = Math.round((checkedInToday / totalMembers) * 100);
+
+        // Team streak: consecutive days (backwards from today) with ≥1 entry
+        let streak = 0;
+        const allDates = new Set(moods.map(m => m.created_at.split('T')[0]));
+        const cur = new Date();
+        while (true) {
+            const key = cur.toISOString().split('T')[0];
+            if (!allDates.has(key)) break;
+            streak++;
+            cur.setDate(cur.getDate() - 1);
+            if (streak > 90) break;
+        }
+
+        // "Minggu Ini" strip (Option C) — Mon to Sun of current week
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // Monday
+        const thisWeekDays = Array.from({ length: 7 }).map((_, i) => {
+            const d = new Date(weekStart);
+            d.setDate(weekStart.getDate() + i);
+            const dateKey = d.toISOString().split('T')[0];
+            const dayMoods = moods.filter(m => m.created_at.startsWith(dateKey));
+            const avgSc = dayMoods.length > 0
+                ? dayMoods.reduce((s, m) => s + getMeta(m.mood_label).score, 0) / dayMoods.length
+                : null;
+            const topEmoji = dayMoods.length > 0
+                ? dayMoods.sort((a, b) => getMeta(b.mood_label).score - getMeta(a.mood_label).score)[0]?.mood_emoji
+                : null;
+            const isToday = dateKey === today;
+            const isFuture = d > now;
+            return { label: DOW[(d.getDay())], dateKey, avgSc, topEmoji, isToday, isFuture, count: dayMoods.length };
+        });
+
+        return { bestDay, worstDay, checkinRate, checkedInToday, totalMembers, streak, thisWeekDays };
+    })();
+
     const STATS = [
-        { label: 'Total Entri', value: filteredMoods.length, icon: Activity, color: 'text-blue-500', bg: 'bg-blue-50 border-blue-200', note: 'semua respons' },
-        { label: 'Anggota Aktif', value: latestPerUser.length, icon: Users, color: 'text-violet-500', bg: 'bg-violet-50 border-violet-200', note: 'unik responden' },
-        { label: 'Responden Hari Ini', value: respondersToday, icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-50 border-emerald-200', note: 'login hari ini' },
-        { label: 'Rata-Rata Mood', value: `${avgScore}/5`, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200', note: 'skor tim' },
+        { label: 'Total Entri', value: filteredMoods.length, icon: Activity, color: 'text-blue-500', bg: 'bg-blue-100 border-blue-200 dark:border-blue-800', note: 'semua respons' },
+        { label: 'Anggota Aktif', value: latestPerUser.length, icon: Users, color: 'text-purple-500', bg: 'bg-purple-100 border-purple-200 dark:border-purple-800', note: 'unik responden' },
+        { label: 'Responden Hari Ini', value: respondersToday, icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-100 border-emerald-200 dark:border-emerald-800', note: 'login hari ini' },
+        { label: 'Rata-Rata Mood', value: `${avgScore}/5`, icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-100 border-amber-200 dark:border-amber-800', note: 'skor tim' },
     ];
+
+    // ── Chart styles (reactive to theme changes via isDarkMode state) ─
+    const chartTooltipStyle = isDarkMode
+        ? { borderRadius: '12px', border: '2px solid #475569', fontWeight: 700, fontSize: 11, backgroundColor: '#1e293b', color: '#f1f5f9' }
+        : { borderRadius: '12px', border: '3px solid #0f172a', fontWeight: 700, fontSize: 11, backgroundColor: '#ffffff', color: '#0f172a' };
+
+    const chartGridColor = isDarkMode ? '#334155' : '#e2e8f0';
+    const chartAxisColor = isDarkMode ? '#94a3b8' : '#64748b';
+    const legendTextColor = isDarkMode ? '#cbd5e1' : '#334155';
 
     if (loading) return (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -504,20 +651,20 @@ export const AdminMoodTracker: React.FC = () => {
         <div className="space-y-6 pb-20 animate-in fade-in duration-500">
 
             {/* ── Header ─────────────────────────────────────────── */}
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard mb-12">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-slate-900 dark:border-slate-700 shadow-hard mb-12">
                 <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                        <div className="px-4 py-1.5 rounded-full border-[3px] border-slate-900 bg-pink-100/50 text-pink-600 font-black text-[10px] uppercase tracking-[0.2em] shadow-hard-mini flex items-center gap-2">
+                        <div className="px-4 py-1.5 rounded-full border-[3px] border-slate-900 dark:border-slate-700 bg-pink-100/50 dark:bg-pink-900/30 text-pink-600 font-black text-[10px] uppercase tracking-[0.2em] shadow-hard-mini flex items-center gap-2">
                             <Heart size={14} fill="currentColor" strokeWidth={3} /> Admin Zone
                         </div>
-                        <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm bg-slate-100 px-3 py-1.5 rounded-lg border-[2px] border-slate-200">
+                        <div className="flex items-center gap-2 text-muted-foreground font-bold text-sm bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border-[2px] border-slate-200 dark:border-slate-700">
                             <Activity size={14} className="text-accent" strokeWidth={3} /> Psychological Tracker
                         </div>
                     </div>
                     <h1 className="text-4xl lg:text-6xl font-heading font-black text-foreground leading-tight uppercase tracking-tight">
-                        Team Pulse
+                        Team Reflection
                     </h1>
-                    <p className="text-slate-500 font-bold max-w-xl text-lg leading-relaxed">
+                    <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xl text-lg leading-relaxed">
                         Monitor kesejahteraan psikologis tim secara real-time untuk menciptakan lingkungan kerja yang lebih produktif dan empatik.
                     </p>
                 </div>
@@ -528,7 +675,7 @@ export const AdminMoodTracker: React.FC = () => {
                         <select
                             value={selectedWorkspaceId}
                             onChange={(e) => setSelectedWorkspaceId(e.target.value)}
-                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-indigo-300 shadow-hard font-black text-xs uppercase tracking-widest text-indigo-700 bg-indigo-50 outline-none focus:border-indigo-500 cursor-pointer min-w-[160px]"
+                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-indigo-300 dark:border-indigo-700 shadow-hard font-black text-xs uppercase tracking-widest text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 outline-none focus:border-indigo-500 dark:focus:border-indigo-500 cursor-pointer min-w-[160px]"
                         >
                             {workspaces.map(ws => (
                                 <option key={ws.id} value={ws.id}>{ws.name}</option>
@@ -541,7 +688,7 @@ export const AdminMoodTracker: React.FC = () => {
                         <select
                             value={selectedUserId}
                             onChange={(e) => setSelectedUserId(e.target.value)}
-                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 shadow-hard font-black text-xs uppercase tracking-widest text-slate-700 bg-white outline-none focus:border-slate-900 cursor-pointer min-w-[160px]"
+                            className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 shadow-hard font-black text-xs uppercase tracking-widest text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 outline-none focus:border-slate-900 dark:focus:border-slate-500 cursor-pointer min-w-[160px]"
                         >
                             <option value="all">Semua Anggota</option>
                             {workspaceUsers.map(u => (
@@ -553,18 +700,18 @@ export const AdminMoodTracker: React.FC = () => {
                     <button
                         onClick={() => fetchMoods(true)}
                         disabled={refreshing}
-                        className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none bg-white text-slate-700 hover:text-slate-900 transition-all shrink-0"
+                        className="p-3 sm:p-3.5 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 shadow-hard hover:-translate-y-1 active:translate-y-0 active:shadow-none bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shrink-0"
                         title="Refresh"
                     >
                         <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} strokeWidth={3} />
                     </button>
 
-                    <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border-[3.5px] border-slate-900 shadow-hard gap-0.5 overflow-x-auto w-full sm:w-auto">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl border-[3.5px] border-slate-900 dark:border-slate-700 shadow-hard gap-0.5 overflow-x-auto w-full sm:w-auto">
                         {(['today', '7d', '30d', 'all'] as const).map((r) => (
                             <button
                                 key={r}
                                 onClick={() => setTimeRange(r)}
-                                className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === r ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-900'}`}
+                                className={`px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === r ? 'bg-slate-900 dark:bg-slate-700 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'}`}
                             >
                                 {r === 'today' ? 'Hari Ini' : r === '7d' ? '7 Hari' : r === '30d' ? '30 Hari' : 'Semua'}
                             </button>
@@ -575,14 +722,14 @@ export const AdminMoodTracker: React.FC = () => {
 
             {/* ── Alert: Burnout Detection ─────────────────────── */}
             {burnoutCount > 0 && (
-                <div className="bg-rose-100 border-[3.5px] border-slate-900 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center gap-5 shadow-hard-mini transition-all hover:-translate-y-1">
-                    <div className="w-14 h-14 bg-rose-500 rounded-2xl flex items-center justify-center flex-shrink-0 border-[3px] border-slate-900 shadow-hard-mini transform -rotate-6">
+                <div className="bg-red-100 border-[3.5px] border-slate-900 dark:border-red-800 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center gap-5 shadow-hard-mini transition-all hover:-translate-y-1">
+                    <div className="w-14 h-14 bg-rose-500 rounded-2xl flex items-center justify-center flex-shrink-0 border-[3px] border-slate-900 dark:border-rose-800 shadow-hard-mini transform -rotate-6">
                         <AlertTriangle size={24} className="text-white" strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h4 className="font-black text-base text-rose-700 uppercase tracking-widest mb-1">⚠️ Perhatian Diperlukan</h4>
-                        <p className="text-sm font-bold text-rose-900/80 leading-relaxed max-w-3xl">
-                            Ada <span className="bg-rose-200 px-1.5 py-0.5 rounded border border-rose-300 text-rose-900">{burnoutCount} anggota tim</span> saat ini melaporkan bahwa mereka merasa <strong className="text-rose-700">Burnout</strong>.
+                        <h4 className="font-black text-base text-red-700 uppercase tracking-widest mb-1">⚠️ Perhatian Diperlukan</h4>
+                        <p className="text-sm font-bold text-red-700 leading-relaxed max-w-3xl">
+                            Ada <span className="bg-red-200 dark:bg-red-900/50 px-1.5 py-0.5 rounded border border-red-300 dark:border-red-700 font-black">{burnoutCount} anggota tim</span> saat ini melaporkan bahwa mereka merasa <strong className="text-red-700">Burnout</strong>.
                             Direkomendasikan segera menyapa atau memberikan dukungan moral.
                         </p>
                     </div>
@@ -595,329 +742,395 @@ export const AdminMoodTracker: React.FC = () => {
                     <div
                         key={i}
                         onClick={() => setSelectedStatModal(s.label)}
-                        className="bg-card border-[3.5px] border-slate-900 rounded-[2rem] p-6 shadow-hard hover:-translate-y-2 hover:shadow-[10px_10px_0px_rgba(15,23,42,1)] transition-all duration-300 cursor-pointer"
+                        className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2rem] p-6 shadow-hard hover:-translate-y-2 hover:shadow-[10px_10px_0px_rgba(15,23,42,1)] dark:hover:shadow-[10px_10px_0px_rgba(51,65,85,1)] transition-all duration-300 cursor-pointer"
                     >
-                        <div className={`w-14 h-14 ${s.bg} border-[3px] border-slate-900 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4`}>
+                        <div className={`w-14 h-14 ${s.bg} border-[3px] border-slate-900 dark:border-slate-700 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4`}>
                             <s.icon size={24} className={s.color} strokeWidth={2.5} />
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">{s.label}</p>
-                        <p className="text-4xl font-black font-heading text-slate-900 leading-none">{s.value}</p>
-                        <p className="text-[10px] text-slate-400 font-bold mt-2 bg-slate-100 rounded-md px-2 py-1 uppercase tracking-widest inline-block">{s.note}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">{s.label}</p>
+                        <p className="text-4xl font-black font-heading text-slate-900 dark:text-slate-100 leading-none">{s.value}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 bg-slate-100 dark:bg-slate-800/50 rounded-md px-2 py-1 uppercase tracking-widest inline-block">{s.note}</p>
                     </div>
                 ))}
             </div>
 
-            {/* ── Today's Team Mood Snapshot ────────────────────── */}
-            {latestPerUser.length > 0 && (
-                <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
-                    <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 flex items-center justify-between bg-slate-50/50">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-rose-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
-                                <Smile size={24} className="text-rose-700" strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Mood Terkini Per Anggota</h3>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Entri mood paling baru dari setiap user</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1.5 rounded-xl border-[2.5px] border-slate-900 shadow-hard-mini">
-                            <span className="w-2.5 h-2.5 bg-emerald-500 border border-slate-900 rounded-full animate-pulse" />
-                            <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Live</span>
-                        </div>
-                    </div>
+            {/* ── Dashboard Middle Layer: Snapshots & Heatmap ───── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-                    <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {latestPerUser.map((item) => {
-                            const m = item.mood;
-                            const hasMood = !!m;
-                            const meta = hasMood ? getMeta(m!.mood_label) : { bg: '#f8fafc', color: '#cbd5e1', score: 0 };
-                            const isLowMood = hasMood && meta.score <= 2;
-                            const currentUserId = localStorage.getItem('user_id');
-                            const isSelf = item.user_id === currentUserId;
-                            return (
-                                <div
-                                    key={item.user_id}
-                                    onClick={() => setSelectedUserModal(item.user_id)}
-                                    className={`flex items-start gap-4 p-4 rounded-2xl border-[3.5px] transition-all duration-300 cursor-pointer ${hasMood ? 'hover:-translate-y-1 hover:shadow-hard border-slate-900' : 'border-slate-300 grayscale-[40%] opacity-80'}`}
-                                    style={{ background: meta.bg }}
-                                >
-                                    <div className="relative shrink-0">
-                                        <img
-                                            src={item.user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${item.user.full_name}`}
-                                            className="w-12 h-12 rounded-[1rem] border-[3px] border-slate-900 object-cover shadow-hard-mini"
-                                            alt=""
-                                        />
+                {/* ── Left: Today's Team Mood Snapshot ────────────── */}
+                {latestPerUser.length > 0 && (
+                    <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden h-full flex flex-col">
+                        <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-800/20 dark:bg-slate-800/50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-rose-200 dark:bg-rose-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                                    <Smile size={24} className="text-rose-700 dark:text-rose-400" strokeWidth={2.5} />
+                                </div>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Mood Terkini</h3>
+                            </div>
+                            <div className="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-xl border-[2.5px] border-slate-900 dark:border-slate-700 shadow-hard-mini">
+                                <span className="w-2 h-2 bg-emerald-500 border border-slate-900 dark:border-emerald-900 rounded-full animate-pulse" />
+                                <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Live</span>
+                            </div>
+                        </div>
+
+                        <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 flex-1 items-start">
+                            {latestPerUser.map((item) => {
+                                const m = item.mood;
+                                const hasMood = !!m;
+                                const meta = hasMood ? getMeta(m!.mood_label) : { bg: 'bg-slate-50 dark:bg-slate-800/30', color: '#cbd5e1', score: 0 };
+                                const currentUserId = localStorage.getItem('user_id');
+                                const isSelf = item.user_id === currentUserId;
+                                return (
+                                    <div
+                                        key={item.user_id}
+                                        onClick={() => setSelectedUserModal(item.user_id)}
+                                        className={hasMood ? `${meta.bg} flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-hard border-slate-900 border-opacity-20 hover:border-opacity-100 dark:border-opacity-40 relative overflow-hidden min-h-[90px]` : `flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer border-slate-300 dark:border-slate-700 grayscale-[40%] opacity-80 bg-slate-50 dark:bg-slate-800/30 relative overflow-hidden min-h-[90px]`}
+                                    >
                                         {hasMood && (
-                                            <span
-                                                className="absolute -bottom-2 -right-2 w-7 h-7 bg-white rounded-full text-base flex items-center justify-center border-[2.5px] border-slate-900 shadow-hard-mini"
-                                            >
-                                                {m!.mood_emoji}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className={`text-xs font-black truncate ${hasMood ? 'text-foreground' : 'text-slate-400'}`}>{item.user.full_name || '–'}</p>
-                                        <p className="text-[9px] font-semibold text-muted-foreground truncate">{item.user.role || ''}</p>
-
-                                        {hasMood ? (
-                                            <div className="flex items-center gap-1 mt-0.5">
+                                            <div className="absolute top-2.5 right-2.5 z-10">
                                                 <span
-                                                    className="inline-block px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wide"
-                                                    style={{ background: meta.color, color: '#fff' }}
+                                                    className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-hard-mini border border-slate-900 border-opacity-10"
+                                                    style={{ backgroundColor: meta.color }}
                                                 >
                                                     {m!.mood_label}
                                                 </span>
-                                                <span className="text-[8px] text-muted-foreground font-semibold">{relativeTime(m!.created_at)}</span>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1 mt-1">
-                                                <span className="inline-block px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wide bg-slate-200 text-slate-500">
-                                                    Belum Input
-                                                </span>
                                             </div>
                                         )}
 
-                                        {/* Virtual Support Buttons — available for all moods if not self */}
-                                        {hasMood && !isSelf && (
-                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                                {isLowMood ? (
-                                                    // Mood Rendah (Burnout, Capek)
-                                                    <>
-                                                        <button
-                                                            onClick={() => sendVirtualSupport(m, 'hug')}
-                                                            disabled={sendingSupport === m.user_id + 'hug' || sentSupport.has(m.user_id + 'hug')}
-                                                            title="Kirim Virtual Hug"
-                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'hug')
-                                                                ? 'border-rose-300 bg-rose-50 text-rose-500 cursor-default'
-                                                                : 'border-rose-200 bg-white hover:border-rose-500 hover:bg-rose-50 text-rose-500 active:scale-95'
-                                                                }`}
-                                                        >
-                                                            {sentSupport.has(m.user_id + 'hug') ? '🤗 Terkirim' : '🤗 Hug'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => sendVirtualSupport(m, 'coffee')}
-                                                            disabled={sendingSupport === m.user_id + 'coffee' || sentSupport.has(m.user_id + 'coffee')}
-                                                            title="Kirim Virtual Coffee"
-                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'coffee')
-                                                                ? 'border-amber-300 bg-amber-50 text-amber-600 cursor-default'
-                                                                : 'border-amber-200 bg-white hover:border-amber-500 hover:bg-amber-50 text-amber-600 active:scale-95'
-                                                                }`}
-                                                        >
-                                                            {sentSupport.has(m.user_id + 'coffee') ? '☕ Terkirim' : '☕ Kopi'}
-                                                        </button>
-                                                    </>
-                                                ) : meta.score === 3 ? (
-                                                    // Mood Netral (Biasa)
-                                                    <>
-                                                        <button
-                                                            onClick={() => sendVirtualSupport(m, 'donut')}
-                                                            disabled={sendingSupport === m.user_id + 'donut' || sentSupport.has(m.user_id + 'donut')}
-                                                            title="Kirim Donat"
-                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'donut')
-                                                                ? 'border-sky-300 bg-sky-50 text-sky-500 cursor-default'
-                                                                : 'border-sky-200 bg-white hover:border-sky-500 hover:bg-sky-50 text-sky-500 active:scale-95'
-                                                                }`}
-                                                        >
-                                                            {sentSupport.has(m.user_id + 'donut') ? '🍩 Terkirim' : '🍩 Donat'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => sendVirtualSupport(m, 'music')}
-                                                            disabled={sendingSupport === m.user_id + 'music' || sentSupport.has(m.user_id + 'music')}
-                                                            title="Kirim Musik"
-                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'music')
-                                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-500 cursor-default'
-                                                                : 'border-indigo-200 bg-white hover:border-indigo-500 hover:bg-indigo-50 text-indigo-500 active:scale-95'
-                                                                }`}
-                                                        >
-                                                            {sentSupport.has(m.user_id + 'music') ? '🎧 Terkirim' : '🎧 Musik'}
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    // Mood Tinggi (Baik, Semangat)
-                                                    <>
-                                                        <button
-                                                            onClick={() => sendVirtualSupport(m, 'high_five')}
-                                                            disabled={sendingSupport === m.user_id + 'high_five' || sentSupport.has(m.user_id + 'high_five')}
-                                                            title="High Five"
-                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'high_five')
-                                                                ? 'border-emerald-300 bg-emerald-50 text-emerald-600 cursor-default'
-                                                                : 'border-emerald-200 bg-white hover:border-emerald-500 hover:bg-emerald-50 text-emerald-600 active:scale-95'
-                                                                }`}
-                                                        >
-                                                            {sentSupport.has(m.user_id + 'high_five') ? '🤚 Terkirim' : '🤚 High Five'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => sendVirtualSupport(m, 'rocket')}
-                                                            disabled={sendingSupport === m.user_id + 'rocket' || sentSupport.has(m.user_id + 'rocket')}
-                                                            title="Rocket"
-                                                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border-2 text-[9px] font-black transition-all ${sentSupport.has(m.user_id + 'rocket')
-                                                                ? 'border-purple-300 bg-purple-50 text-purple-600 cursor-default'
-                                                                : 'border-purple-200 bg-white hover:border-purple-500 hover:bg-purple-50 text-purple-600 active:scale-95'
-                                                                }`}
-                                                        >
-                                                            {sentSupport.has(m.user_id + 'rocket') ? '🚀 Terkirim' : '🚀 Roket'}
-                                                        </button>
-                                                    </>
+                                        {/* Left Side: Enlarged Visuals (Avatar + Emoji + Heart) */}
+                                        <div className="relative shrink-0 w-16 h-16">
+                                            <img
+                                                src={item.user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${item.user.full_name}`}
+                                                className="w-full h-full rounded-2xl border-[3px] border-slate-900 dark:border-slate-700 object-cover shadow-hard-mini"
+                                                alt=""
+                                            />
+                                            {hasMood && (
+                                                <span className="absolute -bottom-1.5 -right-1.5 w-9 h-9 bg-white dark:bg-slate-800 rounded-full text-xl flex items-center justify-center border-[3px] border-slate-900 dark:border-slate-600 shadow-hard-mini z-10 transition-transform hover:scale-110">
+                                                    {m!.mood_emoji}
+                                                </span>
+                                            )}
+                                            {item.receivedSupport && (
+                                                <span className="absolute -top-2 -left-2 w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center border-[2.5px] border-slate-900 dark:border-pink-900/50 shadow-hard-mini animate-bounce z-20">
+                                                    <Heart size={16} fill="white" className="text-white" />
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Content Area: Name, Time, Dots */}
+                                        <div className="flex-1 min-w-0 pr-16 space-y-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className={`text-base tracking-tight font-black truncate ${hasMood ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-400'}`}>{item.user.full_name || '–'}</p>
+                                                {item.streak > 1 && (
+                                                    <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-slate-900 dark:border-slate-700">
+                                                        🔥{item.streak}
+                                                    </span>
                                                 )}
                                             </div>
-                                        )}
+
+                                            <div className="flex flex-col gap-0.5">
+                                                {hasMood ? (
+                                                    <>
+                                                        <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-900 dark:text-slate-100 leading-none">
+                                                            <Clock size={12} strokeWidth={3} className="shrink-0" />
+                                                            {new Date(m!.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':')} WIB
+                                                        </div>
+                                                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4.5">
+                                                            {relativeTime(m!.created_at)}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Belum Update</span>
+                                                )}
+                                            </div>
+
+                                            {/* Bottom: History Color Dots */}
+                                            <div className="flex gap-1.5 pt-1.5">
+                                                {item.dots.length > 0 ? item.dots.map((color, idx) => (
+                                                    <div key={idx} className="w-2.5 h-2.5 rounded-full border border-black/10 dark:border-white/20 shadow-sm" style={{ backgroundColor: color }} />
+                                                )) : (
+                                                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest opacity-50">No Data</span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Right: Mood Heatmap 35 Hari ─────────────────── */}
+                <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden h-full flex flex-col">
+                    <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-800/20 dark:bg-slate-800/50">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-indigo-200 dark:bg-indigo-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
+                                <Calendar size={24} className="text-indigo-700 dark:text-indigo-400" strokeWidth={2.5} />
+                            </div>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Heatmap Mood</h3>
+                        </div>
+                    </div>
+                    <div className="p-6 md:p-8 flex-1 flex flex-col justify-center">
+                        {filteredMoods.length > 0 ? (
+                            <MoodHeatmap moods={filteredHeatmap} />
+                        ) : (
+                            <div className="py-8 text-center">
+                                <span className="text-4xl opacity-20">📅</span>
+                                <p className="text-sm font-bold text-muted-foreground mt-2">Belum ada data mood</p>
+                            </div>
+                        )}
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-6 text-center">Tren mood 35 hari terakhir</p>
+                    </div>
+                </div>
+            </div>
+
+
+            {/* ── 2. Insight Cards Row ──────────────────────────── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {/* Best Day */}
+                <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 transition-all duration-300">
+                    <div className="w-12 h-12 bg-emerald-100 border-[3px] border-slate-900 dark:border-emerald-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
+                        <span className="text-xl">🏆</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Hari Terbaik</p>
+                    {heatmapInsights.bestDay ? (
+                        <>
+                            <p className="text-4xl font-black font-heading text-emerald-600 dark:text-emerald-400 leading-none">{heatmapInsights.bestDay.day}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-md px-2 py-1 uppercase tracking-widest inline-block">avg {heatmapInsights.bestDay.avg.toFixed(1)}/5</p>
+                        </>
+                    ) : (
+                        <p className="text-4xl font-black font-heading text-slate-300 dark:text-slate-600 leading-none">–</p>
+                    )}
+                </div>
+
+                {/* Worst Day */}
+                <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 transition-all duration-300">
+                    <div className="w-12 h-12 bg-red-100 border-[3px] border-slate-900 dark:border-red-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
+                        <span className="text-xl">😰</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Hari Tersulit</p>
+                    {heatmapInsights.worstDay && heatmapInsights.worstDay.day !== heatmapInsights.bestDay?.day ? (
+                        <>
+                            <p className="text-4xl font-black font-heading text-red-600 dark:text-red-400 leading-none">{heatmapInsights.worstDay.day}</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 bg-red-50 dark:bg-red-900/30 rounded-md px-2 py-1 uppercase tracking-widest inline-block">avg {heatmapInsights.worstDay.avg.toFixed(1)}/5</p>
+                        </>
+                    ) : (
+                        <p className="text-4xl font-black font-heading text-slate-300 dark:text-slate-600 leading-none">–</p>
+                    )}
+                </div>
+
+                {/* Check-in Rate */}
+                <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 transition-all duration-300">
+                    <div className="w-12 h-12 bg-blue-100 border-[3px] border-slate-900 dark:border-blue-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
+                        <span className="text-xl">📋</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Check-in Hari Ini</p>
+                    <p className="text-4xl font-black font-heading text-blue-600 dark:text-blue-400 leading-none">{heatmapInsights.checkinRate}%</p>
+                    <div className="mt-3 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <div
+                            className="h-full bg-blue-500 rounded-full transition-all duration-700"
+                            style={{ width: `${heatmapInsights.checkinRate}%` }}
+                        />
+                    </div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 bg-slate-100 dark:bg-slate-800/50 rounded-md px-2 py-1 uppercase tracking-widest inline-block">{heatmapInsights.checkedInToday}/{heatmapInsights.totalMembers} anggota</p>
+                </div>
+
+                {/* Team Streak */}
+                <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2rem] p-6 shadow-hard hover:-translate-y-1 transition-all duration-300">
+                    <div className="w-12 h-12 bg-amber-100 border-[3px] border-slate-900 dark:border-amber-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
+                        <span className="text-xl">🔥</span>
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Streak Tim</p>
+                    <p className="text-4xl font-black font-heading text-amber-600 dark:text-amber-400 leading-none">{heatmapInsights.streak}<span className="text-xl ml-1 font-bold">hr</span></p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 bg-amber-50 dark:bg-amber-900/30 rounded-md px-2 py-1 uppercase tracking-widest inline-block">berturut-turut</p>
+                </div>
+            </div>
+
+            {/* ── 3. Minggu Ini Card ────────────────────────────── */}
+            <div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden">
+                <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-800/20 dark:bg-slate-800/50">
+                    <div className="w-12 h-12 bg-violet-200 dark:bg-violet-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                        <span className="text-xl">📆</span>
+                    </div>
+                    <div>
+                        <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Refleksi Minggu Ini</h3>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Mood harian tim — Sen sampai Min</p>
+                    </div>
+                </div>
+                <div className="p-6 md:p-8">
+                    <div className="grid grid-cols-7 gap-3">
+                        {heatmapInsights.thisWeekDays.map((day) => {
+                            const bg = day.isFuture
+                                ? 'bg-slate-50 dark:bg-slate-800/20 opacity-40'
+                                : day.avgSc === null ? 'bg-slate-100 dark:bg-slate-800/40'
+                                    : day.avgSc >= 4.5 ? 'bg-purple-100 dark:bg-purple-900/30'
+                                        : day.avgSc >= 3.5 ? 'bg-blue-100 dark:bg-blue-900/30'
+                                            : day.avgSc >= 2.5 ? 'bg-slate-100 dark:bg-slate-800/40'
+                                                : day.avgSc >= 1.5 ? 'bg-orange-100 dark:bg-orange-900/30'
+                                                    : 'bg-red-100 dark:bg-red-900/30';
+                            return (
+                                <div
+                                    key={day.dateKey}
+                                    title={day.count > 0 ? `${day.label}: ${day.count} entri, avg ${day.avgSc?.toFixed(1)}/5` : `${day.label}: belum ada data`}
+                                    className={`${bg} rounded-2xl border-[3px] ${day.isToday
+                                        ? 'border-slate-900 dark:border-indigo-400 shadow-hard-mini'
+                                        : 'border-slate-200 dark:border-slate-700'
+                                        } p-4 flex flex-col items-center gap-2 transition-transform hover:scale-105`}
+                                >
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${day.isToday ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'
+                                        }`}>{day.label}</span>
+                                    <span className="text-2xl leading-none min-h-[2rem] flex items-center">
+                                        {day.isFuture ? '' : day.topEmoji ?? '·'}
+                                    </span>
+                                    {day.count > 0 ? (
+                                        <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-900/40 rounded-lg px-1.5 py-0.5">
+                                            {day.avgSc?.toFixed(1)}/5
+                                        </span>
+                                    ) : !day.isFuture ? (
+                                        <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600">—</span>
+                                    ) : null}
+                                    {day.isToday && (
+                                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 </div>
-            )}
-
-            {/* ── Mood Heatmap 35 Hari ─────────────────────────── */}
-            <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
-                <div className="p-6 md:p-8 border-b-[3.5px] border-slate-900 flex items-center gap-4 bg-slate-50/50">
-                    <div className="w-12 h-12 bg-indigo-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
-                        <Calendar size={24} className="text-indigo-700" strokeWidth={2.5} />
-                    </div>
-                    <div>
-                        <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Heatmap Mood Tim</h3>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tren mood 35 hari terakhir — hover untuk detail per hari</p>
-                    </div>
-                </div>
-                <div className="p-6 md:p-8">
-                    {filteredMoods.length > 0 ? (
-                        <MoodHeatmap moods={filteredHeatmap} />
-                    ) : (
-                        <div className="py-8 text-center">
-                            <span className="text-4xl opacity-20">📅</span>
-                            <p className="text-sm font-bold text-muted-foreground mt-2">Belum ada data mood untuk ditampilkan</p>
-                        </div>
-                    )}
-                </div>
             </div>
+
 
             {/* ── Charts Row ────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {/* Pie Chart */}
-                <div className="lg:col-span-5 bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
-                    <div className="p-6 border-b-[3.5px] border-slate-900 flex items-center gap-4 bg-slate-50/50">
-                        <div className="w-12 h-12 bg-violet-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
-                            <PieIcon size={24} className="text-violet-700" strokeWidth={2.5} />
+                <div className="lg:col-span-5 bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden">
+                    <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-800/20 dark:bg-slate-800/50">
+                        <div className="w-12 h-12 bg-violet-200 dark:bg-violet-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                            <PieIcon size={24} className="text-violet-700 dark:text-violet-400" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Distribusi Mood</h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Proporsi setiap mood dalam periode ini</p>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Distribusi Mood</h3>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Proporsi setiap mood dalam periode ini</p>
                         </div>
                     </div>
-                    {distribution.length > 0 ? (
-                        <div className="p-6 h-[320px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={distribution}
-                                        cx="50%" cy="45%"
-                                        innerRadius={65} outerRadius={95}
-                                        paddingAngle={4} dataKey="value"
-                                        strokeWidth={3} stroke="#fff"
-                                    >
-                                        {distribution.map((entry, idx) => (
-                                            <Cell key={idx} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(val, name, props) => [`${val} entri`, `${props.payload?.emoji} ${name}`]}
-                                        contentStyle={{ borderRadius: '12px', border: '3px solid #0f172a', fontWeight: 700, fontSize: 11 }}
-                                    />
-                                    <Legend
-                                        verticalAlign="bottom" height={40}
-                                        formatter={(value, entry: any) => (
-                                            <span style={{ fontSize: 10, fontWeight: 800, color: '#334155' }}>
-                                                {entry.payload?.emoji} {value}
-                                            </span>
-                                        )}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    ) : (
-                        <div className="p-8 flex flex-col items-center justify-center h-[280px] text-center gap-3">
-                            <span className="text-5xl opacity-30">📊</span>
-                            <p className="text-sm font-bold text-muted-foreground">Belum ada data mood</p>
-                        </div>
-                    )}
-                </div>
+                    {
+                        distribution.length > 0 ? (
+                            <div className="p-6 h-[320px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={distribution}
+                                            cx="50%" cy="45%"
+                                            innerRadius={65} outerRadius={95}
+                                            paddingAngle={4} dataKey="value"
+                                            strokeWidth={3} stroke="#fff"
+                                        >
+                                            {distribution.map((entry, idx) => (
+                                                <Cell key={idx} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            formatter={(val, name, props) => [`${val} entri`, `${props.payload?.emoji} ${name}`]}
+                                            contentStyle={chartTooltipStyle}
+                                            labelStyle={{ color: isDarkMode ? '#94a3b8' : '#64748b' }}
+                                        />
+                                        <Legend
+                                            verticalAlign="bottom" height={40}
+                                            formatter={(value, entry: any) => (
+                                                <span style={{ fontSize: 10, fontWeight: 800, color: legendTextColor }}>
+                                                    {entry.payload?.emoji} {value}
+                                                </span>
+                                            )}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="p-8 flex flex-col items-center justify-center h-[280px] text-center gap-3">
+                                <span className="text-5xl opacity-30">📊</span>
+                                <p className="text-sm font-bold text-muted-foreground">Belum ada data mood</p>
+                            </div>
+                        )
+                    }
+                </div >
 
                 {/* Area Chart — Trend */}
-                <div className="lg:col-span-7 bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
-                    <div className="p-6 border-b-[3.5px] border-slate-900 flex items-center gap-4 bg-slate-50/50">
-                        <div className="w-12 h-12 bg-blue-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
-                            <BarChart3 size={24} className="text-blue-700" strokeWidth={2.5} />
+                < div className="lg:col-span-7 bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden" >
+                    <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center gap-4 bg-slate-800/20 dark:bg-slate-800/50">
+                        <div className="w-12 h-12 bg-blue-200 dark:bg-blue-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform rotate-3">
+                            <BarChart3 size={24} className="text-blue-700 dark:text-blue-400" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Tren Mood Tim</h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Rata-rata skor harian (1=Burnout → 5=Semangat)</p>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Tren Mood Tim</h3>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Rata-rata skor harian (1=Burnout → 5=Semangat)</p>
                         </div>
                     </div>
-                    {trendData.length > 0 ? (
-                        <div className="p-6 h-[320px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={trendData}>
-                                    <defs>
-                                        <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25} />
-                                            <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="date" tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                                    <YAxis domain={[1, 5]} tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} width={20} />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '12px', border: '3px solid #0f172a', fontWeight: 700, fontSize: 11 }}
-                                        formatter={(val) => [`${val} / 5`, 'Avg Mood Score']}
-                                    />
-                                    <Area type="monotone" dataKey="avg" stroke="#4f46e5" strokeWidth={3} fill="url(#moodGrad)" dot={{ fill: '#4f46e5', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    ) : (
-                        <div className="p-8 flex flex-col items-center justify-center h-[280px] text-center gap-3">
-                            <span className="text-5xl opacity-30">📈</span>
-                            <p className="text-sm font-bold text-muted-foreground">Belum cukup data untuk tren</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+                    {
+                        trendData.length > 0 ? (
+                            <div className="p-6 h-[320px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={trendData}>
+                                        <defs>
+                                            <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.25} />
+                                                <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartGridColor} />
+                                        <XAxis dataKey="date" tick={{ fontSize: 9, fontWeight: 700, fill: chartAxisColor }} axisLine={false} tickLine={false} />
+                                        <YAxis domain={[1, 5]} tick={{ fontSize: 9, fontWeight: 700, fill: chartAxisColor }} axisLine={false} tickLine={false} width={20} />
+                                        <Tooltip
+                                            contentStyle={chartTooltipStyle}
+                                            labelStyle={{ color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 700, fontSize: 10 }}
+                                            formatter={(val) => [`${val} / 5`, 'Avg Mood Score']}
+                                        />
+                                        <Area type="monotone" dataKey="avg" stroke="#4f46e5" strokeWidth={3} fill="url(#moodGrad)" dot={{ fill: '#4f46e5', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="p-8 flex flex-col items-center justify-center h-[280px] text-center gap-3">
+                                <span className="text-5xl opacity-30">📈</span>
+                                <p className="text-sm font-bold text-muted-foreground">Belum cukup data untuk tren</p>
+                            </div>
+                        )
+                    }
+                </div >
+            </div >
 
             {/* ── Full History Table ────────────────────────────── */}
-            <div className="bg-card border-[3.5px] border-slate-900 rounded-[2.5rem] shadow-hard overflow-hidden">
-                <div className="p-6 border-b-[3.5px] border-slate-900 flex items-center justify-between bg-slate-50/50">
+            < div className="bg-card border-[3.5px] border-slate-900 dark:border-slate-700 rounded-[2.5rem] shadow-hard overflow-hidden" >
+                <div className="p-6 border-b-[3.5px] border-slate-900 dark:border-slate-700 flex items-center justify-between bg-slate-800/20 dark:bg-slate-800/50">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-emerald-200 border-[3px] border-slate-900 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
-                            <Activity size={24} className="text-emerald-700" strokeWidth={2.5} />
+                        <div className="w-12 h-12 bg-emerald-200 dark:bg-emerald-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
+                            <Activity size={24} className="text-emerald-700 dark:text-emerald-400" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-xl text-slate-900 uppercase tracking-tight">Riwayat Lengkap</h3>
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{moods.length} entri total dalam periode ini</p>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Riwayat Lengkap</h3>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">{moods.length} entri total dalam periode ini</p>
                         </div>
                     </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[500px]">
                         <thead>
-                            <tr className="bg-slate-50 border-b-2 border-slate-100">
+                            <tr className="bg-slate-50 dark:bg-slate-800 border-b-2 border-slate-200 dark:border-slate-700 divide-x-2 divide-slate-200 dark:divide-slate-700">
                                 <th className="px-5 py-3 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground">Anggota</th>
                                 <th className="px-5 py-3 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground">Mood</th>
                                 <th className="px-5 py-3 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground">Waktu</th>
                                 <th className="px-5 py-3 text-center text-[9px] font-black uppercase tracking-widest text-muted-foreground">Skor</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50">
+                        <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-700">
                             {moods.slice(0, 50).map((m) => {
                                 const meta = getMeta(m.mood_label);
                                 return (
-                                    <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
+                                    <tr key={m.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors divide-x-2 divide-slate-200 dark:divide-slate-700">
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-2.5">
                                                 <img
                                                     src={m.user?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${m.user?.full_name}`}
-                                                    className="w-8 h-8 rounded-full border-2 border-slate-100 object-cover flex-shrink-0"
+                                                    className="w-8 h-8 rounded-full border-2 border-slate-100 dark:border-slate-700 object-cover flex-shrink-0"
                                                     alt=""
                                                 />
                                                 <div>
@@ -930,8 +1143,8 @@ export const AdminMoodTracker: React.FC = () => {
                                             <div className="flex items-center gap-2">
                                                 <span className="text-lg leading-none">{m.mood_emoji}</span>
                                                 <span
-                                                    className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide"
-                                                    style={{ background: meta.bg, color: meta.text, border: `1.5px solid ${meta.color}33` }}
+                                                    className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide !text-white"
+                                                    style={{ background: meta.color }}
                                                 >
                                                     {m.mood_label}
                                                 </span>
@@ -947,8 +1160,8 @@ export const AdminMoodTracker: React.FC = () => {
                                             <p className="text-[9px] text-muted-foreground/60 mt-0.5">{relativeTime(m.created_at)}</p>
                                         </td>
                                         <td className="px-5 py-3 text-center">
-                                            <div className="inline-flex items-center justify-center w-7 h-7 rounded-xl border-2 text-[10px] font-black"
-                                                style={{ borderColor: meta.color, color: meta.color, background: meta.bg }}>
+                                            <div className="inline-flex items-center justify-center w-7 h-7 rounded-xl border-2 text-[10px] font-black !text-white"
+                                                style={{ borderColor: meta.color, background: meta.color }}>
                                                 {meta.score}
                                             </div>
                                         </td>
@@ -971,257 +1184,246 @@ export const AdminMoodTracker: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Why It Matters (Brutalism Edition) ───────────────────────────────── */}
-            <div className="bg-amber-300 border-[3.5px] border-slate-900 rounded-[2.5rem] p-8 md:p-10 shadow-hard relative mt-4">
-                <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
-                    <div className="w-20 h-20 bg-amber-400 rounded-2xl border-[3px] border-slate-900 shadow-hard-mini flex items-center justify-center flex-shrink-0 transform -rotate-6">
-                        <Heart className="text-slate-900" size={36} strokeWidth={2.5} />
-                    </div>
-                    <div className="space-y-3 flex-1">
-                        <h3 className="text-2xl md:text-3xl font-heading font-black text-slate-900 tracking-tight uppercase">
-                            Catatan HR: Psychological Safety
-                        </h3>
-                        <p className="text-slate-900 font-bold text-base leading-relaxed max-w-4xl">
-                            Dalam rutinitas kerja yang padat, bertanya <span className="bg-amber-100 border-[2px] border-slate-900 px-2 py-0.5 rounded-md font-black italic">"Bagaimana kabarmu?"</span> sering terlewat. Sistem Team Pulse memastikan kesejahteraan psikologis setiap anggota terpantau tanpa terkesan menginterogasi. Riset internal membuktikan bahwa tim yang didukung secara emosional mencatat stabilitas output hingga <span className="text-slate-900 font-black border-b-[4px] border-slate-900 uppercase">300% Lebih Konsisten</span>.
-                        </p>
-                    </div>
-                </div>
-            </div>
+
 
             {/* ── Modals ───────────────────────────────────────────────────────────── */}
-            {selectedStatModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.target === e.currentTarget && setSelectedStatModal(null) }}>
-                    <div className="bg-white border-[4px] border-slate-900 w-full max-w-md rounded-[2rem] shadow-[12px_12px_0px_rgba(15,23,42,1)] overflow-hidden animate-in zoom-in-95 mt-10">
-                        <div className="p-4 bg-slate-100 border-b-[4px] border-slate-900 flex justify-between items-center">
-                            <h2 className="font-black text-xl uppercase tracking-tight text-slate-900 flex items-center gap-2">
-                                <BarChart3 className="text-accent" size={20} strokeWidth={3} /> {selectedStatModal}
-                            </h2>
-                            <button onClick={() => setSelectedStatModal(null)} className="p-1.5 hover:bg-slate-200 rounded-xl transition-colors border-2 border-transparent hover:border-slate-900"><X size={20} strokeWidth={3} /></button>
-                        </div>
-                        <div className="p-6 max-h-[70vh] overflow-y-auto">
-                            {(() => {
-                                if (selectedStatModal === 'Total Entri') {
-                                    return (
-                                        <div className="space-y-4">
-                                            <p className="font-bold text-slate-700">Detail entri mood dalam periode yang dipilih.</p>
-                                            <div className="bg-slate-100 p-4 border-[3px] border-slate-900 rounded-2xl shadow-hard-mini">
-                                                <ul className="space-y-2">
+            {
+                selectedStatModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.target === e.currentTarget && setSelectedStatModal(null) }}>
+                        <div className="bg-white dark:bg-slate-900 border-[4px] border-slate-900 dark:border-slate-700 w-full max-w-md rounded-[2rem] shadow-[12px_12px_0px_rgba(15,23,42,1)] dark:shadow-[12px_12px_0px_rgba(51,65,85,1)] overflow-hidden animate-in zoom-in-95 mt-10">
+                            <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b-[4px] border-slate-900 dark:border-slate-700 flex justify-between items-center">
+                                <h2 className="font-black text-xl uppercase tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                    <BarChart3 className="text-accent" size={20} strokeWidth={3} /> {selectedStatModal}
+                                </h2>
+                                <button onClick={() => setSelectedStatModal(null)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors border-2 border-transparent hover:border-slate-900 dark:hover:border-slate-500 text-slate-800 dark:text-slate-200"><X size={20} strokeWidth={3} /></button>
+                            </div>
+                            <div className="p-6 max-h-[70vh] overflow-y-auto">
+                                {(() => {
+                                    if (selectedStatModal === 'Total Entri') {
+                                        return (
+                                            <div className="space-y-4">
+                                                <p className="font-bold text-slate-700 dark:text-slate-300">Detail entri mood dalam periode yang dipilih.</p>
+                                                <div className="bg-slate-100 dark:bg-slate-800/50 p-4 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl shadow-hard-mini">
+                                                    <ul className="space-y-2">
+                                                        {workspaceUsers.map(u => {
+                                                            const userMoods = filteredMoods.filter(m => m.user_id === u.id);
+                                                            return (
+                                                                <li key={u.id} className="flex justify-between items-center border-b-2 border-slate-200 dark:border-slate-700 pb-2 last:border-0 last:pb-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className="w-8 h-8 rounded-lg border-2 border-slate-900 dark:border-slate-700" alt="" />
+                                                                        <span className="font-bold text-sm text-foreground">{u.name}</span>
+                                                                    </div>
+                                                                    <span className="font-black text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 px-2 py-1 rounded-md border-2 border-slate-900 dark:border-slate-500">{userMoods.length} entri</span>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        );
+                                    } else if (selectedStatModal === 'Anggota Aktif') {
+                                        const activeUsers = new Set(filteredMoods.map(m => m.user_id));
+                                        return (
+                                            <div className="space-y-4">
+                                                <p className="font-bold text-slate-700 dark:text-slate-300">Anggota yang telah mengisi mood pada periode yang dipilih.</p>
+                                                <div className="grid grid-cols-2 gap-3">
                                                     {workspaceUsers.map(u => {
-                                                        const userMoods = filteredMoods.filter(m => m.user_id === u.id);
+                                                        const isActive = activeUsers.has(u.id);
                                                         return (
-                                                            <li key={u.id} className="flex justify-between items-center border-b-2 border-slate-200 pb-2 last:border-0 last:pb-0">
-                                                                <div className="flex items-center gap-2">
-                                                                    <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className="w-8 h-8 rounded-lg border-2 border-slate-900" alt="" />
-                                                                    <span className="font-bold text-sm">{u.name}</span>
+                                                            <div key={u.id} className={`flex items-center gap-3 p-3 rounded-xl border-[3px] shadow-hard-mini ${isActive ? 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-900 dark:border-emerald-700' : 'bg-slate-100 dark:bg-slate-800/50 border-slate-400 dark:border-slate-600 opacity-60'}`}>
+                                                                <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className={`w-10 h-10 rounded-lg border-2 ${isActive ? 'border-emerald-900 dark:border-emerald-700' : 'border-slate-400 dark:border-slate-600'} shadow-sm`} alt="" />
+                                                                <div className="overflow-hidden">
+                                                                    <div className="font-bold text-sm truncate text-slate-900 dark:text-slate-100">{u.name}</div>
+                                                                    <div className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{isActive ? 'Aktif' : 'Pasif'}</div>
                                                                 </div>
-                                                                <span className="font-black text-slate-900 bg-white px-2 py-1 rounded-md border-2 border-slate-900">{userMoods.length} entri</span>
-                                                            </li>
+                                                            </div>
                                                         );
                                                     })}
-                                                </ul>
+                                                </div>
+                                            </div>
+                                        );
+                                    } else if (selectedStatModal === 'Responden Hari Ini') {
+                                        const todayStr = new Date().toISOString().split('T')[0];
+                                        const todayMoods = moods.filter(m => m.created_at.startsWith(todayStr));
+                                        const responderIds = new Set(todayMoods.map(m => m.user_id));
+                                        return (
+                                            <div className="space-y-4">
+                                                <p className="font-bold text-slate-700 dark:text-slate-300">Responden yang telah mengisi mood hari ini ({todayMoods.length} Entri).</p>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Sudah Mengisi</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {workspaceUsers.filter(u => responderIds.has(u.id)).map(u => (
+                                                                <div key={u.id} className="flex items-center gap-2 bg-white dark:bg-slate-800 border-[2px] border-slate-900 dark:border-slate-700 rounded-lg p-1.5 shadow-hard-mini font-bold text-xs text-foreground"><img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className="w-6 h-6 rounded border border-slate-900 dark:border-slate-700" alt="" />{u.name}</div>
+                                                            ))}
+                                                            {workspaceUsers.filter(u => responderIds.has(u.id)).length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500 italic font-bold">Belum ada responden</p>}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">Belum Mengisi</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {workspaceUsers.filter(u => !responderIds.has(u.id)).map(u => (
+                                                                <div key={u.id} className="bg-slate-100 dark:bg-slate-800/50 border-[2px] border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 font-bold text-xs text-slate-500 dark:text-slate-400">{u.name}</div>
+                                                            ))}
+                                                            {workspaceUsers.filter(u => !responderIds.has(u.id)).length === 0 && <p className="text-xs text-slate-400 dark:text-slate-500 italic font-bold">Semua sudah mengisi</p>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    } else if (selectedStatModal === 'Rata-Rata Mood') {
+                                        return (
+                                            <div className="space-y-6">
+                                                <div className="flex items-center justify-center p-8 bg-violet-100 dark:bg-violet-900/40 border-[4px] border-violet-900 dark:border-violet-700 rounded-2xl shadow-hard">
+                                                    <div className="text-center">
+                                                        <span className="text-6xl font-black text-violet-900 dark:text-violet-200 font-heading">{avgScore}</span>
+                                                        <p className="text-xs font-black text-violet-700 dark:text-violet-400 uppercase tracking-widest mt-2">Dari Skala 1 - 5</p>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white dark:bg-card border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl p-4 shadow-hard-mini">
+                                                    <h4 className="font-black text-sm uppercase tracking-widest text-slate-700 dark:text-slate-300 mb-4 border-b-2 border-slate-200 dark:border-slate-700 pb-2">Distribusi Skor</h4>
+                                                    <div className="space-y-2">
+                                                        {[5, 4, 3, 2, 1].map(score => {
+                                                            const count = filteredMoods.filter(m => getMeta(m.mood_label).score === score).length;
+                                                            const pct = filteredMoods.length ? Math.round((count / filteredMoods.length) * 100) : 0;
+                                                            return (
+                                                                <div key={score} className="flex items-center gap-3">
+                                                                    <div className="w-12 font-black text-slate-500 dark:text-slate-400">Skor {score}</div>
+                                                                    <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-800/50 rounded-full border border-slate-900 dark:border-slate-700 overflow-hidden">
+                                                                        <div className="h-full bg-slate-800 dark:bg-slate-400 border-r border-slate-900 dark:border-slate-700 transition-all" style={{ width: `${pct}%` }} />
+                                                                    </div>
+                                                                    <div className="w-10 text-right font-bold text-sm text-foreground">{count}</div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {
+                selectedUserModal && (() => {
+                    const user = workspaceUsers.find(u => u.id === selectedUserModal);
+                    if (!user) return null;
+
+                    const userMoods = moods.filter(m => m.user_id === selectedUserModal).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                    const latest = userMoods[0];
+                    const latestMeta = latest ? getMeta(latest.mood_label) : null;
+                    const currentUserId = localStorage.getItem('user_id');
+
+                    return (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.target === e.currentTarget && setSelectedUserModal(null) }}>
+                            <div className="bg-white dark:bg-slate-900 border-[4px] border-slate-900 dark:border-slate-700 w-full max-w-2xl rounded-[2rem] shadow-[12px_12px_0px_rgba(15,23,42,1)] dark:shadow-[12px_12px_0px_rgba(51,65,85,1)] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 mt-10">
+                                <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b-[4px] border-slate-900 dark:border-slate-700 flex justify-between items-center shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} className="w-10 h-10 rounded-xl border-2 border-slate-900 dark:border-slate-700 bg-white dark:bg-slate-800" alt="" />
+                                        <div>
+                                            <h2 className="font-black text-lg uppercase tracking-tight text-slate-900 dark:text-slate-100">{user.name}</h2>
+                                            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{user.role || 'Member'}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setSelectedUserModal(null)} className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors border-2 border-transparent hover:border-slate-900 dark:hover:border-slate-500 text-slate-800 dark:text-slate-200"><X size={20} strokeWidth={3} /></button>
+                                </div>
+
+                                <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                                    {/* Latest Status */}
+                                    {latest && latestMeta && (
+                                        <div className={`flex items-center gap-4 p-4 rounded-[1.5rem] border-[3px] border-slate-900 dark:border-slate-700 shadow-hard-mini ${latestMeta.bg}`}>
+                                            <div className="text-4xl bg-white dark:bg-slate-800 w-16 h-16 rounded-2xl border-2 border-slate-900 dark:border-slate-700 shadow-sm flex items-center justify-center -rotate-3">{latest.mood_emoji}</div>
+                                            <div>
+                                                <h4 className="font-black text-sm uppercase tracking-widest text-slate-600 dark:text-slate-300 mb-1">Status Terbaru</h4>
+                                                <div className="flex items-center gap-2 font-bold text-lg text-slate-900 dark:text-slate-100">
+                                                    {latest.mood_label}
+                                                    <span className="text-xs font-semibold px-2 py-0.5 bg-white dark:bg-slate-800 rounded-md border border-slate-900 dark:border-slate-700 shadow-sm">{relativeTime(latest.created_at)}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    );
-                                } else if (selectedStatModal === 'Anggota Aktif') {
-                                    const activeUsers = new Set(filteredMoods.map(m => m.user_id));
-                                    return (
-                                        <div className="space-y-4">
-                                            <p className="font-bold text-slate-700">Anggota yang telah mengisi mood pada periode yang dipilih.</p>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {workspaceUsers.map(u => {
-                                                    const isActive = activeUsers.has(u.id);
+                                    )}
+
+                                    {/* Recent History Inline Table */}
+                                    <div className="space-y-3">
+                                        <h4 className="font-black text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2"><Clock size={14} strokeWidth={3} /> Riwayat Terakhir</h4>
+                                        {userMoods.length > 0 ? (
+                                            <div className="bg-slate-50 dark:bg-slate-800/30 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl overflow-hidden shadow-hard-mini">
+                                                <table className="w-full text-left border-collapse min-w-full">
+                                                    <thead>
+                                                        <tr className="bg-slate-200 dark:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border-b-[3px] border-slate-900 dark:border-slate-700">
+                                                            <th className="p-3 whitespace-nowrap">Waktu</th>
+                                                            <th className="p-3">Mood</th>
+                                                            <th className="p-3 hidden sm:table-cell w-24">Skor</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-700">
+                                                        {userMoods.slice(0, 10).map(m => {
+                                                            const meta = getMeta(m.mood_label);
+                                                            return (
+                                                                <tr key={m.id} className="hover:bg-white dark:hover:bg-slate-800/60 transition-colors">
+                                                                    <td className="p-3 text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap align-middle">
+                                                                        {new Date(m.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', ':')}
+                                                                    </td>
+                                                                    <td className="p-3 align-middle">
+                                                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border-[2px] border-slate-900 dark:border-slate-700 text-xs font-bold shadow-sm whitespace-nowrap text-foreground">
+                                                                            <span className="text-sm leading-none">{m.mood_emoji}</span> {m.mood_label}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="p-3 hidden sm:table-cell align-middle">
+                                                                        <div className="flex gap-0.5">
+                                                                            {[1, 2, 3, 4, 5].map(s => (
+                                                                                <div key={s} className={`w-2 h-3 rounded-[1px] border border-slate-900 dark:border-slate-500 ${s <= meta.score ? 'bg-slate-800 dark:bg-slate-400' : 'bg-transparent'}`}></div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <div className="p-6 bg-slate-50 dark:bg-slate-800/30 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl border-dashed text-center font-bold text-slate-400 dark:text-slate-500">Belum ada data riwayat</div>
+                                        )}
+                                    </div>
+
+                                    {/* Support Actions */}
+                                    {user.id !== currentUserId && latest && (
+                                        <div className="space-y-3">
+                                            <h4 className="font-black text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2"><HandHeart size={14} strokeWidth={3} /> Kirim Dukungan (Maksimal 1 Jam Berapa Pun)</h4>
+                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                                {(['hug', 'coffee', 'donut', 'high_five'] as const).map(type => {
+                                                    const emojis = { hug: '🤗', coffee: '☕', donut: '🍩', high_five: '🙌' };
+                                                    const labels = { hug: 'Hug', coffee: 'Coffee', donut: 'Donut', high_five: 'High Five' };
                                                     return (
-                                                        <div key={u.id} className={`flex items-center gap-3 p-3 rounded-xl border-[3px] shadow-hard-mini ${isActive ? 'bg-emerald-100 border-emerald-900' : 'bg-slate-100 border-slate-400 opacity-60'}`}>
-                                                            <img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className={`w-10 h-10 rounded-lg border-2 ${isActive ? 'border-emerald-900' : 'border-slate-400'} shadow-sm`} alt="" />
-                                                            <div className="overflow-hidden">
-                                                                <div className="font-bold text-sm truncate text-slate-900">{u.name}</div>
-                                                                <div className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-emerald-700' : 'text-slate-500'}`}>{isActive ? 'Aktif' : 'Pasif'}</div>
-                                                            </div>
-                                                        </div>
+                                                        <button
+                                                            key={type}
+                                                            disabled={sendingSupport === user.id || sentSupport.has(user.id)}
+                                                            onClick={() => sendVirtualSupport(latest, type)}
+                                                            className="p-3 rounded-xl border-[3px] border-slate-900 dark:border-slate-700 bg-white dark:bg-slate-800 text-foreground hover:-translate-y-1 hover:shadow-hard-mini transition-all active:translate-y-0 active:shadow-none font-bold text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex flex-col items-center gap-1.5"
+                                                        >
+                                                            <span className="text-3xl">{emojis[type]}</span>
+                                                            <span className="text-[10px] uppercase tracking-widest">{labels[type]}</span>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>
+                                            {(sendingSupport === user.id || sentSupport.has(user.id)) && (
+                                                <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 text-center mt-2">✨ Dukungan berhasil dikirim! Silakan tunggu jika ingin mengirim lagi nanti.</p>
+                                            )}
                                         </div>
-                                    );
-                                } else if (selectedStatModal === 'Responden Hari Ini') {
-                                    const todayStr = new Date().toISOString().split('T')[0];
-                                    const todayMoods = moods.filter(m => m.created_at.startsWith(todayStr));
-                                    const responderIds = new Set(todayMoods.map(m => m.user_id));
-                                    return (
-                                        <div className="space-y-4">
-                                            <p className="font-bold text-slate-700">Responden yang telah mengisi mood hari ini ({todayMoods.length} Entri).</p>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Sudah Mengisi</h4>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {workspaceUsers.filter(u => responderIds.has(u.id)).map(u => (
-                                                            <div key={u.id} className="flex items-center gap-2 bg-white border-[2px] border-slate-900 rounded-lg p-1.5 shadow-hard-mini font-bold text-xs"><img src={u.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${u.name}`} className="w-6 h-6 rounded border border-slate-900" alt="" />{u.name}</div>
-                                                        ))}
-                                                        {workspaceUsers.filter(u => responderIds.has(u.id)).length === 0 && <p className="text-xs text-slate-400 italic font-bold">Belum ada responden</p>}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-2">Belum Mengisi</h4>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {workspaceUsers.filter(u => !responderIds.has(u.id)).map(u => (
-                                                            <div key={u.id} className="bg-slate-100 border-[2px] border-slate-300 rounded-lg px-2 py-1.5 font-bold text-xs text-slate-500">{u.name}</div>
-                                                        ))}
-                                                        {workspaceUsers.filter(u => !responderIds.has(u.id)).length === 0 && <p className="text-xs text-slate-400 italic font-bold">Semua sudah mengisi</p>}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                } else if (selectedStatModal === 'Rata-Rata Mood') {
-                                    return (
-                                        <div className="space-y-6">
-                                            <div className="flex items-center justify-center p-8 bg-violet-100 border-[4px] border-violet-900 rounded-2xl shadow-hard">
-                                                <div className="text-center">
-                                                    <span className="text-6xl font-black text-violet-900 font-heading">{avgScore}</span>
-                                                    <p className="text-xs font-black text-violet-700 uppercase tracking-widest mt-2">Dari Skala 1 - 5</p>
-                                                </div>
-                                            </div>
-                                            <div className="bg-white border-[3px] border-slate-900 rounded-2xl p-4 shadow-hard-mini">
-                                                <h4 className="font-black text-sm uppercase tracking-widest text-slate-700 mb-4 border-b-2 border-slate-200 pb-2">Distribusi Skor</h4>
-                                                <div className="space-y-2">
-                                                    {[5, 4, 3, 2, 1].map(score => {
-                                                        const count = filteredMoods.filter(m => getMeta(m.mood_label).score === score).length;
-                                                        const pct = filteredMoods.length ? Math.round((count / filteredMoods.length) * 100) : 0;
-                                                        return (
-                                                            <div key={score} className="flex items-center gap-3">
-                                                                <div className="w-12 font-black text-slate-500">Skor {score}</div>
-                                                                <div className="flex-1 h-4 bg-slate-100 rounded-full border border-slate-900 overflow-hidden">
-                                                                    <div className="h-full bg-slate-800 border-r border-slate-900 transition-all" style={{ width: `${pct}%` }} />
-                                                                </div>
-                                                                <div className="w-10 text-right font-bold text-sm">{count}</div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })()}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {selectedUserModal && (() => {
-                const user = workspaceUsers.find(u => u.id === selectedUserModal);
-                if (!user) return null;
-
-                const userMoods = moods.filter(m => m.user_id === selectedUserModal).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-                const latest = userMoods[0];
-                const latestMeta = latest ? getMeta(latest.mood_label) : null;
-                const currentUserId = localStorage.getItem('user_id');
-
-                return (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => { e.target === e.currentTarget && setSelectedUserModal(null) }}>
-                        <div className="bg-white border-[4px] border-slate-900 w-full max-w-2xl rounded-[2rem] shadow-[12px_12px_0px_rgba(15,23,42,1)] overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 mt-10">
-                            <div className="p-4 bg-slate-100 border-b-[4px] border-slate-900 flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <img src={user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} className="w-10 h-10 rounded-xl border-2 border-slate-900 bg-white" alt="" />
-                                    <div>
-                                        <h2 className="font-black text-lg uppercase tracking-tight text-slate-900">{user.name}</h2>
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{user.role || 'Member'}</p>
-                                    </div>
-                                </div>
-                                <button onClick={() => setSelectedUserModal(null)} className="p-1.5 hover:bg-slate-200 rounded-xl transition-colors border-2 border-transparent hover:border-slate-900"><X size={20} strokeWidth={3} /></button>
-                            </div>
-
-                            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                                {/* Latest Status */}
-                                {latest && latestMeta && (
-                                    <div className="flex items-center gap-4 p-4 rounded-[1.5rem] border-[3px] border-slate-900 shadow-hard-mini" style={{ backgroundColor: latestMeta.bg }}>
-                                        <div className="text-4xl bg-white w-16 h-16 rounded-2xl border-2 border-slate-900 shadow-sm flex items-center justify-center -rotate-3">{latest.mood_emoji}</div>
-                                        <div>
-                                            <h4 className="font-black text-sm uppercase tracking-widest text-slate-600 mb-1">Status Terbaru</h4>
-                                            <div className="flex items-center gap-2 font-bold text-lg text-slate-900">
-                                                {latest.mood_label}
-                                                <span className="text-xs font-semibold px-2 py-0.5 bg-white rounded-md border border-slate-900 shadow-sm">{relativeTime(latest.created_at)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Recent History Inline Table */}
-                                <div className="space-y-3">
-                                    <h4 className="font-black text-xs uppercase tracking-widest text-slate-500 flex items-center gap-2"><Clock size={14} strokeWidth={3} /> Riwayat Terakhir</h4>
-                                    {userMoods.length > 0 ? (
-                                        <div className="bg-slate-50 border-[3px] border-slate-900 rounded-2xl overflow-hidden shadow-hard-mini">
-                                            <table className="w-full text-left border-collapse min-w-full">
-                                                <thead>
-                                                    <tr className="bg-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 border-b-[3px] border-slate-900">
-                                                        <th className="p-3 whitespace-nowrap">Waktu</th>
-                                                        <th className="p-3">Mood</th>
-                                                        <th className="p-3 hidden sm:table-cell w-24">Skor</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {userMoods.slice(0, 10).map(m => {
-                                                        const meta = getMeta(m.mood_label);
-                                                        return (
-                                                            <tr key={m.id} className="border-b-2 border-slate-200 last:border-b-0 hover:bg-white transition-colors">
-                                                                <td className="p-3 text-xs font-bold text-slate-700 whitespace-nowrap align-middle">
-                                                                    {new Date(m.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).replace('.', ':')}
-                                                                </td>
-                                                                <td className="p-3 align-middle">
-                                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white border-[2px] border-slate-900 text-xs font-bold shadow-sm whitespace-nowrap">
-                                                                        <span className="text-sm leading-none">{m.mood_emoji}</span> {m.mood_label}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="p-3 hidden sm:table-cell align-middle">
-                                                                    <div className="flex gap-0.5">
-                                                                        {[1, 2, 3, 4, 5].map(s => (
-                                                                            <div key={s} className={`w-2 h-3 rounded-[1px] border border-slate-900 ${s <= meta.score ? 'bg-slate-800' : 'bg-transparent'}`}></div>
-                                                                        ))}
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="p-6 bg-slate-50 border-[3px] border-slate-900 rounded-2xl border-dashed text-center font-bold text-slate-400">Belum ada data riwayat</div>
                                     )}
                                 </div>
-
-                                {/* Support Actions */}
-                                {user.id !== currentUserId && latest && (
-                                    <div className="space-y-3">
-                                        <h4 className="font-black text-xs uppercase tracking-widest text-slate-500 flex items-center gap-2"><HandHeart size={14} strokeWidth={3} /> Kirim Dukungan (Maksimal 1 Jam Berapa Pun)</h4>
-                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                            {(['hug', 'coffee', 'donut', 'high_five'] as const).map(type => {
-                                                const emojis = { hug: '🤗', coffee: '☕', donut: '🍩', high_five: '🙌' };
-                                                const labels = { hug: 'Hug', coffee: 'Coffee', donut: 'Donut', high_five: 'High Five' };
-                                                return (
-                                                    <button
-                                                        key={type}
-                                                        disabled={sendingSupport === user.id || sentSupport.has(user.id)}
-                                                        onClick={() => sendVirtualSupport(latest, type)}
-                                                        className="p-3 rounded-xl border-[3px] border-slate-900 bg-white hover:-translate-y-1 hover:shadow-hard-mini transition-all active:translate-y-0 active:shadow-none font-bold text-sm disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex flex-col items-center gap-1.5"
-                                                    >
-                                                        <span className="text-3xl">{emojis[type]}</span>
-                                                        <span className="text-[10px] uppercase tracking-widest">{labels[type]}</span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                        {(sendingSupport === user.id || sentSupport.has(user.id)) && (
-                                            <p className="text-xs font-black text-emerald-600 text-center mt-2">✨ Dukungan berhasil dikirim! Silakan tunggu jika ingin mengirim lagi nanti.</p>
-                                        )}
-                                    </div>
-                                )}
                             </div>
                         </div>
-                    </div>
-                );
-            })()}
+                    );
+                })()
+            }
 
             <style>{`
                 @keyframes moodPulseFloat {

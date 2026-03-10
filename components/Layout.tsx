@@ -190,6 +190,15 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-dark .border-amber-300 { border-color: #b45309 !important; }
         .theme-dark .border-purple-300 { border-color: #7c3aed !important; }
         .theme-dark .border-emerald-300 { border-color: #059669 !important; }
+
+        /* Mood Tracker Icon Overrides - keep icon color inside stat boxes */
+        .theme-dark .bg-blue-100 .text-blue-500 { color: #60a5fa !important; stroke: #60a5fa !important; }
+        .theme-dark .bg-purple-100 .text-purple-500 { color: #c084fc !important; stroke: #c084fc !important; }
+        .theme-dark .bg-emerald-100 .text-emerald-500 { color: #34d399 !important; stroke: #34d399 !important; }
+        .theme-dark .bg-amber-100 .text-amber-500 { color: #fbbf24 !important; stroke: #fbbf24 !important; }
+        /* Respect !text-white override on inline-styled badges */
+        .theme-dark [style*="background"] .\\!text-white,
+        .theme-dark .\\!text-white { color: #ffffff !important; }
     `,
     midnight: () => `
         body.theme-midnight, .theme-midnight, .theme-midnight main, .theme-midnight .bg-background, .theme-midnight.bg-background { background-color: #0c1130 !important; }
@@ -293,6 +302,14 @@ const THEME_STYLES: Record<string, (color?: string) => string> = {
         .theme-midnight .border-amber-300 { border-color: #d97706 !important; }
         .theme-midnight .border-purple-300 { border-color: #7c3aed !important; }
         .theme-midnight .border-emerald-300 { border-color: #059669 !important; }
+
+        /* Mood Tracker Icon Overrides - midnight */
+        .theme-midnight .bg-blue-100 .text-blue-500 { color: #93c5fd !important; stroke: #93c5fd !important; }
+        .theme-midnight .bg-purple-100 .text-purple-500 { color: #d8b4fe !important; stroke: #d8b4fe !important; }
+        .theme-midnight .bg-emerald-100 .text-emerald-500 { color: #6ee7b7 !important; stroke: #6ee7b7 !important; }
+        .theme-midnight .bg-amber-100 .text-amber-500 { color: #fde68a !important; stroke: #fde68a !important; }
+        .theme-midnight [style*="background"] .\\!text-white,
+        .theme-midnight .\\!text-white { color: #ffffff !important; }
     `,
     pastel: () => `
         body.theme-pastel, .theme-pastel, .theme-pastel main, .theme-pastel .bg-background, .theme-pastel.bg-background { background-color: #fff1f2 !important; }
@@ -1443,7 +1460,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },
             { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
-            { id: 'mood', path: '/mood', label: 'Team Pulse', icon: Smile },
+            { id: 'mood', path: '/mood', label: 'Team Reflection', icon: Smile },
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
