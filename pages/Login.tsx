@@ -127,6 +127,7 @@ export const Login: React.FC = () => {
                         throw new Error("Akun Anda telah dinonaktifkan.");
                     }
 
+                    localStorage.setItem('login_ts', Date.now().toString());
                     await logActivity({ user_id: preloadedUser.id, action: 'LOGIN' });
                     navigate('/');
                     window.location.reload();
@@ -383,6 +384,7 @@ export const Login: React.FC = () => {
             }
 
             // Navigation will be handled by AuthProvider's state change
+            localStorage.setItem('login_ts', Date.now().toString());
             navigate('/');
 
         } catch (err: any) {
@@ -405,6 +407,7 @@ export const Login: React.FC = () => {
         if (u.parent_user_id) localStorage.setItem('tenant_id', u.parent_user_id);
         if (u.admin_id) localStorage.setItem('tenant_id', u.admin_id);
 
+        localStorage.setItem('login_ts', Date.now().toString());
         await logActivity({ user_id: u.id, action: 'BYPASS_LOGIN', details: { method: showBypassCode ? 'activation_code' : 'password_match' } });
         navigate('/');
         window.location.reload();

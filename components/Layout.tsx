@@ -442,10 +442,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
     const [currentMood, setCurrentMood] = useState<string | null>(localStorage.getItem(`current_mood_${localStorage.getItem('user_id')}`));
     const [showMoodMenu, setShowMoodMenu] = useState(false);
-    // Key yang berubah setiap login baru → memaksa MoodTrackerModal re-mount fresh
-    const [moodModalKey, setMoodModalKey] = useState(0);
 
-    const activeWorkspaceId = localStorage.getItem('active_workspace_id');
+    // State — bukan variabel biasa — agar MoodTrackerModal re-render ketika workspace berhasil di-resolve
+    const [activeWorkspaceId, setActiveWorkspaceId] = useState(
+        localStorage.getItem('active_workspace_id') || ''
+    );
     const notificationRef = useRef<HTMLDivElement>(null);
 
     const MOOD_OPTIONS = [
@@ -461,6 +462,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         const wsId = localStorage.getItem('active_workspace_id');
         if (!userId || !wsId) return;
 
+        // Optimistic update — langsung tampil sebelum DB selesai
+        setCurrentMood(mood.emoji);
+        localStorage.setItem(`current_mood_${userId}`, mood.emoji);
+        setShowMoodMenu(false);
+
         try {
             const { error } = await supabase
                 .from('user_moods')
@@ -468,19 +474,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     user_id: userId,
                     workspace_id: wsId,
                     mood_emoji: mood.emoji,
-                    mood_label: mood.label
+                    mood_label: mood.label,
+                    is_private: false,  // selalu visible ke tim
                 });
 
             if (error) throw error;
-            setCurrentMood(mood.emoji);
-            localStorage.setItem(`current_mood_${userId}`, mood.emoji);
-            setShowMoodMenu(false);
 
             window.dispatchEvent(new CustomEvent('app-alert', {
-                detail: { type: 'success', message: `Mood diupdate ke ${mood.label}!` }
+                detail: { type: 'success', message: `Mood diupdate: ${mood.emoji} ${mood.label}` }
             }));
         } catch (err) {
             console.error(err);
+            // Rollback jika gagal
+            const prev = localStorage.getItem(`current_mood_${userId}`);
+            setCurrentMood(prev);
         }
     };
 
@@ -627,6 +634,35 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 localStorage.setItem('user_subscription_package', profileData.subscriptionPackage);
                 if (profileData.parentUserId) localStorage.setItem('parent_user_id', profileData.parentUserId);
                 else localStorage.removeItem('parent_user_id');
+
+                // ── Set active_workspace_id jika belum ada ──────────────────
+                // Ini diperlukan oleh Mood Tracker dan fitur lain
+                const existingWsId = localStorage.getItem('active_workspace_id');
+                if (!existingWsId) {
+                    try {
+                        const { data: workspaces } = await supabase
+                            .from('workspaces')
+                            .select('id, members, owner_id')
+                            .limit(50);
+
+                        if (workspaces && workspaces.length > 0) {
+                            // Cari workspace yang user bergabung (owner atau member)
+                            const myWs = workspaces.find(ws =>
+                                ws.owner_id === data.id ||
+                                (Array.isArray(ws.members) && ws.members.includes(data.id))
+                            );
+                            const wsId = myWs?.id || workspaces[0].id;
+                            localStorage.setItem('active_workspace_id', wsId);
+                            // ← Kunci: update React state agar MoodTrackerModal re-render
+                            setActiveWorkspaceId(wsId);
+                        }
+                    } catch (wsErr) {
+                        console.warn('Could not fetch workspace for mood tracker:', wsErr);
+                    }
+                } else {
+                    // Workspace sudah ada di localStorage — sync ke React state juga
+                    setActiveWorkspaceId(existingWsId);
+                }
             }
         } catch (err) {
             console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
@@ -1138,8 +1174,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const handleLogout = () => {
         if (confirm('Apakah Anda yakin ingin keluar?')) {
             clearSessionPreserveTheme();
-            // Reset mood modal key agar popup muncul kembali saat login berikutnya
-            setMoodModalKey(0);
             navigate('/login');
         }
     };
@@ -1409,10 +1443,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             { id: 'insight', path: '/insight', label: 'Content Data Insight', icon: Presentation },
             { id: 'carousel', path: '/carousel', label: 'Aruneeka makeDesign', icon: ImageIcon },
             { id: 'kpi', path: '/script', label: 'Team KPI Board', icon: BarChart2 },
+            { id: 'mood', path: '/mood', label: 'Team Pulse', icon: Smile },
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
-            { id: 'mood', path: '/admin/mood-tracker', label: 'Team Pulse', icon: Smile, adminOnly: true },
         ],
         'Superuser': [
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
@@ -1507,7 +1541,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }
 
                                 // Known core pages that are visible by default unless explicitly hidden
-                                const CORE_PAGES = ['dashboard', 'plan', 'flow', 'calendar', 'insight', 'carousel', 'kpi', 'team', 'users', 'inbox', 'workspace'];
+                                const CORE_PAGES = ['dashboard', 'plan', 'flow', 'calendar', 'insight', 'carousel', 'kpi', 'team', 'mood', 'users', 'inbox', 'workspace', 'analytics'];
 
                                 const isHidden = config?.hidden_pages?.includes(item.id);
 
@@ -2669,16 +2703,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
             )}
 
-            {userProfile.id && activeWorkspaceId && (
+            {userProfile.id && (
                 <MoodTrackerModal
-                    key={`mood-modal-${userProfile.id}-${moodModalKey}`}
+                    key={`mood-modal-${userProfile.id}-${localStorage.getItem('login_ts') || '0'}`}
                     userId={userProfile.id}
-                    workspaceId={activeWorkspaceId}
+                    workspaceId={activeWorkspaceId || ''}
                     onClose={() => {
                         const todayMood = localStorage.getItem(`current_mood_${userProfile.id}`);
                         if (todayMood) setCurrentMood(todayMood);
-                        // Naikan key agar tidak muncul lagi di session ini
-                        setMoodModalKey(prev => prev + 1);
                     }}
                 />
             )}

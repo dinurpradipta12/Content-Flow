@@ -164,7 +164,12 @@ export const AdminMoodTracker: React.FC = () => {
     const [heatmapMoods, setHeatmapMoods] = useState<UserMood[]>([]);
 
     const fetchMoods = useCallback(async (silent = false) => {
-        if (!activeWorkspaceId) return;
+        // Baca fresh dari localStorage setiap fetch (bukan dari stale state)
+        const wsId = localStorage.getItem('active_workspace_id');
+        if (!wsId) {
+            setLoading(false);
+            return;
+        }
         if (!silent) setLoading(true);
         else setRefreshing(true);
 
@@ -194,7 +199,7 @@ export const AdminMoodTracker: React.FC = () => {
                     let q = supabase
                         .from('user_moods')
                         .select('id,user_id,workspace_id,mood_emoji,mood_label,is_private,created_at')
-                        .eq('workspace_id', activeWorkspaceId)
+                        .eq('workspace_id', wsId)
                         .order('created_at', { ascending: false })
                         .limit(300);
                     if (fromDate) q = q.gte('created_at', fromDate);
@@ -204,7 +209,7 @@ export const AdminMoodTracker: React.FC = () => {
                 supabase
                     .from('user_moods')
                     .select('user_id,mood_emoji,mood_label,created_at')
-                    .eq('workspace_id', activeWorkspaceId)
+                    .eq('workspace_id', wsId)
                     .gte('created_at', heatmapFrom.toISOString())
                     .order('created_at', { ascending: false })
                     .limit(1000)
@@ -268,7 +273,7 @@ export const AdminMoodTracker: React.FC = () => {
             await supabase.from('notifications').insert([{
                 recipient_id: targetMood.user_id,
                 actor_id: actorId,
-                workspace_id: activeWorkspaceId,
+                workspace_id: localStorage.getItem('active_workspace_id'),
                 type: 'MOOD_SUPPORT',
                 title: `${icon} ${label} dari ${actorName}`,
                 content: type === 'hug'

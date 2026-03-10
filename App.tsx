@@ -222,6 +222,8 @@ const App: React.FC = () => {
                   {/* Team & Admin Routes */}
                   <Route path="admin/team" element={<RequireAdmin><TeamManagement /></RequireAdmin>} />
                   <Route path="admin/mood-tracker" element={<RequireAdmin><AdminMoodTracker /></RequireAdmin>} />
+                  {/* Team Mood — accessible to all workspace members */}
+                  <Route path="mood" element={<AdminMoodTracker />} />
 
                   {/* Superuser / Developer Infrastructure */}
                   <Route path="admin/workspace" element={<RequireDeveloper><WorkspaceSettings /></RequireDeveloper>} />
