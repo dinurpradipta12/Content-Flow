@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Modal } from './ui/Modal';
-import { CheckCircle, Heart, Sparkles, AlertCircle } from 'lucide-react';
+import { Heart, Users, MessageSquare, TrendingUp, Eye, EyeOff, Coffee, Lightbulb } from 'lucide-react';
 
 interface MoodTrackerModalProps {
     userId: string;
@@ -10,145 +9,320 @@ interface MoodTrackerModalProps {
 }
 
 const MOODS = [
-    { emoji: '😭', label: 'Burnout', color: 'bg-red-500', shadow: 'shadow-red-500/50' },
-    { emoji: '😴', label: 'Tired', color: 'bg-amber-500', shadow: 'shadow-amber-500/50' },
-    { emoji: '😐', label: 'Neutral', color: 'bg-slate-500', shadow: 'shadow-slate-500/50' },
-    { emoji: '🙂', label: 'Good', color: 'bg-blue-500', shadow: 'shadow-blue-500/50' },
-    { emoji: '🤩', label: 'Happy', color: 'bg-pink-500', shadow: 'shadow-pink-500/50' },
+    {
+        emoji: '😭', label: 'Burnout',
+        gradient: 'from-red-500 to-rose-600',
+        isLow: true,
+        motivation: '💙 Wajar banget untuk merasa begini. Ambil napas dalam, minum air, dan ingat: kamu sudah melakukan yang terbaik. Istirahat sejenak itu bukan kelemahan — itu kebutuhan.',
+        tip: 'Coba istirahat 5–10 menit sebelum melanjutkan.'
+    },
+    {
+        emoji: '😴', label: 'Capek',
+        gradient: 'from-amber-400 to-orange-500',
+        isLow: true,
+        motivation: '🌿 Kelelahan adalah tanda kamu sudah bekerja keras. Pelan-pelan saja hari ini — kualitas lebih baik dari kecepatan.',
+        tip: 'Prioritaskan 1–2 tugas terpenting saja hari ini.'
+    },
+    {
+        emoji: '😐', label: 'Biasa',
+        gradient: 'from-slate-400 to-slate-600',
+        isLow: false,
+        motivation: null, tip: null
+    },
+    {
+        emoji: '🙂', label: 'Baik',
+        gradient: 'from-blue-400 to-indigo-500',
+        isLow: false,
+        motivation: null, tip: null
+    },
+    {
+        emoji: '🤩', label: 'Semangat',
+        gradient: 'from-pink-400 to-fuchsia-500',
+        isLow: false,
+        motivation: null, tip: null
+    },
 ];
 
+const WHY_POINTS = [
+    {
+        icon: MessageSquare,
+        color: 'text-blue-500', bg: 'bg-blue-50',
+        title: 'Kita jarang bisa cerita langsung',
+        desc: 'Di tim yang sibuk, mood tracker jadi jembatan kecil untuk saling memahami.'
+    },
+    {
+        icon: Users,
+        color: 'text-purple-500', bg: 'bg-purple-50',
+        title: 'Empati membangun tim yang kuat',
+        desc: 'Ketika rekan tahu kamu sedang burnout, mereka bisa lebih pengertian.'
+    },
+    {
+        icon: TrendingUp,
+        color: 'text-emerald-500', bg: 'bg-emerald-50',
+        title: 'Mood baik = performa baik',
+        desc: 'Karyawan yang merasa didengar 4.6x lebih produktif.'
+    },
+];
+
+/**
+ * MoodTrackerModal Logic:
+ * - Muncul SEKALI per session login.
+ * - Saat logout → localStorage.clear() → popup muncul kembali.
+ * - Key: mood_session_{userId}_{workspaceId}
+ * - Privacy: is_private=true → tidak tampil ke rekan tim
+ */
 export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, workspaceId, onClose }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedMood, setSelectedMood] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
     const [showThankYou, setShowThankYou] = useState(false);
+    const [selectedMood, setSelectedMood] = useState<typeof MOODS[0] | null>(null);
+    const [isPrivate, setIsPrivate] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    // Motivational nudge state — shows BEFORE thank you when mood is low
+    const [showNudge, setShowNudge] = useState(false);
 
     useEffect(() => {
-        const checkDailyMood = async () => {
-            if (!userId) return;
-
-            const today = new Date().toISOString().split('T')[0];
-            const lastCheck = localStorage.getItem(`mood_check_${userId}`);
-
-            if (lastCheck === today) return;
-
-            // Optional: Check database if already filled today for this workspace
-            const { data } = await supabase
-                .from('user_moods')
-                .select('id')
-                .eq('user_id', userId)
-                .gte('created_at', `${today}T00:00:00`)
-                .limit(1);
-
-            if (data && data.length > 0) {
-                localStorage.setItem(`mood_check_${userId}`, today);
-                return;
-            }
-
-            // Show modal if not filled
+        const check = () => {
+            if (!userId || !workspaceId) return;
+            const sessionKey = `mood_session_${userId}_${workspaceId}`;
+            if (localStorage.getItem(sessionKey) === 'true') return;
             setIsOpen(true);
         };
+        const t = setTimeout(check, 1200);
+        return () => clearTimeout(t);
+    }, [userId, workspaceId]);
 
-        checkDailyMood();
-    }, [userId]);
+    const handleSelect = (mood: typeof MOODS[0]) => {
+        if (isSaving) return;
+        setSelectedMood(mood);
 
-    const handleMoodSelect = async (mood: typeof MOODS[0]) => {
-        if (!userId || !workspaceId) return;
-
-        setIsSaving(true);
-        setSelectedMood(mood.emoji);
-
-        try {
-            const today = new Date().toISOString().split('T')[0];
-
-            // Upsert mood for today
-            const { error } = await supabase
-                .from('user_moods')
-                .insert({
-                    user_id: userId,
-                    workspace_id: workspaceId,
-                    mood_emoji: mood.emoji,
-                    mood_label: mood.label
-                });
-
-            if (error) throw error;
-
-            localStorage.setItem(`mood_check_${userId}`, today);
-            localStorage.setItem(`current_mood_${userId}`, mood.emoji);
-
-            setShowThankYou(true);
-            setTimeout(() => {
-                setIsOpen(false);
-                if (onClose) onClose();
-            }, 2000);
-        } catch (err) {
-            console.error('Error saving mood:', err);
-        } finally {
-            setIsSaving(false);
+        // Low mood → show motivational nudge first, then thank you
+        if (mood.isLow) {
+            setShowNudge(true);
+        } else {
+            saveMoodAndClose(mood);
         }
+    };
+
+    const saveMoodAndClose = async (mood: typeof MOODS[0]) => {
+        setIsSaving(true);
+
+        // Mark session instantly
+        localStorage.setItem(`mood_session_${userId}_${workspaceId}`, 'true');
+        if (!isPrivate) {
+            localStorage.setItem(`current_mood_${userId}`, mood.emoji);
+        }
+
+        setShowNudge(false);
+        setShowThankYou(true);
+
+        // Auto close after 1.8s
+        setTimeout(() => {
+            setIsOpen(false);
+            if (onClose) onClose();
+        }, 1800);
+
+        // Save to DB in background
+        supabase.from('user_moods').insert({
+            user_id: userId,
+            workspace_id: workspaceId,
+            mood_emoji: mood.emoji,
+            mood_label: mood.label,
+            is_private: isPrivate,
+        }).then(({ error }) => {
+            if (error) console.error('Mood save error:', error);
+        });
+
+        setIsSaving(false);
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-card w-full max-w-lg rounded-[2.5rem] border-[4px] border-slate-900 shadow-[12px_12px_0px_0px_rgba(15,23,42,1)] overflow-hidden relative">
-                {/* Decorative background elements */}
-                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                    <Sparkles size={120} />
-                </div>
+        <>
+            {/* Overlay */}
+            <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-[6px]"
+                style={{ animation: 'moodFadeIn 0.3s ease-out both' }} />
 
-                <div className="p-8 sm:p-10">
-                    {!showThankYou ? (
-                        <div className="space-y-8">
-                            <div className="text-center space-y-3">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-accent/10 border-2 border-accent/20 text-accent rounded-full text-xs font-black uppercase tracking-widest mb-2 animate-bounce">
-                                    <Heart size={14} fill="currentColor" /> Daily Pulse
+            {/* Modal */}
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6"
+                style={{ animation: 'moodFadeIn 0.3s ease-out both' }}>
+                <div
+                    className="bg-card w-full max-w-2xl rounded-[2rem] border-[4px] border-slate-900 shadow-[16px_16px_0px_0px_rgba(15,23,42,0.9)] overflow-hidden relative"
+                    style={{ animation: 'moodSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}
+                >
+
+                    {/* ── NUDGE STATE (low mood message before saving) ── */}
+                    {showNudge && selectedMood ? (
+                        <div className="p-8 sm:p-10 flex flex-col items-center gap-6 text-center"
+                            style={{ animation: 'moodZoomIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+
+                            <div className="flex flex-col items-center gap-3">
+                                <span className="text-7xl" style={{ animation: 'moodBounce 0.6s ease-out both' }}>
+                                    {selectedMood.emoji}
+                                </span>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 border-2 border-amber-300 rounded-full">
+                                    <Lightbulb size={11} className="text-amber-600" />
+                                    <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Sebentar ya…</span>
                                 </div>
-                                <h2 className="text-3xl sm:text-4xl font-black text-foreground font-heading tracking-tight">Bagaimana mood kamu hari ini?</h2>
-                                <p className="text-muted-foreground font-bold text-sm sm:text-base leading-relaxed">
-                                    Berbagi mood membantu kita saling memahami dan berempati satu sama lain dalam tim, terutama saat kita jarang bisa bercerita langsung.
+                            </div>
+
+                            <div className="max-w-md space-y-3">
+                                <p className="text-base sm:text-lg font-black text-foreground leading-snug">
+                                    {selectedMood.motivation}
+                                </p>
+                                {selectedMood.tip && (
+                                    <div className="flex items-center gap-2 bg-amber-50 border-2 border-amber-200 rounded-2xl px-4 py-3">
+                                        <Coffee size={16} className="text-amber-600 shrink-0" />
+                                        <p className="text-xs font-bold text-amber-800 text-left">{selectedMood.tip}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-3 w-full max-w-xs">
+                                <button
+                                    onClick={() => setShowNudge(false)}
+                                    className="flex-1 py-2.5 rounded-xl border-[2.5px] border-slate-300 text-xs font-black text-slate-600 hover:border-slate-500 transition-all"
+                                >
+                                    Ubah Mood
+                                </button>
+                                <button
+                                    onClick={() => saveMoodAndClose(selectedMood)}
+                                    className="flex-1 py-2.5 rounded-xl border-[2.5px] border-slate-900 bg-slate-900 text-white text-xs font-black shadow-[3px_3px_0px_0px_rgba(15,23,42,0.4)] hover:-translate-y-0.5 transition-all"
+                                >
+                                    Lanjutkan →
+                                </button>
+                            </div>
+                        </div>
+
+                    ) : showThankYou && selectedMood ? (
+
+                        /* ── THANK YOU STATE ── */
+                        <div className="py-16 px-8 flex flex-col items-center justify-center text-center gap-5"
+                            style={{ animation: 'moodZoomIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+                            <div className="relative">
+                                <div className="text-7xl leading-none" style={{ animation: 'moodBounce 0.6s ease-out both' }}>
+                                    {selectedMood.emoji}
+                                </div>
+                                <div className="absolute -inset-4 rounded-full bg-gradient-to-br from-pink-400/20 to-fuchsia-500/20 blur-xl -z-10" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-3xl sm:text-4xl font-black text-foreground font-heading italic tracking-tight">
+                                    Thankyou, happy working!
+                                </h3>
+                                <p className="text-sm font-semibold text-muted-foreground">
+                                    {isPrivate
+                                        ? 'Mood kamu disimpan secara pribadi. 🔒'
+                                        : 'Terima kasih sudah jujur dengan perasaanmu. Selamat berkarya! 🚀'
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                    ) : (
+
+                        /* ── MAIN QUESTION STATE ── */
+                        <div className="flex flex-col sm:flex-row min-h-0">
+
+                            {/* LEFT: Pertanyaan + Emoji */}
+                            <div className="flex-1 p-7 sm:p-9 flex flex-col justify-between gap-5">
+
+                                {/* Badge */}
+                                <div className="flex items-center gap-2 w-fit">
+                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-pink-100 border-2 border-pink-300 rounded-full">
+                                        <Heart size={12} className="text-pink-500 fill-pink-500" />
+                                        <span className="text-[10px] font-black text-pink-600 uppercase tracking-widest">Daily Pulse</span>
+                                    </div>
+                                </div>
+
+                                {/* Question */}
+                                <div className="space-y-1.5">
+                                    <h2 className="text-2xl sm:text-3xl font-black text-foreground font-heading leading-tight tracking-tight">
+                                        Bagaimana<br />mood kamu<br />hari ini?
+                                    </h2>
+                                    <p className="text-xs font-semibold text-muted-foreground leading-relaxed">
+                                        Pilih satu emoji yang paling menggambarkan perasaanmu sekarang.
+                                    </p>
+                                </div>
+
+                                {/* Emoji Grid */}
+                                <div className="grid grid-cols-5 gap-2 sm:gap-3 w-full">
+                                    {MOODS.map((mood) => (
+                                        <button
+                                            key={mood.label}
+                                            onClick={() => handleSelect(mood)}
+                                            disabled={isSaving}
+                                            title={mood.label}
+                                            className={`
+                                                group relative flex flex-col items-center justify-center gap-1
+                                                w-full aspect-square rounded-2xl border-[3px] border-slate-900
+                                                bg-gradient-to-br ${mood.gradient}
+                                                shadow-[4px_4px_0px_0px_rgba(15,23,42,0.8)]
+                                                hover:-translate-y-1.5 hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,0.9)]
+                                                active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(15,23,42,0.9)]
+                                                transition-all duration-200 ease-out
+                                                disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0
+                                            `}
+                                        >
+                                            <span className="text-2xl leading-none group-hover:scale-110 transition-transform duration-200 drop-shadow-md">
+                                                {mood.emoji}
+                                            </span>
+                                            <span className="text-[9px] font-black uppercase tracking-tight text-white/90 leading-none">
+                                                {mood.label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Privacy Toggle */}
+                                <button
+                                    onClick={() => setIsPrivate(p => !p)}
+                                    className={`flex items-center gap-2 w-fit px-3 py-2 rounded-xl border-2 transition-all duration-200 ${isPrivate
+                                            ? 'border-slate-800 bg-slate-900 text-white'
+                                            : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-400'
+                                        }`}
+                                >
+                                    {isPrivate
+                                        ? <EyeOff size={13} className="text-white" />
+                                        : <Eye size={13} />
+                                    }
+                                    <span className="text-[10px] font-black uppercase tracking-wider leading-none">
+                                        {isPrivate ? '🔒 Hanya untuk saya' : 'Tampilkan ke tim'}
+                                    </span>
+                                </button>
+
+                                {/* Footer */}
+                                <p className="text-[9px] text-muted-foreground font-semibold opacity-60 italic leading-relaxed">
+                                    Popup ini hanya muncul sekali setiap kamu login.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-5 gap-3 sm:gap-4 py-4">
-                                {MOODS.map((mood) => (
-                                    <button
-                                        key={mood.label}
-                                        onClick={() => handleMoodSelect(mood)}
-                                        disabled={isSaving}
-                                        className={`group relative flex flex-col items-center gap-3 p-3 sm:p-4 rounded-3xl border-[3px] border-slate-900 transition-all duration-300 ${mood.color} hover:-translate-y-2 hover:shadow-[6px_6px_0px_0px_rgba(15,23,42,1)] disabled:opacity-50 disabled:translate-y-0`}
-                                    >
-                                        <span className="text-3xl sm:text-4xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md animate-mood-float">
-                                            {mood.emoji}
-                                        </span>
-                                        <span className="text-[10px] font-black uppercase tracking-tighter text-white opacity-90">
-                                            {mood.label}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="bg-muted/50 border-2 border-slate-900/10 p-5 rounded-3xl flex items-start gap-4">
-                                <div className="p-2 bg-blue-500 rounded-xl text-white shadow-hard-mini">
-                                    <AlertCircle size={18} />
+                            {/* RIGHT: Why it matters */}
+                            <div className="w-full sm:w-[210px] bg-slate-50 border-t-[3px] sm:border-t-0 sm:border-l-[3px] border-slate-200 flex flex-col p-5 gap-4">
+                                <div className="space-y-0.5">
+                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">Mengapa ini ada?</p>
+                                    <h3 className="text-sm font-black text-foreground leading-snug">Karena kita peduli satu sama lain.</h3>
                                 </div>
-                                <div>
-                                    <h4 className="font-black text-xs text-foreground uppercase tracking-widest mb-1">Kenapa ini penting?</h4>
-                                    <p className="text-[11px] font-bold text-muted-foreground leading-snug">
-                                        Mood yang baik meningkatkan kreativitas dan performa kerja. Dengan mengetahui mood tim, kita bisa saling mendukung dan menciptakan lingkungan kerja yang aman secara psikologis.
+
+                                <div className="space-y-3 flex-1">
+                                    {WHY_POINTS.map((point, i) => (
+                                        <div key={i} className="flex items-start gap-2.5">
+                                            <div className={`w-6 h-6 ${point.bg} rounded-lg flex items-center justify-center flex-shrink-0 border border-slate-200`}>
+                                                <point.icon size={12} className={point.color} />
+                                            </div>
+                                            <div className="space-y-0.5 min-w-0">
+                                                <p className="text-[10px] font-black text-foreground leading-tight">{point.title}</p>
+                                                <p className="text-[9px] font-medium text-muted-foreground leading-snug">{point.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="bg-slate-900 text-slate-100 rounded-xl p-3 space-y-1">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">Tahukah kamu?</p>
+                                    <p className="text-[9px] font-semibold leading-relaxed text-slate-400">
+                                        Tim yang saling memahami kondisi satu sama lain menghasilkan kolaborasi 3× lebih efektif.
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="py-12 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in-95 duration-500">
-                            <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-white border-[4px] border-slate-900 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] animate-bounce">
-                                <CheckCircle size={48} strokeWidth={3} />
-                            </div>
-                            <div className="space-y-2">
-                                <h3 className="text-4xl font-black text-foreground font-heading italic">Thankyou, happy working!</h3>
-                                <p className="text-muted-foreground font-bold">Terima kasih sudah jujur dengan perasaanmu hari ini.</p>
                             </div>
                         </div>
                     )}
@@ -156,14 +330,24 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
             </div>
 
             <style>{`
-                @keyframes mood-float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-5px); }
+                @keyframes moodFadeIn {
+                    from { opacity: 0; } to { opacity: 1; }
                 }
-                .animate-mood-float {
-                    animation: mood-float 3s ease-in-out infinite;
+                @keyframes moodSlideUp {
+                    from { opacity: 0; transform: translateY(32px) scale(0.96); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                @keyframes moodZoomIn {
+                    from { opacity: 0; transform: scale(0.85); }
+                    to   { opacity: 1; transform: scale(1); }
+                }
+                @keyframes moodBounce {
+                    0%   { transform: scale(0.3) rotate(-15deg); }
+                    60%  { transform: scale(1.2) rotate(5deg); }
+                    80%  { transform: scale(0.95) rotate(-3deg); }
+                    100% { transform: scale(1) rotate(0deg); }
                 }
             `}</style>
-        </div>
+        </>
     );
 };

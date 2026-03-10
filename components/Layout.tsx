@@ -53,6 +53,9 @@ import { UserPresence } from './UserPresence';
 import { PresenceToast } from './PresenceToast';
 import { FirstLoginModal } from './FirstLoginModal';
 import { EmailSetupModal } from './EmailSetupModal';
+import { MoodTrackerModal } from './MoodTrackerModal';
+import { MoodIndicator } from './MoodIndicator';
+import { Smile } from 'lucide-react';
 
 const THEME_STYLES: Record<string, (color?: string) => string> = {
     dark: () => `
@@ -436,9 +439,48 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Notification State
     const { notifications, unreadCount, markAsRead, markAllAsRead, handleNotificationClick, clearAllNotifications } = useNotifications();
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
+    const [currentMood, setCurrentMood] = useState<string | null>(localStorage.getItem(`current_mood_${localStorage.getItem('user_id')}`));
+    const [showMoodMenu, setShowMoodMenu] = useState(false);
 
     const activeWorkspaceId = localStorage.getItem('active_workspace_id');
     const notificationRef = useRef<HTMLDivElement>(null);
+
+    const MOOD_OPTIONS = [
+        { emoji: '🤩', label: 'Inspired' },
+        { emoji: '🙂', label: 'Good' },
+        { emoji: '😐', label: 'Neutral' },
+        { emoji: '😴', label: 'Tired' },
+        { emoji: '😭', label: 'Burnout' },
+    ];
+
+    const handleUpdateMood = async (mood: any) => {
+        const userId = localStorage.getItem('user_id');
+        const wsId = localStorage.getItem('active_workspace_id');
+        if (!userId || !wsId) return;
+
+        try {
+            const { error } = await supabase
+                .from('user_moods')
+                .insert({
+                    user_id: userId,
+                    workspace_id: wsId,
+                    mood_emoji: mood.emoji,
+                    mood_label: mood.label
+                });
+
+            if (error) throw error;
+            setCurrentMood(mood.emoji);
+            localStorage.setItem(`current_mood_${userId}`, mood.emoji);
+            setShowMoodMenu(false);
+
+            window.dispatchEvent(new CustomEvent('app-alert', {
+                detail: { type: 'success', message: `Mood diupdate ke ${mood.label}!` }
+            }));
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -641,6 +683,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
         };
         checkEmailSetup();
+
+        // Fetch user mood for today
+        const fetchMood = async () => {
+            const userId = localStorage.getItem('user_id');
+            const wsId = localStorage.getItem('active_workspace_id');
+            if (!userId || !wsId) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from('user_moods')
+                .select('mood_emoji')
+                .eq('user_id', userId)
+                .eq('workspace_id', wsId)
+                .gte('created_at', `${today}T00:00:00`)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (data && data[0]) {
+                setCurrentMood(data[0].mood_emoji);
+                localStorage.setItem(`current_mood_${userId}`, data[0].mood_emoji);
+            }
+        };
+        fetchMood();
+
 
         // 4. Listen for User Updates (Sync between Profile page and Layout)
         const handleUserUpdate = () => {
@@ -1342,6 +1408,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ],
         'Admin Zone': [
             { id: 'team', path: '/admin/team', label: 'Team Management', icon: Briefcase, adminOnly: true },
+            { id: 'mood', path: '/admin/mood-tracker', label: 'Team Pulse', icon: Smile, adminOnly: true },
         ],
         'Superuser': [
             { id: 'users', path: '/admin/users', label: 'User Management', icon: Users, developerOnly: true },
@@ -1634,9 +1701,107 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <p className="font-bold text-sm md:text-base text-slate-800 leading-tight group-hover:text-accent transition-colors">{userProfile.name}</p>
                                     <p className="text-[11px] md:text-xs text-slate-500 font-bold">{userProfile.jobTitle || userProfile.role}</p>
                                 </div>
-                                <div className="relative">
+                                <div className="relative group/avatar"
+                                    onMouseEnter={() => setShowMoodMenu(true)}
+                                    onMouseLeave={() => setShowMoodMenu(false)}>
                                     <img src={userProfile.avatar} alt="User" className="w-11 h-11 md:w-13 md:h-13 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
                                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                                    <MoodIndicator moodEmoji={currentMood} size="sm" />
+
+                                    {/* ── Mood Hover Dropdown ── */}
+                                    {showMoodMenu && (
+                                        <div
+                                            className="absolute top-full right-0 mt-2 z-[200] w-64"
+                                            style={{ animation: 'moodDropIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+                                        >
+                                            <div className="bg-card border-[3px] border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_rgba(15,23,42,0.85)] overflow-hidden">
+                                                {/* Header */}
+                                                <div className="px-4 pt-4 pb-3 border-b-2 border-slate-100">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="relative shrink-0">
+                                                            <img src={userProfile.avatar} className="w-8 h-8 rounded-full border-2 border-slate-200 object-cover" alt="" />
+                                                            {currentMood && (
+                                                                <span className="absolute -bottom-1 -right-1 text-[11px] leading-none bg-white rounded-full w-4 h-4 flex items-center justify-center shadow border border-slate-100">
+                                                                    {currentMood}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-black text-foreground truncate leading-tight">{userProfile.name}</p>
+                                                            <p className="text-[10px] font-semibold text-muted-foreground">
+                                                                {currentMood ? `Mood sekarang: ${currentMood}` : 'Belum set mood hari ini'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Emoji Picker */}
+                                                <div className="p-3 space-y-2">
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground px-0.5">Pilih mood kamu sekarang</p>
+                                                    <div className="grid grid-cols-5 gap-1.5">
+                                                        {MOOD_OPTIONS.map((m) => {
+                                                            const isActive = currentMood === m.emoji;
+                                                            const gradientStyles: Record<string, string> = {
+                                                                '🤩': 'linear-gradient(135deg, #f472b6, #c026d3)',
+                                                                '🙂': 'linear-gradient(135deg, #60a5fa, #4f46e5)',
+                                                                '😐': 'linear-gradient(135deg, #94a3b8, #475569)',
+                                                                '😴': 'linear-gradient(135deg, #fbbf24, #f97316)',
+                                                                '😭': 'linear-gradient(135deg, #f87171, #e11d48)',
+                                                            };
+                                                            return (
+                                                                <button
+                                                                    key={m.label}
+                                                                    onClick={(e) => { e.stopPropagation(); handleUpdateMood(m); }}
+                                                                    title={m.label}
+                                                                    className={`
+                                                                         relative flex flex-col items-center justify-center gap-0.5
+                                                                         aspect-square rounded-xl border-[2.5px] transition-all duration-200
+                                                                         ${isActive
+                                                                            ? 'border-slate-900 shadow-[3px_3px_0px_0px_rgba(15,23,42,0.8)] scale-110'
+                                                                            : 'bg-slate-50 border-slate-200 hover:border-slate-800 hover:scale-110 hover:shadow-[3px_3px_0px_0px_rgba(15,23,42,0.6)]'
+                                                                        }
+                                                                     `}
+                                                                    style={{
+                                                                        background: isActive ? gradientStyles[m.emoji] : undefined,
+                                                                        animation: isActive ? 'moodIndicatorFloat 2.5s ease-in-out infinite' : undefined
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = gradientStyles[m.emoji];
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '';
+                                                                    }}
+                                                                >
+                                                                    <span className="text-base leading-none">{m.emoji}</span>
+                                                                    <span className={`text-[7px] font-black uppercase leading-none ${isActive ? 'text-white' : 'text-slate-500'} group-hover:text-white`}>
+                                                                        {m.label.substring(0, 5)}
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Footer */}
+                                                <div className="px-3 pb-3">
+                                                    <p className="text-[9px] font-semibold text-muted-foreground/60 italic text-center leading-snug">
+                                                        Mood kamu akan terlihat oleh rekan tim di workspace ini
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <style>{`
+                                         @keyframes moodDropIn {
+                                             from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+                                             to   { opacity: 1; transform: translateY(0) scale(1); }
+                                         }
+                                         @keyframes moodIndicatorFloat {
+                                             0%,100% { transform: translateY(0); }
+                                             50%     { transform: translateY(-3px); }
+                                         }
+                                     `}</style>
                                 </div>
                             </div>
                         </div>
@@ -2496,6 +2661,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
             )}
 
+            {userProfile.id && activeWorkspaceId && (
+                <MoodTrackerModal
+                    userId={userProfile.id}
+                    workspaceId={activeWorkspaceId}
+                    onClose={() => {
+                        const todayMood = localStorage.getItem(`current_mood_${userProfile.id}`);
+                        if (todayMood) setCurrentMood(todayMood);
+                    }}
+                />
+            )}
         </>
     );
 };
