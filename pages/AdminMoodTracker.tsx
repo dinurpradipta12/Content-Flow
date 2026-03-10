@@ -161,33 +161,80 @@ export const AdminMoodTracker: React.FC = () => {
     const [sentSupport, setSentSupport] = useState<Set<string>>(new Set()); // userIds already sent
 
     // ── Fetch ─────────────────────────────────────────────────────
+    const [heatmapMoods, setHeatmapMoods] = useState<UserMood[]>([]);
+
     const fetchMoods = useCallback(async (silent = false) => {
         if (!activeWorkspaceId) return;
         if (!silent) setLoading(true);
         else setRefreshing(true);
 
         try {
-            let query = supabase
-                .from('user_moods')
-                .select('*, user:app_users!user_id(full_name, avatar_url, role, job_title)')
-                .eq('workspace_id', activeWorkspaceId)
-                .order('created_at', { ascending: false });
-
             const now = new Date();
+
+            // ── Date boundary untuk main query ─
+            let fromDate: string | null = null;
             if (timeRange === 'today') {
-                const today = now.toISOString().split('T')[0];
-                query = query.gte('created_at', `${today}T00:00:00`);
+                fromDate = `${now.toISOString().split('T')[0]}T00:00:00`;
             } else if (timeRange === '7d') {
                 const d = new Date(now); d.setDate(d.getDate() - 7);
-                query = query.gte('created_at', d.toISOString());
+                fromDate = d.toISOString();
             } else if (timeRange === '30d') {
                 const d = new Date(now); d.setDate(d.getDate() - 30);
-                query = query.gte('created_at', d.toISOString());
+                fromDate = d.toISOString();
             }
 
-            const { data, error } = await query;
-            if (error) throw error;
-            setMoods(data || []);
+            // ── Heatmap: 35 hari terakhir, ringan (tanpa join) ─
+            const heatmapFrom = new Date(now);
+            heatmapFrom.setDate(heatmapFrom.getDate() - 34);
+
+            // Jalankan kedua query secara paralel
+            const [mainRes, heatRes] = await Promise.all([
+                // Query utama: tanpa join, dengan limit
+                (() => {
+                    let q = supabase
+                        .from('user_moods')
+                        .select('id,user_id,workspace_id,mood_emoji,mood_label,is_private,created_at')
+                        .eq('workspace_id', activeWorkspaceId)
+                        .order('created_at', { ascending: false })
+                        .limit(300);
+                    if (fromDate) q = q.gte('created_at', fromDate);
+                    return q;
+                })(),
+                // Heatmap: selalu 35 hari, tanpa join, minimal kolom
+                supabase
+                    .from('user_moods')
+                    .select('user_id,mood_emoji,mood_label,created_at')
+                    .eq('workspace_id', activeWorkspaceId)
+                    .gte('created_at', heatmapFrom.toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(1000)
+            ]);
+
+            if (mainRes.error) throw mainRes.error;
+            const rawMoods: UserMood[] = mainRes.data || [];
+
+            // ── Batch-fetch user info untuk user_id unik (1 request saja) ─
+            const uniqueUserIds = [...new Set(rawMoods.map(m => m.user_id))];
+            let userMap: Record<string, { full_name: string; avatar_url: string; role: string; job_title?: string }> = {};
+
+            if (uniqueUserIds.length > 0) {
+                const { data: users } = await supabase
+                    .from('app_users')
+                    .select('id,full_name,avatar_url,role,job_title')
+                    .in('id', uniqueUserIds);
+                if (users) {
+                    userMap = Object.fromEntries(users.map(u => [u.id, u]));
+                }
+            }
+
+            // Gabungkan data user ke moods
+            const enriched: UserMood[] = rawMoods.map(m => ({
+                ...m,
+                user: userMap[m.user_id] || { full_name: 'Unknown', avatar_url: '', role: '' }
+            }));
+
+            setMoods(enriched);
+            setHeatmapMoods((heatRes.data as UserMood[]) || []);
         } catch (err) {
             console.error('Error fetching mood stats:', err);
         } finally {
@@ -478,7 +525,7 @@ export const AdminMoodTracker: React.FC = () => {
                 </div>
                 <div className="p-5">
                     {moods.length > 0 ? (
-                        <MoodHeatmap moods={moods} />
+                        <MoodHeatmap moods={heatmapMoods} />
                     ) : (
                         <div className="py-8 text-center">
                             <span className="text-4xl opacity-20">📅</span>
