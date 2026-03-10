@@ -151,52 +151,47 @@ export const Dashboard: React.FC = () => {
         }
     }, [userPrefs]);
 
+    const fetchQuoteOnline = useCallback(async (rel: string) => {
+        const timePhase = Math.floor(new Date().getTime() / 10800000);
+        const cacheKey = `daily_quote_${rel}_${timePhase}`;
+        const cached = localStorage.getItem(cacheKey);
+
+        if (cached) {
+            setDailyQuote(JSON.parse(cached));
+            return;
+        }
+
+        try {
+            if (rel === 'Kristen' || rel === 'Katolik') {
+                const res = await fetch('https://labs.bible.org/api/?passage=random&type=json');
+                const data = await res.json();
+                const item = Array.isArray(data) ? data[0] : data;
+                const newQuote = {
+                    text: item.text.replace(/<\/?b>/g, ''),
+                    source: `${item.bookname} ${item.chapter}:${item.verse}`
+                };
+                setDailyQuote(newQuote);
+                localStorage.setItem(cacheKey, JSON.stringify(newQuote));
+            } else if (rel !== 'Islam') {
+                const res = await fetch('https://dummyjson.com/quotes/random');
+                const data = await res.json();
+                const newQuote = {
+                    text: data.quote,
+                    source: data.author
+                };
+                setDailyQuote(newQuote);
+                localStorage.setItem(cacheKey, JSON.stringify(newQuote));
+            }
+        } catch (e) {
+            if (RELIGION_CONTENT[rel]) {
+                const quotes = RELIGION_CONTENT[rel].quotes;
+                setDailyQuote(quotes[timePhase % quotes.length]);
+            }
+        }
+    }, [religion]);
+
     useEffect(() => {
         let isCancelled = false;
-
-        const fetchQuoteOnline = async (rel: string) => {
-            const timePhase = Math.floor(new Date().getTime() / 10800000);
-            const cacheKey = `daily_quote_${rel}_${timePhase}`;
-            const cached = localStorage.getItem(cacheKey);
-
-            if (cached) {
-                if (!isCancelled) setDailyQuote(JSON.parse(cached));
-                return;
-            }
-
-            try {
-                if (rel === 'Kristen' || rel === 'Katolik') {
-                    const res = await fetch('https://labs.bible.org/api/?passage=random&type=json');
-                    const data = await res.json();
-                    const item = Array.isArray(data) ? data[0] : data;
-                    const newQuote = {
-                        text: item.text.replace(/<\/?b>/g, ''), // bersihkan label HTML
-                        source: `${item.bookname} ${item.chapter}:${item.verse}`
-                    };
-                    if (!isCancelled) {
-                        setDailyQuote(newQuote);
-                        localStorage.setItem(cacheKey, JSON.stringify(newQuote));
-                    }
-                } else if (rel !== 'Islam') {
-                    const res = await fetch('https://dummyjson.com/quotes/random');
-                    const data = await res.json();
-                    const newQuote = {
-                        text: data.quote,
-                        source: data.author
-                    };
-                    if (!isCancelled) {
-                        setDailyQuote(newQuote);
-                        localStorage.setItem(cacheKey, JSON.stringify(newQuote));
-                    }
-                }
-            } catch (e) {
-                // Fallback jika tidak ada internet
-                if (!isCancelled && RELIGION_CONTENT[rel]) {
-                    const quotes = RELIGION_CONTENT[rel].quotes;
-                    setDailyQuote(quotes[timePhase % quotes.length]);
-                }
-            }
-        };
 
         if (religion && RELIGION_CONTENT[religion]) {
             if (religion === 'Islam') {
@@ -640,7 +635,14 @@ export const Dashboard: React.FC = () => {
     };
 
     // --- Personal Mood State ---
-    const [personalMood, setPersonalMood] = useState<{ emoji: string; label: string; created_at?: string } | null>(null);
+    const [personalMood, setPersonalMood] = useState<{ emoji: string; label: string; created_at?: string } | null>(() => {
+        // Optimistic: load from cache immediately
+        const cachedEmoji = localStorage.getItem(`current_mood_${userId}`);
+        if (cachedEmoji) {
+            return { emoji: cachedEmoji, label: 'Loading...', created_at: new Date().toISOString() };
+        }
+        return null;
+    });
     const [moodLoading, setMoodLoading] = useState(true);
     const [showMoodDashMenu, setShowMoodDashMenu] = useState(false);
 
@@ -704,7 +706,21 @@ export const Dashboard: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchLatestMood();
+        // Parallelize initial dashboard data fetches
+        const initDashboard = async () => {
+            if (!userId) return;
+
+            try {
+                await Promise.all([
+                    fetchLatestMood(),
+                    religion ? fetchQuoteOnline(religion).catch(() => { }) : Promise.resolve()
+                ]);
+            } catch (err) {
+                console.warn('Non-critical dashboard load failure:', err);
+            }
+        };
+
+        initDashboard();
 
         // Listen for manual updates
         window.addEventListener('mood-updated', fetchLatestMood);
@@ -726,7 +742,7 @@ export const Dashboard: React.FC = () => {
             window.removeEventListener('mood-updated', fetchLatestMood);
             supabase.removeChannel(channel);
         };
-    }, [userId, fetchLatestMood]);
+    }, [userId, fetchLatestMood, religion]);
 
     const getMoodBadgeStyles = (label: string) => {
         const l = label?.toLowerCase() || '';

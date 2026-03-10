@@ -600,30 +600,45 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         const userId = localStorage.getItem('user_id');
         if (!userId) return;
 
+        // --- OPTIMIZATION: Immediate state from localStorage to prevent empty loading state --- 
+        const cachedName = localStorage.getItem('user_name');
+        const cachedRole = localStorage.getItem('user_role');
+        const cachedAvatar = localStorage.getItem('user_avatar');
+        if (cachedName && cachedRole) {
+            setUserProfile(prev => ({
+                ...prev,
+                name: cachedName,
+                role: cachedRole,
+                avatar: cachedAvatar || prev.avatar
+            }));
+        }
+
         try {
-            const { data, error } = await supabase.from('app_users')
-                .select('id, full_name, role, avatar_url, job_title, subscription_end, subscription_package, parent_user_id')
-                .eq('id', userId)
-                .single();
+            // Consolidation: Start multiple independent requests in parallel
+            const [userResult, workspaceResult] = await Promise.all([
+                supabase.from('app_users')
+                    .select('id, full_name, role, avatar_url, job_title, subscription_end, subscription_package, parent_user_id')
+                    .eq('id', userId)
+                    .single(),
+                !localStorage.getItem('active_workspace_id')
+                    ? supabase.from('workspaces').select('id, members, owner_id').limit(50)
+                    : Promise.resolve({ data: null, error: null })
+            ]);
+
+            const { data, error } = userResult;
             if (data && !error) {
                 // Determine effective subscription
                 let effectiveSubscription = data.subscription_package || 'Free';
 
                 if (data.role === 'Developer') {
-                    effectiveSubscription = 'Premium'; // Developer role never locked
+                    effectiveSubscription = 'Premium';
                 } else if (data.parent_user_id) {
-                    // Fetch parent info to determine effective subscription
                     const { data: parentData } = await supabase.from('app_users')
                         .select('role, subscription_package')
                         .eq('id', data.parent_user_id)
                         .single();
-
                     if (parentData) {
-                        if (parentData.role === 'Developer') {
-                            effectiveSubscription = 'Premium'; // Invited by Developer
-                        } else {
-                            effectiveSubscription = parentData.subscription_package || 'Free';
-                        }
+                        effectiveSubscription = (parentData.role === 'Developer') ? 'Premium' : (parentData.subscription_package || 'Free');
                     }
                 }
 
@@ -638,62 +653,34 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 };
                 setUserProfile(profileData);
 
-                // Abuse Protection: Check if more than 2 free trial accounts from same device
+                // BACKGROUND: Non-blocking checks
                 if (profileData.subscriptionPackage === 'Free' && profileData.role !== 'Developer') {
                     const fingerprint = btoa(navigator.userAgent + screen.width + screen.height).slice(0, 32);
-                    const { data: trialCount } = await supabase.rpc('check_trial_abuse', { fingerprint_check: fingerprint });
-                    if (trialCount > 2) {
-                        console.warn('Abuse detected. Protocol: Force Logout.');
-                        handleLogout();
-                        window.location.href = '/login?abuse=true';
-                        return;
-                    }
+                    supabase.rpc('check_trial_abuse', { fingerprint_check: fingerprint }).then(({ data: tc }) => {
+                        if (tc > 2) handleLogout();
+                    });
                 }
 
-                if (data.subscription_end) {
-                    localStorage.setItem('subscription_end', data.subscription_end);
-                } else {
-                    localStorage.removeItem('subscription_end');
+                // Workspace handling
+                const existingWsId = localStorage.getItem('active_workspace_id');
+                if (!existingWsId && workspaceResult.data) {
+                    const myWs = workspaceResult.data.find(ws =>
+                        ws.owner_id === data.id || (Array.isArray(ws.members) && ws.members.includes(data.id))
+                    );
+                    const wsId = myWs?.id || workspaceResult.data[0].id;
+                    localStorage.setItem('active_workspace_id', wsId);
+                    setActiveWorkspaceId(wsId);
+                } else if (existingWsId) {
+                    setActiveWorkspaceId(existingWsId);
                 }
 
-                window.dispatchEvent(new Event('sub_updated'));
-
-                // Keep localStorage in sync
+                // Storage sync
                 localStorage.setItem('user_name', profileData.name);
                 localStorage.setItem('user_role', profileData.role);
                 localStorage.setItem('user_avatar', profileData.avatar);
                 localStorage.setItem('user_subscription_package', profileData.subscriptionPackage);
-                if (profileData.parentUserId) localStorage.setItem('parent_user_id', profileData.parentUserId);
-                else localStorage.removeItem('parent_user_id');
-
-                // ── Set active_workspace_id jika belum ada ──────────────────
-                // Ini diperlukan oleh Mood Tracker dan fitur lain
-                const existingWsId = localStorage.getItem('active_workspace_id');
-                if (!existingWsId) {
-                    try {
-                        const { data: workspaces } = await supabase
-                            .from('workspaces')
-                            .select('id, members, owner_id')
-                            .limit(50);
-
-                        if (workspaces && workspaces.length > 0) {
-                            // Cari workspace yang user bergabung (owner atau member)
-                            const myWs = workspaces.find(ws =>
-                                ws.owner_id === data.id ||
-                                (Array.isArray(ws.members) && ws.members.includes(data.id))
-                            );
-                            const wsId = myWs?.id || workspaces[0].id;
-                            localStorage.setItem('active_workspace_id', wsId);
-                            // ← Kunci: update React state agar MoodTrackerModal re-render
-                            setActiveWorkspaceId(wsId);
-                        }
-                    } catch (wsErr) {
-                        console.warn('Could not fetch workspace for mood tracker:', wsErr);
-                    }
-                } else {
-                    // Workspace sudah ada di localStorage — sync ke React state juga
-                    setActiveWorkspaceId(existingWsId);
-                }
+                if (data.subscription_end) localStorage.setItem('subscription_end', data.subscription_end);
+                window.dispatchEvent(new Event('sub_updated'));
             }
         } catch (err) {
             console.warn("Failed to fetch user profile from DB, using localStorage fallback.");
@@ -702,21 +689,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     // --- INIT EFFECT ---
     useEffect(() => {
-        // 1. Check Network
+        // BACKGROUND: Check Network (don't block init)
         const checkNetwork = async () => {
             if (!navigator.onLine) {
                 setNetworkStatus('offline');
                 return;
             }
-            const ms = await checkConnectionLatency();
-            setLatency(ms);
-            if (ms === -1) setNetworkStatus('offline');
-            else if (ms < 300) setNetworkStatus('good');
-            else if (ms < 800) setNetworkStatus('unstable');
-            else setNetworkStatus('bad');
+            try {
+                const ms = await checkConnectionLatency();
+                setLatency(ms);
+                if (ms === -1) setNetworkStatus('offline');
+                else if (ms < 300) setNetworkStatus('good');
+                else if (ms < 800) setNetworkStatus('unstable');
+                else setNetworkStatus('bad');
+            } catch (e) {
+                setNetworkStatus('offline');
+            }
         };
-        checkNetwork();
-        const interval = setInterval(checkNetwork, 10000);
+
+        // Defer execution slightly to prioritize main render
+        setTimeout(checkNetwork, 1000);
+        const interval = setInterval(checkNetwork, 15000);
 
         // Theme Load
         const savedTheme = localStorage.getItem('app_ui_theme');
