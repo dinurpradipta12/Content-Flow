@@ -1629,7 +1629,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                                 <span className="font-bold text-sm tracking-tight whitespace-nowrap">
                                                                     {item.label}
                                                                 </span>
-                                                                {userProfile.subscriptionPackage === 'Free' && ['flow', 'carousel', 'kpi'].includes(item.id) && (
+                                                                {userProfile.subscriptionPackage === 'Free' && ['flow', 'carousel', 'kpi', 'mood'].includes(item.id) && (
                                                                     <Crown size={14} className={isActive ? "text-amber-300" : "text-amber-500"} title="Pro Feature" />
                                                                 )}
                                                             </div>
