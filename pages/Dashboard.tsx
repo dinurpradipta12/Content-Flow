@@ -471,12 +471,47 @@ export const Dashboard: React.FC = () => {
     const [filterMonth, setFilterMonth] = useState(new Date().getMonth());
     const [filterYear, setFilterYear] = useState(new Date().getFullYear());
     const [selectedMetric, setSelectedMetric] = useState('views');
-    const [metricsCurrent, setMetricsCurrent] = useState({ views: 0, er: 0, published: 0 });
-    const [metricsPrev, setMetricsPrev] = useState({ views: 0, er: 0, published: 0 });
-    const [chartData, setChartData] = useState<any[]>([]);
+    const [metricsCurrent, setMetricsCurrent] = useState({ views: 0, reach: 0, er: 0, published: 0 });
+    const [metricsPrev, setMetricsPrev] = useState({ views: 0, reach: 0, er: 0, published: 0 });
+    const [recentContent, setRecentContent] = useState<any[]>([]);
     const [statusDistribution, setStatusDistribution] = useState<any[]>([]);
     const [pillarDistribution, setPillarDistribution] = useState<any[]>([]);
-    const [recentContent, setRecentContent] = useState<any[]>([]);
+
+    // Helper to generate empty month data to avoid blank charts
+    const getEmptyMonthData = (month: number, year: number) => {
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        return Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
+            const d = new Date(year, month, day);
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            return {
+                date: dateStr,
+                formattedDate: d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+                views: 0, likes: 0, comments: 0, shares: 0, saves: 0, interactions: 0
+            };
+        });
+    };
+
+    const [chartData, setChartData] = useState<any[]>(() => {
+        const now = new Date();
+        return getEmptyMonthData(now.getMonth(), now.getFullYear());
+    });
+
+    // ── Reactive dark mode detection ──────────────────────────────
+    const [isDarkMode, setIsDarkMode] = useState(() =>
+        document.documentElement.classList.contains('theme-dark') ||
+        document.documentElement.classList.contains('theme-midnight')
+    );
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDarkMode(
+                document.documentElement.classList.contains('theme-dark') ||
+                document.documentElement.classList.contains('theme-midnight')
+            );
+        });
+        observer.observe(document.documentElement, { attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         const fetchAnalytics = async () => {
@@ -490,7 +525,7 @@ export const Dashboard: React.FC = () => {
 
             let query = supabase
                 .from('content_items')
-                .select('id, title, date, metrics, platform, workspace_id, status, pillar, thumbnail_url, updated_at')
+                .select('*')
                 .gte('date', startPrev.toISOString())
                 .lte('date', endCurrent.toISOString());
 
@@ -498,12 +533,17 @@ export const Dashboard: React.FC = () => {
                 query = query.eq('workspace_id', filterWs);
             } else {
                 const wsIds = workspaces.map(w => w.id);
-                query = query.in('workspace_id', wsIds);
+                if (wsIds.length > 0) {
+                    query = query.in('workspace_id', wsIds);
+                }
             }
 
-            if (filterPlatform !== 'all') query = query.eq('platform', filterPlatform);
+            if (filterPlatform !== 'all') {
+                query = query.eq('platform', filterPlatform);
+            }
 
-            const { data, error } = await query.order('updated_at', { ascending: false });
+            const { data, error } = await query.order('date', { ascending: false });
+
             if (error) {
                 console.error("Error fetching analytics:", error);
                 return;
@@ -513,98 +553,96 @@ export const Dashboard: React.FC = () => {
             // Set Recent Content (Pipeline)
             setRecentContent(data.slice(0, 5));
 
-            // Prepare Chart Data (Days of selected month)
+            // Prepare Map for the current month
             const dailyDataMap: Record<string, any> = {};
             const daysInMonth = new Date(filterYear, filterMonth + 1, 0).getDate();
 
             for (let i = 1; i <= daysInMonth; i++) {
-                const d = new Date(filterYear, filterMonth, i);
-                const dateStr = d.toISOString().split('T')[0];
+                const dateStr = `${filterYear}-${String(filterMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const displayDate = new Date(filterYear, filterMonth, i);
                 dailyDataMap[dateStr] = {
                     date: dateStr,
-                    formattedDate: d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
-                    views: 0,
-                    likes: 0,
-                    comments: 0,
-                    shares: 0,
-                    saves: 0,
-                    interactions: 0
+                    formattedDate: displayDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+                    views: 0, reach: 0, likes: 0, comments: 0, shares: 0, saves: 0, interactions: 0
                 };
             }
 
-            let curViews = 0, curInteractions = 0, curPublished = 0;
-            let prevViews = 0, prevInteractions = 0, prevPublished = 0;
+            let curViews = 0, curReach = 0, curInteractions = 0, curPublished = 0;
+            let prevViews = 0, prevReach = 0, prevInteractions = 0, prevPublished = 0;
 
-            data.forEach((item: any) => {
-                const dateToProcess = item.date || item.upload_date;
-                if (!dateToProcess) return;
-                const itemDate = new Date(dateToProcess);
-                const dateStr = dateToProcess.split('T')[0];
-                const m = item.metrics || {};
-                const itemViews = m.views || 0;
-                const itemLikes = m.likes || 0;
-                const itemComments = m.comments || 0;
-                const itemShares = m.shares || 0;
-                const itemSaves = m.saves || 0;
-                const itemInteractions = itemLikes + itemComments + itemShares + itemSaves;
-
-                // Update Overview Metrics
-                if (itemDate >= startCurrent && itemDate <= endCurrent) {
-                    curViews += itemViews;
-                    curInteractions += itemInteractions;
-                    if (item.status === 'Published') curPublished++;
-                } else if (itemDate >= startPrev && itemDate <= endPrev) {
-                    prevViews += itemViews;
-                    prevInteractions += itemInteractions;
-                    if (item.status === 'Published') prevPublished++;
-                }
-
-                // Update Chart Data Map
-                if (dailyDataMap[dateStr]) {
-                    dailyDataMap[dateStr].views += itemViews;
-                    dailyDataMap[dateStr].likes += itemLikes;
-                    dailyDataMap[dateStr].comments += itemComments;
-                    dailyDataMap[dateStr].shares += itemShares;
-                    dailyDataMap[dateStr].saves += itemSaves;
-                    dailyDataMap[dateStr].interactions += itemInteractions;
-                }
-            });
-
-            const sortedChartData = Object.values(dailyDataMap).sort((a: any, b: any) => a.date.localeCompare(b.date));
-            setChartData(sortedChartData);
-
-            // Calculate Distributions (Status & Pillar) for the same 30-day window
             const statusMap: Record<string, number> = {};
             const pillarMap: Record<string, number> = {};
 
             data.forEach((item: any) => {
-                const dateToProcess = item.date || item.upload_date;
-                if (!dateToProcess) return;
-                const itemDate = new Date(dateToProcess);
+                if (!item.date) return;
 
-                // Use the same month window as the chart
+                const itemDate = new Date(item.date);
+                const dateStr = item.date.split('T')[0];
+                const m = item.metrics || {};
+
+                const itemViews = Number(m.views) || 0;
+                const itemReach = Number(m.reach) || 0;
+                const itemLikes = Number(m.likes) || 0;
+                const itemComments = Number(m.comments) || 0;
+                const itemShares = Number(m.shares) || 0;
+                const itemSaves = Number(m.saves) || 0;
+                const itemReposts = Number(m.reposts) || 0;
+                const itemInteractions = itemLikes + itemComments + itemShares + itemSaves + itemReposts;
+
+                // 1. Distribution (Regardless of Date Range)
                 if (itemDate >= startCurrent && itemDate <= endCurrent) {
-                    // Status distribution
                     const s = item.status || 'Draft';
                     statusMap[s] = (statusMap[s] || 0) + 1;
-
-                    // Pillar distribution
-                    const p = item.pillar || 'Uncategorized';
+                    const p = item.pillar || 'General';
                     pillarMap[p] = (pillarMap[p] || 0) + 1;
+                }
+
+                // 2. Metrics (Only Published content counts for performance)
+                if (item.status === 'Published') {
+                    if (itemDate >= startCurrent && itemDate <= endCurrent) {
+                        curReach += itemReach;
+                        curViews += itemViews;
+                        curInteractions += itemInteractions;
+                        curPublished++;
+
+                        // Update Chart Map
+                        if (dailyDataMap[dateStr]) {
+                            dailyDataMap[dateStr].reach += itemReach;
+                            dailyDataMap[dateStr].views += itemViews;
+                            dailyDataMap[dateStr].likes += itemLikes;
+                            dailyDataMap[dateStr].comments += itemComments;
+                            dailyDataMap[dateStr].shares += itemShares;
+                            dailyDataMap[dateStr].saves += itemSaves;
+                            dailyDataMap[dateStr].interactions += itemInteractions;
+                        }
+                    } else if (itemDate >= startPrev && itemDate <= endPrev) {
+                        prevReach += itemReach;
+                        prevViews += itemViews;
+                        prevInteractions += itemInteractions;
+                        prevPublished++;
+                    }
                 }
             });
 
+            setChartData(Object.values(dailyDataMap).sort((a: any, b: any) => a.date.localeCompare(b.date)));
             setStatusDistribution(Object.entries(statusMap).map(([name, value]) => ({ name, value })));
             setPillarDistribution(Object.entries(pillarMap).map(([name, value]) => ({ name, value })));
 
-            const curER = curViews > 0 ? (curInteractions / curViews) * 100 : 0;
-            const prevER = prevViews > 0 ? (prevInteractions / prevViews) * 100 : 0;
+            // Calculate ER (consistent with ContentDataInsight formula)
+            const calculateERValues = (totalInteractions: number, totalViews: number, totalReach: number) => {
+                const platformLabel = filterPlatform && filterPlatform !== 'all' ? filterPlatform : '';
+                if (platformLabel === 'Instagram' && totalReach > 0) return (totalInteractions / totalReach) * 100;
+                if (totalViews > 0) return (totalInteractions / totalViews) * 100;
+                return 0;
+            };
 
-            setMetricsCurrent({ views: curViews, er: curER, published: curPublished });
-            setMetricsPrev({ views: prevViews, er: prevER, published: prevPublished });
+            const curER = calculateERValues(curInteractions, curViews, curReach);
+            const prevER = calculateERValues(prevInteractions, prevViews, prevReach);
+
+            setMetricsCurrent({ views: curViews, reach: curReach, er: curER, published: curPublished });
+            setMetricsPrev({ views: prevViews, reach: prevReach, er: prevER, published: prevPublished });
         };
         fetchAnalytics();
-
     }, [filterWs, filterPlatform, filterMonth, filterYear, workspaces, userId]);
 
     const calculateGrowth = (current: number, previous: number) => {
@@ -826,7 +864,7 @@ export const Dashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
                             <div className="space-y-1">
-                                <h3 className="text-3xl font-black text-foreground truncate leading-tight mt-1">
+                                <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-foreground leading-tight mt-1 break-words max-w-full">
                                     Halo {userName}
                                 </h3>
                                 <div className="mt-2 flex flex-col gap-1">
@@ -1007,7 +1045,7 @@ export const Dashboard: React.FC = () => {
                         </h3>
                         <div className="grid grid-cols-2 gap-5 p-1">
                             {[
-                                { title: 'Viral Reach', value: formatShortNumber(metricsCurrent.views), icon: <Eye size={20} />, color: 'bg-sky-500', shadow: 'shadow-sky-500/10' },
+                                { title: 'Viral Reach', value: formatShortNumber(filterPlatform === 'Instagram' ? metricsCurrent.reach : metricsCurrent.views), icon: <Eye size={20} />, color: 'bg-sky-500', shadow: 'shadow-sky-500/10' },
                                 { title: 'Eng. Power', value: metricsCurrent.er.toFixed(1) + '%', icon: <MousePointerClick size={20} />, color: 'bg-indigo-600', shadow: 'shadow-indigo-500/10' },
                                 { title: 'Consistent', value: metricsCurrent.published, icon: <CalendarCheck size={20} />, color: 'bg-emerald-600', shadow: 'shadow-emerald-500/10' },
                                 { title: 'Active Day', value: '24/30', icon: <Sparkles size={20} />, color: 'bg-amber-500', shadow: 'shadow-amber-500/10' }
@@ -1089,7 +1127,7 @@ export const Dashboard: React.FC = () => {
                         <div className="mt-8 flex items-center gap-4 relative z-10">
                             <div className="bg-white/10 p-3 rounded-2xl backdrop-blur-md border border-white/10">
                                 <p className="text-[9px] font-black opacity-50 uppercase mb-1">{selectedMetric}</p>
-                                <p className="text-xl font-black text-accent">{formatShortNumber(metricsCurrent[selectedMetric as keyof typeof metricsCurrent] || 0)}</p>
+                                <p className="text-xl font-black text-accent">{formatShortNumber(metricsCurrent[selectedMetric === 'interactions' ? 'reach' : selectedMetric as keyof typeof metricsCurrent] || 0)}</p>
                             </div>
                             <div className="flex-1">
                                 <p className="text-[10px] font-bold opacity-40 leading-relaxed italic">"Performa Anda meningkat 12% dibanding minggu lalu."</p>
@@ -1159,7 +1197,7 @@ export const Dashboard: React.FC = () => {
                         {/* Summary Metrics Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                             {[
-                                { title: 'Viral Reach', value: formatShortNumber(metricsCurrent.views), prev: metricsPrev.views, cur: metricsCurrent.views, icon: <Eye size={24} />, color: 'bg-sky-400 text-white border-border shadow-hard-mini' },
+                                { title: 'Viral Reach', value: formatShortNumber(filterPlatform === 'Instagram' ? metricsCurrent.reach : metricsCurrent.views), prev: filterPlatform === 'Instagram' ? metricsPrev.reach : metricsPrev.views, cur: filterPlatform === 'Instagram' ? metricsCurrent.reach : metricsCurrent.views, icon: <Eye size={24} />, color: 'bg-sky-400 text-white border-border shadow-hard-mini' },
                                 { title: 'Eng. Power', value: metricsCurrent.er.toFixed(2) + '%', prev: metricsPrev.er, cur: metricsCurrent.er, icon: <MousePointerClick size={24} />, color: 'bg-indigo-500 text-white border-border shadow-hard-mini' },
                                 { title: 'Consistency', value: metricsCurrent.published, prev: metricsPrev.published, cur: metricsCurrent.published, icon: <CalendarCheck size={24} />, color: 'bg-emerald-500 text-white border-border shadow-hard-mini' }
                             ].map((card, i) => (
@@ -1186,27 +1224,50 @@ export const Dashboard: React.FC = () => {
                                     <p className="text-mutedForeground font-bold text-base sm:text-lg">Visualisasi performa konten berdasarkan metrik terpilih.</p>
                                 </div>
                                 <div className="flex flex-wrap bg-muted p-1 sm:p-2 rounded-xl sm:rounded-[1.5rem] border-[2px] sm:border-[3px] border-border shadow-inner">
-                                    {['views', 'likes', 'comments', 'shares', 'interactions'].map((m) => (
+                                    {chartData.length > 0 && ['views', 'likes', 'comments', 'shares', 'interactions'].map((m) => (
                                         <button key={m} onClick={() => setSelectedMetric(m)} className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${selectedMetric === m ? 'bg-foreground text-background shadow-lg' : 'text-mutedForeground hover:text-foreground'}`}>
                                             {m === 'interactions' ? 'Eng' : m}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                            <div className="h-[300px] sm:h-[400px] w-full">
+                            <div className="h-[300px] sm:h-[400px] w-full relative">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData}>
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
                                         <defs>
-                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#A855F7" stopOpacity={0.2} />
+                                            <linearGradient id="colorValueGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#A855F7" stopOpacity={0.3} />
                                                 <stop offset="95%" stopColor="#A855F7" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                                        <XAxis dataKey="formattedDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: '800', fill: '#94a3b8' }} minTickGap={30} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: '800', fill: '#94a3b8' }} tickFormatter={formatShortNumber} dx={-10} />
-                                        <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--foreground)', strokeWidth: 3 }} />
-                                        <Area type="monotone" dataKey={selectedMetric} stroke="#A855F7" strokeWidth={6} fillOpacity={1} fill="url(#colorValue)" animationDuration={2000} />
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#E2E8F0'} />
+                                        <XAxis
+                                            dataKey="formattedDate"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 9, fontWeight: '800', fill: '#94a3b8' }}
+                                            minTickGap={20}
+                                            dy={10}
+                                        />
+                                        <YAxis
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 9, fontWeight: '800', fill: '#94a3b8' }}
+                                            tickFormatter={formatShortNumber}
+                                            width={40}
+                                        />
+                                        <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#A855F7', strokeWidth: 2, strokeDasharray: '5 5' }} />
+                                        <Area
+                                            type="monotone"
+                                            dataKey={selectedMetric}
+                                            stroke="#A855F7"
+                                            strokeWidth={5}
+                                            fillOpacity={1}
+                                            fill="url(#colorValueGrad)"
+                                            animationDuration={1500}
+                                            dot={{ r: 3, fill: '#A855F7', strokeWidth: 0 }}
+                                            activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                                        />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
@@ -1226,8 +1287,28 @@ export const Dashboard: React.FC = () => {
                                         <div className="py-20 text-center text-mutedForeground/30 font-bold italic text-lg">No content in pipeline.</div>
                                     ) : recentContent.map(item => (
                                         <div key={item.id} className="group flex items-center gap-6 p-5 rounded-[2rem] border-[3px] border-border transition-all bg-card shadow-hard-mini hover:shadow-hard hover:-translate-y-1">
-                                            <div className="w-20 h-16 bg-muted rounded-2xl border-[3px] border-border overflow-hidden shrink-0 group-hover:rotate-2 transition-transform">
-                                                {item.thumbnail_url ? <img src={item.thumbnail_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 font-black text-2xl uppercase">{item.platform?.[0]}</div>}
+                                            <div className="w-20 h-16 bg-muted rounded-2xl border-[3px] border-border overflow-hidden shrink-0 group-hover:rotate-2 transition-transform shadow-inner">
+                                                {item.thumbnail_url || item.asset_url || (item.result_assets && item.result_assets.length > 0 ? item.result_assets[0] : null) ? (
+                                                    <img
+                                                        src={item.thumbnail_url || item.asset_url || item.result_assets[0]}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            // Fallback if image fails to load
+                                                            e.currentTarget.style.display = 'none';
+                                                            const parent = e.currentTarget.parentElement;
+                                                            if (parent) {
+                                                                const fallback = document.createElement('div');
+                                                                fallback.className = 'w-full h-full flex items-center justify-center text-slate-300 font-black text-2xl uppercase';
+                                                                fallback.innerText = item.platform?.[0] || 'T';
+                                                                parent.appendChild(fallback);
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-300 font-black text-2xl uppercase">
+                                                        {item.platform?.[0]}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="text-lg font-black truncate text-foreground ">{item.title}</h4>
@@ -1237,7 +1318,10 @@ export const Dashboard: React.FC = () => {
                                                     <span className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">{new Date(item.updated_at || item.date).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
-                                            <div className={`px-5 py-2 rounded-full text-[10px] font-black border-[3px] shadow-hard-mini ${item.status === 'Published' ? 'bg-emerald-400 text-foreground border-border animate-pulse' : 'bg-amber-400 text-foreground border-border'}`}>
+                                            <div
+                                                className={`px-5 py-2 rounded-full text-[10px] font-black border-[3px] shadow-hard-mini ${item.status === 'Published' ? 'bg-emerald-400 !text-[#0f172a] border-border animate-pulse' : 'bg-amber-400 !text-[#0f172a] border-border'}`}
+                                                style={{ color: '#0f172a' }}
+                                            >
                                                 {item.status}
                                             </div>
                                         </div>
@@ -1249,11 +1333,26 @@ export const Dashboard: React.FC = () => {
                                 <h3 className="text-2xl font-black font-heading self-start mb-10 flex items-center gap-4">
                                     <Layout className="text-emerald-500 w-8 h-8" /> Status Ratio
                                 </h3>
-                                <div className="h-[300px] w-full">
-                                    <ResponsiveContainer>
+                                <div className="h-[400px] w-full flex-1 min-h-0">
+                                    <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
-                                            <Pie data={statusDistribution} cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={10} dataKey="value" stroke="none">
-                                                {statusDistribution.map((_, index) => <Cell key={index} fill={['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#A855F7'][index % 5]} className="stroke-card stroke-[5px]" />)}
+                                            <Pie
+                                                data={statusDistribution}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius="60%"
+                                                outerRadius="90%"
+                                                paddingAngle={8}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                {statusDistribution.map((_, index) => (
+                                                    <Cell
+                                                        key={index}
+                                                        fill={['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#A855F7'][index % 5]}
+                                                        className="stroke-card stroke-[6px]"
+                                                    />
+                                                ))}
                                             </Pie>
                                             <Tooltip content={<ChartTooltip />} />
                                         </PieChart>
@@ -1292,7 +1391,12 @@ export const Dashboard: React.FC = () => {
                                                     <div className="text-4xl font-black text-mutedForeground uppercase">{ws.name?.[0]}</div>
                                                 </div>
                                             )}
-                                            <div className="px-5 py-2 bg-foreground text-background rounded-full text-[10px] font-black tracking-[0.2em] shadow-hard-mini">{ws.period || 'Personal'}</div>
+                                            <div
+                                                className="px-5 py-2 bg-white !text-[#0f172a] rounded-full text-[10px] font-black tracking-[0.2em] shadow-hard-mini"
+                                                style={{ color: '#0f172a' }}
+                                            >
+                                                {ws.period || 'Personal'}
+                                            </div>
                                         </div>
                                         <h4 className="text-2xl font-black text-foreground font-heading mb-4 group-hover:text-slate-900 transition-colors truncate relative z-10">{ws.name}</h4>
                                         <p className="text-sm font-bold text-slate-500 mb-10 line-clamp-3 leading-relaxed flex-1 relative z-10">{ws.description || "Content Plan Workspace untuk memanajemen konten secara tersistem & maksimal."}</p>
@@ -1303,7 +1407,10 @@ export const Dashboard: React.FC = () => {
                                                 ))}
                                                 {ws.members && ws.members.length > 4 && <div className="w-12 h-12 rounded-full border-[3.5px] border-card bg-muted text-xs font-black flex items-center justify-center text-mutedForeground z-10 shadow-soft">+{ws.members.length - 4}</div>}
                                             </div>
-                                            <div className="w-12 h-12 rounded-2xl bg-foreground text-background flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white group-hover:scale-110 transition-all shadow-hard-mini">
+                                            <div
+                                                className="w-12 h-12 rounded-2xl bg-white !text-[#0f172a] flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white group-hover:scale-110 transition-all shadow-hard-mini"
+                                                style={{ color: '#0f172a' }}
+                                            >
                                                 <ArrowUpRight size={22} strokeWidth={3} />
                                             </div>
                                         </div>
@@ -1327,7 +1434,7 @@ export const Dashboard: React.FC = () => {
                                     <label className="text-[10px] font-black uppercase text-mutedForeground ml-2">Platform Focus</label>
                                     <select value={filterPlatform} onChange={(e) => setFilterPlatform(e.target.value)} className="w-full bg-muted border-[3px] border-border rounded-2xl px-5 py-4 text-xs font-black tracking-widest outline-none focus:bg-card cursor-pointer shadow-hard-mini transition-all">
                                         <option value="all">ALL PLATFORM</option>
-                                        {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
+                                        {['Instagram', 'TikTok', 'YouTube', 'LinkedIn', 'Facebook', 'Threads'].map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
