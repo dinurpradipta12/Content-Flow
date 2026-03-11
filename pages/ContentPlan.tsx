@@ -11,6 +11,7 @@ import { supabase } from '../services/supabaseClient';
 import { useAppConfig } from '../components/AppConfigProvider';
 import { useWorkspaces, useContentStats } from '../src/hooks/useDataQueries';
 import { useQueryClient } from '@tanstack/react-query';
+import { storageService } from '../services/storageService';
 
 interface WorkspaceData extends Workspace {
     totalContent: number;
@@ -131,6 +132,8 @@ export const ContentPlan: React.FC = () => {
         accountNames: {} as Record<string, string>, // New: Store usernames per platform
         workspace_type: 'team' as 'personal' | 'team'
     });
+
+    const [uploadingLogo, setUploadingLogo] = useState(false);
 
     const [currentUserName, setCurrentUserName] = useState('Anda');
     const [gridCols, setGridCols] = useState<3 | 4>(3);
@@ -256,21 +259,28 @@ export const ContentPlan: React.FC = () => {
     };
 
     // Handle Image Upload to Base64
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Validate size (max 1MB for base64 safety in standard text columns)
             if (file.size > 5 * 1024 * 1024) {
                 alert("Ukuran file terlalu besar (Max 5MB)");
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                setFormData(prev => ({ ...prev, logoUrl: base64String }));
-            };
-            reader.readAsDataURL(file);
+            setUploadingLogo(true);
+            try {
+                const publicUrl = await storageService.uploadFile(file, 'content-assets', 'workspace-logos');
+                if (publicUrl) {
+                    setFormData(prev => ({ ...prev, logoUrl: publicUrl }));
+                } else {
+                    throw new Error('Gagal mengunggah logo.');
+                }
+            } catch (err) {
+                console.error('[WorkspaceLogo] Upload error:', err);
+                alert('Gagal mengunggah logo workspace.');
+            } finally {
+                setUploadingLogo(false);
+            }
         }
     };
 
@@ -840,7 +850,11 @@ export const ContentPlan: React.FC = () => {
                                     onClick={triggerFileInput}
                                     className="w-24 h-24 bg-slate-100 border-[3px] border-dashed border-slate-900 rounded-2xl flex flex-col items-center justify-center text-slate-500 hover:text-foreground hover:bg-slate-200 cursor-pointer transition-colors relative overflow-hidden group shadow-[2px_2px_0px_#0f172a]"
                                 >
-                                    {formData.logoUrl ? (
+                                    {uploadingLogo ? (
+                                        <div className="absolute inset-0 bg-slate-900/10 flex items-center justify-center z-50">
+                                            <Loader2 size={32} className="animate-spin text-accent" />
+                                        </div>
+                                    ) : formData.logoUrl ? (
                                         <div className="relative w-full h-full p-2 bg-card">
                                             {/* Use object-contain to preserve transparency and aspect ratio */}
                                             <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-contain" />

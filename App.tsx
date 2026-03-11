@@ -66,18 +66,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const authUser = currentSession.user;
 
-        // Try finding profile by ID first (for new users registered via Supabase Auth)
+        // Try finding profile by ID first
         let { data, error } = await supabase
           .from('app_users')
-          .select('*')
+          .select('id, username, full_name, role, avatar_url, is_active, parent_user_id, subscription_package')
           .eq('id', authUser.id)
           .maybeSingle();
 
-        // Fallback: find by email (for migrated legacy users whose ID differs from auth ID)
+        // Fallback: find by email
         if (!data && authUser.email) {
           const result = await supabase
             .from('app_users')
-            .select('*')
+            .select('id, username, full_name, role, avatar_url, is_active, parent_user_id, subscription_package')
             .ilike('email', authUser.email)
             .maybeSingle();
           data = result.data;
@@ -85,13 +85,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (data && !error && data.is_active !== false) {
+          const userRole = data.role || 'Member';
           setUser({ ...authUser, ...data });
-          setRole(data.role || 'Member');
-          localStorage.setItem('isLegacyAuth', 'false'); // Clear legacy flag on real login
+          setRole(userRole);
+          localStorage.setItem('isLegacyAuth', 'false');
 
           // Legacy Sync
           localStorage.setItem('user_id', data.id);
-          localStorage.setItem('user_role', data.role);
+          localStorage.setItem('user_role', userRole);
           localStorage.setItem('isAuthenticated', 'true');
           if (data.username) localStorage.setItem('user_username', data.username);
           if (data.full_name) localStorage.setItem('user_name', data.full_name);

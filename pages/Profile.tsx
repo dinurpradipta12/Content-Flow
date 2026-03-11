@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { googleCalendarService } from '../services/googleCalendarService';
 import { Globe, Smile } from 'lucide-react';
 import { MoodIndicator } from '../components/MoodIndicator';
+import { storageService } from '../services/storageService';
 
 interface UserData {
   id: string;
@@ -67,6 +68,7 @@ export const Profile: React.FC = () => {
   const [email, setEmail] = useState('');
 
   const [loading, setLoading] = useState(true);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [currentMood, setCurrentMood] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -218,19 +220,29 @@ export const Profile: React.FC = () => {
     }
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'File terlalu besar (Max 5MB)' } }));
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const res = reader.result as string;
-        updateProfile({ avatar_url: res });
-      };
-      reader.readAsDataURL(file);
+
+      setUploadingAvatar(true);
+      try {
+        const publicUrl = await storageService.uploadFile(file, 'content-assets', 'avatars');
+        if (publicUrl) {
+          await updateProfile({ avatar_url: publicUrl });
+          window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: 'Foto profil berhasil diperbarui!' } }));
+        } else {
+          throw new Error('Gagal mengunggah foto.');
+        }
+      } catch (err) {
+        console.error('[Avatar] Upload error:', err);
+        window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'error', message: 'Gagal mengunggah foto profil.' } }));
+      } finally {
+        setUploadingAvatar(false);
+      }
     }
   };
 
@@ -243,7 +255,13 @@ export const Profile: React.FC = () => {
       <div className="flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8 md:mb-10">
         <div className="relative group shrink-0 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
           <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-44 md:h-44 rounded-full border-3 sm:border-4 border-slate-800 shadow-[6px_6px_0px_0px_#1E293B] sm:shadow-[8px_8px_0px_0px_#1E293B] overflow-hidden bg-card relative">
-            <img src={user.avatar_url} className="w-full h-full object-cover" alt="User Avatar" />
+            {uploadingAvatar ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-900/10">
+                <Loader2 size={32} className="animate-spin text-accent" />
+              </div>
+            ) : (
+              <img src={user.avatar_url} className="w-full h-full object-cover" alt="User Avatar" />
+            )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
               <Upload size={24} className="text-white sm:w-8 sm:h-8 md:w-8 md:h-8" />
             </div>
