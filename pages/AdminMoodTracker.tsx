@@ -9,6 +9,7 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     AreaChart, Area, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { PremiumLockScreen } from '../components/PremiumLockScreen';
 
 // ── Types ────────────────────────────────────────────────────────
 interface UserMood {
@@ -256,6 +257,8 @@ export const AdminMoodTracker: React.FC = () => {
         observer.observe(document.documentElement, { attributeFilter: ['class'] });
         return () => observer.disconnect();
     }, []);
+
+    const isFree = localStorage.getItem('user_subscription_package') === 'Free' && localStorage.getItem('user_role') !== 'Developer';
 
     // ── Fetch Workspaces ──────────────────────────────────────────
     useEffect(() => {
@@ -732,6 +735,13 @@ export const AdminMoodTracker: React.FC = () => {
             </div>
         </div>
     );
+
+    if (isFree) {
+        return <PremiumLockScreen
+            title="Team Reflection Terkunci"
+            description="Pantau kesehatan mental dan produktivitas tim Anda secara visual dan interaktif. Upgrade untuk membuka fitur pro ini."
+        />;
+    }
 
     return (
         <div className="space-y-6 pb-20 animate-in fade-in duration-500">
