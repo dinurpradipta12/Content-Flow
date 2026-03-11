@@ -869,7 +869,7 @@ export const AdminMoodTracker: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-4 md:p-6 lg:p-8 pt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-4 gap-y-8 flex-1 items-start">
+                        <div className="p-4 md:p-6 lg:p-8 pt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 flex-1 items-start">
                             {latestPerUser.map((item) => {
                                 const m = item.mood;
                                 const hasMood = !!m;

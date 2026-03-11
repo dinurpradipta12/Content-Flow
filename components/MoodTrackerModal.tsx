@@ -120,7 +120,7 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
             <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-8"
                 style={{ animation: 'moodFadeIn 0.3s ease-out both' }}>
                 <div
-                    className="bg-card w-full max-w-[900px] rounded-[2.5rem] border-[4px] border-slate-900 shadow-[20px_20px_0px_0px_rgba(15,23,42,0.9)] overflow-hidden"
+                    className="bg-card w-full max-w-[1150px] rounded-[2.5rem] border-[4px] border-slate-900 shadow-[20px_20px_0px_0px_rgba(15,23,42,0.9)] overflow-hidden"
                     style={{ animation: 'moodSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}
                 >
                     {/* ── NUDGE STATE ── */}
@@ -133,7 +133,7 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
                                 </span>
                                 <div className="flex items-center gap-2 px-4 py-2 bg-amber-100 border-2 border-amber-300 rounded-full">
                                     <Lightbulb size={14} className="text-amber-600" />
-                                    <span className="text-xs font-black text-amber-700 uppercase tracking-widest">Sebentar ya…</span>
+                                    <span className="text-xs font-black text-amber-700 tracking-widest">Sebentar ya…</span>
                                 </div>
                             </div>
                             <div className="max-w-xl space-y-4">
@@ -196,7 +196,7 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
                                 <div className="flex items-center gap-2 w-fit">
                                     <div className="flex items-center gap-2 px-4 py-1.5 bg-pink-100 border-2 border-pink-300 rounded-full">
                                         <Heart size={14} className="text-pink-500 fill-pink-500" />
-                                        <span className="text-xs font-black text-pink-600 uppercase tracking-widest">Daily Pulse</span>
+                                        <span className="text-xs font-black text-pink-600 tracking-widest">Daily Pulse</span>
                                     </div>
                                 </div>
 
@@ -224,7 +224,7 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
                                             <span className="text-3xl sm:text-4xl leading-none group-hover:scale-110 transition-transform duration-200 drop-shadow-md">
                                                 {mood.emoji}
                                             </span>
-                                            <span className="text-[11px] font-black uppercase tracking-tight text-white/90 leading-none">
+                                            <span className="text-[11px] font-black tracking-tight text-white/90 leading-none">
                                                 {mood.label}
                                             </span>
                                         </button>
@@ -246,9 +246,9 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
                             </div>
 
                             {/* RIGHT: Why it matters */}
-                            <div className="w-full sm:w-[300px] bg-slate-50 border-t-[3px] sm:border-t-0 sm:border-l-[3px] border-slate-200 flex flex-col p-7 gap-5">
+                            <div className="w-full sm:w-[380px] bg-slate-50 border-t-[3px] sm:border-t-0 sm:border-l-[3px] border-slate-200 flex flex-col p-9 gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Mengapa ini ada?</p>
+                                    <p className="text-[11px] font-black tracking-[0.15em] text-slate-400">Mengapa ini ada?</p>
                                     <h3 className="text-base font-black text-foreground leading-snug">Karena kita peduli satu sama lain.</h3>
                                 </div>
 
@@ -267,7 +267,7 @@ export const MoodTrackerModal: React.FC<MoodTrackerModalProps> = ({ userId, work
                                 </div>
 
                                 <div className="bg-slate-900 text-slate-100 rounded-xl p-4 space-y-1.5">
-                                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-300">Tahukah kamu?</p>
+                                    <p className="text-[11px] font-black tracking-widest text-slate-300">Tahukah kamu?</p>
                                     <p className="text-[11px] font-semibold leading-relaxed text-slate-400">
                                         Tim yang saling memahami kondisi satu sama lain menghasilkan kolaborasi 3× lebih efektif.
                                     </p>
