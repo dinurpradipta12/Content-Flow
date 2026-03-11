@@ -478,17 +478,17 @@ export const ContentPlan: React.FC = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4 mt-2">
                     <div>
-                        <h2 className="text-xl font-black text-foreground font-heading tracking-tight leading-none uppercase">{config?.page_titles?.['plan']?.title || 'Content Plan'}</h2>
-                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{workspaces.length} workspace</p>
+                        <h2 className="text-xl font-black text-foreground font-heading tracking-tight leading-none">{config?.page_titles?.['plan']?.title || 'Content Plan'}</h2>
+                        <p className="text-[11px] font-black text-slate-500 tracking-widest">{workspaces.length} workspace</p>
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => setIsJoinModalOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-amber-400 dark:bg-blue-600 text-foreground dark:text-white rounded-xl text-[10px] uppercase font-black tracking-widest border-[3px] border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
+                            className="flex items-center gap-1.5 px-3 py-2 bg-amber-400 dark:bg-blue-600 text-foreground dark:text-white rounded-xl text-[10px] font-black tracking-widest border-[3px] border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
                             <Users size={14} strokeWidth={3} /> Gabung
                         </button>
                         {isAdminOrOwner && (
                             <button onClick={handleOpenCreateModal}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-accent text-white rounded-xl text-[10px] uppercase font-black tracking-widest border-[3px] border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
+                                className="flex items-center gap-1.5 px-3 py-2 bg-accent text-white rounded-xl text-[10px] font-black tracking-widest border-[3px] border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-[2px] hover:shadow-none transition-all">
                                 <Plus size={14} strokeWidth={3} /> Buat
                             </button>
                         )}
@@ -504,10 +504,10 @@ export const ContentPlan: React.FC = () => {
                 ) : workspaces.length === 0 ? (
                     <div className="text-center py-12 border-[3px] border-dashed border-slate-900 rounded-3xl bg-muted shadow-inner">
                         <Layers size={36} strokeWidth={2.5} className="text-mutedForeground mx-auto mb-4" />
-                        <p className="text-base font-black text-foreground mb-1 uppercase tracking-widest">Belum ada workspace</p>
+                        <p className="text-base font-black text-foreground mb-1 tracking-widest">Belum ada workspace</p>
                         <p className="text-xs font-bold text-slate-500 mb-6">Buat atau bergabung ke workspace</p>
                         {isAdminOrOwner && (
-                            <button onClick={handleOpenCreateModal} className="px-5 py-3.5 bg-accent border-[3px] border-slate-900 text-white rounded-xl text-[10px] uppercase tracking-widest font-black shadow-[4px_4px_0px_#0f172a] hover:shadow-none hover:translate-y-[4px] transition-all w-3/4 mx-auto block max-w-xs">
+                            <button onClick={handleOpenCreateModal} className="px-5 py-3.5 bg-accent border-[3px] border-slate-900 text-white rounded-xl text-[10px] tracking-widest font-black shadow-[4px_4px_0px_#0f172a] hover:shadow-none hover:translate-y-[4px] transition-all w-3/4 mx-auto block max-w-xs">
                                 Buat Workspace Baru
                             </button>
                         )}
@@ -535,11 +535,11 @@ export const ContentPlan: React.FC = () => {
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             {ws.workspace_type === 'personal' ? (
-                                                <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-100 border-[2px] border-slate-900 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                <span className="flex-shrink-0 text-[9px] font-black tracking-widest text-purple-700 bg-purple-100 border-[2px] border-slate-900 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                     <Lock size={10} strokeWidth={3} /> Personal
                                                 </span>
                                             ) : (
-                                                <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-blue-100 border-[2px] border-slate-900 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                <span className="flex-shrink-0 text-[9px] font-black tracking-widest text-blue-700 bg-blue-100 border-[2px] border-slate-900 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                     <Globe size={10} strokeWidth={3} /> Team
                                                 </span>
                                             )}
@@ -550,7 +550,7 @@ export const ContentPlan: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="bg-muted p-3 rounded-xl border-2 border-slate-200 mt-1">
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                                    <div className="flex justify-between text-[10px] font-black tracking-widest text-slate-500 mb-2">
                                         <span>{ws.publishedCount} Published</span>
                                         <span className={ws.totalContent > 0 && Math.round((ws.publishedCount / ws.totalContent) * 100) >= 100 ? 'text-emerald-500' : 'text-accent'}>{ws.totalContent > 0 ? Math.round((ws.publishedCount / ws.totalContent) * 100) : 0}%</span>
                                     </div>
@@ -575,7 +575,7 @@ export const ContentPlan: React.FC = () => {
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 sm:gap-8 bg-card p-6 sm:p-8 lg:p-10 rounded-[2rem] sm:rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard mb-8 sm:mb-12">
                     <div className="space-y-2 sm:space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="px-4 py-1.5 rounded-full border-[3px] border-slate-900 bg-card text-foreground font-black text-[10px] uppercase tracking-[0.2em] shadow-[3px_3px_0px_#0f172a]">
+                            <div className="px-4 py-1.5 rounded-full border-[3px] border-slate-900 bg-card text-foreground font-black text-[10px] tracking-[0.2em] shadow-[3px_3px_0px_#0f172a]">
                                 {workspaces.length} Workspace Aktif
                             </div>
                             <div className="flex items-center gap-2 text-mutedForeground font-bold text-sm bg-slate-100 px-3 py-1 rounded-lg">
@@ -596,13 +596,13 @@ export const ContentPlan: React.FC = () => {
                         <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border-[3px] border-slate-900 shadow-hard-mini mr-2">
                             <button
                                 onClick={() => setGridCols(3)}
-                                className={`px-4 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${gridCols === 3 ? 'bg-slate-900 text-white' : 'text-mutedForeground'}`}
+                                className={`px-4 py-2.5 rounded-xl font-black text-[11px] tracking-widest transition-all ${gridCols === 3 ? 'bg-slate-900 text-white' : 'text-mutedForeground'}`}
                             >
                                 3 Baris
                             </button>
                             <button
                                 onClick={() => setGridCols(4)}
-                                className={`px-4 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all ${gridCols === 4 ? 'bg-slate-900 text-white' : 'text-mutedForeground'}`}
+                                className={`px-4 py-2.5 rounded-xl font-black text-[11px] tracking-widest transition-all ${gridCols === 4 ? 'bg-slate-900 text-white' : 'text-mutedForeground'}`}
                             >
                                 4 Baris
                             </button>
@@ -629,7 +629,7 @@ export const ContentPlan: React.FC = () => {
                     <div className="flex items-center justify-center py-20">
                         <div className="p-6 bg-card border-[4px] border-slate-900 rounded-3xl shadow-[8px_8px_0px_#0f172a] flex flex-col items-center gap-4">
                             <Loader2 className="animate-spin w-12 h-12 text-foreground" strokeWidth={3} />
-                            <span className="text-sm font-black uppercase tracking-widest text-foreground">Memuat data ...</span>
+                            <span className="text-sm font-black tracking-widest text-foreground">Memuat data ...</span>
                         </div>
                     </div>
                 ) : (
@@ -663,7 +663,7 @@ export const ContentPlan: React.FC = () => {
                                         <h3 className="text-lg sm:text-xl font-black font-heading text-foreground leading-tight truncate group-hover:text-slate-900 transition-colors">
                                             {ws.name}
                                         </h3>
-                                        <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest mt-0.5">{ws.role}</p>
+                                        <p className="text-[10px] font-black text-mutedForeground tracking-widest mt-0.5">{ws.role}</p>
                                     </div>
 
                                     {(isDeveloper || isAdmin || currentUserId === ws.owner_id || tenantIdForEdit === ws.owner_id) && (
@@ -677,11 +677,11 @@ export const ContentPlan: React.FC = () => {
 
                                             {activeMenu === ws.id && (
                                                 <div className="absolute right-0 top-full mt-2 w-48 bg-card border-[3px] border-slate-900 rounded-xl shadow-hard z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
-                                                    <button onClick={(e) => handleOpenEditModal(e, ws)} className="w-full text-left px-4 py-3 hover:bg-muted font-black text-foreground uppercase tracking-widest text-[9px] flex items-center gap-2">
+                                                    <button onClick={(e) => handleOpenEditModal(e, ws)} className="w-full text-left px-4 py-3 hover:bg-muted font-black text-foreground tracking-widest text-[9px] flex items-center gap-2">
                                                         <Edit size={14} className="text-accent" strokeWidth={3} /> Edit
                                                     </button>
                                                     <div className="h-[2px] bg-slate-100"></div>
-                                                    <button onClick={(e) => handleDeleteWorkspace(e, ws.id)} className="w-full text-left px-4 py-3 hover:bg-rose-50 text-rose-600 font-black uppercase tracking-widest text-[9px] flex items-center gap-2">
+                                                    <button onClick={(e) => handleDeleteWorkspace(e, ws.id)} className="w-full text-left px-4 py-3 hover:bg-rose-50 text-rose-600 font-black tracking-widest text-[9px] flex items-center gap-2">
                                                         <Trash2 size={14} strokeWidth={3} /> Hapus
                                                     </button>
                                                 </div>
@@ -692,7 +692,7 @@ export const ContentPlan: React.FC = () => {
 
                                 {/* Platforms Badge Row */}
                                 <div className="flex items-center gap-1.5 mb-5 relative z-10 flex-wrap">
-                                    <span className={`px-2.5 py-1 rounded-lg border-[2px] border-slate-900 font-black text-[8px] uppercase tracking-widest flex items-center gap-1 ${ws.workspace_type === 'personal' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <span className={`px-2.5 py-1 rounded-lg border-[2px] border-slate-900 font-black text-[8px] tracking-widest flex items-center gap-1 ${ws.workspace_type === 'personal' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                                         {ws.workspace_type === 'personal' ? <Lock size={8} strokeWidth={3} /> : <Globe size={8} strokeWidth={3} />}
                                         {ws.workspace_type}
                                     </span>
@@ -711,7 +711,7 @@ export const ContentPlan: React.FC = () => {
                                 {/* Compact Stats & Power Bar */}
                                 <div className="mt-auto space-y-3 relative z-10">
                                     <div className="flex justify-between items-center">
-                                        <p className="text-[9px] font-black text-mutedForeground uppercase tracking-widest">{ws.publishedCount} / {ws.totalContent} Published</p>
+                                        <p className="text-[9px] font-black text-mutedForeground tracking-widest">{ws.publishedCount} / {ws.totalContent} Published</p>
                                         <div className={`text-xs font-black ${ws.totalContent > 0 && (ws.publishedCount / ws.totalContent) >= 1 ? 'text-emerald-500' : 'text-accent'}`}>
                                             {ws.totalContent > 0 ? Math.round((ws.publishedCount / ws.totalContent) * 100) : 0}%
                                         </div>
@@ -742,7 +742,7 @@ export const ContentPlan: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <div className="h-8 px-4 rounded-xl bg-slate-900 text-white font-black uppercase text-[9px] tracking-widest flex items-center gap-2 transition-all group-hover:bg-slate-800 group-hover:shadow-hard shadow-hard-mini">
+                                        <div className="h-8 px-4 rounded-xl bg-slate-900 text-white font-black text-[9px] tracking-widest flex items-center gap-2 transition-all group-hover:bg-slate-800 group-hover:shadow-hard shadow-hard-mini">
                                             Buka <ArrowRight size={12} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                                         </div>
                                     </div>
@@ -762,7 +762,7 @@ export const ContentPlan: React.FC = () => {
                                         <Button
                                             onClick={handleOpenCreateModal}
                                             icon={<Plus size={18} strokeWidth={3} />}
-                                            className="uppercase font-black tracking-widest text-[10px] sm:text-xs h-12 px-6 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] bg-accent hover:bg-violet-600 w-auto hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all"
+                                            className="font-black tracking-widest text-[10px] sm:text-xs h-12 px-6 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] bg-accent hover:bg-violet-600 w-auto hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all"
                                         >
                                             Buat Workspace Baru
                                         </Button>
@@ -776,7 +776,7 @@ export const ContentPlan: React.FC = () => {
                                         <h3 className="text-foreground font-extrabold font-heading text-2xl mb-2">Menunggu Undangan</h3>
                                         <p className="text-slate-500 font-bold text-sm mb-6 max-w-sm mx-auto">Anda belum diundang ke workspace manapun.<br />Minta admin tim Anda atau masukkan kode undangan.</p>
                                         <Button
-                                            className="bg-amber-400 text-foreground hover:bg-amber-500 uppercase font-black tracking-widest text-[10px] sm:text-xs h-12 px-6 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] w-auto hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all"
+                                            className="bg-amber-400 text-foreground hover:bg-amber-500 font-black tracking-widest text-[10px] sm:text-xs h-12 px-6 border-[3px] border-slate-900 shadow-[4px_4px_0px_#0f172a] w-auto hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0f172a] transition-all"
                                             icon={<Users size={18} strokeWidth={3} />}
                                             onClick={() => setIsJoinModalOpen(true)}
                                         >

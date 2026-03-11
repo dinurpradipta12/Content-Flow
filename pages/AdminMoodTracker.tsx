@@ -201,7 +201,7 @@ export const AdminMoodTracker: React.FC = () => {
                     <div className="flex flex-col gap-1.5 pt-0">
                         {WEEK_LABELS.map(d => (
                             <div key={d} className="h-7 flex items-center">
-                                <span className="text-[8px] font-black text-slate-400 uppercase w-6">{d}</span>
+                                <span className="text-[8px] font-black text-slate-400 w-6">{d}</span>
                             </div>
                         ))}
                     </div>
@@ -231,11 +231,11 @@ export const AdminMoodTracker: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 pt-1 justify-center">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rendah</span>
+                    <span className="text-[9px] font-black text-slate-400 tracking-widest">Rendah</span>
                     {[1, 2, 3, 4, 5].map(s => (
                         <div key={s} className="w-4 h-4 rounded" style={{ background: SCORE_STYLES[s].color }} />
                     ))}
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tinggi</span>
+                    <span className="text-[9px] font-black text-slate-400 tracking-widest">Tinggi</span>
                 </div>
             </div>
         );
@@ -747,7 +747,7 @@ export const AdminMoodTracker: React.FC = () => {
                             <Activity size={14} className="text-accent" strokeWidth={3} /> Psychological Tracker
                         </div>
                     </div>
-                    <h1 className="text-4xl lg:text-6xl font-heading font-black text-foreground leading-tight uppercase tracking-tight">
+                    <h1 className="text-4xl lg:text-6xl font-heading font-black text-foreground leading-tight tracking-tight">
                         Team Reflection
                     </h1>
                     <p className="text-slate-500 dark:text-slate-400 font-bold max-w-xl text-lg leading-relaxed">
@@ -823,7 +823,7 @@ export const AdminMoodTracker: React.FC = () => {
                         <AlertTriangle size={24} className="text-white" strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h4 className="font-black text-base text-red-700 uppercase tracking-widest mb-1">⚠️ Perhatian Diperlukan</h4>
+                        <h4 className="font-black text-base text-red-700 tracking-widest mb-1">⚠️ Perhatian diperlukan</h4>
                         <p className="text-sm font-bold text-red-700 leading-relaxed max-w-3xl">
                             Ada <span className="bg-red-200 dark:bg-red-900/50 px-1.5 py-0.5 rounded border border-red-300 dark:border-red-700 font-black">{burnoutCount} anggota tim</span> saat ini melaporkan bahwa mereka merasa <strong className="text-red-700">Burnout</strong>.
                             Direkomendasikan segera menyapa atau memberikan dukungan moral.
@@ -861,11 +861,11 @@ export const AdminMoodTracker: React.FC = () => {
                                 <div className="w-12 h-12 bg-rose-200 dark:bg-rose-900/40 border-[3px] border-slate-900 dark:border-slate-700 rounded-2xl flex items-center justify-center shadow-hard-mini transform -rotate-3">
                                     <Smile size={24} className="text-rose-700 dark:text-rose-400" strokeWidth={2.5} />
                                 </div>
-                                <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Mood Terkini</h3>
+                                <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Mood terkini</h3>
                             </div>
                             <div className="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 rounded-xl border-[2.5px] border-slate-900 dark:border-slate-700 shadow-hard-mini">
                                 <span className="w-2 h-2 bg-emerald-500 border border-slate-900 dark:border-emerald-900 rounded-full animate-pulse" />
-                                <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Live</span>
+                                <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 tracking-widest">Live</span>
                             </div>
                         </div>
 
@@ -935,7 +935,7 @@ export const AdminMoodTracker: React.FC = () => {
                                                         </span>
                                                     </>
                                                 ) : (
-                                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Belum Update</span>
+                                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 tracking-widest">Belum update</span>
                                                 )}
                                             </div>
 
@@ -987,7 +987,7 @@ export const AdminMoodTracker: React.FC = () => {
                     <div className="w-12 h-12 bg-emerald-100 border-[3px] border-slate-900 dark:border-emerald-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
                         <span className="text-xl">🏆</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Hari Terbaik</p>
+                    <p className="text-[10px] font-black tracking-widest text-slate-500 dark:text-slate-400 mb-1">Hari terbaik</p>
                     {heatmapInsights.bestDay ? (
                         <>
                             <p className="text-4xl font-black font-heading text-emerald-600 dark:text-emerald-400 leading-none">{heatmapInsights.bestDay.day}</p>
@@ -1003,7 +1003,7 @@ export const AdminMoodTracker: React.FC = () => {
                     <div className="w-12 h-12 bg-red-100 border-[3px] border-slate-900 dark:border-red-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
                         <span className="text-xl">😰</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Hari Tersulit</p>
+                    <p className="text-[10px] font-black tracking-widest text-slate-500 dark:text-slate-400 mb-1">Hari tersulit</p>
                     {heatmapInsights.worstDay && heatmapInsights.worstDay.day !== heatmapInsights.bestDay?.day ? (
                         <>
                             <p className="text-4xl font-black font-heading text-red-600 dark:text-red-400 leading-none">{heatmapInsights.worstDay.day}</p>
@@ -1019,7 +1019,7 @@ export const AdminMoodTracker: React.FC = () => {
                     <div className="w-12 h-12 bg-blue-100 border-[3px] border-slate-900 dark:border-blue-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
                         <span className="text-xl">📋</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Check-in Hari Ini</p>
+                    <p className="text-[10px] font-black tracking-widest text-slate-500 dark:text-slate-400 mb-1">Check-in hari ini</p>
                     <p className="text-4xl font-black font-heading text-blue-600 dark:text-blue-400 leading-none">{heatmapInsights.checkinRate}%</p>
                     <div className="mt-3 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
                         <div
@@ -1035,7 +1035,7 @@ export const AdminMoodTracker: React.FC = () => {
                     <div className="w-12 h-12 bg-amber-100 border-[3px] border-slate-900 dark:border-amber-800 shadow-hard-mini rounded-2xl flex items-center justify-center mb-4">
                         <span className="text-xl">🔥</span>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">Streak Tim</p>
+                    <p className="text-[10px] font-black tracking-widest text-slate-500 dark:text-slate-400 mb-1">Streak tim</p>
                     <p className="text-4xl font-black font-heading text-amber-600 dark:text-amber-400 leading-none">{heatmapInsights.streak}<span className="text-xl ml-1 font-bold">hr</span></p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-2 bg-amber-50 dark:bg-amber-900/30 rounded-md px-2 py-1 uppercase tracking-widest inline-block">berturut-turut</p>
                 </div>
@@ -1048,7 +1048,7 @@ export const AdminMoodTracker: React.FC = () => {
                         <span className="text-xl">📆</span>
                     </div>
                     <div>
-                        <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Refleksi Minggu Ini</h3>
+                        <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Refleksi minggu ini</h3>
                         <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Mood harian tim — Sen sampai Min</p>
                     </div>
                 </div>
@@ -1105,7 +1105,7 @@ export const AdminMoodTracker: React.FC = () => {
                             <PieIcon size={24} className="text-violet-700 dark:text-violet-400" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Distribusi Mood</h3>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Distribusi mood</h3>
                             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Proporsi setiap mood dalam periode ini</p>
                         </div>
                     </div>
@@ -1157,7 +1157,7 @@ export const AdminMoodTracker: React.FC = () => {
                             <BarChart3 size={24} className="text-blue-700 dark:text-blue-400" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Tren Mood Tim</h3>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Tren mood tim</h3>
                             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">Rata-rata skor harian (1=Burnout → 5=Semangat)</p>
                         </div>
                     </div>
@@ -1202,7 +1202,7 @@ export const AdminMoodTracker: React.FC = () => {
                             <Activity size={24} className="text-emerald-700 dark:text-emerald-400" strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Riwayat Lengkap</h3>
+                            <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Riwayat lengkap</h3>
                             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">{moods.length} entri total dalam periode ini</p>
                         </div>
                     </div>
@@ -1534,7 +1534,7 @@ export const AdminMoodTracker: React.FC = () => {
                                     <Settings size={24} className="text-indigo-700 dark:text-indigo-400" strokeWidth={2.5} />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 uppercase tracking-tight">Team Configuration</h3>
+                                    <h3 className="font-black text-xl text-slate-900 dark:text-slate-100 tracking-tight">Team configuration</h3>
                                     <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Atur emoticon & label mood secara global</p>
                                 </div>
                             </div>

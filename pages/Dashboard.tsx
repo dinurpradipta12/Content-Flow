@@ -36,7 +36,7 @@ const ChartTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-card p-4 border-[3px] border-border shadow-[6px_6px_0px_#0f172a] rounded-[20px] pointer-events-none">
-                {label && <p className="text-mutedForeground font-black text-[10px] uppercase tracking-widest mb-2 leading-none border-b-2 border-border/50 pb-1">{label}</p>}
+                {label && <p className="text-mutedForeground font-black text-[10px] tracking-widest mb-2 leading-none border-b-2 border-border/50 pb-1">{label}</p>}
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }}></div>
@@ -783,7 +783,7 @@ export const Dashboard: React.FC = () => {
                             <span className="text-8xl select-none inline-block drop-shadow-xl">{mood.emoji}</span>
                         </div>
                         <div className={`${badgeStyles} px-3 py-1 rounded-xl border-[3px] border-border shadow-hard-mini`}>
-                            <span className="text-[10px] font-black uppercase tracking-widest">{mood.label}</span>
+                            <span className="text-[10px] font-black tracking-widest">{mood.label}</span>
                         </div>
 
                         {/* ── Dashboard Mood Hover Dropdown ── */}
@@ -794,7 +794,7 @@ export const Dashboard: React.FC = () => {
                             >
                                 <div className="bg-card border-[3.5px] border-slate-900 rounded-2xl shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] overflow-hidden">
                                     <div className="p-3 bg-slate-50 border-b-2 border-slate-100">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Update Pulse</p>
+                                        <p className="text-[10px] font-black tracking-widest text-slate-500 text-center">Update Pulse</p>
                                     </div>
                                     <div className="p-3 grid grid-cols-5 gap-2">
                                         {DASH_MOOD_OPTIONS.map((m) => {
@@ -830,7 +830,7 @@ export const Dashboard: React.FC = () => {
                                     Halo {userName}
                                 </h3>
                                 <div className="mt-2 flex flex-col gap-1">
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-mutedForeground opacity-50 uppercase tracking-widest">
+                                    <div className="flex items-center gap-2 text-[10px] font-black text-mutedForeground opacity-50 tracking-widest">
                                         <Clock size={12} strokeWidth={3} className="text-accent" />
                                         <span>Update {relativeTime(mood.created_at || new Date().toISOString())}</span>
                                     </div>
@@ -860,12 +860,12 @@ export const Dashboard: React.FC = () => {
 
                     <div className="relative z-10 flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">{timeInfo.text}</span>
+                            <span className="text-[10px] font-black tracking-[0.3em] text-white/60">{timeInfo.text}</span>
                             <h1 className="text-4xl font-black font-heading text-white tracking-tight">
                                 Halo, <span className="text-white italic">{userName}!</span>
                             </h1>
                             <div className="flex items-center gap-2 mt-3">
-                                <span className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-full text-[9px] font-black text-white uppercase tracking-widest backdrop-blur-md">
+                                <span className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-full text-[9px] font-black text-white tracking-widest backdrop-blur-md">
                                     {getPlanDisplay()}
                                 </span>
                             </div>
@@ -902,9 +902,9 @@ export const Dashboard: React.FC = () => {
                                         {religion === 'Islam' ? <Clock size={20} /> : <Sparkles size={20} className="text-slate-900" />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${religion === 'Islam' ? 'text-white/90' : 'text-slate-900/60'}`}>Daily {religion} Assistant</span>
+                                        <span className={`text-[10px] font-black tracking-[0.2em] ${religion === 'Islam' ? 'text-white/90' : 'text-slate-900/60'}`}>Daily {religion} Assistant</span>
                                         {religion === 'Islam' && (
-                                            <span className="text-[9px] font-black opacity-60 uppercase tracking-widest">{cityInfo} • {tzLabel}</span>
+                                            <span className="text-[9px] font-black opacity-60 tracking-widest">{cityInfo} • {tzLabel}</span>
                                         )}
                                     </div>
                                 </div>
@@ -916,7 +916,7 @@ export const Dashboard: React.FC = () => {
                             {religion === 'Islam' && prayerData ? (
                                 <div className="space-y-4 relative z-10">
                                     <div>
-                                        <h3 className="text-[10px] font-black uppercase text-white/50 tracking-widest mb-1">Mendekati Waktu</h3>
+                                        <h3 className="text-[10px] font-black text-white/50 tracking-widest mb-1">Mendekati Waktu</h3>
                                         <h2 className="text-5xl font-black font-heading leading-none tracking-tight">{nextPrayerState.name}</h2>
                                     </div>
                                     <div className="flex items-end justify-between">
@@ -925,8 +925,8 @@ export const Dashboard: React.FC = () => {
                                                 {nextPrayerState.time}
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-white/60 uppercase">Menghitung</span>
-                                                <span className="text-lg font-black">{nextPrayerState.countdown} <span className="text-xs opacity-60">MENIT</span></span>
+                                                <span className="text-[10px] font-black text-white/60">Menghitung</span>
+                                                <span className="text-lg font-black">{nextPrayerState.countdown} <span className="text-xs opacity-60">menit</span></span>
                                             </div>
                                         </div>
                                     </div>
@@ -937,7 +937,7 @@ export const Dashboard: React.FC = () => {
                                     <p className="text-2xl font-black leading-tight italic">"{dailyQuote?.text || String(dailyQuote || '')}"</p>
                                     <div className="mt-8 flex items-center gap-3">
                                         <div className="h-[2px] w-8 bg-white/30 rounded-full" />
-                                        <p className="text-[11px] font-black uppercase tracking-widest opacity-80">{dailyQuote?.source || 'Wisdom of the Day'}</p>
+                                        <p className="text-[11px] font-black tracking-widest opacity-80">{dailyQuote?.source || 'Wisdom of the Day'}</p>
                                     </div>
                                 </div>
                             )}
@@ -955,7 +955,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <button
                                 onClick={() => navigate('/plan')}
-                                className="w-full text-[11px] font-black text-white bg-slate-900 py-3.5 px-6 rounded-2xl border-2 border-slate-900 shadow-hard-mini uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.97] transition-all"
+                                className="w-full text-[11px] font-black text-white bg-slate-900 py-3.5 px-6 rounded-2xl border-2 border-slate-900 shadow-hard-mini tracking-widest flex items-center justify-center gap-3 active:scale-[0.97] transition-all"
                             >
                                 Lihat Semua Workspace <ArrowUpRight size={14} className="text-accent" />
                             </button>
@@ -978,7 +978,7 @@ export const Dashboard: React.FC = () => {
                                             </div>
                                         )}
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[8px] font-black text-mutedForeground uppercase tracking-widest bg-muted px-3 py-1 rounded-full border border-border/50">{ws.period || 'Personal'}</span>
+                                            <span className="text-[8px] font-black text-mutedForeground tracking-widest bg-muted px-3 py-1 rounded-full border border-border/50">{ws.period || 'Personal'}</span>
                                             <ArrowUpRight size={20} className="text-slate-300 mt-2" />
                                         </div>
                                     </div>
@@ -1017,7 +1017,7 @@ export const Dashboard: React.FC = () => {
                                         {stat.icon}
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-mutedForeground uppercase tracking-wider mb-1 opacity-70">{stat.title}</p>
+                                        <p className="text-[10px] font-black text-mutedForeground tracking-wider mb-1 opacity-70">{stat.title}</p>
                                         <h4 className="text-2xl font-black text-foreground">{stat.value}</h4>
                                     </div>
                                 </div>
@@ -1030,7 +1030,7 @@ export const Dashboard: React.FC = () => {
                         <div className="absolute inset-0 bg-[radial-gradient(var(--dot-color)_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
                         <div className="flex justify-between items-center mb-10 relative z-10">
                             <div className="space-y-1">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent font-heading">The Journey</h3>
+                                <h3 className="text-[10px] font-black tracking-[0.3em] text-accent font-heading">The Journey</h3>
                                 <h2 className="text-2xl font-black font-heading tracking-tight">Today's Pipeline</h2>
                             </div>
                             <Command size={24} className="text-slate-400" />
@@ -1049,11 +1049,11 @@ export const Dashboard: React.FC = () => {
                                             <div className="flex-1 min-w-0 bg-muted/30 p-4 rounded-2xl border-2 border-transparent hover:border-slate-200 transition-colors">
                                                 <div className="flex justify-between items-start gap-2">
                                                     <p className="text-sm font-black truncate text-foreground leading-tight mb-1">{item.title}</p>
-                                                    <span className="text-[8px] font-black text-mutedForeground uppercase tracking-tighter shrink-0">{item.platform}</span>
+                                                    <span className="text-[8px] font-black text-mutedForeground tracking-tighter shrink-0">{item.platform}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-2">
                                                     <div className={`w-2 h-2 rounded-full ${item.status === 'Published' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                                                    <span className="text-[9px] font-bold text-mutedForeground uppercase opacity-70 tracking-widest">{item.status}</span>
+                                                    <span className="text-[9px] font-bold text-mutedForeground opacity-70 tracking-widest">{item.status}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1067,7 +1067,7 @@ export const Dashboard: React.FC = () => {
                     <section className="bg-slate-900 rounded-[1.8rem] p-8 shadow-hard text-white relative overflow-hidden h-[300px]">
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent/80 mb-1">Growth Trend</h3>
+                                <h3 className="text-[10px] font-black tracking-[0.3em] text-accent/80 mb-1">Growth Trend</h3>
                                 <h2 className="text-2xl font-black font-heading tracking-tight">Active Analytics</h2>
                             </div>
                             <TrendingUp className="text-emerald-400" size={24} />
@@ -1100,7 +1100,7 @@ export const Dashboard: React.FC = () => {
 
                 {/* FAB: Floating Action Button (Centered Alignment Fix) */}
                 <div className="fixed bottom-24 right-6 z-[110] flex flex-col items-center gap-3">
-                    <div className="bg-slate-900 text-white text-[9px] font-black uppercase py-2 px-4 rounded-full border-2 border-border shadow-hard-mini animate-bounce whitespace-nowrap text-center">
+                    <div className="bg-slate-900 text-white text-[9px] font-black py-2 px-4 rounded-full border-2 border-border shadow-hard-mini animate-bounce whitespace-nowrap text-center">
                         New Post
                     </div>
                     <button
@@ -1237,7 +1237,7 @@ export const Dashboard: React.FC = () => {
                                                     <span className="text-[10px] font-black text-mutedForeground uppercase tracking-widest">{new Date(item.updated_at || item.date).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
-                                            <div className={`px-5 py-2 rounded-full text-[10px] font-black uppercase border-[3px] shadow-hard-mini ${item.status === 'Published' ? 'bg-emerald-400 text-foreground border-border animate-pulse' : 'bg-amber-400 text-foreground border-border'}`}>
+                                            <div className={`px-5 py-2 rounded-full text-[10px] font-black border-[3px] shadow-hard-mini ${item.status === 'Published' ? 'bg-emerald-400 text-foreground border-border animate-pulse' : 'bg-amber-400 text-foreground border-border'}`}>
                                                 {item.status}
                                             </div>
                                         </div>
@@ -1276,7 +1276,7 @@ export const Dashboard: React.FC = () => {
                                 <h2 className="text-3xl font-black font-heading flex items-center gap-4">
                                     <Send className="text-indigo-500 w-10 h-10 -rotate-12" strokeWidth={3} /> My Power Workspaces
                                 </h2>
-                                <Button variant="secondary" onClick={() => navigate('/plan')} className="shadow-hard rounded-[1.5rem] px-8 py-6 font-black text-base uppercase tracking-widest border-[3px] border-border">Explore Labs</Button>
+                                <Button variant="secondary" onClick={() => navigate('/plan')} className="shadow-hard rounded-[1.5rem] px-8 py-6 font-black text-base tracking-widest border-[3px] border-border">Explore labs</Button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                                 {workspaces.slice(0, 6).map(ws => (
@@ -1292,7 +1292,7 @@ export const Dashboard: React.FC = () => {
                                                     <div className="text-4xl font-black text-mutedForeground uppercase">{ws.name?.[0]}</div>
                                                 </div>
                                             )}
-                                            <div className="px-5 py-2 bg-foreground text-background rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-hard-mini">{ws.period || 'PERSONAL'}</div>
+                                            <div className="px-5 py-2 bg-foreground text-background rounded-full text-[10px] font-black tracking-[0.2em] shadow-hard-mini">{ws.period || 'Personal'}</div>
                                         </div>
                                         <h4 className="text-2xl font-black text-foreground font-heading mb-4 group-hover:text-slate-900 transition-colors truncate relative z-10">{ws.name}</h4>
                                         <p className="text-sm font-bold text-slate-500 mb-10 line-clamp-3 leading-relaxed flex-1 relative z-10">{ws.description || "Content Plan Workspace untuk memanajemen konten secara tersistem & maksimal."}</p>
@@ -1325,14 +1325,14 @@ export const Dashboard: React.FC = () => {
                             <div className="grid grid-cols-1 gap-5">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-mutedForeground ml-2">Platform Focus</label>
-                                    <select value={filterPlatform} onChange={(e) => setFilterPlatform(e.target.value)} className="w-full bg-muted border-[3px] border-border rounded-2xl px-5 py-4 text-xs font-black uppercase tracking-widest outline-none focus:bg-card cursor-pointer shadow-hard-mini transition-all">
+                                    <select value={filterPlatform} onChange={(e) => setFilterPlatform(e.target.value)} className="w-full bg-muted border-[3px] border-border rounded-2xl px-5 py-4 text-xs font-black tracking-widest outline-none focus:bg-card cursor-pointer shadow-hard-mini transition-all">
                                         <option value="all">ALL PLATFORM</option>
                                         {['Instagram', 'Tiktok', 'Youtube', 'LinkedIn', 'Facebook', 'Twitter', 'Threads'].map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase text-mutedForeground ml-2">Workspace Filter</label>
-                                    <select value={filterWs} onChange={(e) => setFilterWs(e.target.value)} className="w-full bg-muted border-[3px] border-border rounded-2xl px-5 py-4 text-xs font-black uppercase tracking-widest outline-none focus:bg-card cursor-pointer shadow-hard-mini transition-all">
+                                    <select value={filterWs} onChange={(e) => setFilterWs(e.target.value)} className="w-full bg-muted border-[3px] border-border rounded-2xl px-5 py-4 text-xs font-black tracking-widest outline-none focus:bg-card cursor-pointer shadow-hard-mini transition-all">
                                         <option value="all">ALL WORKSPACE</option>
                                         {workspaces.map(ws => <option key={ws.id} value={ws.id}>{ws.name.toUpperCase()}</option>)}
                                     </select>
@@ -1358,7 +1358,7 @@ export const Dashboard: React.FC = () => {
                         <div className="bg-card rounded-[2rem] sm:rounded-[3.5rem] overflow-hidden border-[3.5px] border-border shadow-hard relative group">
                             {isSelectingReligion ? (
                                 <div className="p-10 bg-card h-full space-y-8 animate-in zoom-in-95 duration-300">
-                                    <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter">Set Preference</h3>
+                                    <h3 className="text-2xl font-black text-foreground tracking-tighter">Set Preference</h3>
                                     <div className="grid grid-cols-2 gap-4">
                                         {Object.keys(RELIGION_CONTENT).map(rel => (
                                             <button key={rel} onClick={() => handleSetReligion(rel)} className={`px-4 py-5 border-[3px] rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${religion === rel ? 'bg-foreground border-foreground text-background shadow-hard' : 'border-border/50 hover:border-foreground'}`}>{rel}</button>
@@ -1370,7 +1370,7 @@ export const Dashboard: React.FC = () => {
                                 <div className="bg-gradient-to-br from-[#10B981] via-[#059669] to-[#064E3B] p-10 text-white min-h-[420px] flex flex-col items-center justify-center text-center relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-card/5 rounded-bl-full" />
                                     <button onClick={() => setIsSelectingReligion(true)} className="absolute top-8 right-8 bg-card/10 hover:bg-card/20 p-2 rounded-xl transition-all backdrop-blur-md"><Settings size={20} /></button>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] mb-6 text-emerald-200 flex items-center gap-2"><Clock size={14} /> Next Prayer</p>
+                                    <p className="text-[11px] font-black tracking-[0.3em] mb-6 text-emerald-200 flex items-center gap-2"><Clock size={14} /> Next Prayer</p>
                                     <h3 className="text-6xl font-black font-heading mb-6 drop-shadow-hard">{nextPrayerState.name}</h3>
                                     <div className="bg-black/20 px-6 py-3 rounded-3xl backdrop-blur-xl border border-white/10 shadow-xl">
                                         <p className="font-black text-xl">{nextPrayerState.time} <span className="text-[10px] text-emerald-300 ml-1">{tzLabel}</span></p>
@@ -1471,7 +1471,7 @@ export const Dashboard: React.FC = () => {
                                     );
                                 })}
                             </div>
-                            <Button className="w-full mt-12 py-8 rounded-[1.5rem] font-black uppercase text-xs tracking-[0.3em]" variant="secondary" onClick={() => navigate('/script')}>View Full Board</Button>
+                            <Button className="w-full mt-12 py-8 rounded-[1.5rem] font-black text-xs tracking-[0.3em]" variant="secondary" onClick={() => navigate('/script')}>View full board</Button>
                         </div>
                     </div>
                 </div>
@@ -1486,21 +1486,21 @@ export const Dashboard: React.FC = () => {
                             <div className="flex items-center gap-6">
                                 <div className="w-16 h-16 rounded-[1.5rem] bg-foreground text-background flex items-center justify-center shadow-hard"><Bell size={32} /></div>
                                 <div className="space-y-1">
-                                    <h2 className="text-3xl font-black text-foreground uppercase tracking-tighter">Activity</h2>
-                                    <p className="text-xs font-bold text-accent uppercase tracking-[0.3em]">{unreadCount} UNREAD PULSE</p>
+                                    <h2 className="text-3xl font-black text-foreground tracking-tighter">Activity</h2>
+                                    <p className="text-xs font-bold text-accent tracking-[0.3em]">{unreadCount} unread pulse</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowNotifSidebar(false)} className="w-12 h-12 rounded-2xl flex items-center justify-center text-foreground hover:bg-rose-100 hover:text-rose-600 transition-all border-[3px] border-border shadow-hard-mini hover:shadow-none hover:translate-y-0.5"><X size={32} strokeWidth={3} /></button>
                         </div>
                         <div className="px-10 py-6 border-b-2 border-border/50 flex items-center justify-between bg-muted">
-                            <button onClick={markAllAsRead} className="text-[10px] font-black uppercase text-slate-500 hover:text-accent flex items-center gap-2"><CheckCheck size={16} /> Mark All Clear</button>
-                            <button onClick={() => window.confirm('Purge all notifications?') && clearAllNotifications()} className="text-[10px] font-black uppercase text-mutedForeground hover:text-red-500 flex items-center gap-2"><Trash2 size={16} /> Purge Hub</button>
+                            <button onClick={markAllAsRead} className="text-[10px] font-black text-slate-500 hover:text-accent flex items-center gap-2"><CheckCheck size={16} /> Mark all clear</button>
+                            <button onClick={() => window.confirm('Purge all notifications?')} className="text-[10px] font-black text-mutedForeground hover:text-red-500 flex items-center gap-2"><Trash2 size={16} /> Purge hub</button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-10 space-y-6 custom-scrollbar">
                             {notifications.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center opacity-30 grayscale">
                                     <Bell size={80} className="mb-6" />
-                                    <h3 className="text-2xl font-black uppercase tracking-widest">Hub Empty</h3>
+                                    <h3 className="text-2xl font-black tracking-widest">Hub empty</h3>
                                     <p className="text-xs font-bold">Waiting for new activity...</p>
                                 </div>
                             ) : Object.entries(notifications.reduce((acc: any, n) => {
@@ -1511,7 +1511,7 @@ export const Dashboard: React.FC = () => {
                             }, {})).map(([date, group]: any) => (
                                 <div key={date} className="space-y-4">
                                     <div className="flex items-center gap-4">
-                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] whitespace-nowrap">{date}</span>
+                                        <span className="text-[10px] font-black text-slate-300 tracking-[0.4em] whitespace-nowrap">{date}</span>
                                         <div className="h-px w-full bg-slate-100 " />
                                     </div>
                                     {group.map((n: any) => (
@@ -1530,7 +1530,7 @@ export const Dashboard: React.FC = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start mb-2">
-                                                        <p className="text-[11px] font-black uppercase text-accent tracking-[0.2em]">{n.title}</p>
+                                                        <p className="text-[11px] font-black text-accent tracking-[0.2em]">{n.title}</p>
                                                         <p className="text-[10px] font-bold text-mutedForeground">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                                     </div>
                                                     <p className="text-base font-bold text-foreground leading-snug">{n.content}</p>
