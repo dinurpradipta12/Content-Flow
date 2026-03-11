@@ -170,6 +170,8 @@ export const PresenceToast = () => {
             case 'online': return 'sedang online';
             case 'offline': return 'telah offline';
             case 'idle': return 'sedang idle';
+            case 'busy': return 'sedang sibuk (DND)';
+            case 'away': return 'sedang istirahat';
             default: return status;
         }
     };
@@ -179,6 +181,8 @@ export const PresenceToast = () => {
             case 'online': return '#22c55e';   // green-500
             case 'offline': return '#94a3b8';  // slate-400
             case 'idle': return '#eab308';     // yellow-500
+            case 'busy': return '#ef4444';     // red-500
+            case 'away': return '#f59e0b';     // amber-500
             default: return '#cbd5e1';
         }
     };
@@ -188,6 +192,8 @@ export const PresenceToast = () => {
             case 'online': return '🟢';
             case 'offline': return '⚫';
             case 'idle': return '🟡';
+            case 'busy': return '🔴';
+            case 'away': return '💤';
             default: return '⚪';
         }
     };

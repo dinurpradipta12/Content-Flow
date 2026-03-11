@@ -578,7 +578,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         avatar: localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40',
         jobTitle: localStorage.getItem('user_job_title') || '',
         subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal',
-        parentUserId: localStorage.getItem('parent_user_id') || null
+        parentUserId: localStorage.getItem('parent_user_id') || null,
+        presenceStatus: (localStorage.getItem('presence_status') as any) || 'online'
     });
 
     // Branding State
@@ -617,7 +618,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             // Consolidation: Start multiple independent requests in parallel
             const [userResult, workspaceResult] = await Promise.all([
                 supabase.from('app_users')
-                    .select('id, full_name, role, avatar_url, job_title, subscription_end, subscription_package, parent_user_id')
+                    .select('id, full_name, role, avatar_url, job_title, subscription_end, subscription_package, parent_user_id, presence_status')
                     .eq('id', userId)
                     .single(),
                 !localStorage.getItem('active_workspace_id')
@@ -652,7 +653,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     avatar: data.avatar_url || 'https://picsum.photos/40/40',
                     jobTitle: data.job_title || '',
                     subscriptionPackage: effectiveSubscription,
-                    parentUserId: data.parent_user_id
+                    parentUserId: data.parent_user_id,
+                    presenceStatus: data.presence_status || 'online'
                 };
                 setUserProfile(profileData);
 
@@ -684,6 +686,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 localStorage.setItem('user_role', profileData.role);
                 localStorage.setItem('user_avatar', profileData.avatar);
                 localStorage.setItem('user_subscription_package', profileData.subscriptionPackage);
+                localStorage.setItem('presence_status', profileData.presenceStatus);
                 if (data.subscription_end) localStorage.setItem('subscription_end', data.subscription_end);
                 window.dispatchEvent(new Event('sub_updated'));
             }
@@ -789,6 +792,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
         window.addEventListener('user_updated', handleUserUpdate);
         window.addEventListener('sub_updated', handleUserUpdate);
+        window.addEventListener('user_presence_updated', handleUserUpdate);
 
         // 5. Global Event Listeners
         const handleOpenPayment = () => setShowPaymentModal(true);
@@ -882,6 +886,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             window.removeEventListener('app-confirm', handleAppConfirm);
             window.removeEventListener('open-mood-modal', handleOpenMood);
             window.removeEventListener('mood-updated', handleForceMoodRefresh);
+            window.removeEventListener('user_presence_updated', handleUserUpdate);
             supabase.removeChannel(broadcastChannel);
         };
     }, []);
@@ -1781,7 +1786,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     onMouseEnter={() => setShowMoodMenu(true)}
                                     onMouseLeave={() => setShowMoodMenu(false)}>
                                     <img src={userProfile.avatar} alt="User" className="w-11 h-11 md:w-13 md:h-13 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
-                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                                    <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${userProfile.presenceStatus === 'online' ? 'bg-green-500' :
+                                            userProfile.presenceStatus === 'away' ? 'bg-amber-500' :
+                                                userProfile.presenceStatus === 'busy' ? 'bg-rose-500' :
+                                                    'bg-slate-400'
+                                        }`}></div>
                                     <MoodIndicator moodEmoji={currentMood} size="sm" />
 
                                     {/* ── Mood Hover Dropdown ── */}
