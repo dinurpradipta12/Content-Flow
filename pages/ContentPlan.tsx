@@ -572,8 +572,8 @@ export const ContentPlan: React.FC = () => {
             {/* ═══ DESKTOP VIEW ═══ */}
             <div className="hidden md:block space-y-4 sm:space-y-6 md:space-y-8 lg:space-y-10 pb-4 sm:pb-6 md:pb-8 lg:pb-12">
                 {/* 1. TOP HEADER SECTION - Dashboard Style */}
-                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard mb-12">
-                    <div className="space-y-3">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 sm:gap-8 bg-card p-6 sm:p-8 lg:p-10 rounded-[2rem] sm:rounded-[3rem] border-[3.5px] border-slate-900 shadow-hard mb-8 sm:mb-12">
+                    <div className="space-y-2 sm:space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="px-4 py-1.5 rounded-full border-[3px] border-slate-900 bg-card text-foreground font-black text-[10px] uppercase tracking-[0.2em] shadow-[3px_3px_0px_#0f172a]">
                                 {workspaces.length} Workspace Aktif
@@ -582,10 +582,10 @@ export const ContentPlan: React.FC = () => {
                                 <Layers size={14} className="text-accent" /> Manage Your Content Ecosystem
                             </div>
                         </div>
-                        <h1 className="text-4xl lg:text-6xl font-heading font-black text-foreground leading-tight">
+                        <h1 className="text-3xl sm:text-4xl lg:text-6xl font-heading font-black text-foreground leading-tight">
                             {config?.page_titles?.['plan']?.title || 'Content Plan'}
                         </h1>
-                        <p className="text-slate-500 font-bold max-w-3xl text-xl leading-relaxed">
+                        <p className="text-slate-500 font-bold max-w-3xl text-lg lg:text-xl leading-relaxed">
                             <Sparkles size={20} className="inline mr-2 text-amber-400 animate-pulse" />
                             {config?.page_titles?.['plan']?.subtitle || 'Pilih workspace untuk mulai mengelola konten secara profesional.'}
                         </p>
@@ -638,7 +638,7 @@ export const ContentPlan: React.FC = () => {
                         {workspaces.map((ws) => (
                             <div
                                 key={ws.id}
-                                className={`group relative bg-card rounded-[2.5rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[14px_14px_0px_rgba(15,23,42,0.25)] hover:border-slate-900 hover:-translate-y-3 transition-all duration-300 p-6 flex flex-col cursor-pointer overflow-hidden animate-in fade-in zoom-in-95 duration-500 h-full`}
+                                className={`group relative bg-card rounded-[2rem] sm:rounded-[2.5rem] border-[3.5px] border-slate-900 shadow-hard hover:shadow-[14px_14px_0px_rgba(15,23,42,0.25)] hover:border-slate-900 hover:-translate-y-3 transition-all duration-300 p-4 sm:p-5 lg:p-6 flex flex-col cursor-pointer overflow-hidden animate-in fade-in zoom-in-95 duration-500 h-full`}
                                 onClick={() => navigate(`/plan/${ws.id}`)}
                             >
                                 {/* Moving Ornaments */}
@@ -660,7 +660,7 @@ export const ContentPlan: React.FC = () => {
                                     )}
 
                                     <div className="flex-1 min-w-0 pr-8">
-                                        <h3 className="text-xl font-black font-heading text-foreground leading-tight truncate group-hover:text-slate-900 transition-colors">
+                                        <h3 className="text-lg sm:text-xl font-black font-heading text-foreground leading-tight truncate group-hover:text-slate-900 transition-colors">
                                             {ws.name}
                                         </h3>
                                         <p className="text-[10px] font-black text-mutedForeground uppercase tracking-widest mt-0.5">{ws.role}</p>

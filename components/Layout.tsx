@@ -1501,7 +1501,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {currentTheme !== 'light' && <style dangerouslySetInnerHTML={{ __html: THEME_STYLES[currentTheme](customColor) }} />}
                 {/* Sidebar (Fixed position always - Hidden on Mobile) */}
                 <aside
-                    className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-col ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-20 translate-x-0'}`}
+                    className={`hidden md:flex fixed inset-y-0 left-0 z-40 bg-card border-r-2 border-slate-200 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex-col ${isSidebarOpen ? 'w-64 lg:w-72 translate-x-0' : 'w-20 translate-x-0'}`}
                 >
                     <div className="flex-shrink-0 mobile-safe-top-spacer"></div>
                     <div className={`h-auto flex flex-col shrink-0 pt-1 pb-4 transition-all duration-500 ${isSidebarOpen ? 'items-start px-8' : 'items-center px-0'} `}>
@@ -1670,13 +1670,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </aside>
 
                 {/* Main Wrapper-Uses padding left instead of flex width sharing */}
-                <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-72' : 'pl-0 md:pl-20'}`}>
+                <div className={`flex flex-col h-screen overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full min-w-0 ${isSidebarOpen ? 'md:pl-64 lg:pl-72' : 'pl-0 md:pl-20'}`}>
                     <PresenceToast />
                     {/* ChatNotificationListener removed - Messages feature disabled */}
 
                     {/* Mobile & Tablet top safe area spacer - pushes header below status bar */}
                     {!location.pathname.startsWith('/carousel') && <div className="flex-shrink-0 mobile-safe-top-spacer"></div>}
-                    <header className={`mt-0 md:mt-4 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-3 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-16 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-4 sm:px-4 md:px-6 py-2 sm:py-2 md:py-3 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                    <header className={`mt-0 md:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-2 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-14 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-5 lg:px-8 py-2 sm:py-2 md:py-2 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
 
                         {/* ── MOBILE HEADER (< md) ── */}
                         <div className="flex md:hidden items-center justify-between w-full gap-1 pb-2">
@@ -1710,20 +1710,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </div>
                         </div>
 
-                        {/* ── DESKTOP HEADER (≥ md) ── */}
-                        <div className="hidden md:flex items-center gap-3 md:gap-4">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={22} /></button>
+                        {/* ── DESKTOP & TABLET HEADER (≥ md) ── */}
+                        <div className="hidden md:flex items-center gap-2 lg:gap-4">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 lg:p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} className="lg:w-[22px] lg:h-[22px]" /></button>
                             <div className="flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
-                                <span className="text-[10px] lg:text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                    {currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                <span className="text-[9px] lg:text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5 lg:mb-1">
+                                    {currentTime.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
                                 </span>
-                                <span className="text-sm lg:text-lg font-black text-slate-900 font-heading tracking-tight leading-none">
-                                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                                <span className="text-xs lg:text-lg font-black text-slate-900 font-heading tracking-tight leading-none whitespace-nowrap">
+                                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="hidden md:flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-6">
+                        <div className="hidden md:flex items-center gap-1.5 lg:gap-6">
                             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 py-1 relative">
                                 <div className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border text-[10px] sm:text-[11px] font-bold transition-colors ${getNetworkColor()}`}>
                                     <Wifi size={14} className="sm:w-4 sm:h-4 md:w-4 md:h-4" />

@@ -260,7 +260,7 @@ const FlowColumn: React.FC<{
     const cfg = STATUS_CONFIG[status];
 
     return (
-        <div className="flex-1 flex-shrink-0 min-w-[320px] max-w-[360px] flex flex-col">
+        <div className="flex-1 flex-shrink-0 min-w-[280px] sm:min-w-[320px] max-w-[360px] flex flex-col">
             {/* Column Header */}
             <div className={`flex-shrink-0 mb-4 p-4 rounded-[2rem] border-[3.5px] border-border shadow-hard-mini bg-card relative overflow-hidden`}>
                 <div className={`absolute top-0 left-0 right-0 h-1.5 ${cfg.dotColor}`} />
@@ -602,41 +602,41 @@ export const ContentFlow: React.FC = () => {
 
                     {/* Stats Row */}
                     {!loading && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-5 flex items-center gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
-                                <div className="w-12 h-12 bg-accent/20 border-2 border-accent rounded-xl flex items-center justify-center shadow-hard-mini-mini">
-                                    <Layers size={22} className="text-accent" />
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-4 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 border-2 border-accent rounded-xl flex items-center justify-center shadow-hard-mini-mini shrink-0">
+                                    <Layers size={18} className="text-accent lg:w-[22px] lg:h-[22px]" />
                                 </div>
                                 <div>
-                                    <p className="text-[11px] font-black text-mutedForeground uppercase tracking-wider">Total Konten</p>
-                                    <p className="text-3xl font-black text-foreground">{totalItems}</p>
+                                    <p className="text-[9px] sm:text-[11px] font-black text-mutedForeground uppercase tracking-wider">Total Konten</p>
+                                    <p className="text-xl sm:text-3xl font-black text-foreground">{totalItems}</p>
                                 </div>
                             </div>
-                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-5 flex items-center gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
-                                <div className="w-12 h-12 bg-emerald-500/20 border-2 border-emerald-500 rounded-xl flex items-center justify-center shadow-hard-mini-mini">
-                                    <CheckCircle size={22} className="text-emerald-500" />
+                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-4 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-500/20 border-2 border-emerald-500 rounded-xl flex items-center justify-center shadow-hard-mini-mini shrink-0">
+                                    <CheckCircle size={18} className="text-emerald-500 lg:w-[22px] lg:h-[22px]" />
                                 </div>
                                 <div>
-                                    <p className="text-[11px] font-black text-mutedForeground uppercase tracking-wider">Published</p>
-                                    <p className="text-3xl font-black text-foreground">{publishedItems} <span className="text-sm font-black text-emerald-500">({publishRate}%)</span></p>
+                                    <p className="text-[9px] sm:text-[11px] font-black text-mutedForeground uppercase tracking-wider">Published</p>
+                                    <p className="text-xl sm:text-3xl font-black text-foreground">{publishedItems}</p>
                                 </div>
                             </div>
-                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-5 flex items-center gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
-                                <div className="w-12 h-12 bg-blue-500/20 border-2 border-blue-500 rounded-xl flex items-center justify-center shadow-hard-mini-mini">
-                                    <Zap size={22} className="text-blue-500" />
+                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-4 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/20 border-2 border-blue-500 rounded-xl flex items-center justify-center shadow-hard-mini-mini shrink-0">
+                                    <Zap size={18} className="text-blue-500 lg:w-[22px] lg:h-[22px]" />
                                 </div>
                                 <div>
-                                    <p className="text-[11px] font-black text-mutedForeground uppercase tracking-wider">In Progress</p>
-                                    <p className="text-3xl font-black text-foreground">{inProgressItems}</p>
+                                    <p className="text-[9px] sm:text-[11px] font-black text-mutedForeground uppercase tracking-wider">In Progress</p>
+                                    <p className="text-xl sm:text-3xl font-black text-foreground">{inProgressItems}</p>
                                 </div>
                             </div>
-                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-5 flex items-center gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
-                                <div className="w-12 h-12 bg-amber-500/20 border-2 border-amber-500 rounded-xl flex items-center justify-center shadow-hard-mini-mini">
-                                    <Eye size={22} className="text-amber-500" />
+                            <div className="bg-card border-[3.5px] border-border rounded-[2rem] p-4 sm:p-5 flex items-center gap-2 sm:gap-4 shadow-hard hover:-translate-y-1 hover:shadow-hard-xl transition-all">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500/20 border-2 border-amber-500 rounded-xl flex items-center justify-center shadow-hard-mini-mini shrink-0">
+                                    <Eye size={18} className="text-amber-500 lg:w-[22px] lg:h-[22px]" />
                                 </div>
                                 <div>
-                                    <p className="text-[11px] font-black text-mutedForeground uppercase tracking-wider">Perlu Review</p>
-                                    <p className="text-3xl font-black text-foreground">{reviewItems}</p>
+                                    <p className="text-[9px] sm:text-[11px] font-black text-mutedForeground uppercase tracking-wider">Review</p>
+                                    <p className="text-xl sm:text-3xl font-black text-foreground">{reviewItems}</p>
                                 </div>
                             </div>
                         </div>

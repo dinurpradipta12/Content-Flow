@@ -1118,8 +1118,8 @@ export const Dashboard: React.FC = () => {
   ═══════════════════════════════════════════════════════════════════ */}
             <div className="hidden md:block w-full px-8 lg:px-12 py-10 space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
                 {/* 1. TOP HEADER SECTION */}
-                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 bg-card p-10 rounded-[3rem] border-[3.5px] border-border shadow-hard">
-                    <div className="space-y-3">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 sm:gap-8 bg-card p-6 sm:p-8 lg:p-10 rounded-[2rem] sm:rounded-[3rem] border-[3.5px] border-border shadow-hard">
+                    <div className="space-y-2 sm:space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="px-4 py-1.5 rounded-full border-[3px] border-border bg-card text-foreground font-black text-[10px] uppercase tracking-[0.2em] shadow-hard-mini">
                                 {getPlanDisplay()}
@@ -1128,10 +1128,10 @@ export const Dashboard: React.FC = () => {
                                 <Calendar size={14} className="text-accent" /> {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
                             </div>
                         </div>
-                        <h1 className="text-4xl lg:text-6xl xl:text-7xl font-heading font-black text-foreground leading-tight">
+                        <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-heading font-black text-foreground leading-tight">
                             {timeInfo.text}, <span className="text-accent">{userName}!</span>
                         </h1>
-                        <p className="text-slate-500 font-bold max-w-3xl text-xl leading-relaxed">
+                        <p className="text-slate-500 font-bold max-w-3xl text-lg lg:text-xl leading-relaxed">
                             <Sparkles size={20} className="inline mr-2 text-amber-400 animate-pulse" />
                             "{timeInfo.quote}"
                         </p>
@@ -1157,18 +1157,18 @@ export const Dashboard: React.FC = () => {
                     <div className="lg:col-span-9 space-y-10">
 
                         {/* Summary Metrics Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                             {[
                                 { title: 'Viral Reach', value: formatShortNumber(metricsCurrent.views), prev: metricsPrev.views, cur: metricsCurrent.views, icon: <Eye size={24} />, color: 'bg-sky-400 text-white border-border shadow-hard-mini' },
                                 { title: 'Eng. Power', value: metricsCurrent.er.toFixed(2) + '%', prev: metricsPrev.er, cur: metricsCurrent.er, icon: <MousePointerClick size={24} />, color: 'bg-indigo-500 text-white border-border shadow-hard-mini' },
                                 { title: 'Consistency', value: metricsCurrent.published, prev: metricsPrev.published, cur: metricsCurrent.published, icon: <CalendarCheck size={24} />, color: 'bg-emerald-500 text-white border-border shadow-hard-mini' }
                             ].map((card, i) => (
-                                <div key={i} className="group bg-card rounded-[3rem] border-[3.5px] border-border shadow-hard hover:shadow-hard-hover transition-all p-8 relative overflow-hidden">
+                                <div key={i} className="group bg-card rounded-[2rem] sm:rounded-[3rem] border-[3.5px] border-border shadow-hard hover:shadow-hard-hover transition-all p-6 sm:p-8 relative overflow-hidden">
                                     <div className={`w-16 h-16 ${card.color} rounded-[1.5rem] border-[3.5px] flex items-center justify-center mb-6 shadow-hard-mini group-hover:rotate-12 transition-transform`}>
                                         {card.icon}
                                     </div>
                                     <p className="text-[12px] font-black text-mutedForeground uppercase tracking-[0.2em] mb-2">{card.title}</p>
-                                    <h3 className="text-4xl lg:text-5xl font-black text-foreground leading-none">{card.value}</h3>
+                                    <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground leading-none">{card.value}</h3>
                                     <div className="mt-4">
                                         {renderMetricCompare(card.cur, card.prev)}
                                     </div>
@@ -1177,23 +1177,23 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* Chart: The Big Bento Block */}
-                        <div className="bg-card rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-10">
-                            <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-8 mb-12">
-                                <div className="space-y-2">
-                                    <h3 className="text-3xl font-black font-heading text-foreground flex items-center gap-4">
-                                        <BarChart3 className="text-accent w-10 h-10" strokeWidth={2.5} /> Content Growth Trend
+                        <div className="bg-card rounded-[2rem] sm:rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-6 sm:p-8 lg:p-10">
+                            <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-6 sm:gap-8 mb-8 sm:mb-12">
+                                <div className="space-y-1 sm:space-y-2">
+                                    <h3 className="text-2xl sm:text-3xl font-black font-heading text-foreground flex items-center gap-3 sm:gap-4">
+                                        <BarChart3 className="text-accent w-8 h-8 sm:w-10 sm:h-10" strokeWidth={2.5} /> Content Growth Trend
                                     </h3>
-                                    <p className="text-mutedForeground font-bold text-lg">Visualisasi performa konten berdasarkan metrik terpilih.</p>
+                                    <p className="text-mutedForeground font-bold text-base sm:text-lg">Visualisasi performa konten berdasarkan metrik terpilih.</p>
                                 </div>
-                                <div className="flex flex-wrap bg-muted p-2 rounded-[1.5rem] border-[3px] border-border shadow-inner">
+                                <div className="flex flex-wrap bg-muted p-1 sm:p-2 rounded-xl sm:rounded-[1.5rem] border-[2px] sm:border-[3px] border-border shadow-inner">
                                     {['views', 'likes', 'comments', 'shares', 'interactions'].map((m) => (
-                                        <button key={m} onClick={() => setSelectedMetric(m)} className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedMetric === m ? 'bg-foreground text-background shadow-lg' : 'text-mutedForeground hover:text-foreground'}`}>
+                                        <button key={m} onClick={() => setSelectedMetric(m)} className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all ${selectedMetric === m ? 'bg-foreground text-background shadow-lg' : 'text-mutedForeground hover:text-foreground'}`}>
                                             {m === 'interactions' ? 'Eng' : m}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                            <div className="h-[400px] w-full">
+                            <div className="h-[300px] sm:h-[400px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData}>
                                         <defs>
@@ -1214,7 +1214,7 @@ export const Dashboard: React.FC = () => {
 
                         {/* Bottom Double Bento: Pipeline & Distribution */}
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-                            <div className="bg-card rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-10">
+                            <div className="bg-card rounded-[2rem] sm:rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-6 sm:p-10">
                                 <div className="flex items-center justify-between mb-10">
                                     <h3 className="text-2xl font-black font-heading flex items-center gap-4">
                                         <Command className="text-amber-500 w-8 h-8" /> Smart Pipeline
@@ -1245,7 +1245,7 @@ export const Dashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-card rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-10 flex flex-col items-center">
+                            <div className="bg-card rounded-[2rem] sm:rounded-[3.5rem] border-[3.5px] border-border shadow-hard p-6 sm:p-10 flex flex-col items-center">
                                 <h3 className="text-2xl font-black font-heading self-start mb-10 flex items-center gap-4">
                                     <Layout className="text-emerald-500 w-8 h-8" /> Status Ratio
                                 </h3>
@@ -1280,7 +1280,7 @@ export const Dashboard: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
                                 {workspaces.slice(0, 6).map(ws => (
-                                    <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="group bg-card rounded-[3.5rem] border-[3.5px] border-border p-8 shadow-hard hover:shadow-[14px_14px_0px_rgba(15,23,42,0.25)] hover:border-slate-900 transition-all hover:-translate-y-3 cursor-pointer flex flex-col h-full relative overflow-hidden">
+                                    <div key={ws.id} onClick={() => navigate(`/plan/${ws.id}`)} className="group bg-card rounded-[2.5rem] sm:rounded-[3.5rem] border-[3.5px] border-border p-6 sm:p-8 shadow-hard hover:shadow-[14px_14px_0px_rgba(15,23,42,0.25)] hover:border-slate-900 transition-all hover:-translate-y-3 cursor-pointer flex flex-col h-full relative overflow-hidden">
                                         <div className="absolute -top-10 -right-10 w-40 h-40 bg-muted rounded-full group-hover:scale-110 transition-transform duration-500" />
                                         <div className="flex justify-between items-start mb-8 relative z-10">
                                             {ws.logo_url ? (
@@ -1320,7 +1320,7 @@ export const Dashboard: React.FC = () => {
                         <PersonalMoodCard />
 
                         {/* 1. Global Filter Hub */}
-                        <div className="bg-card rounded-[3rem] border-[3.5px] border-border p-8 shadow-hard space-y-6">
+                        <div className="bg-card rounded-[2rem] sm:rounded-[3rem] border-[3.5px] border-border p-6 sm:p-8 shadow-hard space-y-4 sm:space-y-6">
                             <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-mutedForeground/30">Hub Filter</h4>
                             <div className="grid grid-cols-1 gap-5">
                                 <div className="space-y-2">
@@ -1355,7 +1355,7 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* 2. Personalized Insight (Religious/Quote) */}
-                        <div className="bg-foreground rounded-[3.5rem] overflow-hidden border-[4px] border-border shadow-hard relative group">
+                        <div className="bg-card rounded-[2rem] sm:rounded-[3.5rem] overflow-hidden border-[3.5px] border-border shadow-hard relative group">
                             {isSelectingReligion ? (
                                 <div className="p-10 bg-card h-full space-y-8 animate-in zoom-in-95 duration-300">
                                     <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter">Set Preference</h3>
@@ -1441,8 +1441,8 @@ export const Dashboard: React.FC = () => {
                         </div>
 
                         {/* 5. KPI Live Preview */}
-                        <div className="bg-card rounded-[3rem] border-[3.5px] border-border shadow-hard p-10">
-                            <h3 className="text-2xl font-black font-heading mb-10 flex items-center gap-4">
+                        <div className="bg-card rounded-[2rem] sm:rounded-[3rem] border-[3.5px] border-border shadow-hard p-6 sm:p-10">
+                            <h3 className="text-xl sm:text-2xl font-black font-heading mb-6 sm:mb-10 flex items-center gap-4">
                                 <TrendingUp size={28} className="text-foreground " strokeWidth={3} /> My KPI Targets
                             </h3>
                             <div className="space-y-8">
