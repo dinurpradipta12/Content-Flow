@@ -1542,7 +1542,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border-2 border-slate-900 shadow-hard-mini">
                                             <AlertTriangle size={20} className="text-red-600" />
                                         </div>
-                                        <span className="text-xs font-black uppercase tracking-[0.2em]">Peringatan</span>
+                                        <span className="text-xs font-black tracking-[0.2em]">Peringatan</span>
                                     </div>
                                     <h3 className="text-xl font-black leading-tight mb-2">
                                         {daysToSubExp === 0 ? "Hari ini" : `${daysToSubExp} Hari Lagi`} Langganan Habis!
@@ -1610,7 +1610,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             return (
                                 <div key={section} className="mb-8 font-heading">
                                     {isSidebarOpen && (
-                                        <h3 className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 animate-in fade-in slide-in-from-left-2">{section}</h3>
+                                        <h3 className="px-4 text-[10px] font-black text-slate-400 tracking-widest mb-4 animate-in fade-in slide-in-from-left-2">{section}</h3>
                                     )}
                                     <div className="space-y-1 flex flex-col items-center w-full">
                                         {filteredItems.map((item) => {
@@ -1676,7 +1676,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                     {/* Mobile & Tablet top safe area spacer - pushes header below status bar */}
                     {!location.pathname.startsWith('/carousel') && <div className="flex-shrink-0 mobile-safe-top-spacer"></div>}
-                    <header className={`mt-0 md:mt-3 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-2 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-14 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-5 lg:px-8 py-2 sm:py-2 md:py-2 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
+                    <header className={`mt-0 md:mt-5 lg:mt-4 shrink-0 z-50 mx-2 sm:mx-3 md:mx-4 lg:mx-6 mb-2 sm:mb-4 md:mb-3 lg:mb-2 h-auto sm:h-auto md:h-14 lg:h-20 bg-card rounded-lg sm:rounded-xl md:rounded-2xl border-2 border-border shadow-hard items-center justify-between px-3 sm:px-4 md:px-5 lg:px-8 py-2 sm:py-2 md:py-2 lg:py-0 transition-all max-w-full ${location.pathname.startsWith('/carousel') ? 'hidden md:flex' : 'flex'}`}>
 
                         {/* ── MOBILE HEADER (< md) ── */}
                         <div className="flex md:hidden items-center justify-between w-full gap-1 pb-2">
@@ -1714,7 +1714,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <div className="hidden md:flex items-center gap-2 lg:gap-4">
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-1.5 lg:p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors shrink-0"><Menu size={20} className="lg:w-[22px] lg:h-[22px]" /></button>
                             <div className="flex flex-col justify-center animate-in fade-in slide-in-from-left duration-500">
-                                <span className="text-[9px] lg:text-[12px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5 lg:mb-1">
+                                <span className="text-[9px] lg:text-[12px] font-black text-slate-400 tracking-widest leading-none mb-0.5 lg:mb-1">
                                     {currentTime.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
                                 </span>
                                 <span className="text-xs lg:text-lg font-black text-slate-900 font-heading tracking-tight leading-none whitespace-nowrap">
@@ -1738,7 +1738,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         <div className="absolute top-full right-0 mt-2 sm:mt-3 w-[90vw] max-w-sm md:max-w-md lg:w-[400px] bg-card border-2 border-border shadow-hard rounded-lg sm:rounded-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
                                             <div className="px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 border-b-2 border-border flex items-center justify-between bg-muted/50">
                                                 <div className="flex items-center gap-1.5 sm:gap-2"><Bell size={14} className="sm:w-4 sm:h-4 text-accent" /><span className="font-black font-heading text-slate-800 tracking-tight text-sm md:text-lg">Notifikasi</span></div>
-                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[8px] sm:text-[10px] font-black text-accent hover:underline uppercase tracking-widest bg-accent/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">Tandai</button>}
+                                                {unreadCount > 0 && <button onClick={(e) => { e.stopPropagation(); markAllAsRead(); }} className="text-[8px] sm:text-[10px] font-black text-accent hover:underline tracking-widest bg-accent/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg">Tandai</button>}
                                             </div>
                                             <div className="max-h-[280px] sm:max-h-[320px] overflow-y-auto custom-scrollbar">
                                                 {notifications.length === 0 ? (
@@ -1752,7 +1752,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                                     {notif.actor?.avatar_url ? <img src={notif.actor.avatar_url} alt="" className="w-10 h-10 rounded-full border border-border object-cover" /> : <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-mutedForeground border border-border"><User size={18} /></div>}
                                                                 </div>
                                                                 <div className="flex-1 min-w-0">
-                                                                    <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent uppercase tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                                                                    <div className="flex justify-between items-start mb-0.5"><h5 className="font-black text-[9px] text-accent tracking-widest truncate pr-2">{notif.title}</h5><span className="text-[9px] text-slate-400 font-medium">{new Date(notif.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
                                                                     <p className="text-xs font-bold text-slate-600 leading-snug">
                                                                         {notif.actor?.full_name && !notif.metadata?.hide_actor_name && (
                                                                             <span className="text-slate-900">{notif.actor.full_name} </span>
@@ -1817,7 +1817,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                                                 {/* Emoji Picker */}
                                                 <div className="p-3 space-y-2">
-                                                    <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground px-0.5">Pilih mood kamu sekarang</p>
+                                                    <p className="text-[9px] font-black tracking-[0.15em] text-muted-foreground px-0.5">Pilih mood kamu sekarang</p>
                                                     <div className="grid grid-cols-5 gap-1.5">
                                                         {MOOD_OPTIONS.map((m) => {
                                                             const isActive = currentMood === m.emoji;
@@ -1853,7 +1853,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                                     }}
                                                                 >
                                                                     <span className="text-base leading-none">{m.emoji}</span>
-                                                                    <span className={`text-[7px] font-black uppercase leading-none ${isActive ? 'text-white' : 'text-slate-500'} group-hover:text-white`}>
+                                                                    <span className={`text-[7px] font-black leading-none ${isActive ? 'text-white' : 'text-slate-500'} group-hover:text-white`}>
                                                                         {m.label.substring(0, 5)}
                                                                     </span>
                                                                 </button>
@@ -2428,7 +2428,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         className={`flex flex-col items-center justify-center rounded-2xl transition-all duration-300 relative ${isActive ? 'flex-[1.5] bg-accent text-white shadow-hard-mini-accent -translate-y-1' : 'flex-1 text-slate-400 hover:text-slate-600'} h-full gap-0.5`}
                                     >
                                         <item.icon size={isActive ? 22 : 20} strokeWidth={isActive ? 3 : 2} className={isActive ? 'animate-pulse' : ''} />
-                                        {isActive && <span className="text-[8px] font-black uppercase tracking-tighter">{item.label}</span>}
+                                        {isActive && <span className="text-[8px] font-black tracking-tighter">{item.label}</span>}
                                         {isActive && <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full" />}
                                     </button>
                                 );
@@ -2456,7 +2456,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             {unreadCount > 0 && (
                                 <button
                                     onClick={() => markAllAsRead()}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-xl text-[10px] font-black tracking-widest"
                                 >
                                     <CheckCheck size={12} /> Tandai Semua
                                 </button>
@@ -2491,7 +2491,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     return d.toDateString() === today.toDateString();
                                 }) && (
                                         <div className="px-4 py-2 bg-muted/30 sticky top-0 z-10">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari Ini</span>
+                                            <span className="text-[10px] font-black text-slate-400 tracking-widest">Hari ini</span>
                                         </div>
                                     )}
                                 {notifications.map((notif) => {
@@ -2536,7 +2536,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <h5 className={`font-black text-[10px] uppercase tracking-widest truncate pr-2 ${!notif.is_read ? 'text-accent' : 'text-slate-500'}`}>
+                                                    <h5 className={`font-black text-[10px] tracking-widest truncate pr-2 ${!notif.is_read ? 'text-accent' : 'text-slate-500'}`}>
                                                         {notif.title}
                                                     </h5>
                                                     <div className="flex items-center gap-1 flex-shrink-0">
@@ -2553,7 +2553,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                 {!notif.is_read && (
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); markAsRead(notif.id); }}
-                                                        className="mt-1.5 text-[9px] font-black text-accent/70 hover:text-accent uppercase tracking-widest"
+                                                        className="mt-1.5 text-[9px] font-black text-accent/70 hover:text-accent tracking-widest"
                                                     >
                                                         Tandai dibaca
                                                     </button>
@@ -2629,7 +2629,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     <h3 className="font-heading font-black text-base text-foreground leading-tight truncate">{userProfile.name}</h3>
                                     <p className="text-xs text-mutedForeground font-bold truncate">{userProfile.jobTitle || userProfile.role}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black tracking-widest border ${userProfile.role === 'Developer' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                                             userProfile.role === 'Owner' ? 'bg-amber-100 text-amber-700 border-amber-200' :
                                                 userProfile.role === 'Admin' ? 'bg-blue-100 text-blue-700 border-blue-200' :
                                                     'bg-slate-100 text-slate-600 border-slate-200'
@@ -2650,7 +2650,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
                                     <Settings size={16} className="text-slate-600" />
                                 </div>
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Pengaturan</span>
+                                <span className="text-[10px] font-black text-slate-500 tracking-wide">Pengaturan</span>
                             </button>
                             <button
                                 onClick={() => { setShowMobileMenu(false); setShowThemeModal(true); }}
@@ -2659,7 +2659,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
                                     <Palette size={16} className="text-slate-600" />
                                 </div>
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wide">Tema</span>
+                                <span className="text-[10px] font-black text-slate-500 tracking-wide">Tema</span>
                             </button>
                             <button
                                 onClick={() => { setShowMobileMenu(false); handleLogout(); }}
@@ -2668,7 +2668,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
                                     <LogOut size={16} className="text-red-500" />
                                 </div>
-                                <span className="text-[10px] font-black text-red-400 uppercase tracking-wide">Keluar</span>
+                                <span className="text-[10px] font-black text-red-400 tracking-wide">Keluar</span>
                             </button>
                         </div>
 
@@ -2698,7 +2698,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 if (filteredItems.length === 0) return null;
                                 return (
                                     <div key={section} className="mb-5">
-                                        <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{section}</h3>
+                                        <h3 className="text-[9px] font-black text-slate-400 tracking-widest mb-2 px-1">{section}</h3>
                                         <div className="space-y-1">
                                             {filteredItems.map((item) => {
                                                 const isActive = location.pathname === item.path || location.pathname === `/${item.path}`;
@@ -2741,17 +2741,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
             )}
 
-            {userProfile.id && (
-                <MoodTrackerModal
-                    key={`mood-modal-${userProfile.id}-${localStorage.getItem('login_ts') || '0'}`}
-                    userId={userProfile.id}
-                    workspaceId={activeWorkspaceId || ''}
-                    onClose={() => {
-                        const todayMood = localStorage.getItem(`current_mood_${userProfile.id}`);
-                        if (todayMood) setCurrentMood(todayMood);
-                    }}
-                />
-            )}
+            {
+                userProfile.id && (
+                    <MoodTrackerModal
+                        key={`mood-modal-${userProfile.id}-${localStorage.getItem('login_ts') || '0'}`}
+                        userId={userProfile.id}
+                        workspaceId={activeWorkspaceId || ''}
+                        onClose={() => {
+                            const todayMood = localStorage.getItem(`current_mood_${userProfile.id}`);
+                            if (todayMood) setCurrentMood(todayMood);
+                        }}
+                    />
+                )
+            }
         </>
     );
 };

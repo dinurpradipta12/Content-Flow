@@ -723,7 +723,7 @@ export const TeamManagement: React.FC = () => {
                 <div className="flex z-10 items-center gap-1.5 sm:gap-2 md:gap-3 w-full md:w-auto">
                     {currentAdmin && (
                         <div className="hidden md:flex flex-col items-end mr-1 sm:mr-2 flex-shrink-0">
-                            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-muted-foreground uppercase tracking-widest">Kapasitas Tim</span>
+                            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black text-muted-foreground tracking-widest">Kapasitas Tim</span>
                             <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
                                 <div className="w-12 sm:w-16 md:w-20 lg:w-24 bg-muted h-1.5 sm:h-2 rounded-full overflow-hidden">
                                     <div
@@ -793,7 +793,7 @@ export const TeamManagement: React.FC = () => {
                                             )}
                                             <div className="min-w-0">
                                                 <h4 className="font-heading font-black text-foreground truncate text-xs sm:text-sm md:text-base">{ws.name}</h4>
-                                                <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-muted-foreground">
+                                                <p className="text-[10px] sm:text-xs font-black tracking-widest text-muted-foreground">
                                                     {users.filter(u => ws.members?.some((m: string) => m === u.id || m === u.username || u.avatar_url === m)).length} Members
                                                 </p>
                                             </div>
@@ -831,7 +831,7 @@ export const TeamManagement: React.FC = () => {
                                         placeholder="Cari..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-card border-[3.5px] border-border rounded-lg sm:rounded-xl pl-6 sm:pl-8 md:pl-10 pr-2 sm:pr-3 md:pr-4 py-1 sm:py-1.5 md:py-2 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-widest text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[4px_4px_0px_var(--shadow-color)]"
+                                        className="w-full bg-card border-[3.5px] border-border rounded-lg sm:rounded-xl pl-6 sm:pl-8 md:pl-10 pr-2 sm:pr-3 md:pr-4 py-1 sm:py-1.5 md:py-2 text-[10px] sm:text-xs md:text-sm font-black tracking-widest text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-[4px_4px_0px_var(--shadow-color)]"
                                     />
                                 </div>
                             </div>
@@ -848,8 +848,8 @@ export const TeamManagement: React.FC = () => {
                                             <div className="bg-muted border border-border rounded-xl p-4 space-y-2">
                                                 <p className="text-xs font-bold text-foreground">Link Login: <span className="text-blue-500 break-all">{getLoginLink()}</span></p>
                                                 <div className="grid grid-cols-2 gap-2 text-sm">
-                                                    <div><p className="text-[9px] text-muted-foreground uppercase">Username</p><p className="font-black text-foreground">{inviteSuccess.username}</p></div>
-                                                    <div><p className="text-[9px] text-muted-foreground uppercase">Password</p><p className="font-black text-foreground">{inviteSuccess.password}</p></div>
+                                                    <div><p className="text-[9px] text-muted-foreground">Username</p><p className="font-black text-foreground">{inviteSuccess.username}</p></div>
+                                                    <div><p className="text-[9px] text-muted-foreground">Password</p><p className="font-black text-foreground">{inviteSuccess.password}</p></div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
@@ -894,16 +894,16 @@ export const TeamManagement: React.FC = () => {
 
                                         <div className="bg-card border-[3px] border-border rounded-2xl p-5 space-y-3 shadow-[6px_6px_0px_var(--shadow-color)]">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Link Login</span>
+                                                <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Link login</span>
                                             </div>
                                             <p className="text-sm font-mono font-bold text-blue-500 break-all">{getLoginLink()}</p>
                                             <div className="border-t border-slate-800 pt-2 mt-2 grid grid-cols-2 gap-2 text-sm">
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Username</span>
+                                                    <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Username</span>
                                                     <p className="font-black text-foreground">{inviteSuccess.username}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Password</span>
+                                                    <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Password</span>
                                                     <p className="font-black text-foreground">{inviteSuccess.password}</p>
                                                 </div>
                                             </div>
@@ -918,7 +918,7 @@ export const TeamManagement: React.FC = () => {
                                             </button>
                                             <button
                                                 onClick={handleShareViaWhatsApp}
-                                                className="flex-1 px-4 py-3 bg-emerald-400 text-foreground font-black text-xs uppercase tracking-widest rounded-xl border-[3.5px] border-border shadow-[4px_4px_0px_var(--shadow-color)] hover:bg-emerald-300 transition-all flex items-center justify-center gap-2"
+                                                className="flex-1 px-4 py-3 bg-emerald-400 text-foreground font-black text-xs tracking-widest rounded-xl border-[3.5px] border-border shadow-[4px_4px_0px_var(--shadow-color)] hover:bg-emerald-300 transition-all flex items-center justify-center gap-2"
                                             >
                                                 <Globe size={16} strokeWidth={3} /> WhatsApp
                                             </button>
@@ -938,9 +938,9 @@ export const TeamManagement: React.FC = () => {
                                             Daftarkan & Undang Member Baru
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
-                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
-                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
+                                            <input type="text" value={inviteForm.full_name} onChange={e => setInviteForm(p => ({ ...p, full_name: e.target.value }))} placeholder="Nama Lengkap" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
+                                            <input type="text" value={inviteForm.username} onChange={e => setInviteForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/\s/g, '_') }))} placeholder="Username Login" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
+                                            <input type="password" value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} placeholder="Password Sementara" required className="bg-card border-[3px] border-border rounded-xl px-4 py-2.5 text-sm font-black tracking-widest text-foreground shadow-[4px_4px_0px_var(--shadow-color)] focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder:text-slate-300" />
                                         </div>
                                         <div className="mt-4 flex gap-3">
                                             <Button type="submit" disabled={inviting}>
@@ -1035,7 +1035,7 @@ export const TeamManagement: React.FC = () => {
                                 <div className="relative z-10 w-full">
                                     <div className="flex items-center justify-between gap-2">
                                         <h3 className="text-xl font-heading font-black text-foreground truncate">{selectedUser.full_name}</h3>
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border-[2px] ${selectedUser.online_status === 'online' ? 'text-emerald-500 border-emerald-500/50 bg-emerald-500/10' : selectedUser.online_status === 'idle' ? 'text-amber-500 border-amber-500/50 bg-amber-500/10' : 'text-muted-foreground border-border bg-muted'}`}>
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black tracking-widest border-[2px] ${selectedUser.online_status === 'online' ? 'text-emerald-500 border-emerald-500/50 bg-emerald-500/10' : selectedUser.online_status === 'idle' ? 'text-amber-500 border-amber-500/50 bg-amber-500/10' : 'text-muted-foreground border-border bg-muted'}`}>
                                             <div className={`w-2 h-2 rounded-full border border-border/20 ${selectedUser.online_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : selectedUser.online_status === 'idle' ? 'bg-amber-500' : 'bg-muted-foreground'}`} />
                                             {selectedUser.online_status === 'online' ? 'Online' : selectedUser.online_status === 'idle' ? 'Idle' : 'Offline'}
                                         </span>
@@ -1048,7 +1048,7 @@ export const TeamManagement: React.FC = () => {
                                             </span>
                                         )}
                                     </p>
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] uppercase tracking-widest mt-1">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-black bg-accent text-white border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] tracking-widest mt-1">
                                         {selectedUser.role}
                                     </span>
                                 </div>
@@ -1061,7 +1061,7 @@ export const TeamManagement: React.FC = () => {
                                 </h4>
                                 <div className="bg-card rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] p-4 transition-all hover:shadow-[6px_6px_0px_var(--shadow-color)] hover:-translate-y-0.5">
                                     <div className="mb-4">
-                                        <p className="text-[10px] font-black text-muted-foreground mb-2 uppercase tracking-widest">Password Saat Ini:</p>
+                                        <p className="text-[10px] font-black text-muted-foreground mb-2 tracking-widest">Password saat ini:</p>
                                         <div className="flex justify-between items-center bg-muted border-2 border-border p-3 rounded-xl">
                                             <span className="font-mono font-black text-foreground tracking-widest text-lg">
                                                 {showPassword ? selectedUser.password : '••••••••'}
@@ -1080,7 +1080,7 @@ export const TeamManagement: React.FC = () => {
                                             required
                                             className="flex-1 bg-card border-[3px] border-border rounded-xl px-4 py-2 text-sm font-bold text-foreground focus:outline-none focus:ring-4 focus:ring-accent/20 shadow-[2px_2px_0px_var(--shadow-color)] placeholder:text-muted-foreground"
                                         />
-                                        <Button type="submit" disabled={saving || !newPassword} className="border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] uppercase font-black text-[10px] tracking-widest px-4 sm:px-6 h-11 bg-accent hover:bg-violet-600 transition-all">
+                                        <Button type="submit" disabled={saving || !newPassword} className="border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] font-black text-[10px] tracking-widest px-4 sm:px-6 h-11 bg-accent hover:bg-violet-600 transition-all">
                                             {saving ? <Loader2 className="animate-spin" size={16} /> : 'Ubah Password'}
                                         </Button>
                                     </form>
@@ -1113,7 +1113,7 @@ export const TeamManagement: React.FC = () => {
 
                                 {/* Add to Workspace feature */}
                                 <div className="bg-emerald-500/10 rounded-2xl border-[3px] border-border shadow-[4px_4px_0px_var(--shadow-color)] p-4">
-                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Undang ke workspace lain:</p>
+                                    <p className="text-[10px] font-black text-emerald-500 tracking-widest mb-2">Undang ke workspace lain:</p>
                                     <div className="flex gap-2 items-center">
                                         <select
                                             id="ws-select"
@@ -1127,7 +1127,7 @@ export const TeamManagement: React.FC = () => {
                                         <Button onClick={() => {
                                             const selectEl = document.getElementById('ws-select') as HTMLSelectElement;
                                             if (selectEl && selectEl.value) handleAddToOtherWorkspace(selectEl.value);
-                                        }} className="border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] bg-emerald-500 hover:bg-emerald-600 font-black uppercase text-[10px] tracking-widest px-4 h-11">Undang</Button>
+                                        }} className="border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] bg-emerald-500 hover:bg-emerald-600 font-black text-[10px] tracking-widest px-4 h-11">Undang</Button>
                                     </div>
                                 </div>
                             </div>
@@ -1140,7 +1140,7 @@ export const TeamManagement: React.FC = () => {
                                     </p>
                                     <button
                                         onClick={handleRemoveFromWorkspace}
-                                        className="whitespace-nowrap bg-rose-500 text-white hover:bg-rose-600 font-black text-[10px] sm:text-xs px-4 py-3 rounded-xl border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] transition-all hover:translate-y-[2px] hover:shadow-none uppercase tracking-widest flex items-center"
+                                        className="whitespace-nowrap bg-rose-500 text-white hover:bg-rose-600 font-black text-[10px] sm:text-xs px-4 py-3 rounded-xl border-[3px] border-border shadow-[2px_2px_0px_var(--shadow-color)] transition-all hover:translate-y-[2px] hover:shadow-none tracking-widest flex items-center"
                                     >
                                         <UserMinus size={14} className="inline mr-1" strokeWidth={3} /> Keluarkan
                                     </button>
@@ -1155,7 +1155,7 @@ export const TeamManagement: React.FC = () => {
                                 <div className="flex items-center justify-between mb-4">
                                     <h4 className="font-heading font-black text-2xl tracking-tight text-foreground">Daftar KPI</h4>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 bg-accent text-white rounded-lg border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)]">
+                                        <span className="text-xs font-black tracking-widest px-3 py-1.5 bg-accent text-white rounded-lg border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)]">
                                             {getKPICompletion(selectedUser)}% Selesai
                                         </span>
                                         <button
@@ -1170,7 +1170,7 @@ export const TeamManagement: React.FC = () => {
                                 {/* Min Completion Rate setter */}
                                 <div className="flex items-center gap-2 bg-amber-100 border-[3px] border-border rounded-xl px-3 py-2 shadow-[2px_2px_0px_var(--shadow-color)] w-fit">
                                     <Target size={14} className="text-amber-700 shrink-0" strokeWidth={3} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-800 mt-0.5">Completion min:</span>
+                                    <span className="text-[10px] font-black tracking-widest text-amber-800 mt-0.5">Completion min:</span>
                                     <input
                                         type="number"
                                         min={0} max={100}
@@ -1183,7 +1183,7 @@ export const TeamManagement: React.FC = () => {
                                 {/* Add KPI Form */}
                                 {showAddKPI && (
                                     <form onSubmit={handleAddKPI} className="mt-4 bg-card border-[3.5px] border-border rounded-[2rem] p-6 space-y-4 shadow-[6px_6px_0px_var(--shadow-color)] animate-in fade-in slide-in-from-top-4">
-                                        <p className="text-xs font-black text-foreground uppercase tracking-wide">Tambah KPI Baru</p>
+                                        <p className="text-xs font-black text-foreground tracking-wide">Tambah KPI baru</p>
                                         <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                                             {/* Nama Metrik */}
                                             <div className="col-span-2">
@@ -1254,7 +1254,7 @@ export const TeamManagement: React.FC = () => {
                                                     <div className="flex items-center gap-1.5 shrink-0">
                                                         <span className={`text-[10px] font-black tracking-widest px-2 py-1 rounded-md border-[2px] border-border uppercase shadow-[2px_2px_0px_var(--shadow-color)] ${isSuccess ? 'bg-emerald-400 text-foreground' : 'bg-rose-400 text-white'
                                                             }`}>{isSuccess ? '✓ Berhasil' : '✗ Perlu Ditingkatkan'}</span>
-                                                        <span className="text-[10px] font-black tracking-widest px-2 py-1 rounded-md bg-muted text-foreground border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)] uppercase">{kpi.period}</span>
+                                                        <span className="text-[10px] font-black tracking-widest px-2 py-1 rounded-md bg-muted text-foreground border-[2px] border-border shadow-[2px_2px_0px_var(--shadow-color)]">{kpi.period}</span>
                                                         {/* Edit button */}
                                                         {!isEditingThis ? (
                                                             <button
@@ -1370,8 +1370,8 @@ export const TeamManagement: React.FC = () => {
 
                         <div className="w-full bg-muted border-4 border-border rounded-2xl p-4 text-left my-2 shadow-[4px_4px_0px_var(--shadow-color)]">
                             <div className="flex justify-between items-center mb-1">
-                                <span className="text-[10px] font-black uppercase text-muted-foreground">Status Saat Ini</span>
-                                <span className="text-[10px] font-black uppercase bg-border text-white px-2 py-0.5 rounded">{currentAdmin?.subscription_package}</span>
+                                <span className="text-[10px] font-black text-muted-foreground">Status saat ini</span>
+                                <span className="text-[10px] font-black bg-border text-white px-2 py-0.5 rounded">{currentAdmin?.subscription_package}</span>
                             </div>
                             <p className="text-sm font-black text-foreground">Penggunaan: {subUsersCount}/{currentAdmin?.member_limit || 2} Orang</p>
                         </div>
@@ -1379,13 +1379,13 @@ export const TeamManagement: React.FC = () => {
                         <div className="grid grid-cols-1 w-full gap-3">
                             <Button
                                 onClick={handleUpgradePackage}
-                                className="w-full h-12 text-sm font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 border-emerald-700 shadow-[4px_4px_0px_#064e3b]"
+                                className="w-full h-12 text-sm font-black tracking-widest bg-emerald-500 hover:bg-emerald-600 border-emerald-700 shadow-[4px_4px_0px_#064e3b]"
                             >
                                 Upgrade Sekarang
                             </Button>
                             <button
                                 onClick={() => setIsUpgradeModalOpen(false)}
-                                className="w-full h-12 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                                className="w-full h-12 text-xs font-black tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Nanti Saja
                             </button>

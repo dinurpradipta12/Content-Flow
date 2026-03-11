@@ -165,13 +165,13 @@ const WORKSPACE_COLORS: Record<string, string> = {
 const getKanbanApprovalBadge = (status: ContentStatus) => {
     switch (status) {
         case ContentStatus.REVIEW:
-            return <div className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[9px] font-black rounded-full border-2 border-amber-200 dark:border-amber-500/30 uppercase">Perlu Review</div>;
+            return <div className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[9px] font-black rounded-full border-2 border-amber-200 dark:border-amber-500/30">Perlu review</div>;
         case ContentStatus.REVISION:
-            return <div className="px-2 py-0.5 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[9px] font-black rounded-full border-2 border-orange-200 dark:border-orange-500/30 uppercase">Revisi !!</div>;
+            return <div className="px-2 py-0.5 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 text-[9px] font-black rounded-full border-2 border-orange-200 dark:border-orange-500/30">Revisi !!</div>;
         case ContentStatus.PUBLISHED:
-            return <div className="px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full border-2 border-emerald-600 uppercase">Published</div>;
+            return <div className="px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full border-2 border-emerald-600">Published</div>;
         case ContentStatus.SCHEDULED:
-            return <div className="px-2 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 text-[9px] font-black rounded-full border-2 border-purple-200 dark:border-purple-500/30 uppercase">Scheduled</div>;
+            return <div className="px-2 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 text-[9px] font-black rounded-full border-2 border-purple-200 dark:border-purple-500/30">Scheduled</div>;
         default:
             return null;
     }
@@ -265,7 +265,7 @@ const FlowColumn: React.FC<{
             <div className={`flex-shrink-0 mb-4 p-4 rounded-[2rem] border-[3.5px] border-border shadow-hard-mini bg-card relative overflow-hidden`}>
                 <div className={`absolute top-0 left-0 right-0 h-1.5 ${cfg.dotColor}`} />
                 <div className="flex items-center justify-between mt-1">
-                    <div className={`flex items-center gap-2.5 font-black text-[14px] uppercase tracking-wider ${cfg.color}`}>
+                    <div className={`flex items-center gap-2.5 font-black text-[14px] tracking-wider ${cfg.color}`}>
                         <div className={`p-1.5 rounded-xl border-2 border-border bg-card shadow-sm ${cfg.color}`}>
                             {cfg.icon}
                         </div>
@@ -284,7 +284,7 @@ const FlowColumn: React.FC<{
                         <FlowCard key={item.id} item={item} onClick={onCardClick} />
                     ))
                 ) : (
-                    <div className="h-32 border-[3px] border-dashed border-border rounded-[2rem] flex items-center justify-center text-mutedForeground/60 text-[13px] font-black uppercase tracking-[0.2em] bg-card/50">
+                    <div className="h-32 border-[3px] border-dashed border-border rounded-[2rem] flex items-center justify-center text-mutedForeground/60 text-[13px] font-black tracking-[0.2em] bg-card/50">
                         KOSONG
                     </div>
                 )}
@@ -608,7 +608,7 @@ export const ContentFlow: React.FC = () => {
                                     <Layers size={18} className="text-accent lg:w-[22px] lg:h-[22px]" />
                                 </div>
                                 <div>
-                                    <p className="text-[9px] sm:text-[11px] font-black text-mutedForeground uppercase tracking-wider">Total Konten</p>
+                                    <p className="text-[9px] sm:text-[11px] font-black text-mutedForeground tracking-wider">Total konten</p>
                                     <p className="text-xl sm:text-3xl font-black text-foreground">{totalItems}</p>
                                 </div>
                             </div>
@@ -645,7 +645,7 @@ export const ContentFlow: React.FC = () => {
 
                 {/* Filters */}
                 <div className="flex flex-wrap items-center gap-4 mb-8">
-                    <div className="flex items-center gap-2 text-[11px] font-black text-mutedForeground uppercase tracking-[0.2em] bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
+                    <div className="flex items-center gap-2 text-[11px] font-black text-mutedForeground tracking-[0.2em] bg-muted/50 px-3 py-1.5 rounded-xl border border-border">
                         <Filter size={14} /> Filter
                     </div>
 
@@ -727,7 +727,7 @@ export const ContentFlow: React.FC = () => {
                                     {/* Mini status bar */}
                                     <div className="mt-auto space-y-2">
                                         <div className="flex justify-between items-end mb-1">
-                                            <span className="text-[10px] font-black text-mutedForeground uppercase tracking-wider">Progress</span>
+                                            <span className="text-[10px] font-black text-mutedForeground tracking-wider">Progress</span>
                                             <span className="text-accent font-black text-sm">{rate}%</span>
                                         </div>
                                         <div className="w-full bg-muted h-3 rounded-full overflow-hidden border-[2px] border-border shadow-inner">
@@ -861,7 +861,7 @@ export const ContentFlow: React.FC = () => {
                                 {/* Meta Grid */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-muted border border-border rounded-xl p-3">
-                                        <p className="text-[10px] font-bold text-mutedForeground uppercase tracking-wider mb-1">Tanggal</p>
+                                        <p className="text-[10px] font-bold text-mutedForeground tracking-wider mb-1">Tanggal</p>
                                         <div className="flex items-center gap-1.5 font-bold text-foreground text-sm">
                                             <Calendar size={14} className="text-mutedForeground" />
                                             {selectedItem.date ? new Date(selectedItem.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
@@ -901,7 +901,7 @@ export const ContentFlow: React.FC = () => {
 
                                 {/* Flow Progress */}
                                 <div>
-                                    <p className="text-[10px] font-bold text-mutedForeground uppercase tracking-wider mb-3">Alur Konten</p>
+                                    <p className="text-[10px] font-bold text-mutedForeground tracking-wider mb-3">Alur konten</p>
                                     <div className="flex items-center gap-1">
                                         {Object.values(ContentStatus).map((s, idx) => {
                                             const cfg = STATUS_CONFIG[s];

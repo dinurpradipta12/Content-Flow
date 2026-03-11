@@ -257,7 +257,7 @@ export const CalendarPage: React.FC = () => {
                 <div className="bg-card border border-border rounded-2xl overflow-hidden mb-3 flex-shrink-0">
                     <div className="grid grid-cols-7 border-b border-border bg-muted/40">
                         {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
-                            <div key={d} className="py-1.5 text-center text-[9px] font-black text-mutedForeground uppercase">{d}</div>
+                            <div key={d} className="py-1.5 text-center text-[9px] font-black text-mutedForeground">{d}</div>
                         ))}
                     </div>
                     <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(44px, 1fr)' }}>
@@ -288,7 +288,7 @@ export const CalendarPage: React.FC = () => {
 
                 {/* List */}
                 <div className="flex-1 overflow-y-auto">
-                    <h3 className="text-xs font-black text-foreground uppercase tracking-wider mb-2">
+                    <h3 className="text-xs font-black text-foreground tracking-wider mb-2">
                         Konten {MONTH_NAMES[month]} {year}
                     </h3>
                     {loading ? (
@@ -375,7 +375,7 @@ export const CalendarPage: React.FC = () => {
                 <div className="bg-card border-[3px] border-slate-900 rounded-2xl p-3.5 flex flex-wrap items-center gap-x-8 gap-y-3 shadow-[4px_4px_0px_#0f172a]">
                     {/* Workspaces */}
                     <div className="flex items-center gap-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground">Workspace</p>
+                        <p className="text-[10px] font-black tracking-widest text-mutedForeground">Workspace</p>
                         <div className="flex flex-wrap gap-2">
                             {workspaces.map(ws => (
                                 <div key={ws.id} className="relative group/ws">
@@ -392,7 +392,7 @@ export const CalendarPage: React.FC = () => {
 
                                     {colorPickerOpen === ws.id && (
                                         <div ref={colorPickerRef} className="absolute left-0 top-full mt-2 z-50 bg-card border-2 border-border rounded-xl shadow-hard p-3 w-48" onClick={e => e.stopPropagation()}>
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-mutedForeground mb-2">Warna Kalender</p>
+                                            <p className="text-[9px] font-black tracking-widest text-mutedForeground mb-2">Warna Kalender</p>
                                             <div className="grid grid-cols-6 gap-1.5 mb-2">
                                                 {DEFAULT_PALETTE.map(color => (
                                                     <button key={color} type="button" onClick={() => handleSaveCalendarColor(ws.id, color)} disabled={savingColor === ws.id}
@@ -415,7 +415,7 @@ export const CalendarPage: React.FC = () => {
 
                     {/* Platforms */}
                     <div className="flex items-center gap-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-mutedForeground">Platform</p>
+                        <p className="text-[10px] font-black tracking-widest text-mutedForeground">Platform</p>
                         <div className="flex flex-wrap gap-2">
                             {['Instagram', 'TikTok', 'LinkedIn', 'YouTube', 'Facebook', 'Threads'].map(p => (
                                 <button key={p} onClick={() => setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])}
@@ -445,7 +445,7 @@ export const CalendarPage: React.FC = () => {
                         {DAY_NAMES.map((d, idx) => (
                             <div
                                 key={d}
-                                className={`py-3.5 text-center text-[12px] font-black uppercase tracking-widest text-white bg-violet-600 border-b-[3px] border-slate-950 dark:border-slate-800
+                                className={`py-3.5 text-center text-[12px] font-black tracking-widest text-white bg-violet-600 border-b-[3px] border-slate-950 dark:border-slate-800
                                     ${idx === 0 ? 'rounded-tl-[calc(1rem-3px)]' : ''}
                                     ${idx === 6 ? 'rounded-tr-[calc(1rem-3px)]' : ''}
                                     ${idx < 6 ? 'border-r-[3px] border-r-violet-700' : ''}
@@ -582,7 +582,7 @@ export const CalendarPage: React.FC = () => {
                             {/* Status & Type */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-mutedForeground tracking-widest block mb-1.5">Status</label>
+                                    <label className="text-[10px] font-black text-mutedForeground tracking-widest block mb-1.5">Status</label>
                                     <select
                                         value={selectedItem.status}
                                         onChange={e => handleUpdateStatus(e.target.value)}
@@ -598,7 +598,7 @@ export const CalendarPage: React.FC = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-mutedForeground tracking-widest block mb-1.5">Tipe</label>
+                                    <label className="text-[10px] font-black text-mutedForeground tracking-widest block mb-1.5">Tipe</label>
                                     <div className="px-3 py-2.5 bg-muted rounded-xl border border-border font-bold text-foreground text-sm capitalize">
                                         {selectedItem.type || 'Standard'}
                                     </div>
