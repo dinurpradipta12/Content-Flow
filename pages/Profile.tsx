@@ -27,6 +27,7 @@ interface UserData {
   subscription_code?: string;
   gcal_access_token?: string;
   gcal_token_expiry?: string;
+  presence_status?: 'online' | 'away' | 'busy' | 'offline';
 }
 
 interface KPI {
@@ -71,6 +72,7 @@ export const Profile: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [currentMood, setCurrentMood] = useState<string | null>(null);
+  const [presenceStatus, setPresenceStatus] = useState<'online' | 'away' | 'busy' | 'offline'>('online');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Derived
@@ -139,6 +141,7 @@ export const Profile: React.FC = () => {
         }
 
         fetchMood();
+        setPresenceStatus(uData.presence_status || 'online');
       }
     } catch (err) {
       console.error("Profile load error:", err);
@@ -208,6 +211,20 @@ export const Profile: React.FC = () => {
     }
   };
 
+  const updatePresenceStatus = async (status: 'online' | 'away' | 'busy' | 'offline') => {
+    if (!user) return;
+    setPresenceStatus(status);
+    try {
+      const { error } = await supabase.from('app_users').update({ presence_status: status }).eq('id', user.id);
+      if (error) throw error;
+      localStorage.setItem('presence_status', status);
+      window.dispatchEvent(new Event('user_presence_updated'));
+      window.dispatchEvent(new CustomEvent('app-alert', { detail: { type: 'success', message: `Status diubah ke ${status}!` } }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleConnectGCal = async () => {
     try {
       await googleCalendarService.connect();
@@ -267,9 +284,17 @@ export const Profile: React.FC = () => {
             </div>
             <MoodIndicator moodEmoji={currentMood} size="lg" />
           </div>
-          <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 bg-quaternary border-3 sm:border-4 border-slate-800 rounded-full flex items-center justify-center pointer-events-none">
-            <div className="w-full h-full rounded-full bg-quaternary animate-ping opacity-75 absolute" />
-            <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 bg-card rounded-full relative z-10" />
+          <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-8 h-8 sm:w-10 sm:h-10 bg-card border-3 sm:border-4 border-slate-800 rounded-full flex items-center justify-center pointer-events-none">
+            <div className={`w-full h-full rounded-full animate-ping opacity-75 absolute ${presenceStatus === 'online' ? 'bg-emerald-500' :
+              presenceStatus === 'away' ? 'bg-amber-500' :
+                presenceStatus === 'busy' ? 'bg-rose-500' :
+                  'bg-slate-500'
+              }`} />
+            <div className={`w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full relative z-10 ${presenceStatus === 'online' ? 'bg-emerald-500' :
+              presenceStatus === 'away' ? 'bg-amber-500' :
+                presenceStatus === 'busy' ? 'bg-rose-500' :
+                  'bg-slate-500'
+              }`} />
           </div>
           <input
             type="file"
@@ -530,6 +555,51 @@ export const Profile: React.FC = () => {
             )}
           </div>
         </Card>
+
+        {/* Developer Presence Status - ONLY DEVELOPER */}
+        {isSuperUser && (
+          <Card title="Developer Stealth Mode" icon={<Zap size={20} />} headerColor="indigo">
+            <div className="space-y-6">
+              <div className="p-4 bg-muted rounded-2xl border-2 border-slate-200 border-dashed">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Atur Status Kehadiran</p>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { id: 'online', label: 'Online', sub: 'Terlihat aktif', color: 'bg-emerald-500' },
+                    { id: 'away', label: 'Away', sub: 'Lagi istirahat', color: 'bg-amber-500' },
+                    { id: 'busy', label: 'Busy', sub: 'Jangan ganggu', color: 'bg-rose-500' },
+                    { id: 'offline', label: 'Invisible', sub: 'Mode siluman', color: 'bg-slate-400' },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => updatePresenceStatus(s.id as any)}
+                      className={`relative flex flex-col items-center p-3 rounded-2xl border-[3px] transition-all ${presenceStatus === s.id
+                          ? 'border-slate-900 bg-white shadow-[4px_4px_0px_#1e293b] -translate-y-1'
+                          : 'border-transparent bg-card/50 hover:border-slate-200 shadow-sm'
+                        }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full ${s.color} border-2 border-slate-900 shadow-mini mb-2 flex items-center justify-center text-white`}>
+                        {presenceStatus === s.id && <Check size={14} strokeWidth={4} />}
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-tighter text-foreground">{s.label}</span>
+                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">{s.sub}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-4 p-4 bg-indigo-50 border-2 border-indigo-100 rounded-2xl">
+                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                  <Shield size={20} className="text-white" />
+                </div>
+                <div>
+                  <h5 className="text-[11px] font-black uppercase text-indigo-600 tracking-widest">Developer Privilege</h5>
+                  <p className="text-[10px] font-bold text-indigo-500 leading-relaxed uppercase tracking-tight">
+                    Anda bisa mengatur status "Invisible" untuk tetap menggunakan aplikasi secara normal namun terlihat offline bagi anggota tim lainnya.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

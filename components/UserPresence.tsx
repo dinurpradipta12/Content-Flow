@@ -32,14 +32,23 @@ export const UserPresence = () => {
         };
 
         const trackPresence = (status: 'online' | 'idle') => {
+            const currentStatus = localStorage.getItem('presence_status') || 'online';
+
+            // If developer chooses 'offline' (Invisible mode), do not track in realtime channel
+            if (currentStatus === 'offline') {
+                channel.untrack();
+                syncToDatabase('offline');
+                return;
+            }
+
             channel.track({
                 id: userId,
                 name: userName || 'User',
                 avatar: userAvatar,
-                status,
+                status: status === 'online' ? currentStatus : 'idle',
                 online_at: new Date().toISOString(),
             });
-            syncToDatabase(status);
+            syncToDatabase(status === 'online' ? currentStatus : 'idle');
         };
 
         let idleTimer: NodeJS.Timeout;
@@ -48,14 +57,22 @@ export const UserPresence = () => {
         const handleActivity = () => {
             clearTimeout(idleTimer);
             const lastStatus = sessionStorage.getItem('last_presence_status');
+            const currentPresenceStatus = localStorage.getItem('presence_status') || 'online';
+
             if (lastStatus !== 'online') {
                 sessionStorage.setItem('last_presence_status', 'online');
                 trackPresence('online');
             }
+
             idleTimer = setTimeout(() => {
                 sessionStorage.setItem('last_presence_status', 'idle');
                 trackPresence('idle');
             }, IDLE_TIMEOUT);
+        };
+
+        const handleStatusChange = () => {
+            sessionStorage.removeItem('last_presence_status');
+            handleActivity();
         };
 
         const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
@@ -67,9 +84,11 @@ export const UserPresence = () => {
         });
 
         events.forEach(event => window.addEventListener(event, handleActivity));
+        window.addEventListener('user_presence_updated', handleStatusChange);
 
         return () => {
             events.forEach(event => window.removeEventListener(event, handleActivity));
+            window.removeEventListener('user_presence_updated', handleStatusChange);
             clearTimeout(idleTimer);
             supabase.removeChannel(channel);
         };
