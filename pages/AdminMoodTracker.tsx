@@ -1180,7 +1180,7 @@ export const AdminMoodTracker: React.FC = () => {
                                             labelStyle={{ color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: 700, fontSize: 10 }}
                                             formatter={(val) => [`${val} / 5`, 'Avg Mood Score']}
                                         />
-                                        <Area type="monotone" dataKey="avg" stroke="#4f46e5" strokeWidth={3} fill="url(#moodGrad)" dot={{ fill: '#4f46e5', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                                        <Area type="monotone" dataKey="avg" stroke="#4f46e5" strokeWidth={5} fill="url(#moodGrad)" dot={{ fill: '#4f46e5', r: 5, strokeWidth: 0 }} activeDot={{ r: 7 }} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             </div>
