@@ -787,7 +787,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 avatar: localStorage.getItem('user_avatar') || 'https://picsum.photos/40/40',
                 jobTitle: localStorage.getItem('user_job_title') || '',
                 subscriptionPackage: localStorage.getItem('user_subscription_package') || 'Personal',
-                parentUserId: localStorage.getItem('parent_user_id') || null
+                parentUserId: localStorage.getItem('parent_user_id') || null,
+                presenceStatus: (localStorage.getItem('presence_status') as any) || 'online'
             });
         };
         window.addEventListener('user_updated', handleUserUpdate);
@@ -1787,9 +1788,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     onMouseLeave={() => setShowMoodMenu(false)}>
                                     <img src={userProfile.avatar} alt="User" className="w-11 h-11 md:w-13 md:h-13 rounded-full border-2 border-slate-200 group-hover:border-accent transition-colors object-cover" />
                                     <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${userProfile.presenceStatus === 'online' ? 'bg-green-500' :
-                                            userProfile.presenceStatus === 'away' ? 'bg-amber-500' :
-                                                userProfile.presenceStatus === 'busy' ? 'bg-rose-500' :
-                                                    'bg-slate-400'
+                                        userProfile.presenceStatus === 'away' ? 'bg-amber-500' :
+                                            userProfile.presenceStatus === 'busy' ? 'bg-rose-500' :
+                                                'bg-slate-400'
                                         }`}></div>
                                     <MoodIndicator moodEmoji={currentMood} size="sm" />
 
