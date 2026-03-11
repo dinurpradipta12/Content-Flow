@@ -155,21 +155,31 @@
 
     /* Mobile safe area support with fallback */
     .pb-safe {
-      padding-bottom: max(env(safe-area-inset-bottom), 8px);
+      padding-bottom: max(env(safe-area-inset-bottom), 12px);
     }
 
     .pt-safe {
-      padding-top: max(env(safe-area-inset-top), 8px);
+      padding-top: max(env(safe-area-inset-top), 12px);
     }
 
+    /* Top Safe Area Spacer - Critical for iOS Status Bar/Notch */
     .mobile-safe-top-spacer {
-      height: max(env(safe-area-inset-top, 0px), 24px);
+      height: max(env(safe-area-inset-top, 0px), 32px);
       flex-shrink: 0;
+      transition: height 0.3s ease;
     }
 
     @media (max-width: 767px) {
       .mobile-safe-top-spacer {
-        height: max(env(safe-area-inset-top, 0px), 32px);
+        height: max(env(safe-area-inset-top, 0px), 44px);
+      }
+    }
+
+    /* iPad/Tablet Specific safe area handling */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .mobile-safe-top-spacer {
+        /* iPads often have 20px-24px status bar, we want visible breathing room */
+        height: max(env(safe-area-inset-top, 0px), 36px);
       }
     }
 
@@ -177,7 +187,7 @@
     @supports (padding-top: env(safe-area-inset-top)) {
       @media all and (display-mode: standalone) {
         .mobile-safe-top-spacer {
-          height: max(env(safe-area-inset-top), 36px);
+          height: max(env(safe-area-inset-top), 40px);
         }
       }
     }
