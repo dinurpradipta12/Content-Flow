@@ -869,7 +869,7 @@ export const AdminMoodTracker: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="p-4 md:p-6 pt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-6 flex-1 items-start">
+                        <div className="p-4 md:p-6 lg:p-8 pt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-4 gap-y-8 flex-1 items-start">
                             {latestPerUser.map((item) => {
                                 const m = item.mood;
                                 const hasMood = !!m;
@@ -880,10 +880,10 @@ export const AdminMoodTracker: React.FC = () => {
                                     <div
                                         key={item.user_id}
                                         onClick={() => setSelectedUserModal(item.user_id)}
-                                        className={hasMood ? `${meta.bg} flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-hard border-slate-900 border-opacity-20 hover:border-opacity-100 dark:border-opacity-40 relative min-h-[90px]` : `flex items-center gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer border-slate-300 dark:border-slate-700 grayscale-[40%] opacity-80 bg-slate-50 dark:bg-slate-800/30 relative min-h-[90px]`}
+                                        className={hasMood ? `${meta.bg} flex items-center gap-3 sm:gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-hard border-slate-900 border-opacity-20 hover:border-opacity-100 dark:border-opacity-40 relative min-h-[100px]` : `flex items-center gap-3 sm:gap-4 p-3 rounded-[1.5rem] border-[3px] transition-all duration-300 cursor-pointer border-slate-300 dark:border-slate-700 grayscale-[40%] opacity-80 bg-slate-50 dark:bg-slate-800/30 relative min-h-[100px]`}
                                     >
                                         {hasMood && (
-                                            <div className="absolute top-0 right-2 -translate-y-[70%] z-[30] pointer-events-none">
+                                            <div className="absolute -top-1 right-2 z-[30] pointer-events-none">
                                                 <span
                                                     className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-hard border-[2px] border-slate-900 transform -rotate-1 inline-block whitespace-nowrap`}
                                                     style={{ backgroundColor: meta.color, color: meta.text }}
@@ -894,28 +894,28 @@ export const AdminMoodTracker: React.FC = () => {
                                         )}
 
                                         {/* Left Side: Enlarged Visuals (Avatar + Emoji + Heart) */}
-                                        <div className="relative shrink-0 w-16 h-16">
+                                        <div className="relative shrink-0 w-14 h-14 sm:w-16 sm:h-16">
                                             <img
                                                 src={item.user.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${item.user.full_name}`}
                                                 className="w-full h-full rounded-2xl border-[3px] border-slate-900 dark:border-slate-700 object-cover shadow-hard-mini"
                                                 alt=""
                                             />
                                             {hasMood && (
-                                                <span className="absolute -bottom-1.5 -right-1.5 w-9 h-9 bg-white dark:bg-slate-800 rounded-full text-xl flex items-center justify-center border-[3px] border-slate-900 dark:border-slate-600 shadow-hard-mini z-10 transition-transform hover:scale-110">
+                                                <span className="absolute -bottom-1 -right-1 w-7 h-7 sm:w-9 sm:h-9 bg-white dark:bg-slate-800 rounded-full text-sm sm:text-xl flex items-center justify-center border-[2.5px] border-slate-900 dark:border-slate-600 shadow-hard-mini z-10 transition-transform hover:scale-110">
                                                     {getMeta(m!.mood_label).mood_emoji}
                                                 </span>
                                             )}
                                             {item.receivedSupport && (
-                                                <span className="absolute -top-2 -left-2 w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center border-[2.5px] border-slate-900 dark:border-pink-900/50 shadow-hard-mini animate-bounce z-20">
-                                                    <Heart size={16} fill="white" className="text-white" />
+                                                <span className="absolute -top-2 -left-2 w-7 h-7 sm:w-8 sm:h-8 bg-pink-500 rounded-full flex items-center justify-center border-[2.5px] border-slate-900 dark:border-pink-900/50 shadow-hard-mini animate-bounce z-20">
+                                                    <Heart size={14} fill="white" className="text-white sm:w-4 sm:h-4" />
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Content Area: Name, Time, Dots */}
-                                        <div className="flex-1 min-w-0 pr-4 space-y-1">
-                                            <div className="flex items-center gap-1.5">
-                                                <p className={`text-base tracking-tight font-black truncate ${hasMood ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-400'}`}>{item.user.full_name || '–'}</p>
+                                        <div className="flex-1 min-w-0 pr-2 space-y-1">
+                                            <div className="flex items-center gap-1.5 overflow-hidden">
+                                                <p className={`text-sm sm:text-base tracking-tight font-black truncate ${hasMood ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-400'}`}>{item.user.full_name || '–'}</p>
                                                 {item.streak > 1 && (
                                                     <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[8px] font-black px-1.5 py-0.5 rounded-md border border-slate-900 dark:border-slate-700">
                                                         🔥{item.streak}

@@ -138,7 +138,9 @@
     /* Apply zoom ONLY on desktop/tablet. 
        When zoom 0.9 is applied, we must scale the physical height to 111.11% (1/0.9)
        so the visual layout still fills 100% of the viewport. */
-    @media (min-width: 768px) {
+    /* Apply zoom ONLY on large desktop monitors. 
+       On tablets (iPad), zoom often causes layout distortion and blurry text. */
+    @media (min-width: 1280px) {
       body {
         zoom: 0.9;
         min-height: calc(100dvh / 0.9);
