@@ -38,6 +38,7 @@ interface CarouselState {
     referenceData: any | null;
     customFonts: string[];
     projects: any[];
+    presets: any[]; // Added for local storage
     currentProjectId: string | null;
 
     // Actions
@@ -60,6 +61,7 @@ interface CarouselState {
     updatePageElements: (index: number, elements: any[], previewUrl?: string) => void;
     savePreset: (name: string, presetData?: { pages: CarouselPage[], canvasSize: CanvasSize }) => Promise<void>;
     loadPresets: () => Promise<any[]>;
+    deletePreset: (id: string) => Promise<void>; // Added delete action for local
     saveProject: (name: string) => Promise<void>;
     loadProjects: () => Promise<any[]>;
     deleteProject: (id: string) => Promise<void>;
@@ -92,6 +94,7 @@ export const useCarouselStore = create<CarouselState>()(
             referenceData: null,
             customFonts: [],
             projects: [],
+            presets: [],
             currentProjectId: null,
 
             setPages: (pages) => set({ pages }),
@@ -190,84 +193,59 @@ export const useCarouselStore = create<CarouselState>()(
             }),
 
             savePreset: async (name, presetData) => {
-                const { pages, canvasSize } = get();
-                const { supabase } = await import('../../services/supabaseClient');
-                const userId = localStorage.getItem('user_id');
-
-                const { error } = await supabase.from('carousel_presets').insert({
+                const { pages, canvasSize, presets } = get();
+                const newPreset = {
+                    id: Math.random().toString(36).substr(2, 9),
                     name,
-                    user_id: userId,
-                    data: presetData ?? { pages, canvasSize }
-                });
-
-                if (error) throw error;
+                    data: presetData ?? { pages, canvasSize },
+                    created_at: new Date().toISOString()
+                };
+                set({ presets: [newPreset, ...presets] });
             },
 
             loadPresets: async () => {
-                const { supabase } = await import('../../services/supabaseClient');
-                const userId = localStorage.getItem('user_id');
-                if (!userId) return [];
-                const { data, error } = await supabase
-                    .from('carousel_presets')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('created_at', { ascending: false });
+                return get().presets;
+            },
 
-                if (error) {
-                    if (error.code === 'PGRST204') return [];
-                    throw error;
-                }
-                return data || [];
+            deletePreset: async (id) => {
+                const { presets } = get();
+                set({ presets: presets.filter(p => p.id !== id) });
             },
 
             saveProject: async (name) => {
-                const { pages, canvasSize, currentProjectId } = get();
-                const { supabase } = await import('../../services/supabaseClient');
-                const userId = localStorage.getItem('user_id');
-                if (!userId) throw new Error('User not logged in');
+                const { pages, canvasSize, projects, currentProjectId } = get();
+                const updated_at = new Date().toISOString();
+                const preview_url = pages[0]?.previewUrl || '';
 
                 const projectData = {
+                    id: currentProjectId || Math.random().toString(36).substr(2, 9),
                     name,
-                    user_id: userId,
                     data: { pages, canvasSize },
-                    updated_at: new Date().toISOString(),
-                    preview_url: pages[0]?.previewUrl || ''
+                    updated_at,
+                    preview_url
                 };
 
+                let newProjects;
                 if (currentProjectId) {
-                    const { error } = await supabase.from('carousel_projects').update(projectData).eq('id', currentProjectId);
-                    if (error) throw error;
+                    newProjects = projects.map(p => p.id === currentProjectId ? projectData : p);
                 } else {
-                    const { data, error } = await supabase.from('carousel_projects').insert(projectData).select().single();
-                    if (error) throw error;
-                    if (data) set({ currentProjectId: data.id });
+                    newProjects = [projectData, ...projects];
+                    set({ currentProjectId: projectData.id });
                 }
+                set({ projects: newProjects });
             },
 
             loadProjects: async () => {
-                const { supabase } = await import('../../services/supabaseClient');
-                const userId = localStorage.getItem('user_id');
-                if (!userId) return [];
-                const { data, error } = await supabase
-                    .from('carousel_projects')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .order('updated_at', { ascending: false });
-
-                if (error) {
-                    if (error.code === 'PGRST204') return [];
-                    throw error;
-                }
-                set({ projects: data || [] });
-                return data || [];
+                return get().projects;
             },
 
             deleteProject: async (id) => {
-                const { supabase } = await import('../../services/supabaseClient');
-                const { error } = await supabase.from('carousel_projects').delete().eq('id', id);
-                if (error) throw error;
-                if (get().currentProjectId === id) set({ currentProjectId: null });
-                await get().loadProjects();
+                const { projects, currentProjectId } = get();
+                const newProjects = projects.filter(p => p.id !== id);
+                set({
+                    projects: newProjects,
+                    currentProjectId: currentProjectId === id ? null : currentProjectId
+                });
             },
 
             uploadFont: async (name, data) => {

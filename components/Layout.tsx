@@ -621,7 +621,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     .eq('id', userId)
                     .single(),
                 !localStorage.getItem('active_workspace_id')
-                    ? supabase.from('workspaces').select('id, members, owner_id').limit(50)
+                    ? supabase.from('workspaces')
+                        .select('id, members, owner_id')
+                        .or(`owner_id.eq.${userId},members.cs.{"${userId}"}`)
+                        .limit(20)
                     : Promise.resolve({ data: null, error: null })
             ]);
 
@@ -661,15 +664,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     });
                 }
 
-                // Workspace handling
+                // Workspace handling (Safe check)
                 const existingWsId = localStorage.getItem('active_workspace_id');
-                if (!existingWsId && workspaceResult.data) {
+                if (!existingWsId && workspaceResult.data && workspaceResult.data.length > 0) {
                     const myWs = workspaceResult.data.find(ws =>
                         ws.owner_id === data.id || (Array.isArray(ws.members) && ws.members.includes(data.id))
                     );
                     const wsId = myWs?.id || workspaceResult.data[0].id;
-                    localStorage.setItem('active_workspace_id', wsId);
-                    setActiveWorkspaceId(wsId);
+                    if (wsId) {
+                        localStorage.setItem('active_workspace_id', wsId);
+                        setActiveWorkspaceId(wsId);
+                    }
                 } else if (existingWsId) {
                     setActiveWorkspaceId(existingWsId);
                 }

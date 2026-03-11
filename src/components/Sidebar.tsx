@@ -274,9 +274,7 @@ export const Sidebar: React.FC<{ isMobile?: boolean, onClose?: () => void }> = (
         e.stopPropagation();
         if (!confirm(`Hapus preset "${preset.name}"?`)) return;
         try {
-            const { supabase } = await import('../../services/supabaseClient');
-            const { error } = await supabase.from('carousel_presets').delete().eq('id', preset.id);
-            if (error) throw error;
+            await useCarouselStore.getState().deletePreset(preset.id);
             fetchPresets();
         } catch (err) {
             console.error('Delete error', err);

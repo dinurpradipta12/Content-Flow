@@ -320,10 +320,11 @@ export const Login: React.FC = () => {
             if (!user) throw new Error("Gagal mendapatkan data user.");
 
             // 4. Fetch Full Profile from app_users (by ID first, fallback to email for migrated users)
+            const profileCols = 'id, full_name, role, avatar_url, is_active, is_verified, subscription_end, subscription_package, parent_user_id, email, username';
             let profile = null;
             const { data: profileById } = await supabase
                 .from('app_users')
-                .select('*')
+                .select(profileCols)
                 .eq('id', user.id)
                 .maybeSingle();
 
@@ -332,7 +333,7 @@ export const Login: React.FC = () => {
             } else if (user.email) {
                 const { data: profileByEmail } = await supabase
                     .from('app_users')
-                    .select('*')
+                    .select(profileCols)
                     .ilike('email', user.email)
                     .maybeSingle();
                 profile = profileByEmail;
