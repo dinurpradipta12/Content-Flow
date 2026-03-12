@@ -103,11 +103,38 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
     const isRestoringHistory = useRef(false);
     const [cropRect, setCropRect] = useState<fabric.Rect | null>(null);
 
-    const saveCanvas = () => {
-        if (!fabricCanvas.current) return;
-        const json = fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst', 'textBackgroundColor', 'fill', 'opacity', 'filters', 'clipPath']);
-        const previewUrl = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.2 });
-        updatePageElements(currentPageIndex, json.objects, previewUrl);
+    const saveCanvas = (isLive = false) => {
+        if (!fabricCanvas.current || isRestoringHistory.current) return;
+        
+        // Capture the full state IMMEDIATELY (sync)
+        const json = fabricCanvas.current.toJSON(['id', 'name', 'locked', 'selectable', 'evented', 'hoverCursor', 'textCase', 'charSpacing', 'lineHeight', 'paintFirst', 'textBackgroundColor', 'fill', 'opacity', 'filters', 'clipPath', 'shadow', 'backgroundColor']);
+        
+        const savingIndex = currentPageIndex;
+        const currentCanvas = fabricCanvas.current;
+
+        requestAnimationFrame(() => {
+            if (!currentCanvas || currentCanvas.isDisposed) return;
+            
+            try {
+                const previewUrl = currentCanvas.toDataURL({ 
+                    format: 'png', 
+                    multiplier: isLive ? 0.1 : 0.2 
+                });
+                updatePageElements(savingIndex, json.objects, previewUrl);
+                currentCanvas.requestRenderAll();
+            } catch (e) {
+                updatePageElements(savingIndex, json.objects);
+            }
+        });
+    };
+
+    const livePreviewThrottle = useRef<number | null>(null);
+    const triggerLivePreview = () => {
+        if (livePreviewThrottle.current) return;
+        livePreviewThrottle.current = window.setTimeout(() => {
+            saveCanvas(true);
+            livePreviewThrottle.current = null;
+        }, 100); // 10fps for live preview updates is plenty
     };
     const [objectProps, setObjectProps] = useState({
         opacity: 1,
@@ -378,18 +405,57 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
             canvas.upperCanvasEl.style.overflow = 'visible';
         }
 
+        const isMounted = { current: true };
         fabricCanvas.current = canvas;
+
+        const setCanvasBackground = (bg: string) => {
+            if (!canvas) return;
+            if (bg.startsWith('grad-')) {
+                let grad;
+                if (bg === 'grad-1') grad = new fabric.Gradient({ type: 'linear', coords: { x1: 0, y1: 0, x2: canvasSize.width, y2: canvasSize.height }, colorStops: [{ offset: 0, color: '#ff9a9e' }, { offset: 1, color: '#fecfef' }] });
+                else if (bg === 'grad-2') grad = new fabric.Gradient({ type: 'radial', coords: { x1: canvasSize.width / 2, y1: canvasSize.height / 2, r1: 0, x2: canvasSize.width / 2, y2: canvasSize.height / 2, r2: canvasSize.width }, colorStops: [{ offset: 0, color: '#d4fc79' }, { offset: 1, color: '#96e6a1' }] });
+                else if (bg === 'grad-3') grad = new fabric.Gradient({ type: 'linear', coords: { x1: 0, y1: canvasSize.height, x2: canvasSize.width, y2: 0 }, colorStops: [{ offset: 0, color: '#accbee' }, { offset: 1, color: '#e7f0fd' }] });
+                canvas.set('backgroundColor', grad);
+            } else {
+                canvas.set('backgroundColor', bg || '#ffffff');
+            }
+        };
 
         const initCanvas = async () => {
             if (currentPage.elements && currentPage.elements.length > 0) {
                 isRestoringHistory.current = true;
-                await canvas.loadFromJSON({ objects: currentPage.elements });
-                canvas.renderAll();
-                updateLayers();
-                isRestoringHistory.current = false;
-                addToHistory(); // Initial state
+                try {
+                    const data = Array.isArray(currentPage.elements) ? { objects: currentPage.elements } : currentPage.elements;
+                    
+                    await canvas.loadFromJSON(data);
+                    if (!isMounted.current) return;
+                    
+                    // Force background set AFTER loadFromJSON
+                    setCanvasBackground(currentPage.background);
+                    
+                    canvas.calcOffset();
+                    canvas.renderAll(); 
+                    
+                    // Multiple render passes to "wake up" the canvas
+                    requestAnimationFrame(() => {
+                        if (isMounted.current) canvas.requestRenderAll();
+                    });
+                    
+                    setTimeout(() => {
+                        if (isMounted.current) {
+                            canvas.requestRenderAll();
+                            updateLayers();
+                        }
+                    }, 100); 
+                } catch (err) {
+                    console.error("Failed to load canvas data", err);
+                } finally {
+                    isRestoringHistory.current = false;
+                }
             } else {
-                addToHistory(); // Initial empty state
+                setCanvasBackground(currentPage.background);
+                canvas.calcOffset();
+                canvas.renderAll();
             }
         };
         initCanvas();
@@ -460,9 +526,18 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
             addToHistory();
         });
 
-        canvas.on('object:moving', (e) => updateFloatingMenuPos(e.target));
-        canvas.on('object:scaling', (e) => updateFloatingMenuPos(e.target));
-        canvas.on('object:rotating', (e) => updateFloatingMenuPos(e.target));
+        canvas.on('object:moving', (e) => {
+            updateFloatingMenuPos(e.target);
+            triggerLivePreview();
+        });
+        canvas.on('object:scaling', (e) => {
+            updateFloatingMenuPos(e.target);
+            triggerLivePreview();
+        });
+        canvas.on('object:rotating', (e) => {
+            updateFloatingMenuPos(e.target);
+            triggerLivePreview();
+        });
 
         // Snapping Lines (Smart Guides)
         let vLine: fabric.Line | null = null;
@@ -584,18 +659,38 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
             }
         });
 
-        canvas.on('mouse:up', () => {
+        canvas.on('mouse:up', (opt) => {
             isDragging = false;
             canvas.selection = true;
+            
+            // Critical fix for stuck scaling/moving:
+            // If the mouse was released, ensure Fabric's internal transform state is cleared
+            if ((canvas as any)._currentTransform) {
+                (canvas as any)._currentTransform = null;
+            }
+            
             if (isPanningRef.current) {
                 canvas.defaultCursor = 'grab';
             } else {
                 canvas.defaultCursor = 'default';
-                // Re-enable object selection
-                canvas.forEachObject(obj => {
-                    obj.selectable = true;
-                    obj.evented = true;
-                });
+            }
+
+            // Release pointer capture if it exists
+            const e = opt.e as any;
+            if (e && e.pointerId && (canvas.upperCanvasEl as any).hasPointerCapture?.(e.pointerId)) {
+                canvas.upperCanvasEl.releasePointerCapture(e.pointerId);
+            }
+        });
+
+        // Use pointer capture to prevent "stuck" objects when scaling/moving outside the canvas
+        canvas.on('mouse:down', (opt) => {
+            const e = opt.e as any;
+            if (e && e.pointerId && canvas.upperCanvasEl) {
+                try {
+                    canvas.upperCanvasEl.setPointerCapture(e.pointerId);
+                } catch (err) {
+                    console.warn("Failed to set pointer capture", err);
+                }
             }
         });
 
@@ -653,8 +748,13 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
 
         const handleCanvasAdd = (e: any) => {
             const { type, data } = e.detail;
-            const centerX = canvasSize.width / 2;
-            const centerY = canvasSize.height / 2;
+            
+            // Add slight random offset to prevent perfect overlapping (which makes users think previous objects disappeared)
+            const offsetX = Math.floor(Math.random() * 40) - 20;
+            const offsetY = Math.floor(Math.random() * 40) - 20;
+            
+            const centerX = canvasSize.width / 2 + offsetX;
+            const centerY = canvasSize.height / 2 + offsetY;
             if (type === 'text') {
                 const text = new fabric.IText('New Text', {
                     left: centerX,
@@ -750,11 +850,11 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
                     });
                     canvas.add(img);
                     
-                    setTimeout(() => {
-                        canvas.discardActiveObject();
-                        canvas.setActiveObject(img);
-                        canvas.requestRenderAll();
-                    }, 10);
+                    // Finalize adding and deselect others
+                    canvas.discardActiveObject();
+                    canvas.setActiveObject(img);
+                    canvas.requestRenderAll();
+                    addToHistory();
                 });
             }
             canvas.renderAll();
@@ -919,8 +1019,25 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
 
             if (e.key === 'Escape') {
                 setActiveTool(null);
+                // Forcefully clear any active transformation (stuck scaling/moving)
+                if ((canvas as any)._currentTransform) {
+                    (canvas as any)._currentTransform = null;
+                }
                 canvas.discardActiveObject();
+                // Reset interaction state
+                (canvas as any)._onMouseUp(e); 
                 canvas.requestRenderAll();
+                
+                // If in drawing mode, exit it
+                if (canvas.isDrawingMode) {
+                    canvas.isDrawingMode = false;
+                    setIsDrawingMode(false);
+                }
+                
+                // Clear any pending drag state
+                if (canvas.wrapperEl) {
+                    canvas.wrapperEl.style.cursor = 'default';
+                }
             }
             if (e.key === sc.delete || e.key === 'Delete' || e.key === 'Backspace') {
                 const activeObjects = canvas.getActiveObjects();
@@ -963,9 +1080,13 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
                         fabric.Image.fromURL(data).then((img) => {
                             (img as any).id = `img-${Date.now()}`;
                             img.scaleToWidth(300);
+                            
+                            const offsetX = Math.floor(Math.random() * 40) - 20;
+                            const offsetY = Math.floor(Math.random() * 40) - 20;
+                            
                             img.set({
-                                left: canvasSize.width / 2,
-                                top: canvasSize.height / 2,
+                                left: (canvasSize.width / 2) + offsetX,
+                                top: (canvasSize.height / 2) + offsetY,
                                 originX: 'center',
                                 originY: 'center',
                                 evented: true,
@@ -986,56 +1107,12 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
             }
         };
 
-        // CRITICAL FIX: Global mouseup listener to prevent objects sticking to cursor.
-        // When the canvas is CSS-scaled via transform:scale(), mouseup events outside
-        // the canvas bounds are never received by Fabric.js, leaving objects in a
-        // perpetual drag state. This document-level listener catches those mouseups.
-        const handleGlobalMouseUp = (e: MouseEvent) => {
-            if (!canvas) return;
-            // Check if the mouseup happened outside the canvas element
-            const upperCanvas = canvas.upperCanvasEl;
-            if (upperCanvas && !upperCanvas.contains(e.target as Node)) {
-                // Force Fabric.js to end any active dragging/interaction
-                canvas.fire('mouse:up', { e, isClick: false, pointer: canvas.getPointer(e), target: null } as any);
-                // Also reset the canvas internal state
-                (canvas as any).__onMouseUp?.(e);
-            }
-        };
-
-        // Also catch when mouse leaves the canvas element during a drag
-        const handleCanvasMouseLeave = (e: MouseEvent) => {
-            // Add document-level mousemove and mouseup to track outside movements
-            const handleDocMouseMove = (moveEvent: MouseEvent) => {
-                // Forward the mouse move to fabric so the object follows the cursor even outside
-                canvas.fire('mouse:move', { e: moveEvent, pointer: canvas.getPointer(moveEvent) } as any);
-            };
-            const handleDocMouseUp = (upEvent: MouseEvent) => {
-                canvas.fire('mouse:up', { e: upEvent, isClick: false, pointer: canvas.getPointer(upEvent), target: null } as any);
-                document.removeEventListener('mousemove', handleDocMouseMove);
-                document.removeEventListener('mouseup', handleDocMouseUp);
-            };
-            // Only attach if mouse button is pressed (button state during mouseleave)
-            if (e.buttons > 0) {
-                document.addEventListener('mousemove', handleDocMouseMove);
-                document.addEventListener('mouseup', handleDocMouseUp);
-            }
-        };
-
-        document.addEventListener('mouseup', handleGlobalMouseUp);
-        const upperCanvasEl = canvas.upperCanvasEl;
-        if (upperCanvasEl) {
-            upperCanvasEl.addEventListener('mouseleave', handleCanvasMouseLeave);
-        }
-
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
         window.addEventListener('paste', handleSystemPaste);
 
         return () => {
-            document.removeEventListener('mouseup', handleGlobalMouseUp);
-            if (upperCanvasEl) {
-                upperCanvasEl.removeEventListener('mouseleave', handleCanvasMouseLeave);
-            }
+            isMounted.current = false;
             window.removeEventListener('canvas:export', handleExport);
             window.removeEventListener('canvas:action', handleCanvasAction);
             window.removeEventListener('canvas:add', handleCanvasAdd);
@@ -1108,8 +1185,11 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
             }
         };
 
-        window.addEventListener('canvas:load-preset', handlePresetLoad);
-        return () => window.removeEventListener('canvas:load-preset', handlePresetLoad);
+        // Handle Live Preview Clear on Unmount
+        return () => {
+            if (livePreviewThrottle.current) clearTimeout(livePreviewThrottle.current);
+            window.removeEventListener('canvas:load-preset', handlePresetLoad);
+        };
     }, []);
 
     const updateFloatingMenuPos = (obj: fabric.Object | undefined) => {
@@ -1131,7 +1211,7 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
         });
     };
 
-    // Immediate Background Update
+    // Immediate Background Update (Sync with store)
     useEffect(() => {
         if (fabricCanvas.current) {
             const bg = currentPage.background;
@@ -1142,12 +1222,11 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
                 else if (bg === 'grad-3') grad = new fabric.Gradient({ type: 'linear', coords: { x1: 0, y1: canvasSize.height, x2: canvasSize.width, y2: 0 }, colorStops: [{ offset: 0, color: '#accbee' }, { offset: 1, color: '#e7f0fd' }] });
                 fabricCanvas.current.set('backgroundColor', grad);
             } else {
-                fabricCanvas.current.set('backgroundColor', bg);
+                fabricCanvas.current.set('backgroundColor', bg || '#ffffff');
             }
-            fabricCanvas.current.renderAll();
+            fabricCanvas.current.requestRenderAll();
         }
     }, [currentPage.background, canvasSize.width, canvasSize.height]);
-
     const handleFontSize = (size: number) => {
         if (!selectedObject || !fabricCanvas.current || !(selectedObject instanceof fabric.IText)) return;
         selectedObject.set('fontSize', size);

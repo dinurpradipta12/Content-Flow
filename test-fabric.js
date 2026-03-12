@@ -1,12 +1,9 @@
-import * as fabric from 'fabric';
-
-async function test() {
-  const text = new fabric.IText("hello", { fill: "#ffffff", textBackgroundColor: "#ff0000" });
-  const json = text.toJSON(['textBackgroundColor']);
-  console.log('Original JSON:', JSON.stringify(json));
-  
-  const text2 = await fabric.IText.fromObject(json);
-  console.log('Restored fill:', text2.fill);
-  console.log('Restored textBackgroundColor:', text2.textBackgroundColor);
-}
-test();
+const fabric = require('fabric');
+const jsdom = require("jsdom");
+const { JSDOM } = jsdom;
+const dom = new JSDOM(`<!DOCTYPE html><canvas id="c"></canvas>`);
+global.window = dom.window;
+global.document = dom.window.document;
+const canvas = new fabric.Canvas('c');
+console.log("Canvas methods:");
+console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(canvas)).filter(n => n.toLowerCase().includes('mouse') || n.toLowerCase().includes('pointer')));
