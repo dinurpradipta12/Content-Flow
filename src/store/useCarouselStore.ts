@@ -122,6 +122,8 @@ export const useCarouselStore = create<CarouselState>()(
                 currentPageIndex: 0,
                 currentLayers: [],
                 currentProjectId: null,
+                zoom: 0.5,
+                referenceData: null
             }),
 
             addPage: () => set((state) => {
@@ -303,6 +305,26 @@ export const useCarouselStore = create<CarouselState>()(
             }
         }),
         {
-            name: 'carousel-storage'
+            name: 'carousel-storage',
+            partialize: (state) => ({
+                ...state,
+                // Exclude heavy previewUrls from persistence to avoid QuotaExceededError (5MB limit)
+                pages: state.pages.map(({ previewUrl, ...page }) => page),
+                projects: state.projects.map(project => ({
+                    ...project,
+                    preview_url: undefined,
+                    data: {
+                        ...project.data,
+                        pages: project.data.pages.map(({ previewUrl, ...page }: any) => page)
+                    }
+                })),
+                presets: state.presets.map(preset => ({
+                    ...preset,
+                    data: {
+                        ...preset.data,
+                        pages: preset.data.pages.map(({ previewUrl, ...page }: any) => page)
+                    }
+                }))
+            })
         }
     ));
