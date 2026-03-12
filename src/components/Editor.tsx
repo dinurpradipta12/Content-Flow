@@ -744,10 +744,17 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
                         left: centerX,
                         top: centerY,
                         originX: 'center',
-                        originY: 'center'
+                        originY: 'center',
+                        evented: true,
+                        selectable: true
                     });
                     canvas.add(img);
-                    canvas.setActiveObject(img);
+                    
+                    setTimeout(() => {
+                        canvas.discardActiveObject();
+                        canvas.setActiveObject(img);
+                        canvas.requestRenderAll();
+                    }, 10);
                 });
             }
             canvas.renderAll();
@@ -911,12 +918,9 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
             }
 
             if (e.key === 'Escape') {
-                if (activeTool) {
-                    setActiveTool(null);
-                } else {
-                    canvas.discardActiveObject();
-                    canvas.requestRenderAll();
-                }
+                setActiveTool(null);
+                canvas.discardActiveObject();
+                canvas.requestRenderAll();
             }
             if (e.key === sc.delete || e.key === 'Delete' || e.key === 'Backspace') {
                 const activeObjects = canvas.getActiveObjects();
@@ -963,12 +967,18 @@ export const Editor: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
                                 left: canvasSize.width / 2,
                                 top: canvasSize.height / 2,
                                 originX: 'center',
-                                originY: 'center'
+                                originY: 'center',
+                                evented: true,
+                                selectable: true
                             });
                             canvas.add(img);
-                            canvas.setActiveObject(img);
-                            canvas.renderAll();
-                            addToHistory();
+                            
+                            setTimeout(() => {
+                                canvas.discardActiveObject();
+                                canvas.setActiveObject(img);
+                                canvas.renderAll();
+                                addToHistory();
+                            }, 10);
                         });
                     };
                     reader.readAsDataURL(blob);
