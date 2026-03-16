@@ -525,7 +525,7 @@ export const Dashboard: React.FC = () => {
 
             let query = supabase
                 .from('content_items')
-                .select('*')
+                .select('id, date, status, pillar, metrics, platform, title, asset_url')
                 .gte('date', startPrev.toISOString())
                 .lte('date', endCurrent.toISOString());
 
