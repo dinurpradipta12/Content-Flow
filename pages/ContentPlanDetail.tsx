@@ -944,7 +944,7 @@ export const ContentPlanDetail: React.FC = () => {
                     .select('id, full_name, email, avatar_url, role, online_status, last_activity_at, username')
                     .or(userOrCond),
                 supabase.from('content_items')
-                    .select('*')
+                    .select('id, workspace_id, title, pillar, type, platform, status, priority, date, pic, approval_status, content_link, approved_by, approved_at, asset_url')
                     .eq('workspace_id', id)
                     .order('created_at', { ascending: false })
             ]);
@@ -1039,6 +1039,29 @@ export const ContentPlanDetail: React.FC = () => {
         }
     };
 
+    const fetchTaskDetail = async (taskId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('content_items')
+                .select('*')
+                .eq('id', taskId)
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                const mappedItem = {
+                    ...data,
+                    contentLink: data.content_link,
+                };
+                setSelectedTask(mappedItem as ContentItem);
+                // Also update the task in the list to avoid refetching
+                setTasks(prev => prev.map(t => t.id === taskId ? mappedItem as ContentItem : t));
+            }
+        } catch (err) {
+            console.error("Error fetching task detail:", err);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [id]);
@@ -1059,7 +1082,7 @@ export const ContentPlanDetail: React.FC = () => {
         if (openId && tasks.length > 0) {
             const task = tasks.find(t => t.id === openId);
             if (task) {
-                setSelectedTask(task);
+                fetchTaskDetail(openId);
                 setIsDetailModalOpen(true);
                 localStorage.removeItem('open_content_id');
             }
@@ -1185,8 +1208,9 @@ export const ContentPlanDetail: React.FC = () => {
     };
 
     const handleCardClick = (item: ContentItem) => {
-        setSelectedTask(item);
+        setSelectedTask(item); // Show immediate UI with what we have
         setIsDetailModalOpen(true);
+        fetchTaskDetail(item.id); // Fetch full detail (script, result_assets, etc)
     };
 
     const handleDeleteContent = async (itemId: string) => {
